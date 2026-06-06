@@ -73,23 +73,23 @@ function initThemeSwitch() {
     const themeBtn = document.getElementById('theme-toggle-btn');
     if (!themeBtn) return;
 
-    // Check saved theme or system preference
-    const savedTheme = localStorage.getItem('vsa-theme') || 'dark';
-    if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
+    // Check saved theme or default to light
+    const savedTheme = localStorage.getItem('vsa-theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
         themeBtn.querySelector('.theme-icon-dark').classList.add('hidden');
         themeBtn.querySelector('.theme-icon-light').classList.remove('hidden');
     }
 
     themeBtn.addEventListener('click', () => {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('vsa-theme', isLight ? 'light' : 'dark');
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('vsa-theme', isDark ? 'dark' : 'light');
 
         const darkIcon = themeBtn.querySelector('.theme-icon-dark');
         const lightIcon = themeBtn.querySelector('.theme-icon-light');
 
-        if (isLight) {
+        if (isDark) {
             darkIcon.classList.add('hidden');
             lightIcon.classList.remove('hidden');
         } else {
@@ -202,7 +202,7 @@ async function fetchData() {
         const db = await response.json();
         
         VSA_STATE.employees = db.employees || [];
-        VSA_STATE.clients = db.clients || [];
+        VSA_STATE.clients = [];
         VSA_STATE.departments = db.departments || [];
         VSA_STATE.designations = db.designations || [];
         VSA_STATE.manpowerTypes = db.manpowerTypes || [];
@@ -238,7 +238,6 @@ async function fetchData() {
         // Refresh UI components
         renderDashboard();
         renderEmployeeDirectory();
-        renderClientsSection();
         populateSelectors();
         renderClassificationsManager();
         renderTemplatesList();
@@ -277,12 +276,21 @@ function renderDashboard() {
         }
     });
 
+    const activeRate = totalGuards > 0 ? Math.round((activeGuards / totalGuards) * 100) : 0;
+
     document.getElementById('stat-total-employees').textContent = totalGuards;
     document.getElementById('stat-active-employees').textContent = activeGuards;
     document.getElementById('stat-expired-ids').textContent = expiredOrExpiring;
-    document.getElementById('stat-total-clients').textContent = VSA_STATE.clients.length;
+    document.getElementById('stat-active-rate').textContent = activeRate + '%';
 
-
+    // Update semicircular gauge SVG
+    const gaugePath = document.getElementById('gauge-active-path');
+    const gaugeText = document.getElementById('gauge-percentage-text');
+    if (gaugePath && gaugeText) {
+        const offset = 251.3 * (1 - activeRate / 100);
+        gaugePath.setAttribute('stroke-dashoffset', offset);
+        gaugeText.textContent = activeRate + '%';
+    }
 
     // Render client distribution chart using elegant SVGs
     renderDistributionChart();
@@ -298,17 +306,17 @@ function renderDistributionChart() {
     const container = document.getElementById('distribution-chart-container');
     container.innerHTML = '';
     
-    // Count active guards per client site
+    // Count active guards per department
     const distribution = {};
     VSA_STATE.employees.forEach(e => {
-        if (e.status === 'Active' && e.clientLocation) {
-            distribution[e.clientLocation] = (distribution[e.clientLocation] || 0) + 1;
+        if (e.status === 'Active' && e.department) {
+            distribution[e.department] = (distribution[e.department] || 0) + 1;
         }
     });
 
     const entries = Object.entries(distribution);
     if (entries.length === 0) {
-        container.innerHTML = '<div class="placeholder-message">No Active Deployments Tracked.</div>';
+        container.innerHTML = '<div class="placeholder-message">No Active Department Distribution.</div>';
         return;
     }
 
@@ -318,29 +326,28 @@ function renderDistributionChart() {
     // Draw grid lines
     for (let i = 0; i <= 5; i++) {
         const x = 120 + i * 80;
-        svgHtml += `<line x1="${x}" y1="10" x2="${x}" y2="${entries.length * 40 + 10}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
-        svgHtml += `<text x="${x}" y="${entries.length * 40 + 25}" fill="#6b7280" font-size="10" text-anchor="middle">${i * 2}</text>`;
+        svgHtml += `<line x1="${x}" y1="10" x2="${x}" y2="${entries.length * 40 + 10}" stroke="var(--glass-border)" stroke-width="1" stroke-dasharray="2 2"/>`;
+        svgHtml += `<text x="${x}" y="${entries.length * 40 + 25}" fill="var(--text-muted)" font-size="10" font-family="inherit" text-anchor="middle">${i * 2}</text>`;
     }
 
-    entries.forEach(([client, count], idx) => {
+    entries.forEach(([dept, count], idx) => {
         const y = 20 + idx * 40;
         // Max value scale (normalizing relative width)
         const barWidth = Math.min(count * 40, 440);
         
-        // Render bar gradient
         svgHtml += `
-            <text x="10" y="${y + 15}" fill="#c5c6c7" font-size="12" font-weight="500">${client.substring(0, 15)}...</text>
-            <rect x="120" y="${y}" width="${barWidth}" height="18" rx="4" fill="url(#goldGradient)"/>
-            <text x="${130 + barWidth}" y="${y + 14}" fill="#d4af37" font-size="11" font-weight="700">${count}</text>
+            <text x="10" y="${y + 14}" fill="var(--text-primary)" font-size="12" font-family="inherit" font-weight="600">${dept.substring(0, 15)}...</text>
+            <rect x="120" y="${y}" width="${barWidth}" height="18" rx="9" fill="url(#barGradient)"/>
+            <text x="${130 + barWidth}" y="${y + 14}" fill="var(--theme-accent)" font-size="11" font-family="inherit" font-weight="700">${count}</text>
         `;
     });
 
     // Gradients def
     svgHtml += `
         <defs>
-            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#d4af37" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#d4af37" stop-opacity="0.9"/>
+            <linearGradient id="barGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="var(--theme-sage)"/>
+                <stop offset="100%" stop-color="var(--theme-accent)"/>
             </linearGradient>
         </defs>
     </svg>`;
@@ -449,7 +456,7 @@ function renderRecentEmployeesTable() {
             <td><strong>${emp.id}</strong></td>
             <td>${emp.name}</td>
             <td>${emp.designation}</td>
-            <td>${emp.clientLocation || 'Not Assigned'}</td>
+            <td>${emp.department || '-'}</td>
             <td>${emp.joiningDate}</td>
             <td><span class="badge ${emp.status === 'Active' ? 'badge-active' : 'badge-suspended'}">${emp.status}</span></td>
         `;
@@ -528,7 +535,7 @@ function renderEmployeeDirectory() {
                     <div class="directory-card-name" title="${emp.name}">${emp.name}</div>
                     <div class="directory-card-empid">${emp.id}</div>
                     <div class="directory-card-subtext" title="${emp.designation}">${emp.designation}</div>
-                    <div class="directory-card-client" title="${emp.clientLocation || 'HQ Standby'}">${emp.clientLocation || '<span class="text-muted">HQ Standby</span>'}</div>
+                    <div class="directory-card-client" title="${emp.department || '-'}">${emp.department || '<span class="text-muted">-</span>'}</div>
                     <div class="directory-card-chips" style="align-items: center; gap: 6px;">
                         <span class="directory-card-chip">${emp.manpowerType || 'Security'}</span>
                         <select class="directory-status-select" data-id="${emp.id}" data-status="${emp.status}" style="font-size: 10px; padding: 2px 6px;">
@@ -560,7 +567,7 @@ function renderEmployeeDirectory() {
                     </div>
                 </td>
                 <td>${emp.designation}</td>
-                <td>${emp.clientLocation || '<span class="text-muted">Unassigned</span>'}</td>
+                <td>${emp.department || '-'}</td>
                 <td>${emp.mobile}</td>
                 <td><span class="text-muted" style="font-size: 11px;">${docsText}</span></td>
                 <td>
@@ -675,118 +682,27 @@ function renderEmployeeDirectory() {
 }
 
 // C. Client Deployment Section
-function renderClientsSection() {
-    const listContainer = document.getElementById('client-list-container');
-    listContainer.innerHTML = '';
-
-    if (VSA_STATE.clients.length === 0) {
-        listContainer.innerHTML = '<p class="text-muted">No client sites registered.</p>';
-        return;
-    }
-
-    VSA_STATE.clients.forEach((client, idx) => {
-        // Calculate count of guards deployed
-        const count = VSA_STATE.employees.filter(e => e.clientLocation === client.name && e.status === 'Active').length;
-
-        const div = document.createElement('div');
-        div.className = `client-list-item cursor-pointer ${selectedClientId === idx ? 'active' : ''}`;
-        div.setAttribute('data-idx', idx);
-        div.innerHTML = `
-            <div class="client-item-name">${client.name}</div>
-            <div class="client-item-location">${client.location} • ${count} Deployed</div>
-        `;
-        
-        div.addEventListener('click', () => {
-            selectedClientId = idx;
-            renderClientsSection();
-            renderSelectedClientDetails(client);
-        });
-
-        listContainer.appendChild(div);
-    });
-}
-
-function renderSelectedClientDetails(client) {
-    document.getElementById('client-placeholder-message').classList.add('hidden');
-    document.getElementById('client-details-section').classList.remove('hidden');
-
-    document.getElementById('current-selected-client-title').textContent = client.name;
-    document.getElementById('client-meta-manager').textContent = client.manager;
-    document.getElementById('client-meta-contact').textContent = client.contact;
-    document.getElementById('client-meta-location').textContent = client.location;
-
-    // Filter guards assigned to this site
-    const guards = VSA_STATE.employees.filter(e => e.clientLocation === client.name);
-    document.getElementById('client-guard-count').textContent = `${guards.length} Guards`;
-
-    const tbody = document.getElementById('deployed-guards-tbody');
-    tbody.innerHTML = '';
-
-    if (guards.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center placeholder-message">No security guards currently deployed to this site.</td></tr>';
-        return;
-    }
-
-    guards.forEach(g => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><strong>${g.id}</strong></td>
-            <td>${g.name}</td>
-            <td>${g.designation}</td>
-            <td>
-                <select class="deployment-reassign-select" data-empid="${g.id}">
-                    <option value="${client.name}" selected>Retain Here</option>
-                    ${VSA_STATE.clients.filter(c => c.name !== client.name).map(c => `
-                        <option value="${c.name}">Transfer: ${c.name.substring(0, 20)}...</option>
-                    `).join('')}
-                    <option value="">Recall to HQ / Unassign</option>
-                </select>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-
-    // Wire re-assignment
-    document.querySelectorAll('.deployment-reassign-select').forEach(sel => {
-        sel.addEventListener('change', (e) => {
-            const empId = sel.getAttribute('data-empid');
-            const targetSite = sel.value;
-            reassignGuard(empId, targetSite);
-        });
-    });
-}
+// Clients section removed
 
 
 // E. Selectors Populate
 function populateSelectors() {
-    // 2. Client selections in forms (OLD MODAL & NEW REGISTRATION FORM)
-    const clientFormSel = document.getElementById('form-client');
-    const regClientSel = document.getElementById('reg-client');
-    
-    let clientHtml = '<option value="">-- No Deployment (HQ Standby) --</option>';
-    let clientHtml2 = '<option value="">Select Working Place</option>';
-    
-    const repClientSel = document.getElementById('rep-client');
-    let repClientHtml = '<option value="">All Locations</option>';
-    
-    VSA_STATE.clients.forEach(c => {
-        clientHtml += `<option value="${c.name}">${c.name}</option>`;
-        clientHtml2 += `<option value="${c.name}">${c.name}</option>`;
-        repClientHtml += `<option value="${c.name}">${c.name}</option>`;
-    });
-    
-    if (clientFormSel) clientFormSel.innerHTML = clientHtml;
-    if (regClientSel) regClientSel.innerHTML = clientHtml2;
-    if (repClientSel) repClientSel.innerHTML = repClientHtml;
-
-
+    // 2. Report Department filter
+    const repDeptSel = document.getElementById('rep-department');
+    if (repDeptSel) {
+        let repDeptHtml = '<option value="">All Departments</option>';
+        VSA_STATE.departments.forEach(d => {
+            repDeptHtml += `<option value="${d}">${d}</option>`;
+        });
+        repDeptSel.innerHTML = repDeptHtml;
+    }
 
     // 4. ID Card Employee Select & Filters
-    const idFilterLocSel = document.getElementById('id-filter-location');
-    if (idFilterLocSel) {
-        idFilterLocSel.innerHTML = '<option value="">All Locations</option>';
-        VSA_STATE.clients.forEach(c => {
-            idFilterLocSel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    const idFilterDeptSel = document.getElementById('id-filter-department');
+    if (idFilterDeptSel) {
+        idFilterDeptSel.innerHTML = '<option value="">All Departments</option>';
+        VSA_STATE.departments.forEach(d => {
+            idFilterDeptSel.innerHTML += `<option value="${d}">${d}</option>`;
         });
     }
 
@@ -811,11 +727,11 @@ function populateSelectors() {
     if (bulkTplSel) bulkTplSel.innerHTML = tplHtml;
 
     // 5. Employee Record Filters and Select (Letterhead Form)
-    const recFilterLocSel = document.getElementById('rec-filter-location');
-    if (recFilterLocSel) {
-        recFilterLocSel.innerHTML = '<option value="">All Locations</option>';
-        VSA_STATE.clients.forEach(c => {
-            recFilterLocSel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    const recFilterDeptSel = document.getElementById('rec-filter-department');
+    if (recFilterDeptSel) {
+        recFilterDeptSel.innerHTML = '<option value="">All Departments</option>';
+        VSA_STATE.departments.forEach(d => {
+            recFilterDeptSel.innerHTML += `<option value="${d}">${d}</option>`;
         });
     }
 
@@ -904,17 +820,17 @@ function populateIdEmployeeChecklist() {
     if (!listContainer) return;
 
     const searchVal = (document.getElementById('id-search-employee')?.value || '').toLowerCase().trim();
-    const locationVal = document.getElementById('id-filter-location')?.value || '';
+    const deptVal = document.getElementById('id-filter-department')?.value || '';
     const designationVal = document.getElementById('id-filter-designation')?.value || '';
 
     const filtered = VSA_STATE.employees.filter(emp => {
         const matchesSearch = !searchVal || 
                               emp.name.toLowerCase().includes(searchVal) || 
                               emp.id.toLowerCase().includes(searchVal);
-        const matchesLocation = !locationVal || emp.clientLocation === locationVal;
+        const matchesDept = !deptVal || emp.department === deptVal;
         const matchesDesignation = !designationVal || emp.designation === designationVal;
 
-        return matchesSearch && matchesLocation && matchesDesignation;
+        return matchesSearch && matchesDept && matchesDesignation;
     });
 
     let listHtml = '';
@@ -948,7 +864,7 @@ function populateIdEmployeeChecklist() {
                     </div>
                     <div class="id-checklist-item-info">
                         <span class="id-checklist-item-name">${emp.name}</span>
-                        <span class="id-checklist-item-sub">${emp.id} | ${emp.designation} | ${emp.clientLocation || 'HQ'}</span>
+                        <span class="id-checklist-item-sub">${emp.id} | ${emp.designation} | ${emp.department || '-'}</span>
                     </div>
                 </div>
             `;
@@ -1169,7 +1085,6 @@ function openEmployeeModal(empId = null) {
         document.getElementById('form-state').value = emp.state;
         document.getElementById('form-pin').value = emp.pinCode;
         document.getElementById('form-designation').value = emp.designation;
-        document.getElementById('form-client').value = emp.clientLocation || '';
         document.getElementById('form-manager').value = emp.reportingManager;
         document.getElementById('form-joining-date').value = emp.joiningDate;
         document.getElementById('form-status').value = emp.status;
@@ -1238,7 +1153,6 @@ async function saveEmployee(event) {
         state: document.getElementById('form-state').value,
         pinCode: document.getElementById('form-pin').value,
         designation: document.getElementById('form-designation').value,
-        clientLocation: document.getElementById('form-client').value,
         reportingManager: document.getElementById('form-manager').value,
         joiningDate: document.getElementById('form-joining-date').value,
         status: document.getElementById('form-status').value,
@@ -1296,30 +1210,7 @@ async function deleteEmployeeRecord(empId) {
 }
 
 // Client addition
-async function submitClientSite(event) {
-    event.preventDefault();
-    
-    const clientData = {
-        name: document.getElementById('form-client-name').value,
-        location: document.getElementById('form-client-location').value,
-        manager: document.getElementById('form-client-manager').value,
-        contact: document.getElementById('form-client-contact').value
-    };
-
-    try {
-        const response = await fetch('/api/clients', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(clientData)
-        });
-        if (!response.ok) throw new Error('Client creation failed');
-        
-        document.getElementById('client-modal').classList.add('hidden');
-        fetchData();
-    } catch (err) {
-        alert(err.message);
-    }
-}
+// submitClientSite removed
 
 // Reassignment Deployments
 async function reassignGuard(empId, siteName) {
@@ -1345,254 +1236,461 @@ async function reassignGuard(empId, siteName) {
    ========================================================================== */
 function generateIdCardHtml(emp, template, validityYears = 3) {
     if (!emp) return '';
-    if (!template) {
-        template = {
-            layout: 'vertical',
-            headerText: 'VALLEY SECURITY SERVICES',
-            subheaderText: 'ShahidGunj Srinagar Kashmir',
-            headerBgColor: '#0f1218',
-            accentColor: '#d4af37',
-            logo: '',
-            background: '',
-            signature: '',
-            fields: {
-                name: true,
-                employeeId: true,
-                designation: true,
-                department: true,
-                fatherName: true,
-                phone: true,
-                bloodGroup: true,
-                address: true
-            }
-        };
-    }
 
-    // Helper to determine if a color is light or dark to switch text color dynamically
-    const isColorLight = (hexColor) => {
-        if (!hexColor) return false;
-        const hex = hexColor.replace('#', '');
-        if (hex.length === 3) {
-            const r = parseInt(hex[0] + hex[0], 16);
-            const g = parseInt(hex[1] + hex[1], 16);
-            const b = parseInt(hex[2] + hex[2], 16);
-            return (r * 0.299 + g * 0.587 + b * 0.114) > 186;
-        } else if (hex.length === 6) {
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            return (r * 0.299 + g * 0.587 + b * 0.114) > 186;
-        }
-        const lightNames = ['white', 'lightgray', 'gray', 'yellow', 'lightgrey'];
-        if (lightNames.includes(hexColor.toLowerCase())) return true;
-        return false;
+    // Helper to format date
+    const formatDateDDMMYYYYLocal = (date) => {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
     };
-
-    const headerBg = template.headerBgColor || '#ffffff';
-    const isLightHeader = isColorLight(headerBg);
-    const headerTitleColor = isLightHeader ? '#111111' : '#ffffff';
-    const headerSubtitleColor = isLightHeader ? '#555555' : 'rgba(255, 255, 255, 0.8)';
 
     const issueDate = new Date(emp.joiningDate || new Date());
     const expDate = new Date(issueDate);
     expDate.setFullYear(issueDate.getFullYear() + validityYears);
-    const validityStr = `${formatDateDDMMYYYY(issueDate)} - ${formatDateDDMMYYYY(expDate)}`;
+    const validityStr = `${formatDateDDMMYYYYLocal(issueDate)} - ${formatDateDDMMYYYYLocal(expDate)}`;
 
     const getFallbackAvatarData = (initial) => {
         const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23d4af37'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${initial}</text></svg>`;
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
     };
 
-    const getFallbackLogoData = (color) => {
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='none'/><circle cx='50' cy='50' r='40' stroke='${color}' stroke-width='4' fill='none'/><text x='50' y='58' font-family='sans-serif' font-weight='900' font-size='24' fill='${color}' text-anchor='middle'>VS</text></svg>`;
+    const getPresetShield = (color = '#dfba5f') => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
     };
 
-    const logoSrc = template.logo || getFallbackLogoData(template.accentColor || '#d4af37');
-    
-    let bgStyle = `background: #ffffff;`;
-    if (template.background) {
-        bgStyle = `background: url('${template.background}') no-repeat center center; background-size: cover;`;
+    const getPresetStar = (color = '#dfba5f') => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    };
+
+    const getPresetEagle = (color = '#dfba5f') => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
+        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    };
+
+    const getPresetSig1 = (color = '#000000') => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
+        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    };
+
+    const getPresetSig2 = (color = '#000000') => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40"><path d="M15,20 Q40,5 65,25 T115,15" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
+        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    };
+
+    // Use default template properties if none provided
+    if (!template) {
+        template = {
+            layout: 'vertical',
+            font: "'Outfit', sans-serif",
+            backgroundColor: '#ffffff',
+            headerBgColor: '#0e3e2b',
+            accentColor: '#dfba5f',
+            headerText: 'VALLEY SECURITY AGENCY',
+            subheaderText: 'SHAHIDGUNJ SRINAGAR KASHMIR',
+            backgroundImage: '',
+            logo: 'preset-shield',
+            signature: 'preset-sig1',
+            logoSize: 50,
+            headerHeight: 90,
+            headerFontSize: 14,
+            fields: {
+                photo: true, name: true, designation: true, department: true, empid: true,
+                father: true, phone: true, blood: true, address: true, signature: true,
+                qrcode: true, barcode: true
+            }
+        };
     }
 
-    let photoHtml = `<span class="photo-placeholder">No Photo</span>`;
+    const fields = template.fields || {};
+    const logoSize = template.logoSize || 50;
+    const headerHeight = template.headerHeight || 90;
+    const headerFontSize = template.headerFontSize || 14;
+
+    // Normalize fields to support both DB format and Form format
+    const showPhoto = fields.photo !== false;
+    const showName = fields.name !== false;
+    const showDesignation = fields.designation !== false;
+    const showDepartment = fields.department !== false;
+    const showEmpId = (fields.empid !== false) && (fields.employeeId !== false);
+    const showFather = (fields.father !== false) && (fields.fatherName !== false);
+    const showPhone = fields.phone !== false;
+    const showBlood = (fields.blood !== false) && (fields.bloodGroup !== false);
+    const showAddress = fields.address !== false;
+    const showQrCode = fields.qrcode !== false;
+    const showBarcode = fields.barcode !== false;
+
+    // Resolve Logo
+    let logoSrc = '';
+    if (template.logo) {
+        if (template.logo === 'preset-shield') {
+            logoSrc = getPresetShield(template.accentColor || '#dfba5f');
+        } else if (template.logo === 'preset-star') {
+            logoSrc = getPresetStar(template.accentColor || '#dfba5f');
+        } else if (template.logo === 'preset-eagle') {
+            logoSrc = getPresetEagle(template.accentColor || '#dfba5f');
+        } else {
+            logoSrc = template.logo;
+        }
+    } else {
+        logoSrc = getPresetShield(template.accentColor || '#dfba5f');
+    }
+
+    // Resolve Signature (permanent scan)
+    let sigSrc = '';
+    if (template.signature) {
+        if (template.signature === 'preset-sig1') {
+            sigSrc = getPresetSig1('#000000');
+        } else if (template.signature === 'preset-sig2') {
+            sigSrc = getPresetSig2('#000000');
+        } else {
+            sigSrc = template.signature;
+        }
+    } else {
+        sigSrc = getPresetSig1('#000000');
+    }
+
+    // Resolve Background styling
+    let bgStyle = '';
+    let isBgDark = false;
+    if (template.backgroundImage === 'default-bg') {
+        bgStyle = `background: linear-gradient(145deg, #0b0f19 0%, #161f30 100%); color: #ffffff;`;
+        isBgDark = true;
+    } else if (template.backgroundImage === 'vip-bg') {
+        bgStyle = `background: linear-gradient(145deg, #0f1218 0%, #1c150c 100%); color: #ffffff;`;
+        isBgDark = true;
+    } else if (template.backgroundColor) {
+        bgStyle = `background-color: ${template.backgroundColor}; color: #000000;`;
+        const hex = template.backgroundColor.replace('#', '');
+        if (hex.length === 6) {
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            isBgDark = (r * 0.299 + g * 0.587 + b * 0.114) <= 150;
+        }
+    } else {
+        bgStyle = `background-color: #ffffff; color: #000000;`;
+    }
+
+    const textColor = isBgDark ? '#ffffff' : '#111111';
+    const subtextColor = isBgDark ? 'rgba(255, 255, 255, 0.7)' : '#555555';
+
+    // Header light/dark detection
+    const isColorLight = (hexColor) => {
+        if (!hexColor) return false;
+        const hex = hexColor.replace('#', '');
+        if (hex.length === 6) {
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return (r * 0.299 + g * 0.587 + b * 0.114) > 186;
+        }
+        return false;
+    };
+    const isLightHeader = isColorLight(template.headerBgColor || '#0e3e2b');
+    const headerTextColor = isLightHeader ? '#111111' : '#ffffff';
+    const headerSubtextColor = isLightHeader ? '#555555' : 'rgba(255, 255, 255, 0.8)';
+
+    // Photo Src
+    let photoSrc = '';
     if (emp.documents && emp.documents.photo) {
-        photoHtml = `<img src="${emp.documents.photo}" alt="Employee Photo" class="employee-photo">`;
+        photoSrc = emp.documents.photo;
     } else {
         const initial = emp.name ? emp.name[0].toUpperCase() : '?';
-        photoHtml = `<img src="${getFallbackAvatarData(initial)}" class="employee-photo">`;
-    }
-
-    let sigHtml = `<span class="sig-placeholder">Signature Scan</span>`;
-    if (emp.documents && emp.documents.signature) {
-        sigHtml = `<img src="${emp.documents.signature}" alt="Signature" class="signature-img">`;
-    } else if (template.signature) {
-        sigHtml = `<img src="${template.signature}" alt="Signature" class="signature-img">`;
+        photoSrc = getFallbackAvatarData(initial);
     }
 
     const verificationUrl = `${window.location.protocol}//${window.location.host}/verification.html?id=${emp.id}`;
 
     if (template.layout === 'horizontal') {
         return `
-        <div class="id-card-horizontal" style="${bgStyle} border-color: ${template.accentColor};">
-            <div class="id-portrait-header" style="border-bottom: 2px solid ${template.accentColor}; background: ${template.headerBgColor}; padding: 6px 12px; margin: -12px -12px 8px -12px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 12px;">
-                <div class="id-portrait-logo" style="width: 85px; height: 85px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <div class="id-portrait-brand" style="flex-grow: 1;">
-                    <h1 class="id-portrait-title" style="color: ${headerTitleColor}; font-size: 20px; font-weight: 900; margin: 0; line-height: 1.1; font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 0.8px;">${template.headerText}</h1>
-                    <p class="id-portrait-subtitle" style="color: ${headerSubtitleColor}; font-size: 10px; margin: 3px 0 0 0; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">${template.subheaderText || ''}</p>
-                    <p class="id-portrait-contact" style="color: ${headerTitleColor}; font-size: 9px; margin: 3px 0 0 0; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 900;">PH: 7889311608 | EMAIL: VLLSCRTSERVICE@GMAIL.COM</p>
-                </div>
-            </div>
-            
-            <div class="id-horizontal-body">
-                <div class="id-horizontal-left">
-                    <div class="id-portrait-photo-box" style="border-color: ${template.accentColor}; width: 100px; height: 120px; margin-bottom: 4px; overflow: hidden; display: flex; justify-content: center; align-items: center;">
-                        ${photoHtml}
+        <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+            <!-- SINGLE-SIDED HORIZONTAL ID CARD -->
+            <div class="id-card-horizontal visual-id-card-render" style="font-family: ${template.font || "'Outfit', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative;">
+                <!-- Header -->
+                <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-bottom: 2px solid ${template.accentColor || '#dfba5f'}; color: ${headerTextColor}; height: ${headerHeight}px; display: flex; align-items: center; gap: 12px; padding: 0 12px; margin: -15px -15px 8px -15px; border-radius: 10px 10px 0 0; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
+                    <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
-                    <div class="id-portrait-qr" style="width: 60px; height: 60px;">
-                        <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" style="width: 60px; height: 60px;"></canvas>
+                    <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                        <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                     </div>
                 </div>
-                
-                <div class="id-horizontal-right">
-                    <div class="id-portrait-meta">
-                        ${template.fields.name ? `<h2 class="id-portrait-name" style="font-size: 15px; font-weight: 800; margin: 0 0 2px 0; color: #111111; font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 350px;">${emp.name}</h2>` : ''}
-                        ${template.fields.designation ? `<h3 class="id-portrait-designation" style="font-size: 11px; font-weight: 700; color: ${template.accentColor}; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 350px;">${emp.designation}</h3>` : ''}
-                    </div>
+
+                <!-- Body Content Split -->
+                <div style="display: flex; gap: 15px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 8px;">
                     
-                    <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
-                        ${template.fields.employeeId ? `<tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Staff ID:</td>
-                            <td class="id-table-value" style="font-size: 12px; font-weight: bold; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
-                        </tr>` : ''}
-                        ${template.fields.department ? `<tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Site/Dept:</td>
-                            <td class="id-table-value" style="font-size: 12px; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.clientLocation || emp.department || 'Reserve'}</td>
-                        </tr>` : ''}
-                        ${template.fields.fatherName ? `<tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${emp.relationType || 'Father'}'s Name:</td>
-                            <td class="id-table-value" style="font-size: 12px; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
-                        </tr>` : ''}
-                        <tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Phone:</td>
-                            <td class="id-table-value" style="font-size: 12px; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
-                        </tr>
-                        ${template.fields.bloodGroup ? `<tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Blood Group:</td>
-                            <td class="id-table-value" style="font-size: 12px; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
-                        </tr>` : ''}
-                        ${template.fields.address ? `<tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Address:</td>
-                            <td class="id-table-value" style="font-size: 12px; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.currentAddress || emp.permanentAddress || '-'}</td>
-                        </tr>` : ''}
-                        <tr>
-                            <td class="id-table-label" style="font-size: 12px; font-weight: bold; color: #666666; width: 100px; padding: 1.5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Validity:</td>
-                            <td class="id-table-value" style="font-size: 12px; font-weight: bold; color: #000000; padding: 1.5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
-                        </tr>
-                    </table>
-                    
-                    <div class="id-portrait-signature-box" style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed #dddddd; padding-top: 2px;">
-                        <span style="font-size: 7px; color: #888888; font-style: italic;">Authority Signature</span>
-                        <div class="id-portrait-signature" style="width: 80px; height: 25px; border: none;">
-                            ${sigHtml}
+                    <!-- Column 1: Photo and Signature -->
+                    <div style="width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                        <!-- Photo -->
+                        ${showPhoto ? `
+                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: 90px; height: 110px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                            <img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Signature (always visible) -->
+                        <div style="width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
+                            <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.4) brightness(1.1);">
+                            </div>
+                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
                         </div>
                     </div>
-
-                    <!-- Footer spacing -->
-                    <div style="height: 2px;"></div>
+                    
+                    <!-- Column 2: Name, Designation, and Details Table -->
+                    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.15); padding-right: 10px;">
+                        <!-- Name & Designation -->
+                        <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
+                            ${showName ? `
+                            <h2 style="color: ${textColor}; font-size: 13px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                ${emp.name}
+                            </h2>
+                            ` : ''}
+                            ${showDesignation ? `
+                            <h3 style="color: ${template.accentColor || '#dfba5f'}; font-size: 9px; font-weight: 700; text-transform: uppercase; margin: 1px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${emp.designation}
+                            </h3>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Details Table -->
+                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                            ${showEmpId ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+                            </tr>
+                            ` : ''}
+                            ${showFather ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Father:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            ${showDepartment ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Dept:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            ${showPhone ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            ${showBlood ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Blood:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Validity:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+                            </tr>
+                            ${showAddress ? `
+                            <tr>
+                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Address:</td>
+                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                    </div>
+                    
+                    <!-- Column 3: QR Code, Barcode, and terms -->
+                    <div style="width: 85px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                        <!-- QR Code -->
+                        ${showQrCode ? `
+                        <div style="width: 70px; height: 70px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 5px;">
+                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="64" style="width: 64px; height: 64px; display: block;"></canvas>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Instructions -->
+                        <div style="font-size: 4.8px; color: ${subtextColor}; line-height: 1.2; text-align: center; width: 100%; padding: 3px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); margin-bottom: 5px;">
+                            VSA property.<br>Return: Shaheed Gunj Srinagar.
+                        </div>
+                        
+                        <!-- Barcode -->
+                        ${showBarcode ? `
+                        <div style="width: 100%; display: flex; justify-content: center; align-items: center; height: 20px; flex-shrink: 0; margin-top: auto;">
+                            <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: 85px; height: 18px;"></canvas>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         </div>
         `;
     } else {
+        // VERTICAL LAYOUT
         return `
-        <div class="id-card-portrait" style="${bgStyle} border-color: ${template.accentColor};">
-            <div class="id-portrait-header" style="border-bottom: 2px solid ${template.accentColor}; background: ${template.headerBgColor}; padding: 8px; margin: -15px -15px 12px -15px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 12px;">
-                <div class="id-portrait-logo" style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <div class="id-portrait-brand" style="flex-grow: 1;">
-                    <h1 class="id-portrait-title" style="color: ${headerTitleColor}; font-size: 17.5px; font-weight: 900; margin: 0; line-height: 1.1; font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 0.8px;">${template.headerText}</h1>
-                    <p class="id-portrait-subtitle" style="color: ${headerSubtitleColor}; font-size: 9px; margin: 3px 0 0 0; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">${template.subheaderText || ''}</p>
-                    <p class="id-portrait-contact" style="color: ${headerTitleColor}; font-size: 8px; margin: 3px 0 0 0; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 900;">PH: 7889311608 | EMAIL: VLLSCRTSERVICE@GMAIL.COM</p>
-                </div>
-            </div>
-            
-            <div class="id-portrait-photo-box" style="border-color: ${template.accentColor}; width: 112px; height: 134px; margin: 0 auto 12px auto; overflow: hidden; display: flex; justify-content: center; align-items: center; border-radius: 6px; border: 1.5px solid rgba(var(--theme-accent-rgb), 0.2);">
-                ${photoHtml}
-            </div>
-            
-            <div class="id-portrait-meta" style="text-align: center; margin-bottom: 10px;">
-                ${template.fields.name ? `<h2 class="id-portrait-name" style="font-size: 17px; font-weight: 800; margin: 0 0 3px 0; color: #111111; font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 290px;">${emp.name}</h2>` : ''}
-                ${template.fields.designation ? `<h3 class="id-portrait-designation" style="font-size: 12px; font-weight: 700; color: ${template.accentColor}; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 290px;">${emp.designation}</h3>` : ''}
-            </div>
-            
-            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px; table-layout: fixed;">
-                ${template.fields.employeeId ? `<tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Staff ID:</td>
-                    <td class="id-table-value" style="font-size: 13px; font-weight: bold; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
-                </tr>` : ''}
-                ${template.fields.department ? `<tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Department:</td>
-                    <td class="id-table-value" style="font-size: 13px; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.clientLocation || emp.department || 'Reserve'}</td>
-                </tr>` : ''}
-                ${template.fields.fatherName ? `<tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${emp.relationType || 'Father'}'s Name:</td>
-                    <td class="id-table-value" style="font-size: 13px; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
-                </tr>` : ''}
-                <tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Phone:</td>
-                    <td class="id-table-value" style="font-size: 13px; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
-                </tr>
-                ${template.fields.bloodGroup ? `<tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Blood Group:</td>
-                    <td class="id-table-value" style="font-size: 13px; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
-                </tr>` : ''}
-                ${template.fields.address ? `<tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Address:</td>
-                    <td class="id-table-value" style="font-size: 13px; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.currentAddress || emp.permanentAddress || '-'}</td>
-                </tr>` : ''}
-                <tr>
-                    <td class="id-table-label" style="font-size: 13px; font-weight: bold; color: #666666; width: 110px; padding: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Validity:</td>
-                    <td class="id-table-value" style="font-size: 13px; color: #000000; padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
-                </tr>
-            </table>
-            
-            <div class="id-portrait-footer-row" style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed #dddddd; padding-top: 4px;">
-                <div class="id-portrait-signature-box" style="display: flex; flex-direction: column; gap: 2px; align-items: flex-start;">
-                    <div class="id-portrait-signature" style="width: 80px; height: 25px; border: none;">
-                        ${sigHtml}
+        <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+            <!-- SINGLE-SIDED VERTICAL ID CARD -->
+            <div class="id-card-portrait visual-id-card-render" style="font-family: ${template.font || "'Outfit', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; display: flex; flex-direction: column; justify-content: flex-start; height: 500px; width: 320px; box-sizing: border-box; overflow: hidden; position: relative;">
+                <!-- Header -->
+                <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-bottom: 2px solid ${template.accentColor || '#dfba5f'}; color: ${headerTextColor}; height: ${headerHeight}px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 10px; margin: -15px -15px 10px -15px; border-radius: 10px 10px 0 0; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
+                    <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
-                    <span style="font-size: 7px; color: #888888; font-style: italic;">Authority Signature</span>
+                    <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                        <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                    </div>
+                </div>
+
+                <!-- Body Content Split -->
+                <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 5px;">
+                    
+                    <!-- Left column: Photo, QR Code, Signature -->
+                    <div style="width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                        <!-- Photo -->
+                        ${showPhoto ? `
+                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: 85px; height: 105px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                            <img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        ` : ''}
+                        
+                        <!-- QR Code -->
+                        ${showQrCode ? `
+                        <div style="width: 70px; height: 70px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
+                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="64" style="width: 64px; height: 64px; display: block;"></canvas>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- Signature (always visible) -->
+                        <div style="width: 85px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
+                            <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.4) brightness(1.1);">
+                            </div>
+                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Right column: Name, Designation, Details Table -->
+                    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; padding-left: 5px;">
+                        <!-- Name & Designation -->
+                        <div style="margin-bottom: 6px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 4px;">
+                            ${showName ? `
+                            <h2 style="color: ${textColor}; font-size: 14px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                ${emp.name}
+                            </h2>
+                            ` : ''}
+                            ${showDesignation ? `
+                            <h3 style="color: ${template.accentColor || '#dfba5f'}; font-size: 10px; font-weight: 700; text-transform: uppercase; margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${emp.designation}
+                            </h3>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Details Table -->
+                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
+                            ${showEmpId ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+                            </tr>
+                            ` : ''}
+                            ${showFather ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Father:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            ${showDepartment ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Dept:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            ${showPhone ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            ${showBlood ? `
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Blood:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+                            </tr>
+                            ` : ''}
+                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Validity:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+                            </tr>
+                            ${showAddress ? `
+                            <tr>
+                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Address:</td>
+                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                        
+                        <!-- Instructions/Footer -->
+                        <div style="font-size: 5.5px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">
+                            1. Card is VSA property, display on duty.<br>2. Return to Shaheed Gunj Srinagar 190001.
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="id-portrait-qr" style="width: 60px; height: 60px;">
-                    <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" style="width: 60px; height: 60px;"></canvas>
+                <!-- Barcode at the bottom -->
+                ${showBarcode ? `
+                <div style="width: 100%; display: flex; justify-content: center; align-items: center; height: 26px; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 4px; margin-top: 5px; flex-shrink: 0; box-sizing: border-box;">
+                    <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: 130px; height: 20px;"></canvas>
                 </div>
+                ` : ''}
             </div>
-
-            <!-- Footer spacing -->
-            <div style="height: 2px;"></div>
         </div>
         `;
     }
 }
 
 function renderQrsInContainer(container) {
+    // Render QRs
     const canvases = container.querySelectorAll('.qr-canvas-rendered');
     canvases.forEach(canvas => {
         const val = canvas.getAttribute('data-qr-val');
+        const size = parseInt(canvas.getAttribute('data-qr-size')) || 100;
+        const bg = canvas.getAttribute('data-qr-bg') || '#ffffff';
+        const fg = canvas.getAttribute('data-qr-fg') || '#000000';
         new QRious({
             element: canvas,
             value: val,
-            size: 150,
-            background: '#ffffff',
-            foreground: '#000000',
+            size: size,
+            background: bg,
+            foreground: fg,
             level: 'H'
         });
         canvas.classList.remove('qr-canvas-rendered');
+    });
+
+    // Render Barcodes
+    const barcodes = container.querySelectorAll('.barcode-canvas-rendered');
+    barcodes.forEach(canvas => {
+        const val = canvas.getAttribute('data-barcode-val');
+        const format = canvas.getAttribute('data-barcode-type') || 'CODE128';
+        const bg = canvas.getAttribute('data-barcode-bg') || '#ffffff';
+        const fg = canvas.getAttribute('data-barcode-fg') || '#000000';
+        try {
+            if (typeof JsBarcode !== 'undefined') {
+                JsBarcode(canvas, val, {
+                    format: format,
+                    background: bg,
+                    lineColor: fg,
+                    displayValue: false,
+                    margin: 0
+                });
+            }
+        } catch (e) {
+            console.error("JsBarcode render error:", e);
+        }
+        canvas.classList.remove('barcode-canvas-rendered');
     });
 }
 
@@ -1683,7 +1781,7 @@ function compileOperationalReport(e) {
     if (e) e.preventDefault();
 
     const type = document.getElementById('rep-type').value;
-    const clientFilter = document.getElementById('rep-client').value;
+    const deptFilter = document.getElementById('rep-department').value;
 
     const headersRow = document.getElementById('report-headers');
     const tbody = document.getElementById('report-tbody');
@@ -1694,26 +1792,26 @@ function compileOperationalReport(e) {
     let reportHeaders = [];
     let reportData = [];
 
-    // Filter employees by status and client
+    // Filter employees by status and department
     let dataset = [...VSA_STATE.employees];
-    if (clientFilter) {
-        dataset = dataset.filter(emp => emp.clientLocation === clientFilter);
+    if (deptFilter) {
+        dataset = dataset.filter(emp => emp.department === deptFilter);
     }
 
     if (type === 'master') {
-        reportHeaders = ["ID", "Name", "Designation", "Joining Date", "Site Location", "Mobile Number", "Category", "Status"];
+        reportHeaders = ["ID", "Name", "Designation", "Joining Date", "Department", "Mobile Number", "Category", "Status"];
         dataset.forEach(emp => {
             reportData.push([
                 emp.id, emp.name, emp.designation, emp.joiningDate, 
-                emp.clientLocation || "HQ (Reserve)", emp.mobile, emp.category, emp.status
+                emp.department || "-", emp.mobile, emp.category, emp.status
             ]);
         });
     } else if (type === 'active') {
-        reportHeaders = ["ID", "Name", "Designation", "Joining Date", "Site Location", "Manager", "Mobile"];
+        reportHeaders = ["ID", "Name", "Designation", "Joining Date", "Department", "Manager", "Mobile"];
         dataset.filter(emp => emp.status === 'Active').forEach(emp => {
             reportData.push([
                 emp.id, emp.name, emp.designation, emp.joiningDate, 
-                emp.clientLocation || "HQ (Reserve)", emp.reportingManager, emp.mobile
+                emp.department || "-", emp.reportingManager, emp.mobile
             ]);
         });
     } else if (type === 'inactive') {
@@ -1784,9 +1882,9 @@ function setupEventHandlers() {
             populateRecEmployeeSelect(this.value);
         });
     }
-    const recFilterLocation = document.getElementById('rec-filter-location');
-    if (recFilterLocation) {
-        recFilterLocation.addEventListener('change', function() {
+    const recFilterDepartment = document.getElementById('rec-filter-department');
+    if (recFilterDepartment) {
+        recFilterDepartment.addEventListener('change', function() {
             populateRecEmployeeChecklist();
         });
     }
@@ -1881,17 +1979,7 @@ function setupEventHandlers() {
         handleImageCompression(this, 'form-sig-preview-box', () => {});
     });
 
-    // C. Client Creation triggers
-    document.getElementById('btn-add-client').addEventListener('click', () => {
-        document.getElementById('client-modal').classList.remove('hidden');
-    });
-    document.getElementById('btn-close-client-modal').addEventListener('click', () => {
-        document.getElementById('client-modal').classList.add('hidden');
-    });
-    document.getElementById('btn-cancel-client').addEventListener('click', () => {
-        document.getElementById('client-modal').classList.add('hidden');
-    });
-    document.getElementById('client-form').addEventListener('submit', submitClientSite);
+// Client modal listeners removed
 
 
     // E. ID Selection change details trigger
@@ -1906,9 +1994,9 @@ function setupEventHandlers() {
         });
     }
 
-    const idFilterLocation = document.getElementById('id-filter-location');
-    if (idFilterLocation) {
-        idFilterLocation.addEventListener('change', function() {
+    const idFilterDepartment = document.getElementById('id-filter-department');
+    if (idFilterDepartment) {
+        idFilterDepartment.addEventListener('change', function() {
             populateIdEmployeeChecklist();
         });
     }
@@ -2191,7 +2279,7 @@ function populateRegistrationForm(emp) {
     
     document.getElementById('reg-designation').value = emp.designation || '';
     document.getElementById('reg-department').value = emp.department || '';
-    document.getElementById('reg-client').value = emp.clientLocation || '';
+
     document.getElementById('reg-joining-date').value = emp.joiningDate;
     document.getElementById('reg-card-validity').value = emp.cardValidity || 3;
     
@@ -2294,7 +2382,6 @@ async function saveEmployeeFromRegistration(e) {
         designation: document.getElementById('reg-designation').value,
         department: document.getElementById('reg-department').value,
         manpowerType: 'Security Force',
-        clientLocation: document.getElementById('reg-client').value,
         joiningDate: document.getElementById('reg-joining-date').value,
         cardValidity: cardValidity,
         reportingManager: 'Vikram Rathore',
@@ -2380,31 +2467,57 @@ function downloadIdCardImage() {
         return;
     }
     
-    const cardElement = document.querySelector('.id-card-portrait, .id-card-horizontal');
-    if (!cardElement) {
-        alert('ID Card element not found.');
-        return;
+    const templateId = document.getElementById('id-select-template').value;
+    const template = VSA_STATE.templates.find(t => t.id === templateId) || VSA_STATE.templates[0];
+    
+    if (template && template.isVisualTemplate) {
+        // Visual template: download front and back sides separately
+        const cards = document.querySelectorAll('#printable-id-single .visual-id-card-render');
+        if (cards.length === 0) {
+            alert('ID Card element not found.');
+            return;
+        }
+        
+        cards.forEach((cardElement, index) => {
+            const sideName = index === 0 ? 'Front' : 'Back';
+            html2canvas(cardElement, {
+                scale: 4,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `VSA_ID_Card_${sideName}_${selectedId}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error(`Error generating ${sideName} ID card image:`, err);
+            });
+        });
+    } else {
+        const cardElement = document.querySelector('.id-card-portrait, .id-card-horizontal');
+        if (!cardElement) {
+            alert('ID Card element not found.');
+            return;
+        }
+        
+        html2canvas(cardElement, {
+            scale: 4, // 4x scale for print-quality 300+ DPI sharpness
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `VSA_ID_Card_${selectedId}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            console.error("Error generating ID card image:", err);
+            alert("Failed to save ID card as image.");
+        });
     }
-    
-    // Temporarily ensure card is fully visible and not hidden by parent layouts during snapshot
-    const originalStyle = cardElement.style.cssText;
-    
-    // Render the card using html2canvas
-    html2canvas(cardElement, {
-        scale: 4, // 4x scale for print-quality 300+ DPI sharpness
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `VSA_ID_Card_${selectedId}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    }).catch(err => {
-        console.error("Error generating ID card image:", err);
-        alert("Failed to save ID card as image. Please use your browser's Print to PDF option (Ctrl+P) as a fallback.");
-    });
 }
 
 async function downloadIndividualCardImage(empId) {
@@ -2424,46 +2537,68 @@ async function downloadIndividualCardImage(empId) {
     tempDiv.innerHTML = cardHtml;
     document.body.appendChild(tempDiv);
     
-    // Render QRs inside container
-    const canvases = tempDiv.querySelectorAll('.qr-canvas-rendered');
-    canvases.forEach(canvas => {
-        const val = canvas.getAttribute('data-qr-val');
-        new QRious({
-            element: canvas,
-            value: val,
-            size: 150,
-            background: '#ffffff',
-            foreground: '#000000',
-            level: 'H'
+    // Render QRs and Barcodes inside container
+    renderQrsInContainer(tempDiv);
+    
+    await new Promise(resolve => setTimeout(resolve, 150)); // Allow rendering time
+    
+    if (template && template.isVisualTemplate) {
+        const cards = tempDiv.querySelectorAll('.visual-id-card-render');
+        if (cards.length === 0) {
+            document.body.removeChild(tempDiv);
+            alert('Card element failed to generate.');
+            return;
+        }
+        
+        let successCount = 0;
+        for (let idx = 0; idx < cards.length; idx++) {
+            const cardElement = cards[idx];
+            const sideName = idx === 0 ? 'Front' : 'Back';
+            try {
+                const canvas = await html2canvas(cardElement, {
+                    scale: 4,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                const link = document.createElement('a');
+                link.download = `VSA_ID_Card_${sideName}_${emp.id}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                successCount++;
+            } catch (err) {
+                console.error(`Error generating individual visual card ${sideName} image:`, err);
+            }
+        }
+        document.body.removeChild(tempDiv);
+        if (successCount === 0) alert("Failed to download individual card as image.");
+    } else {
+        const cardElement = tempDiv.querySelector('.id-card-portrait, .id-card-horizontal');
+        if (!cardElement) {
+            document.body.removeChild(tempDiv);
+            alert('Card element failed to generate.');
+            return;
+        }
+        
+        html2canvas(cardElement, {
+            scale: 4, // 300+ DPI sharp quality
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `VSA_ID_Card_${emp.id}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            document.body.removeChild(tempDiv);
+        }).catch(err => {
+            console.error("Error generating individual card image:", err);
+            document.body.removeChild(tempDiv);
+            alert("Failed to download individual card as image.");
         });
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 60));
-    
-    const cardElement = tempDiv.querySelector('.id-card-portrait, .id-card-horizontal');
-    if (!cardElement) {
-        document.body.removeChild(tempDiv);
-        alert('Card element failed to generate.');
-        return;
     }
-    
-    html2canvas(cardElement, {
-        scale: 4, // 300+ DPI sharp quality
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `VSA_ID_Card_${emp.id}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        document.body.removeChild(tempDiv);
-    }).catch(err => {
-        console.error("Error generating individual card image:", err);
-        document.body.removeChild(tempDiv);
-        alert("Failed to download individual card as image.");
-    });
 }
 
 /* ==========================================================================
@@ -2501,17 +2636,17 @@ function populateRecEmployeeChecklist() {
     if (!listContainer) return;
 
     const searchVal = (document.getElementById('rec-search-employee')?.value || '').toLowerCase().trim();
-    const locationVal = document.getElementById('rec-filter-location')?.value || '';
+    const deptVal = document.getElementById('rec-filter-department')?.value || '';
     const designationVal = document.getElementById('rec-filter-designation')?.value || '';
 
     const filtered = VSA_STATE.employees.filter(emp => {
         const matchesSearch = !searchVal || 
                               emp.name.toLowerCase().includes(searchVal) || 
                               emp.id.toLowerCase().includes(searchVal);
-        const matchesLocation = !locationVal || emp.clientLocation === locationVal;
+        const matchesDept = !deptVal || emp.department === deptVal;
         const matchesDesignation = !designationVal || emp.designation === designationVal;
 
-        return matchesSearch && matchesLocation && matchesDesignation;
+        return matchesSearch && matchesDept && matchesDesignation;
     });
 
     let listHtml = '';
@@ -2533,7 +2668,7 @@ function populateRecEmployeeChecklist() {
                     </div>
                     <div class="id-checklist-item-info">
                         <span class="id-checklist-item-name">${emp.name}</span>
-                        <span class="id-checklist-item-sub">${emp.id} | ${emp.designation} | ${emp.clientLocation || 'HQ'}</span>
+                        <span class="id-checklist-item-sub">${emp.id} | ${emp.designation} | ${emp.department || '-'}</span>
                     </div>
                 </div>
             `;
@@ -2587,7 +2722,7 @@ function loadEmployeeRecord(empId) {
     
     setSafeText('rec-designation', emp.designation || '-');
     setSafeText('rec-department', emp.department || '-');
-    setSafeText('rec-workplace', emp.clientLocation || '-');
+
     setSafeText('rec-joining', emp.joiningDate || '-');
     setSafeText('rec-status', emp.status || '-');
     
@@ -2631,7 +2766,7 @@ function resetEmployeeRecord() {
     const fields = [
         'rec-empid', 'rec-name', 'rec-father', 'rec-dob', 'rec-gender',
         'rec-curr-address', 'rec-mobile', 'rec-designation', 'rec-department',
-        'rec-workplace', 'rec-joining', 'rec-status', 'rec-blood', 'rec-validity'
+        'rec-joining', 'rec-status', 'rec-blood', 'rec-validity'
     ];
     
     fields.forEach(id => {
@@ -3047,14 +3182,399 @@ async function triggerBulkDownload() {
     lucide.createIcons();
 }
 
+
+let STUDIO_STATE = {
+    activeTemplate: null,
+    activeSide: 'front',
+    zoom: 1.0,
+    snapGrid: true,
+    gridSize: 5,
+    showMargins: true,
+    selectedElementId: null,
+    isDragging: false,
+    isResizing: false,
+    isRotating: false,
+    dragStart: { x: 0, y: 0 },
+    dragOffset: { x: 0, y: 0 },
+    resizeHandle: null,
+    initialElementState: null,
+    initialMouseAngle: 0,
+    clipboard: null,
+    uploads: [],
+    brandKits: [
+        { name: "VSA Luxury Gold", primary: "#0f1218", accent: "#d4af37", text: "#ffffff" },
+        { name: "VSA Forest Green", primary: "#0e3e2b", accent: "#52b788", text: "#ffffff" },
+        { name: "Navy Guard", primary: "#0b1d33", accent: "#e2b23c", text: "#ffffff" },
+        { name: "Steel Patrol", primary: "#1f2937", accent: "#9ca3af", text: "#ffffff" },
+        { name: "High Vis Rescue", primary: "#1e293b", accent: "#f97316", text: "#ffffff" }
+    ],
+    logoPresets: [
+        {
+            name: "Classic Shield",
+            src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M50,10 L85,25 L85,55 C85,75 50,90 50,90 C50,90 15,75 15,55 L15,25 Z" fill="%230f1218" stroke="%23d4af37" stroke-width="4"/><path d="M50,20 L75,32 L75,55 C75,70 50,80 50,80 C50,80 25,70 25,55 L25,32 Z" fill="none" stroke="%23d4af37" stroke-width="1.5" stroke-dasharray="3,3"/><text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="22" fill="%23d4af37" text-anchor="middle">VSA</text></svg>'
+        },
+        {
+            name: "Star Seal",
+            src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="50" cy="50" r="45" fill="%230e3e2b" stroke="%2352b788" stroke-width="4"/><circle cx="50" cy="50" r="38" fill="none" stroke="%2352b788" stroke-width="1" stroke-dasharray="2,2"/><polygon points="50,15 60,35 82,38 66,54 70,76 50,65 30,76 34,54 18,38 40,35" fill="%2352b788" opacity="0.3"/><text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="24" fill="%23ffffff" text-anchor="middle">VSA</text></svg>'
+        },
+        {
+            name: "Eagle Wings",
+            src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M10,40 Q30,10 50,35 Q70,10 90,40 Q50,70 10,40 Z" fill="%231f2937" stroke="%239ca3af" stroke-width="2"/><circle cx="50" cy="40" r="15" fill="%239ca3af"/><text x="50" y="46" font-family="sans-serif" font-weight="bold" font-size="16" fill="%231f2937" text-anchor="middle">VS</text></svg>'
+        }
+    ]
+};
+
+function snapToGrid(val) {
+    if (!STUDIO_STATE.snapGrid) return val;
+    return Math.round(val / STUDIO_STATE.gridSize) * STUDIO_STATE.gridSize;
+}
+
+function convertToVisualTemplate(template) {
+    template.isVisualTemplate = true;
+    template.width = template.layout === 'horizontal' ? 530 : 336;
+    template.height = template.layout === 'horizontal' ? 336 : 530;
+    template.backgroundColor = template.backgroundColor || '#ffffff';
+    template.backgroundImage = template.backgroundImage || '';
+    template.watermark = template.watermark || { enabled: false, src: 'logo', mode: 'center', opacity: 0.1, scale: 0.5 };
+
+    const w = template.width;
+    const h = template.height;
+
+    // Default front side components
+    template.frontElements = [
+        {
+            id: `el-${Date.now()}-1`,
+            type: 'shape',
+            shapeType: 'rect',
+            left: 0,
+            top: 0,
+            width: w,
+            height: 75,
+            fill: template.headerBgColor || '#0e3e2b',
+            stroke: 'transparent',
+            strokeWidth: 0,
+            borderRadius: 0,
+            zIndex: 1,
+            locked: true
+        },
+        {
+            id: `el-${Date.now()}-2`,
+            type: 'text',
+            text: template.headerText || 'VALLEY SECURITY AGENCY',
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 14,
+            fontWeight: '700',
+            color: '#ffffff',
+            textAlign: 'center',
+            left: 10,
+            top: 15,
+            width: w - 20,
+            height: 20,
+            zIndex: 2,
+            locked: true
+        },
+        {
+            id: `el-${Date.now()}-3`,
+            type: 'text',
+            text: template.subheaderText || 'SHAHIDGUNJ SRINAGAR KASHMIR',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 8,
+            fontWeight: '500',
+            color: template.accentColor || '#dfba5f',
+            textAlign: 'center',
+            left: 10,
+            top: 38,
+            width: w - 20,
+            height: 15,
+            zIndex: 2,
+            locked: true
+        },
+        {
+            id: `el-${Date.now()}-4`,
+            type: 'image',
+            imageType: 'photo',
+            left: Math.round((w - 100) / 2),
+            top: 95,
+            width: 100,
+            height: 120,
+            borderRadius: 8,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-5`,
+            type: 'text',
+            text: '{{employee_name}}',
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 16,
+            fontWeight: '700',
+            color: '#0e3e2b',
+            textAlign: 'center',
+            left: 10,
+            top: 225,
+            width: w - 20,
+            height: 24,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-6`,
+            type: 'text',
+            text: '{{designation}}',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 10,
+            fontWeight: '600',
+            color: '#888888',
+            textAlign: 'center',
+            left: 10,
+            top: 250,
+            width: w - 20,
+            height: 16,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-7`,
+            type: 'text',
+            text: 'STAFF ID: {{employee_id}}',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 10,
+            fontWeight: '500',
+            color: '#1a1a1a',
+            textAlign: 'left',
+            left: 30,
+            top: 280,
+            width: w - 60,
+            height: 18,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-8`,
+            type: 'text',
+            text: 'DEPT: {{department}}',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 10,
+            fontWeight: '500',
+            color: '#1a1a1a',
+            textAlign: 'left',
+            left: 30,
+            top: 300,
+            width: w - 60,
+            height: 18,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-9`,
+            type: 'text',
+            text: 'FATHER: {{guardian_name}}',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 10,
+            fontWeight: '500',
+            color: '#1a1a1a',
+            textAlign: 'left',
+            left: 30,
+            top: 320,
+            width: w - 60,
+            height: 18,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-10`,
+            type: 'text',
+            text: 'PHONE: {{phone}}',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 10,
+            fontWeight: '500',
+            color: '#1a1a1a',
+            textAlign: 'left',
+            left: 30,
+            top: 340,
+            width: w - 60,
+            height: 18,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-11`,
+            type: 'text',
+            text: 'ADDRESS: {{address}}',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 9,
+            fontWeight: '500',
+            color: '#1a1a1a',
+            textAlign: 'left',
+            left: 30,
+            top: 360,
+            width: w - 60,
+            height: 35,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-12`,
+            type: 'qrcode',
+            widgetType: 'verification',
+            left: w - 95,
+            top: 415,
+            width: 70,
+            height: 70,
+            bgColor: '#ffffff',
+            fgColor: '#000000',
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-13`,
+            type: 'image',
+            imageType: 'signature',
+            left: 30,
+            top: 415,
+            width: 100,
+            height: 35,
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-14`,
+            type: 'shape',
+            shapeType: 'rect',
+            left: 30,
+            top: 453,
+            width: 100,
+            height: 1,
+            fill: '#888888',
+            zIndex: 3
+        },
+        {
+            id: `el-${Date.now()}-15`,
+            type: 'text',
+            text: 'Authority Signature',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 8,
+            fontWeight: '500',
+            color: '#888888',
+            textAlign: 'center',
+            left: 30,
+            top: 457,
+            width: 100,
+            height: 12,
+            zIndex: 3
+        }
+    ];
+
+    // Default back side components
+    template.backElements = [
+        {
+            id: `el-${Date.now()}-b1`,
+            type: 'text',
+            text: 'TERMS & CONDITIONS',
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 12,
+            fontWeight: '700',
+            color: template.headerBgColor || '#0e3e2b',
+            textAlign: 'center',
+            left: 20,
+            top: 25,
+            width: w - 40,
+            height: 20,
+            zIndex: 1
+        },
+        {
+            id: `el-${Date.now()}-b2`,
+            type: 'text',
+            text: '1. This card is property of Valley Security Agency.\n2. Card must be displayed at all times on duty.\n3. If found, please return to nearest branch office.\n4. Any misuse will lead to immediate suspension and legal action.',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 8,
+            fontWeight: '500',
+            color: '#444444',
+            textAlign: 'left',
+            left: 20,
+            top: 55,
+            width: w - 40,
+            height: 80,
+            zIndex: 1
+        },
+        {
+            id: `el-${Date.now()}-b3`,
+            type: 'text',
+            text: 'PSARA License No:\nPSA | L | 99 | JK | 2024 | DEC',
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 8,
+            fontWeight: '700',
+            color: '#0e3e2b',
+            textAlign: 'center',
+            left: 20,
+            top: 150,
+            width: w - 40,
+            height: 30,
+            zIndex: 1
+        },
+        {
+            id: `el-${Date.now()}-b4`,
+            type: 'text',
+            text: 'In Case of Emergency, Contact:\nPhone: 7889311608 | 7006810234',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 8,
+            fontWeight: '600',
+            color: '#ea580c',
+            textAlign: 'center',
+            left: 20,
+            top: 190,
+            width: w - 40,
+            height: 30,
+            zIndex: 1
+        },
+        {
+            id: `el-${Date.now()}-b5`,
+            type: 'barcode',
+            widgetType: 'verification',
+            left: Math.round((w - 180) / 2),
+            top: 240,
+            width: 180,
+            height: 50,
+            bgColor: '#ffffff',
+            fgColor: '#000000',
+            zIndex: 1
+        },
+        {
+            id: `el-${Date.now()}-b6`,
+            type: 'shape',
+            shapeType: 'rect',
+            left: 0,
+            top: h - 30,
+            width: w,
+            height: 30,
+            fill: template.headerBgColor || '#0e3e2b',
+            zIndex: 1,
+            locked: true
+        },
+        {
+            id: `el-${Date.now()}-b7`,
+            type: 'text',
+            text: 'VALLEY SECURITY SYSTEMS',
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 8,
+            fontWeight: '600',
+            color: '#ffffff',
+            textAlign: 'center',
+            left: 10,
+            top: h - 22,
+            width: w - 20,
+            height: 15,
+            zIndex: 2,
+            locked: true
+        }
+    ];
+
+    return template;
+}
+
 function renderTemplatesList() {
     const tbody = document.getElementById('templates-list-tbody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
+    // Auto-load first template if none is active
+    if (!STUDIO_STATE.activeTemplate && VSA_STATE.templates && VSA_STATE.templates.length > 0) {
+        loadTemplateInStudio(VSA_STATE.templates[0].id);
+    }
+
     if (!VSA_STATE.templates || VSA_STATE.templates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center placeholder-message">No templates registered yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center placeholder-message">No templates registered yet.</td></tr>';
         return;
     }
 
@@ -3064,7 +3584,6 @@ function renderTemplatesList() {
         row.innerHTML = `
             <td><strong>${t.name}</strong> ${isDefault ? '<span class="badge badge-active" style="padding: 2px 6px; font-size: 9px; margin-left: 5px;">Default</span>' : ''}</td>
             <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #ffffff;">${t.layout === 'vertical' ? 'Vertical' : 'Horizontal'}</span></td>
-            <td><span class="text-muted">${t.headerText}</span></td>
             <td>
                 <div class="d-flex gap-2">
                     <button class="btn btn-xs btn-outline btn-edit-template" data-id="${t.id}">Edit</button>
@@ -3078,7 +3597,7 @@ function renderTemplatesList() {
     document.querySelectorAll('.btn-edit-template').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
-            editTemplate(id);
+            loadTemplateInStudio(id);
         });
     });
 
@@ -3090,285 +3609,438 @@ function renderTemplatesList() {
     });
 }
 
-function editTemplate(id) {
-    const tpl = VSA_STATE.templates.find(t => t.id === id);
-    if (!tpl) return;
+function getSelectedElement() {
+    if (!STUDIO_STATE.activeTemplate || !STUDIO_STATE.selectedElementId) return null;
+    const elements = STUDIO_STATE.activeSide === 'front' ? STUDIO_STATE.activeTemplate.frontElements : STUDIO_STATE.activeTemplate.backElements;
+    return elements.find(el => el.id === STUDIO_STATE.selectedElementId);
+}
 
-    document.getElementById('template-form-title').innerHTML = `<i data-lucide="edit"></i> Edit Template: ${tpl.name}`;
-    lucide.createIcons();
+const MOCK_GUARD = {
+    id: "VS-0042",
+    name: "Vikram Singh",
+    designation: "Head Security Guard",
+    department: "Security Operations",
+    fatherName: "Karan Singh",
+    mobile: "+91 98765 43210",
+    bloodGroup: "O+",
+    currentAddress: "Sector 4, Police Line, Srinagar, J&K, 190001",
+    joiningDate: "2024-05-15",
+    documents: {
+        photo: "",
+        signature: ""
+    }
+};
 
-    document.getElementById('template-id').value = tpl.id;
-    document.getElementById('template-name').value = tpl.name;
-    document.getElementById('template-layout').value = tpl.layout;
-    document.getElementById('template-header-text').value = tpl.headerText;
-    document.getElementById('template-subheader-text').value = tpl.subheaderText || '';
-    document.getElementById('template-header-bg').value = tpl.headerBgColor || '#0f1218';
-    document.getElementById('template-accent-color').value = tpl.accentColor || '#d4af37';
+function loadTemplateInStudio(id) {
+    const tplSource = VSA_STATE.templates.find(t => t.id === id) || VSA_STATE.templates[0];
+    if (!tplSource) return;
 
-    const logoFile = document.getElementById('template-logo-file');
-    const bgFile = document.getElementById('template-bg-file');
-    const sigFile = document.getElementById('template-sig-file');
+    // Deep clone template to avoid direct mutation of state list
+    const tpl = JSON.parse(JSON.stringify(tplSource));
 
-    logoFile.dataset.imageData = tpl.logo || '';
-    bgFile.dataset.imageData = tpl.background || '';
-    sigFile.dataset.imageData = tpl.signature || '';
+    document.getElementById('tpl-id').value = tpl.id || '';
+    document.getElementById('tpl-name').value = tpl.name || '';
+    document.getElementById('tpl-layout').value = tpl.layout || 'vertical';
+    document.getElementById('tpl-font').value = tpl.font || "'Outfit', sans-serif";
+    document.getElementById('tpl-bg-color').value = tpl.backgroundColor || '#ffffff';
+    document.getElementById('tpl-header-bg').value = tpl.headerBgColor || '#0e3e2b';
+    document.getElementById('tpl-accent-color').value = tpl.accentColor || '#dfba5f';
+    document.getElementById('tpl-header-text').value = tpl.headerText || '';
+    document.getElementById('tpl-subheader-text').value = tpl.subheaderText || '';
 
-    const logoPreview = document.getElementById('template-logo-preview');
-    if (tpl.logo) {
-        logoPreview.innerHTML = `<img src="${tpl.logo}" style="max-height: 100px;">`;
+    // Load sizes range sliders
+    const logoSizeVal = tpl.logoSize || 50;
+    document.getElementById('tpl-logo-size').value = logoSizeVal;
+    document.getElementById('lbl-logo-size').textContent = logoSizeVal;
+
+    const headerHeightVal = tpl.headerHeight || 90;
+    document.getElementById('tpl-header-height').value = headerHeightVal;
+    document.getElementById('lbl-header-height').textContent = headerHeightVal;
+
+    const headerFontSizeVal = tpl.headerFontSize || 14;
+    document.getElementById('tpl-header-font-size').value = headerFontSizeVal;
+    document.getElementById('lbl-header-font-size').textContent = headerFontSizeVal;
+
+    // Active background pattern preset
+    document.querySelectorAll('.btn-bg-preset').forEach(btn => {
+        if (btn.getAttribute('data-bg') === (tpl.backgroundImage || '')) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Active logo preset/upload
+    document.querySelectorAll('.btn-logo-preset').forEach(btn => {
+        if (btn.getAttribute('data-logo') === tpl.logo) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    if (tpl.logo && !tpl.logo.startsWith('preset-')) {
+        document.querySelectorAll('.btn-logo-preset').forEach(btn => btn.classList.remove('active'));
+        VSA_STATE.customLogoBase64 = tpl.logo;
+        document.getElementById('tpl-logo-filename').textContent = "Custom logo loaded";
     } else {
-        logoPreview.innerHTML = `<span class="preview-placeholder">Click to upload logo (Optional)</span>`;
+        VSA_STATE.customLogoBase64 = null;
+        document.getElementById('tpl-logo-filename').textContent = "";
     }
 
-    const bgPreview = document.getElementById('template-bg-preview');
-    if (tpl.background) {
-        bgPreview.innerHTML = `<img src="${tpl.background}" style="max-height: 100px;">`;
+    // Active signature preset/upload
+    document.querySelectorAll('.btn-sig-preset').forEach(btn => {
+        if (btn.getAttribute('data-sig') === tpl.signature) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    if (tpl.signature && !tpl.signature.startsWith('preset-')) {
+        document.querySelectorAll('.btn-sig-preset').forEach(btn => btn.classList.remove('active'));
+        VSA_STATE.customSigBase64 = tpl.signature;
+        document.getElementById('tpl-sig-filename').textContent = "Custom signature loaded";
     } else {
-        bgPreview.innerHTML = `<span class="preview-placeholder">Click to upload background (Optional)</span>`;
+        VSA_STATE.customSigBase64 = null;
+        document.getElementById('tpl-sig-filename').textContent = "";
     }
 
-    const sigPreview = document.getElementById('template-sig-preview');
-    if (tpl.signature) {
-        sigPreview.innerHTML = `<img src="${tpl.signature}" style="max-height: 100px;">`;
-    } else {
-        sigPreview.innerHTML = `<span class="preview-placeholder">Click to upload signature (Optional)</span>`;
+    // Checkboxes toggles
+    const fields = tpl.fields || {};
+    document.getElementById('field-tpl-photo').checked = fields.photo !== false;
+    document.getElementById('field-tpl-name').checked = fields.name !== false;
+    document.getElementById('field-tpl-designation').checked = fields.designation !== false;
+    document.getElementById('field-tpl-department').checked = fields.department !== false;
+    document.getElementById('field-tpl-empid').checked = fields.empid !== false;
+    document.getElementById('field-tpl-father').checked = fields.father !== false;
+    document.getElementById('field-tpl-phone').checked = fields.phone !== false;
+    document.getElementById('field-tpl-blood').checked = fields.blood !== false;
+    document.getElementById('field-tpl-address').checked = fields.address !== false;
+    document.getElementById('field-tpl-signature').checked = fields.signature !== false;
+    document.getElementById('field-tpl-qrcode').checked = fields.qrcode !== false;
+    document.getElementById('field-tpl-barcode').checked = fields.barcode !== false;
+
+    updateLivePreview();
+}
+
+function getActiveTemplateFromForm() {
+    const id = document.getElementById('tpl-id').value;
+    const name = document.getElementById('tpl-name').value.trim() || 'Standard Guard Card';
+    const layout = document.getElementById('tpl-layout').value;
+    const font = document.getElementById('tpl-font').value;
+    const backgroundColor = document.getElementById('tpl-bg-color').value;
+    const headerBgColor = document.getElementById('tpl-header-bg').value;
+    const accentColor = document.getElementById('tpl-accent-color').value;
+    const headerText = document.getElementById('tpl-header-text').value.trim() || 'VALLEY SECURITY AGENCY';
+    const subheaderText = document.getElementById('tpl-subheader-text').value.trim() || 'SHAHIDGUNJ SRINAGAR';
+
+    // Retrieve sizes range sliders
+    const logoSize = parseInt(document.getElementById('tpl-logo-size').value) || 50;
+    const headerHeight = parseInt(document.getElementById('tpl-header-height').value) || 90;
+    const headerFontSize = parseInt(document.getElementById('tpl-header-font-size').value) || 14;
+
+    // Active background pattern preset
+    const activeBgBtn = document.querySelector('.btn-bg-preset.active');
+    const backgroundImage = activeBgBtn ? activeBgBtn.getAttribute('data-bg') : '';
+
+    // Active logo preset or custom
+    const activeLogoBtn = document.querySelector('.btn-logo-preset.active');
+    let logo = activeLogoBtn ? activeLogoBtn.getAttribute('data-logo') : '';
+    if (!logo) {
+        logo = VSA_STATE.customLogoBase64 || 'preset-shield';
     }
 
-    document.getElementById('field-show-name').checked = !!tpl.fields.name;
-    document.getElementById('field-show-empid').checked = !!tpl.fields.employeeId;
-    document.getElementById('field-show-designation').checked = !!tpl.fields.designation;
-    document.getElementById('field-show-department').checked = !!tpl.fields.department;
-    document.getElementById('field-show-father').checked = !!tpl.fields.fatherName;
-    document.getElementById('field-show-phone').checked = !!tpl.fields.phone;
-    document.getElementById('field-show-blood').checked = !!tpl.fields.bloodGroup;
-    document.getElementById('field-show-address').checked = !!tpl.fields.address;
+    // Active signature preset or custom
+    const activeSigBtn = document.querySelector('.btn-sig-preset.active');
+    let signature = activeSigBtn ? activeSigBtn.getAttribute('data-sig') : '';
+    if (!signature) {
+        signature = VSA_STATE.customSigBase64 || 'preset-sig1';
+    }
+
+    // Checkboxes
+    const fields = {
+        photo: document.getElementById('field-tpl-photo').checked,
+        name: document.getElementById('field-tpl-name').checked,
+        designation: document.getElementById('field-tpl-designation').checked,
+        department: document.getElementById('field-tpl-department').checked,
+        empid: document.getElementById('field-tpl-empid').checked,
+        father: document.getElementById('field-tpl-father').checked,
+        phone: document.getElementById('field-tpl-phone').checked,
+        blood: document.getElementById('field-tpl-blood').checked,
+        address: document.getElementById('field-tpl-address').checked,
+        signature: document.getElementById('field-tpl-signature').checked,
+        qrcode: document.getElementById('field-tpl-qrcode').checked,
+        barcode: document.getElementById('field-tpl-barcode').checked
+    };
+
+    return {
+        id,
+        name,
+        layout,
+        font,
+        backgroundColor,
+        headerBgColor,
+        accentColor,
+        headerText,
+        subheaderText,
+        logoSize,
+        headerHeight,
+        headerFontSize,
+        backgroundImage,
+        logo,
+        signature,
+        fields,
+        isVisualTemplate: true
+    };
+}
+
+function updateLivePreview() {
+    const container = document.getElementById('live-tpl-preview-container');
+    if (!container) return;
+
+    const activeTpl = getActiveTemplateFromForm();
+    const previewEmp = VSA_STATE.employees.length > 0 ? VSA_STATE.employees[0] : MOCK_GUARD;
     
-    // Scroll builder form card into view
-    const builderCard = document.getElementById('template-builder-form').closest('.dashboard-card');
-    if (builderCard) {
-        builderCard.scrollIntoView({ behavior: 'smooth' });
-    }
+    container.innerHTML = generateIdCardHtml(previewEmp, activeTpl);
+    renderQrsInContainer(container);
 }
 
 async function deleteTemplate(id) {
-    if (id === 'tpl-default') {
-        alert('The default template cannot be deleted.');
-        return;
-    }
-
-    if (!confirm('Are you sure you want to delete this template layout design?')) {
-        return;
-    }
-
     try {
-        const response = await fetch(`/api/templates/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Template deletion failed');
+        const response = await fetch(`/api/templates/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('API delete error');
         
         VSA_STATE.templates = VSA_STATE.templates.filter(t => t.id !== id);
         renderTemplatesList();
         populateSelectors();
+        
+        // Reset form if deleted template was active in editor
+        const activeId = document.getElementById('tpl-id').value;
+        if (activeId === id) {
+            resetTemplateForm();
+        }
+        alert('Template deleted successfully.');
     } catch (err) {
-        alert(err.message);
+        console.error("Error deleting template:", err);
+        alert('Failed to delete template.');
+    }
+}
+
+async function saveTemplate() {
+    const activeTpl = getActiveTemplateFromForm();
+    if (!activeTpl.name) {
+        alert('Please enter a template name.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activeTpl)
+        });
+
+        if (!response.ok) throw new Error('API save error');
+        const savedTpl = await response.json();
+
+        const idx = VSA_STATE.templates.findIndex(t => t.id === savedTpl.id);
+        if (idx !== -1) {
+            VSA_STATE.templates[idx] = savedTpl;
+        } else {
+            VSA_STATE.templates.push(savedTpl);
+        }
+
+        renderTemplatesList();
+        populateSelectors();
+        
+        // Load the saved template to sync state
+        loadTemplateInStudio(savedTpl.id);
+        alert('Template saved successfully!');
+    } catch (err) {
+        console.error("Error saving template:", err);
+        alert('Failed to save template.');
     }
 }
 
 function resetTemplateForm() {
-    document.getElementById('template-form-title').innerHTML = '<i data-lucide="layout"></i> Create New Template';
-    lucide.createIcons();
+    document.getElementById('tpl-id').value = '';
+    document.getElementById('tpl-name').value = '';
+    document.getElementById('tpl-layout').value = 'vertical';
+    document.getElementById('tpl-font').value = "'Outfit', sans-serif";
+    document.getElementById('tpl-bg-color').value = '#ffffff';
+    document.getElementById('tpl-header-bg').value = '#0e3e2b';
+    document.getElementById('tpl-accent-color').value = '#dfba5f';
+    document.getElementById('tpl-header-text').value = '';
+    document.getElementById('tpl-subheader-text').value = '';
 
-    document.getElementById('template-id').value = '';
-    document.getElementById('template-builder-form').reset();
+    // Reset range sliders
+    document.getElementById('tpl-logo-size').value = 50;
+    document.getElementById('lbl-logo-size').textContent = 50;
 
-    const logoFile = document.getElementById('template-logo-file');
-    const bgFile = document.getElementById('template-bg-file');
-    const sigFile = document.getElementById('template-sig-file');
+    document.getElementById('tpl-header-height').value = 90;
+    document.getElementById('lbl-header-height').textContent = 90;
 
-    if (logoFile) delete logoFile.dataset.imageData;
-    if (bgFile) delete bgFile.dataset.imageData;
-    if (sigFile) delete sigFile.dataset.imageData;
+    document.getElementById('tpl-header-font-size').value = 14;
+    document.getElementById('lbl-header-font-size').textContent = 14;
 
-    document.getElementById('template-logo-preview').innerHTML = '<span class="preview-placeholder">Click to upload logo (Optional)</span>';
-    document.getElementById('template-bg-preview').innerHTML = '<span class="preview-placeholder">Click to upload background (Optional)</span>';
-    document.getElementById('template-sig-preview').innerHTML = '<span class="preview-placeholder">Click to upload signature (Optional)</span>';
+    VSA_STATE.customLogoBase64 = null;
+    VSA_STATE.customSigBase64 = null;
+    document.getElementById('tpl-logo-filename').textContent = "";
+    document.getElementById('tpl-sig-filename').textContent = "";
+
+    // Set presets back to default
+    document.querySelectorAll('.btn-bg-preset').forEach(btn => btn.classList.remove('active'));
+    const defaultBgBtn = document.querySelector('.btn-bg-preset[data-bg=""]');
+    if (defaultBgBtn) defaultBgBtn.classList.add('active');
+
+    document.querySelectorAll('.btn-logo-preset').forEach(btn => btn.classList.remove('active'));
+    const defaultLogoBtn = document.querySelector('.btn-logo-preset[data-logo="preset-shield"]');
+    if (defaultLogoBtn) defaultLogoBtn.classList.add('active');
+
+    document.querySelectorAll('.btn-sig-preset').forEach(btn => btn.classList.remove('active'));
+    const defaultSigBtn = document.querySelector('.btn-sig-preset[data-sig="preset-sig1"]');
+    if (defaultSigBtn) defaultSigBtn.classList.add('active');
+
+    // All checkboxes enabled by default
+    document.querySelectorAll('.field-toggles-grid input[type="checkbox"]').forEach(chk => chk.checked = true);
+
+    updateLivePreview();
 }
 
 function setupTemplatesManager() {
-    const logoPreview = document.getElementById('template-logo-preview');
-    if (logoPreview) {
-        logoPreview.addEventListener('click', () => {
-            document.getElementById('template-logo-file').click();
-        });
-    }
-    const logoFile = document.getElementById('template-logo-file');
-    if (logoFile) {
-        logoFile.addEventListener('change', (e) => {
-            handleImageUpload(e, 'template-logo-preview');
-        });
-    }
+    // 1. Text and value listeners
+    const inputs = ['tpl-name', 'tpl-header-text', 'tpl-subheader-text'];
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateLivePreview);
+    });
 
-    const bgPreview = document.getElementById('template-bg-preview');
-    if (bgPreview) {
-        bgPreview.addEventListener('click', () => {
-            document.getElementById('template-bg-file').click();
-        });
-    }
-    const bgFile = document.getElementById('template-bg-file');
-    if (bgFile) {
-        bgFile.addEventListener('change', (e) => {
-            handleImageUpload(e, 'template-bg-preview');
-        });
-    }
+    const selects = ['tpl-layout', 'tpl-font'];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', updateLivePreview);
+    });
 
-    const sigPreview = document.getElementById('template-sig-preview');
-    if (sigPreview) {
-        sigPreview.addEventListener('click', () => {
-            document.getElementById('template-sig-file').click();
-        });
-    }
-    const sigFile = document.getElementById('template-sig-file');
-    if (sigFile) {
-        sigFile.addEventListener('change', (e) => {
-            handleImageUpload(e, 'template-sig-preview');
-        });
-    }
+    const colors = ['tpl-bg-color', 'tpl-header-bg', 'tpl-accent-color'];
+    colors.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateLivePreview);
+    });
 
-    const resetBtn = document.getElementById('btn-reset-template-form');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            resetTemplateForm();
-        });
-    }
+    // 1B. Range sliders listeners
+    const rangeSliders = ['tpl-logo-size', 'tpl-header-height', 'tpl-header-font-size'];
+    rangeSliders.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function() {
+                const val = this.value;
+                if (id === 'tpl-logo-size') document.getElementById('lbl-logo-size').textContent = val;
+                if (id === 'tpl-header-height') document.getElementById('lbl-header-height').textContent = val;
+                if (id === 'tpl-header-font-size') document.getElementById('lbl-header-font-size').textContent = val;
+                updateLivePreview();
+            });
+        }
+    });
 
-    const autofillBtn = document.getElementById('btn-autofill-assets');
-    if (autofillBtn) {
-        autofillBtn.addEventListener('click', () => {
-            const layout = document.getElementById('template-layout').value;
-            const defaultTpl = VSA_STATE.templates.find(t => t.id === 'tpl-default');
-            const defaultVip = VSA_STATE.templates.find(t => t.id === 'tpl-vip-landscape');
+    // 2. Checkboxes listeners
+    document.querySelectorAll('.field-toggles-grid input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', updateLivePreview);
+    });
+
+    // 3. Preset background patterns listeners
+    document.querySelectorAll('.btn-bg-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.btn-bg-preset').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateLivePreview();
+        });
+    });
+
+    // 4. Preset logo listeners
+    document.querySelectorAll('.btn-logo-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.btn-logo-preset').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             
-            const logoSvg = defaultTpl ? defaultTpl.logo : '';
-            const sigSvg = defaultTpl ? defaultTpl.signature : '';
-            const bgSvg = (layout === 'horizontal' && defaultVip) ? defaultVip.background : (defaultTpl ? defaultTpl.background : '');
+            // Clear custom upload preview
+            VSA_STATE.customLogoBase64 = null;
+            document.getElementById('tpl-logo-filename').textContent = "";
+            document.getElementById('tpl-logo-upload').value = "";
             
-            const logoFile = document.getElementById('template-logo-file');
-            const bgFile = document.getElementById('template-bg-file');
-            const sigFile = document.getElementById('template-sig-file');
-            
-            if (logoSvg && logoFile) {
-                logoFile.dataset.imageData = logoSvg;
-                document.getElementById('template-logo-preview').innerHTML = `<img src="${logoSvg}" style="max-height: 100px;">`;
-            }
-            if (bgSvg && bgFile) {
-                bgFile.dataset.imageData = bgSvg;
-                document.getElementById('template-bg-preview').innerHTML = `<img src="${bgSvg}" style="max-height: 100px;">`;
-            }
-            if (sigSvg && sigFile) {
-                sigFile.dataset.imageData = sigSvg;
-                document.getElementById('template-sig-preview').innerHTML = `<img src="${sigSvg}" style="max-height: 100px;">`;
-            }
+            updateLivePreview();
         });
-    }
+    });
 
-    const layoutSelect = document.getElementById('template-layout');
-    if (layoutSelect) {
-        layoutSelect.addEventListener('change', (e) => {
-            const layout = e.target.value;
-            const defaultTpl = VSA_STATE.templates.find(t => t.id === 'tpl-default');
-            const defaultVip = VSA_STATE.templates.find(t => t.id === 'tpl-vip-landscape');
+    // 5. Preset signature listeners
+    document.querySelectorAll('.btn-sig-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.btn-sig-preset').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             
-            const bgFile = document.getElementById('template-bg-file');
-            if (bgFile && bgFile.dataset.imageData) {
-                const currentBg = bgFile.dataset.imageData;
-                const isDefaultBg = (defaultTpl && currentBg === defaultTpl.background) || 
-                                     (defaultVip && currentBg === defaultVip.background);
+            // Clear custom upload preview
+            VSA_STATE.customSigBase64 = null;
+            document.getElementById('tpl-sig-filename').textContent = "";
+            document.getElementById('tpl-sig-upload').value = "";
+            
+            updateLivePreview();
+        });
+    });
+
+    // 6. Custom uploads listeners
+    const logoUpload = document.getElementById('tpl-logo-upload');
+    if (logoUpload) {
+        logoUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                VSA_STATE.customLogoBase64 = evt.target.result;
+                document.getElementById('tpl-logo-filename').textContent = file.name;
                 
-                if (isDefaultBg) {
-                    const newBg = (layout === 'horizontal' && defaultVip) ? defaultVip.background : (defaultTpl ? defaultTpl.background : '');
-                    if (newBg) {
-                        bgFile.dataset.imageData = newBg;
-                        document.getElementById('template-bg-preview').innerHTML = `<img src="${newBg}" style="max-height: 100px;">`;
-                    }
-                }
-            }
+                // Deactivate preset buttons
+                document.querySelectorAll('.btn-logo-preset').forEach(btn => btn.classList.remove('active'));
+                updateLivePreview();
+            };
+            reader.readAsDataURL(file);
         });
     }
 
-    const builderForm = document.getElementById('template-builder-form');
-    if (builderForm) {
-        builderForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const id = document.getElementById('template-id').value;
-            const name = document.getElementById('template-name').value.trim();
-            const layout = document.getElementById('template-layout').value;
-            const headerText = document.getElementById('template-header-text').value.trim();
-            const subheaderText = document.getElementById('template-subheader-text').value.trim();
-            const headerBgColor = document.getElementById('template-header-bg').value;
-            const accentColor = document.getElementById('template-accent-color').value;
-
-            let logo = document.getElementById('template-logo-file').dataset.imageData || '';
-            let background = document.getElementById('template-bg-file').dataset.imageData || '';
-            let signature = document.getElementById('template-sig-file').dataset.imageData || '';
-
-            // Fallback to default VSA assets if empty
-            if (!logo || !background || !signature) {
-                const defaultTpl = VSA_STATE.templates.find(t => t.id === 'tpl-default');
-                const defaultVip = VSA_STATE.templates.find(t => t.id === 'tpl-vip-landscape');
-                if (!logo && defaultTpl) logo = defaultTpl.logo;
-                if (!signature && defaultTpl) signature = defaultTpl.signature;
-                if (!background) {
-                    if (layout === 'horizontal' && defaultVip) {
-                        background = defaultVip.background;
-                    } else if (defaultTpl) {
-                        background = defaultTpl.background;
-                    }
-                }
-            }
-
-            const fields = {
-                name: document.getElementById('field-show-name').checked,
-                employeeId: document.getElementById('field-show-empid').checked,
-                designation: document.getElementById('field-show-designation').checked,
-                department: document.getElementById('field-show-department').checked,
-                fatherName: document.getElementById('field-show-father').checked,
-                phone: document.getElementById('field-show-phone').checked,
-                bloodGroup: document.getElementById('field-show-blood').checked,
-                address: document.getElementById('field-show-address').checked
+    const sigUpload = document.getElementById('tpl-sig-upload');
+    if (sigUpload) {
+        sigUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                VSA_STATE.customSigBase64 = evt.target.result;
+                document.getElementById('tpl-sig-filename').textContent = file.name;
+                
+                // Deactivate preset buttons
+                document.querySelectorAll('.btn-sig-preset').forEach(btn => btn.classList.remove('active'));
+                updateLivePreview();
             };
-
-            const payload = {
-                name, layout, headerText, subheaderText, headerBgColor, accentColor,
-                logo, background, signature, fields
-            };
-
-            if (id) {
-                payload.id = id;
-            }
-
-            try {
-                const response = await fetch('/api/templates', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('Failed to save ID template layout design.');
-                const savedTpl = await response.json();
-
-                if (id) {
-                    const idx = VSA_STATE.templates.findIndex(t => t.id === id);
-                    if (idx !== -1) VSA_STATE.templates[idx] = savedTpl;
-                } else {
-                    VSA_STATE.templates.push(savedTpl);
-                }
-
-                resetTemplateForm();
-                renderTemplatesList();
-                populateSelectors();
-                alert('Template saved successfully!');
-            } catch (err) {
-                alert(err.message);
-            }
+            reader.readAsDataURL(file);
         });
+    }
+
+    // 7. Save / Reset buttons
+    const btnSave = document.getElementById('btn-tpl-save');
+    if (btnSave) btnSave.addEventListener('click', saveTemplate);
+
+    const btnReset = document.getElementById('btn-tpl-reset');
+    if (btnReset) btnReset.addEventListener('click', resetTemplateForm);
+
+    const btnNew = document.getElementById('btn-tpl-new');
+    if (btnNew) btnNew.addEventListener('click', resetTemplateForm);
+
+    // Initial render / load
+    if (VSA_STATE.templates && VSA_STATE.templates.length > 0) {
+        loadTemplateInStudio(VSA_STATE.templates[0].id);
+    } else {
+        resetTemplateForm();
     }
 }
+

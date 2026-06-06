@@ -243,7 +243,7 @@ app.get('/api/db', (req, res) => {
 
 app.post('/api/db/import', (req, res) => {
   const incoming = req.body;
-  if (incoming.employees && incoming.clients) {
+  if (incoming.employees) {
     writeDb(incoming);
     res.json({ success: true, message: 'Database imported successfully.' });
   } else {
@@ -305,18 +305,7 @@ app.delete('/api/employees/:id', (req, res) => {
   }
 });
 
-// Client Endpoints
-app.get('/api/clients', (req, res) => {
-  const db = readDb();
-  res.json(db.clients);
-});
 
-app.post('/api/clients', (req, res) => {
-  const db = readDb();
-  db.clients.push(req.body);
-  writeDb(db);
-  res.status(201).json(req.body);
-});
 
 
 // Classifications Endpoints

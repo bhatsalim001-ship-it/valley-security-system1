@@ -7,7 +7,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700&family=Cinzel:wght@700&family=Bebas+Neue&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- QRious QR Code Generator -->
@@ -16,6 +16,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- JSZip Archive Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- JsBarcode Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <link rel="stylesheet" href="styles.css?v=3.6">
 </head>
 <body>
@@ -42,10 +44,7 @@
                     <i data-lucide="users"></i>
                     <span>Employees</span>
                 </a>
-                <a href="#deployments" class="nav-item" data-view="deployments">
-                    <i data-lucide="map-pin"></i>
-                    <span>Deployments</span>
-                </a>
+
                 <a href="#id-cards" class="nav-item" data-view="id-cards">
                     <i data-lucide="contact"></i>
                     <span>ID Card System</span>
@@ -76,14 +75,18 @@
                         <span class="status-ip" id="lan-ip-display">Connecting...</span>
                     </div>
                 </div>
-                <div class="creator-badge" id="btn-open-developer-modal" style="cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); transition: all 0.2s ease; margin-top: 10px; width: 100%; box-sizing: border-box;">
-                    <div class="creator-avatar" style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1.5px solid var(--theme-accent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #161a23;">
-                        <img src="developer.jpg" alt="Salim Ilyas Bhat" style="width: 100%; height: 100%; object-fit: cover; object-position: 22% 20%;">
+                <div class="creator-badge" id="btn-open-developer-modal">
+                    <div class="creator-badge-header">
+                        <div class="creator-badge-logo">
+                            <i data-lucide="shield-check"></i>
+                        </div>
+                        <span class="creator-badge-title">VALLEY SECURITY</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; min-width: 0; text-align: left;">
-                        <span style="font-size: 9px; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Developed by</span>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--theme-accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Salim Ilyas Bhat">SALIM ILYAS BHAT</span>
+                    <div class="creator-badge-body">
+                        <span class="creator-badge-heading">SALIM ILYAS BHAT</span>
+                        <span class="creator-badge-subheading">Lead Systems Developer</span>
                     </div>
+                    <button class="creator-badge-btn" type="button">Developer Profile</button>
                 </div>
             </div>
         </aside>
@@ -96,12 +99,15 @@
                     <h1 id="page-title">Dashboard Overview</h1>
                     <p id="page-subtitle" class="text-muted">Valley Security operations control center.</p>
                 </div>
+                <div class="search-bar-wrapper">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="global-search" placeholder="Search task, employee, ID...">
+                    <span class="search-shortcut">Ctrl F</span>
+                    <div id="search-results-dropdown" class="search-dropdown hidden"></div>
+                </div>
                 <div class="header-right">
-                    <div class="search-bar-wrapper">
-                        <i data-lucide="search" class="search-icon"></i>
-                        <input type="text" id="global-search" placeholder="Quick search employee name, ID...">
-                        <div id="search-results-dropdown" class="search-dropdown hidden"></div>
-                    </div>
+                    <button class="header-icon-btn" aria-label="Mail inbox"><i data-lucide="mail"></i></button>
+                    <button class="header-icon-btn" aria-label="Notifications"><i data-lucide="bell"></i></button>
                     <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle theme">
                         <i data-lucide="moon" class="theme-icon-dark"></i>
                         <i data-lucide="sun" class="theme-icon-light hidden"></i>
@@ -125,40 +131,44 @@
                 <section id="view-dashboard" class="app-view">
                     <!-- Stats Grid -->
                     <div class="stats-grid">
-                        <div class="stat-card luxury-tilt">
-                            <div class="stat-icon-wrapper blue-glow">
-                                <i data-lucide="users"></i>
+                        <div class="stat-card accented">
+                            <div class="stat-card-header">
+                                <span class="stat-card-label">Total Guards</span>
+                                <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-numbers">
-                                <span class="stat-value" id="stat-total-employees">0</span>
-                                <span class="stat-label">Total Guards</span>
-                            </div>
-                        </div>
-                        <div class="stat-card luxury-tilt">
-                            <div class="stat-icon-wrapper green-glow">
-                                <i data-lucide="shield"></i>
-                            </div>
-                            <div class="stat-numbers">
-                                <span class="stat-value" id="stat-active-employees">0</span>
-                                <span class="stat-label">Active Deployments</span>
+                            <div class="stat-card-body">
+                                <span class="stat-card-value" id="stat-total-employees">0</span>
+                                <span class="stat-card-trend"><i data-lucide="trending-up"></i> Increased this month</span>
                             </div>
                         </div>
-                        <div class="stat-card luxury-tilt">
-                            <div class="stat-icon-wrapper yellow-glow">
-                                <i data-lucide="alert-triangle"></i>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-label">Active Guards</span>
+                                <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-numbers">
-                                <span class="stat-value" id="stat-expired-ids">0</span>
-                                <span class="stat-label">ID Expirations</span>
+                            <div class="stat-card-body">
+                                <span class="stat-card-value" id="stat-active-employees">0</span>
+                                <span class="stat-card-trend"><i data-lucide="shield"></i> Currently on duty</span>
                             </div>
                         </div>
-                        <div class="stat-card luxury-tilt">
-                            <div class="stat-icon-wrapper gold-glow">
-                                <i data-lucide="map-pin"></i>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-label">ID Expirations</span>
+                                <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-numbers">
-                                <span class="stat-value" id="stat-total-clients">0</span>
-                                <span class="stat-label">Active Clients</span>
+                            <div class="stat-card-body">
+                                <span class="stat-card-value" id="stat-expired-ids">0</span>
+                                <span class="stat-card-trend" style="color: var(--status-suspended);"><i data-lucide="alert-triangle"></i> Action required</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-label">Active Rate</span>
+                                <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
+                            </div>
+                            <div class="stat-card-body">
+                                <span class="stat-card-value" id="stat-active-rate">0%</span>
+                                <span class="stat-card-trend"><i data-lucide="check-circle-2"></i> Optimal performance</span>
                             </div>
                         </div>
                     </div>
@@ -166,9 +176,9 @@
                     <!-- Dashboard Columns -->
                     <div class="dashboard-row">
                         <!-- Chart Card -->
-                        <div class="dashboard-card col-8">
+                        <div class="dashboard-card col-6">
                             <div class="card-header">
-                                <h3>Client-wise Guard Distribution</h3>
+                                <h3>Department-wise Guard Distribution</h3>
                                 <span class="badge badge-gold">Real-time</span>
                             </div>
                             <div class="card-body">
@@ -177,8 +187,33 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Semicircular progress gauge -->
+                        <div class="dashboard-card col-3">
+                            <div class="card-header">
+                                <h3>Guard Status</h3>
+                            </div>
+                            <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
+                                <div class="progress-gauge-container" style="width: 100%; display: flex; justify-content: center;">
+                                    <svg width="180" height="110" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Gray track -->
+                                        <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--glass-border)" stroke-width="16" stroke-linecap="round"/>
+                                        <!-- Active green track -->
+                                        <path id="gauge-active-path" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--theme-green)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="0"/>
+                                        <!-- Text inside -->
+                                        <text x="100" y="80" font-family="'Outfit', sans-serif" font-size="28" font-weight="700" fill="var(--text-primary)" text-anchor="middle" id="gauge-percentage-text">0%</text>
+                                        <text x="100" y="98" font-family="inherit" font-size="10" font-weight="600" fill="var(--text-secondary)" text-anchor="middle">Active Guards</text>
+                                    </svg>
+                                </div>
+                                <!-- Legend -->
+                                <div class="gauge-legend" style="display: flex; gap: 10px; font-size: 10px; font-weight: 600; width: 100%; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 12px; margin-top: 4px;">
+                                    <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-active); display: inline-block;"></span> Active</div>
+                                    <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block;"></span> Inactive</div>
+                                    <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-suspended); display: inline-block;"></span> Suspended</div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Sidebar Alerts Card -->
-                        <div class="dashboard-card col-4">
+                        <div class="dashboard-card col-3">
                             <div class="card-header">
                                 <h3>Urgent Actions</h3>
                             </div>
@@ -202,7 +237,7 @@
                                             <th>Employee ID</th>
                                             <th>Name</th>
                                             <th>Designation</th>
-                                            <th>Assigned Client</th>
+                                            <th>Department</th>
                                             <th>Joining Date</th>
                                             <th>Status</th>
                                         </tr>
@@ -310,7 +345,7 @@
                                         <th>Staff ID</th>
                                         <th>Name</th>
                                         <th>Designation</th>
-                                        <th>Client Location</th>
+                                        <th>Department</th>
                                         <th>Mobile</th>
                                         <th>Doc Check</th>
                                         <th>Status</th>
@@ -400,8 +435,8 @@
                                         </div>
                                     </div>
 
-                                    <!-- Row 3: Designation, Department, Client Location -->
-                                    <div class="form-row col-3">
+                                    <!-- Row 3: Designation and Department -->
+                                    <div class="form-row col-2">
                                         <div class="form-group">
                                             <label for="reg-designation">Designation *</label>
                                             <select id="reg-designation" required style="color: #ffffff; background: #161a23;">
@@ -412,12 +447,6 @@
                                             <label for="reg-department">Department *</label>
                                             <select id="reg-department" required style="color: #ffffff; background: #161a23;">
                                                 <option value="">Select Department</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="reg-client">Working Place *</label>
-                                            <select id="reg-client" required style="color: #ffffff; background: #161a23;">
-                                                <option value="">Select Working Place</option>
                                             </select>
                                         </div>
                                     </div>
@@ -479,60 +508,7 @@
                     </div>
                 </section>
 
-                <!-- 3. DEPLOYMENTS VIEW -->
-                <section id="view-deployments" class="app-view hidden">
-                    <div class="dashboard-row">
-                        <!-- Client list -->
-                        <div class="dashboard-card col-4">
-                            <div class="card-header">
-                                <h3>Client Sites</h3>
-                                <button class="btn btn-xs btn-outline" id="btn-add-client">Add Site</button>
-                            </div>
-                            <div class="card-body">
-                                <div class="client-list-group" id="client-list-container">
-                                    <!-- Populated dynamically -->
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Deployments / Staff at location -->
-                        <div class="dashboard-card col-8">
-                            <div class="card-header">
-                                <h3 id="current-selected-client-title">Select a Client Site</h3>
-                                <span class="badge badge-gold" id="client-guard-count">0 Guards</span>
-                            </div>
-                            <div class="card-body">
-                                <div id="client-details-section" class="hidden">
-                                    <div class="client-meta-grid">
-                                        <div><strong>Site Manager:</strong> <span id="client-meta-manager">-</span></div>
-                                        <div><strong>Contact Phone:</strong> <span id="client-meta-contact">-</span></div>
-                                        <div><strong>Location:</strong> <span id="client-meta-location">-</span></div>
-                                    </div>
-                                    <h4 class="mt-4 mb-2">Deployed Personnel</h4>
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Name</th>
-                                                    <th>Designation</th>
-                                                    <th>Transfer Deployment</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="deployed-guards-tbody">
-                                                <!-- Dynamic list -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div id="client-placeholder-message" class="placeholder-message">
-                                    <i data-lucide="map-pin" style="font-size: 48px; opacity: 0.3;"></i>
-                                    <p class="text-muted mt-2">Select a client site from the sidebar list to manage active security guard deployments.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
 
                 <!-- 5. ID CARD SYSTEM VIEW -->
@@ -557,9 +533,9 @@
                                         <input type="text" id="id-search-employee" class="form-control" placeholder="Name or ID..." style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px; margin-bottom: 0;">
                                     </div>
                                     <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="id-filter-location" style="font-size: 11px;">Place of Work</label>
-                                        <select id="id-filter-location" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
-                                            <option value="">All Locations</option>
+                                        <label for="id-filter-department" style="font-size: 11px;">Department</label>
+                                        <select id="id-filter-department" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="">All Departments</option>
                                         </select>
                                     </div>
                                     <div class="form-group" style="flex: 1; margin: 0;">
@@ -701,151 +677,210 @@
 
                 <!-- 5C. ID CARD TEMPLATES MANAGER VIEW -->
                 <section id="view-templates" class="app-view hidden">
-                    <div class="section-header">
-                        <div>
-                            <h1>ID Card Templates</h1>
-                            <p class="text-muted">Create and manage customized designs for employee security ID cards.</p>
-                        </div>
-                    </div>
-
                     <div class="dashboard-row">
-                        <!-- Left Panel: Template Form -->
-                        <div class="dashboard-card col-5">
+                        <!-- Left Panel: Simple Form Controls -->
+                        <div class="dashboard-card col-6">
                             <div class="card-header">
-                                <h3 id="template-form-title"><i data-lucide="layout"></i> Create New Template</h3>
+                                <h3><i data-lucide="sliders"></i> Template Settings Form</h3>
+                                <button class="btn btn-primary btn-xs" id="btn-tpl-new">
+                                    <i data-lucide="plus"></i> New Template
+                                </button>
                             </div>
                             <div class="card-body">
-                                <form id="template-builder-form" class="luxury-form">
-                                    <input type="hidden" id="template-id">
-                                    <div class="form-group">
-                                        <label for="template-name">Template Name *</label>
-                                        <input type="text" id="template-name" required placeholder="e.g. Standard Security Force">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="template-layout">Layout Mode</label>
-                                        <select id="template-layout" class="form-control" style="color: #ffffff; background: #161a23;">
-                                            <option value="vertical" selected>Vertical (Standard Portrait)</option>
-                                            <option value="horizontal">Horizontal (Landscape)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="template-header-text">Organization Name / Header *</label>
-                                        <input type="text" id="template-header-text" required placeholder="e.g. VALLEY SECURITY SERVICES">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="template-subheader-text">Sub-Header / Address</label>
-                                        <input type="text" id="template-subheader-text" placeholder="e.g. ShahidGunj Srinagar Kashmir">
-                                    </div>
+                                <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
+                                    <input type="hidden" id="tpl-id">
+                                    
                                     <div class="form-row col-2">
                                         <div class="form-group">
-                                            <label for="template-header-bg">Header BG Color</label>
-                                            <input type="color" id="template-header-bg" value="#0f1218" style="height: 38px; padding: 2px; cursor: pointer; border: 1.5px solid rgba(212, 175, 55, 0.2); background: transparent;">
+                                            <label for="tpl-name">Template Name *</label>
+                                            <input type="text" id="tpl-name" required placeholder="e.g. Standard Guard Card">
                                         </div>
                                         <div class="form-group">
-                                            <label for="template-accent-color">Accent Gold Color</label>
-                                            <input type="color" id="template-accent-color" value="#d4af37" style="height: 38px; padding: 2px; cursor: pointer; border: 1.5px solid rgba(212, 175, 55, 0.2); background: transparent;">
-                                        </div>
-                                    </div>
-                                    <div class="form-group" style="margin-top: 5px; margin-bottom: 15px;">
-                                        <button type="button" class="btn btn-outline w-100" id="btn-autofill-assets" style="border-color: rgba(212, 175, 55, 0.5); color: #d4af37; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Autofill Official VSA Assets
-                                        </button>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Logo (PNG/JPG)</label>
-                                        <input type="file" id="template-logo-file" accept="image/*">
-                                        <div class="preview-upload-box" id="template-logo-preview">
-                                            <span class="preview-placeholder">Click to upload logo (Optional)</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Background Image (Optional)</label>
-                                        <input type="file" id="template-bg-file" accept="image/*">
-                                        <div class="preview-upload-box" id="template-bg-preview">
-                                            <span class="preview-placeholder">Click to upload background (Optional)</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Authority Signature (Optional)</label>
-                                        <input type="file" id="template-sig-file" accept="image/*">
-                                        <div class="preview-upload-box" id="template-sig-preview">
-                                            <span class="preview-placeholder">Click to upload signature (Optional)</span>
+                                            <label for="tpl-layout">Card Layout *</label>
+                                            <select id="tpl-layout">
+                                                <option value="vertical" selected>Vertical (Standard Portrait)</option>
+                                                <option value="horizontal">Horizontal (Landscape)</option>
+                                            </select>
                                         </div>
                                     </div>
 
-                                    <h3 class="form-section-title">Field Visibility</h3>
-                                    
-                                    <div class="form-group" style="display: flex; flex-direction: column; gap: 10px; padding: 10px 0;">
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-name" checked>
-                                            <span class="switch-label">Show Employee Name</span>
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="tpl-font">Card Font *</label>
+                                            <select id="tpl-font">
+                                                <option value="'Outfit', sans-serif" selected>Outfit (Modern)</option>
+                                                <option value="'Inter', sans-serif">Inter (Clean)</option>
+                                                <option value="'Poppins', sans-serif">Poppins (Elegant)</option>
+                                                <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>
+                                                <option value="'Oswald', sans-serif">Oswald (Condensed)</option>
+                                                <option value="'Playfair Display', serif">Playfair Display (Classic Serif)</option>
+                                                <option value="'Cinzel', serif">Cinzel (Luxury Serif)</option>
+                                                <option value="'Bebas Neue', sans-serif">Bebas Neue (Impact)</option>
+                                                <option value="'Quicksand', sans-serif">Quicksand (Soft Rounded)</option>
+                                                <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Premium Clean)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-bg-color">Card Background Color</label>
+                                            <input type="color" id="tpl-bg-color" value="#ffffff" style="width: 100%; height: 38px; border: 1px solid var(--glass-border); padding: 0; background: transparent; cursor: pointer; border-radius: 6px;">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="tpl-header-bg">Header Bar Color</label>
+                                            <input type="color" id="tpl-header-bg" value="#0e3e2b" style="width: 100%; height: 38px; border: 1px solid var(--glass-border); padding: 0; background: transparent; cursor: pointer; border-radius: 6px;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-accent-color">Accent Borders/Text Color</label>
+                                            <input type="color" id="tpl-accent-color" value="#dfba5f" style="width: 100%; height: 38px; border: 1px solid var(--glass-border); padding: 0; background: transparent; cursor: pointer; border-radius: 6px;">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row col-3" style="margin-top: 10px; margin-bottom: 10px;">
+                                        <div class="form-group">
+                                            <label for="tpl-logo-size">Logo Size (<span id="lbl-logo-size">50</span>px)</label>
+                                            <input type="range" id="tpl-logo-size" min="30" max="100" value="50" style="width: 100%; accent-color: var(--theme-gold);">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-header-height">Header Ht (<span id="lbl-header-height">90</span>px)</label>
+                                            <input type="range" id="tpl-header-height" min="60" max="150" value="90" style="width: 100%; accent-color: var(--theme-gold);">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-header-font-size">Title Font Size (<span id="lbl-header-font-size">14</span>px)</label>
+                                            <input type="range" id="tpl-header-font-size" min="10" max="24" value="14" style="width: 100%; accent-color: var(--theme-gold);">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="tpl-header-text">Agency Title Text *</label>
+                                            <input type="text" id="tpl-header-text" required placeholder="VALLEY SECURITY AGENCY">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-subheader-text">Agency Location Text</label>
+                                            <input type="text" id="tpl-subheader-text" placeholder="SHAHIDGUNJ SRINAGAR KASHMIR">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row col-2" style="margin-top: 10px;">
+                                        <div class="form-group">
+                                            <label style="font-size: 11px;">Agency Logo Asset</label>
+                                            <div class="logo-presets-selector" style="display: flex; gap: 4px; margin-bottom: 6px;">
+                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset active" data-logo="preset-shield" style="font-size: 10px; padding: 2px 6px; height: auto;">Shield</button>
+                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset" data-logo="preset-star" style="font-size: 10px; padding: 2px 6px; height: auto;">Star</button>
+                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset" data-logo="preset-eagle" style="font-size: 10px; padding: 2px 6px; height: auto;">Eagle</button>
+                                            </div>
+                                            <input type="file" id="tpl-logo-upload" accept="image/*" style="display: none;">
+                                            <button type="button" class="btn btn-xs btn-outline btn-outline-dashed" onclick="document.getElementById('tpl-logo-upload').click();" style="font-size: 10px; padding: 2px 6px; height: auto; display: flex; align-items: center; gap: 4px;"><i data-lucide="upload" style="width: 10px; height: 10px;"></i> Custom Logo</button>
+                                            <span id="tpl-logo-filename" style="font-size: 9px; color: var(--text-muted); display: block; margin-top: 4px; word-break: break-all;"></span>
+                                        </div>
+                                        <div class="form-group">
+                                            <label style="font-size: 11px;">Signature Asset</label>
+                                            <div class="sig-presets-selector" style="display: flex; gap: 4px; margin-bottom: 6px;">
+                                                <button type="button" class="btn btn-xs btn-outline btn-sig-preset active" data-sig="preset-sig1" style="font-size: 10px; padding: 2px 6px; height: auto;">Sig 1</button>
+                                                <button type="button" class="btn btn-xs btn-outline btn-sig-preset" data-sig="preset-sig2" style="font-size: 10px; padding: 2px 6px; height: auto;">Sig 2</button>
+                                            </div>
+                                            <input type="file" id="tpl-sig-upload" accept="image/*" style="display: none;">
+                                            <button type="button" class="btn btn-xs btn-outline btn-outline-dashed" onclick="document.getElementById('tpl-sig-upload').click();" style="font-size: 10px; padding: 2px 6px; height: auto; display: flex; align-items: center; gap: 4px;"><i data-lucide="upload" style="width: 10px; height: 10px;"></i> Custom Sig</button>
+                                            <span id="tpl-sig-filename" style="font-size: 9px; color: var(--text-muted); display: block; margin-top: 4px; word-break: break-all;"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Assets Picker -->
+                                    <h4 class="props-section-subtitle" style="font-size: 11px; margin-top: 15px; margin-bottom: 8px;">Quick Background Grid Patterns</h4>
+                                    <div class="grid-presets-selector" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                                        <button type="button" class="btn btn-xs btn-outline btn-bg-preset active" data-bg="">Solid Color</button>
+                                        <button type="button" class="btn btn-xs btn-outline btn-bg-preset" data-bg="default-bg">Security Grid (Dark)</button>
+                                        <button type="button" class="btn btn-xs btn-outline btn-bg-preset" data-bg="vip-bg">VIP Grid (Gold)</button>
+                                    </div>
+
+                                    <!-- Content checkboxes -->
+                                    <h4 class="props-section-subtitle" style="font-size: 11px; margin-top: 15px; margin-bottom: 8px;">ID Card Elements to Display</h4>
+                                    <div class="field-toggles-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-photo" checked> Photo
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-empid" checked>
-                                            <span class="switch-label">Show Employee ID</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-name" checked> Name
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-designation" checked>
-                                            <span class="switch-label">Show Designation</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-designation" checked> Designation
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-department" checked>
-                                            <span class="switch-label">Show Department / Client Location</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-department" checked> Department
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-father" checked>
-                                            <span class="switch-label">Show Father's Name</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-empid" checked> Staff ID
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-phone" checked>
-                                            <span class="switch-label">Show Mobile Number</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-father" checked> Father's Name
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-blood" checked>
-                                            <span class="switch-label">Show Blood Group</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-phone" checked> Mobile No
                                         </label>
-                                        <label class="switch-container">
-                                            <input type="checkbox" id="field-show-address" checked>
-                                            <span class="switch-label">Show Address</span>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-blood" checked> Blood Group
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-address" checked> Address
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-signature" checked> Signature
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-qrcode" checked> Verification QR
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
+                                            <input type="checkbox" id="field-tpl-barcode" checked> Barcode
                                         </label>
                                     </div>
 
-                                    <div class="form-actions mt-4">
-                                        <button type="submit" class="btn btn-primary w-100" id="btn-save-template">
-                                            <i data-lucide="save"></i> Save Template
-                                        </button>
-                                        <button type="button" class="btn btn-outline w-100 mt-2" id="btn-reset-template-form">
-                                            Cancel / Reset
-                                        </button>
+                                    <div class="form-actions" style="margin-top: 15px; display: flex; gap: 10px;">
+                                        <button type="button" class="btn btn-outline" id="btn-tpl-reset" style="flex:1;">Clear</button>
+                                        <button type="button" class="btn btn-success" id="btn-tpl-save" style="flex:2;"><i data-lucide="save"></i> Save Template Layout</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
 
-                        <!-- Right Panel: Templates List -->
-                        <div class="dashboard-card col-7">
+                        <!-- Right Panel: Live Mock Preview -->
+                        <div class="dashboard-card col-6">
                             <div class="card-header">
-                                <h3><i data-lucide="list"></i> Available Layout Designs</h3>
+                                <h3><i data-lucide="eye"></i> Live ID Card Preview (Auto-Positioning)</h3>
                             </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Layout</th>
-                                                <th>Header Text</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="templates-list-tbody">
-                                            <!-- Dynamically populated -->
-                                        </tbody>
-                                    </table>
+                            <div class="card-body" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 20px; min-height: 480px; background: var(--input-bg); border-radius: 8px;">
+                                <div id="live-tpl-preview-container" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                                    <!-- Rendered dynamically -->
                                 </div>
-                             </div>
-                         </div>
-                     </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: Saved Templates list -->
+                    <div class="dashboard-card" style="margin-top: 20px;">
+                        <div class="card-header">
+                            <h3><i data-lucide="list"></i> Available Layout Designs</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Template Layout Name</th>
+                                            <th>Orientation</th>
+                                            <th>Title Text</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="templates-list-tbody">
+                                        <!-- Dynamically populated templates list -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section> </div>
                  </section>
 
                  <!-- 5B. EMPLOYEE RECORD (LETTERHEAD PRINTABLE FORM) -->
@@ -870,9 +905,9 @@
                                         <input type="text" id="rec-search-employee" class="form-control" placeholder="Name or ID..." style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px; margin-bottom: 0;">
                                     </div>
                                     <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="rec-filter-location" style="font-size: 11px;">Place of Work</label>
-                                        <select id="rec-filter-location" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
-                                            <option value="">All Locations</option>
+                                        <label for="rec-filter-department" style="font-size: 11px;">Department</label>
+                                        <select id="rec-filter-department" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="">All Departments</option>
                                         </select>
                                     </div>
                                     <div class="form-group" style="flex: 1; margin: 0;">
@@ -978,10 +1013,7 @@
                                                     <td class="label-bold">Department:</td>
                                                     <td id="rec-department">-</td>
                                                 </tr>
-                                                <tr>
-                                                    <td class="label-bold">Place of Work:</td>
-                                                    <td id="rec-workplace" class="value-wide">-</td>
-                                                </tr>
+
                                                 <tr>
                                                     <td class="label-bold">Joining Date:</td>
                                                     <td id="rec-joining">-</td>
@@ -1055,10 +1087,9 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="rep-client">Filter by Site</label>
-                                        <select id="rep-client">
-                                            <option value="">All Locations</option>
-                                            <!-- Dynamically filled -->
+                                        <label for="rep-department">Filter by Department</label>
+                                        <select id="rep-department">
+                                            <option value="">All Departments</option>
                                         </select>
                                     </div>
                                     <div class="form-group flex-end">
@@ -1336,7 +1367,7 @@
                     </div>
 
                     <h3 class="form-section-title">3. Employment & Location Assignment</h3>
-                    <div class="form-row col-3">
+                    <div class="form-row col-2">
                         <div class="form-group">
                             <label for="form-designation">Designation *</label>
                             <select id="form-designation" required>
@@ -1344,12 +1375,6 @@
                                 <option value="Supervisor">Supervisor</option>
                                 <option value="Bodyguard">Bodyguard</option>
                                 <option value="Security Manager">Security Manager</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="form-client">Client Deployment Site *</label>
-                            <select id="form-client" required>
-                                <!-- Populated dynamically from Client list -->
                             </select>
                         </div>
                         <div class="form-group">
@@ -1452,39 +1477,7 @@
         </div>
     </div>
 
-    <!-- CLIENT MODAL -->
-    <div id="client-modal" class="modal-overlay hidden">
-        <div class="modal-container size-sm">
-            <div class="modal-header">
-                <h2>Register New Client Deployment Site</h2>
-                <button class="modal-close" id="btn-close-client-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="client-form" class="luxury-form">
-                    <div class="form-group">
-                        <label for="form-client-name">Client Site/Company Name *</label>
-                        <input type="text" id="form-client-name" required placeholder="e.g. Wave Mall - Jammu">
-                    </div>
-                    <div class="form-group">
-                        <label for="form-client-location">Location Address *</label>
-                        <input type="text" id="form-client-location" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="form-client-manager">Client Site Manager Name *</label>
-                        <input type="text" id="form-client-manager" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="form-client-contact">Site Contact Phone *</label>
-                        <input type="tel" id="form-client-contact" required pattern="[0-9]{10}">
-                    </div>
-                    <div class="form-actions modal-footer mt-4">
-                        <button type="button" class="btn btn-outline" id="btn-cancel-client">Cancel</button>
-                        <submit class="btn btn-primary" id="btn-submit-client">Create Client Site</submit>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Developer Profile Modal -->
     <div id="developer-modal" class="modal-backdrop hidden">

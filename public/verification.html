@@ -14,20 +14,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
         :root {
-            --primary-bg: #000000;
-            --secondary-bg: #0d0e12;
-            --theme-gold: #dfba5f;
-            --text-primary: #f5f5f7;
-            --text-secondary: #86868b;
-            --text-muted: #48484a;
-            --status-active: #30d158;
-            --status-suspended: #ff453a;
-            --status-pending: #ffd60a;
+            --primary-bg: #f4f6f5;
+            --secondary-bg: #ffffff;
+            --theme-gold: #0e3e2b;
+            --theme-sage: #52b788;
+            --text-primary: #1c2621;
+            --text-secondary: #5a6560;
+            --text-muted: #8e9a94;
+            --status-active: #2e7d32;
+            --status-suspended: #d32f2f;
+            --status-pending: #ed6c02;
             
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --glass-background: rgba(13, 14, 18, 0.65);
-            --glass-blur: blur(28px);
-            --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.05);
+            --glass-border: #e1e7e4;
+            --glass-background: #ffffff;
+            --glass-blur: none;
+            --card-shadow: 0 4px 20px rgba(14, 62, 43, 0.03), 0 1px 2px rgba(14, 62, 43, 0.01);
         }
 
         * {
@@ -56,7 +57,7 @@
             position: absolute;
             width: 300px;
             height: 300px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(82, 183, 136, 0.12) 0%, transparent 70%);
             top: 15%;
             left: 50%;
             transform: translateX(-50%);
@@ -68,8 +69,6 @@
             width: 100%;
             max-width: 440px;
             background: var(--glass-background);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             box-shadow: var(--card-shadow);
@@ -87,13 +86,12 @@
             width: 50px;
             height: 50px;
             border-radius: 12px;
-            background: rgba(212, 175, 55, 0.1);
+            background: rgba(14, 62, 43, 0.08);
             border: 1px solid var(--theme-gold);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 8px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
             color: var(--theme-gold);
         }
 
@@ -103,12 +101,13 @@
             font-size: 20px;
             letter-spacing: 1.5px;
             line-height: 1.2;
+            color: var(--theme-gold);
         }
 
         .brand-subtitle {
             font-size: 10px;
             letter-spacing: 1.5px;
-            color: var(--theme-gold);
+            color: var(--theme-sage);
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -124,33 +123,30 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 18px;
+            padding: 6px 16px;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            animation: badgeEntry 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .status-verified {
-            background: rgba(0, 230, 118, 0.12);
+            background: #e2f0d9;
             color: var(--status-active);
-            border: 1px solid rgba(0, 230, 118, 0.3);
-            box-shadow: 0 0 15px rgba(0, 230, 118, 0.1);
+            border: 1px solid #c5e1a5;
         }
 
         .status-suspended {
-            background: rgba(255, 46, 147, 0.12);
+            background: #fce4d6;
             color: var(--status-suspended);
-            border: 1px solid rgba(255, 46, 147, 0.3);
-            box-shadow: 0 0 15px rgba(255, 46, 147, 0.1);
+            border: 1px solid #f8cbad;
         }
 
         .status-notfound {
-            background: rgba(107, 114, 128, 0.12);
+            background: #f0f3f1;
             color: var(--text-secondary);
-            border: 1px solid rgba(107, 114, 128, 0.3);
+            border: 1px solid #e1e7e4;
         }
 
         @keyframes badgeEntry {
@@ -166,14 +162,13 @@
             border: 2px solid var(--glass-border);
             border-radius: 12px;
             padding: 4px;
-            background: rgba(0, 0, 0, 0.3);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            background: var(--dark-accent);
             overflow: hidden;
             transition: border-color 0.3s;
         }
 
         .status-verified ~ .guard-avatar-frame {
-            border-color: rgba(0, 230, 118, 0.4);
+            border-color: var(--status-active);
         }
 
         .guard-avatar-frame img {
@@ -200,7 +195,7 @@
         }
 
         .info-grid {
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--glass-border);
             padding-top: 20px;
             display: flex;
             flex-direction: column;
@@ -229,7 +224,7 @@
         .footer-note {
             font-size: 10px;
             color: var(--text-muted);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--glass-border);
             padding-top: 15px;
             margin-top: 20px;
         }
@@ -363,8 +358,12 @@
                         <span class="info-value">${escapeHtml(guard.id)}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Active Deployment</span>
-                        <span class="info-value" style="color: var(--theme-gold); font-weight: 700;">${escapeHtml(guard.clientLocation || "HQ / Standby Reserve")}</span>
+                        <span class="info-label">Department</span>
+                        <span class="info-value" style="color: var(--theme-gold); font-weight: 700;">${escapeHtml(guard.department || "-")}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Designation</span>
+                        <span class="info-value">${escapeHtml(guard.designation || "-")}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">${escapeHtml(guard.relationType || "Father")}'s Name</span>
@@ -457,19 +456,19 @@
                     countdownContainer.innerHTML = `
                         <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600;">Card Validity Countdown</div>
                         <div class="countdown-timer-display" style="display: flex; justify-content: center; gap: 8px; font-family: 'Inter', sans-serif;">
-                            <div class="time-unit" style="background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 55px;">
+                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 55px;">
                                 <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${days}</span>
                                 <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Days</span>
                             </div>
-                            <div class="time-unit" style="background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
+                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
                                 <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${hours}</span>
                                 <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Hrs</span>
                             </div>
-                            <div class="time-unit" style="background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
+                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
                                 <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${minutes}</span>
                                 <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Mins</span>
                             </div>
-                            <div class="time-unit" style="background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
+                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
                                 <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${seconds}</span>
                                 <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Secs</span>
                             </div>
