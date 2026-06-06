@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valley Security Service Agency - Employee Management & ID System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRious QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- html2canvas HTML to Image Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- JSZip Archive Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="styles.css?v=3.6">
+</head>
+<body>
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i data-lucide="shield-check" class="gold-text"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="agency-title">VALLEY</span>
+                    <span class="agency-subtitle">SECURITY AGENCY</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" data-view="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#employees" class="nav-item" data-view="employees">
+                    <i data-lucide="users"></i>
+                    <span>Employees</span>
+                </a>
+                <a href="#deployments" class="nav-item" data-view="deployments">
+                    <i data-lucide="map-pin"></i>
+                    <span>Deployments</span>
+                </a>
+                <a href="#id-cards" class="nav-item" data-view="id-cards">
+                    <i data-lucide="contact"></i>
+                    <span>ID Card System</span>
+                </a>
+                <a href="#templates" class="nav-item" data-view="templates">
+                    <i data-lucide="layout"></i>
+                    <span>Templates</span>
+                </a>
+                <a href="#emp-record" class="nav-item" data-view="emp-record">
+                    <i data-lucide="file-text"></i>
+                    <span>Employee Record</span>
+                </a>
+                <a href="#reports" class="nav-item" data-view="reports">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#settings" class="nav-item" data-view="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="server-status">
+                    <span class="status-indicator online"></span>
+                    <div class="status-details">
+                        <span class="status-title">Local Cloud Active</span>
+                        <span class="status-ip" id="lan-ip-display">Connecting...</span>
+                    </div>
+                </div>
+                <div class="creator-badge" id="btn-open-developer-modal" style="cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); transition: all 0.2s ease; margin-top: 10px; width: 100%; box-sizing: border-box;">
+                    <div class="creator-avatar" style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1.5px solid var(--theme-accent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #161a23;">
+                        <img src="developer.jpg" alt="Salim Ilyas Bhat" style="width: 100%; height: 100%; object-fit: cover; object-position: 22% 20%;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; min-width: 0; text-align: left;">
+                        <span style="font-size: 9px; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Developed by</span>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--theme-accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Salim Ilyas Bhat">SALIM ILYAS BHAT</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1 id="page-title">Dashboard Overview</h1>
+                    <p id="page-subtitle" class="text-muted">Valley Security operations control center.</p>
+                </div>
+                <div class="header-right">
+                    <div class="search-bar-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="global-search" placeholder="Quick search employee name, ID...">
+                        <div id="search-results-dropdown" class="search-dropdown hidden"></div>
+                    </div>
+                    <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                        <i data-lucide="moon" class="theme-icon-dark"></i>
+                        <i data-lucide="sun" class="theme-icon-light hidden"></i>
+                    </button>
+                    <div class="admin-profile">
+                        <div class="avatar-glow">
+                            <div class="admin-avatar">HR</div>
+                        </div>
+                        <div class="admin-details">
+                            <span class="admin-name">HR Manager</span>
+                            <span class="admin-role">Super Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Views Containers -->
+            <div class="view-viewport">
+
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="app-view">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card luxury-tilt">
+                            <div class="stat-icon-wrapper blue-glow">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <div class="stat-numbers">
+                                <span class="stat-value" id="stat-total-employees">0</span>
+                                <span class="stat-label">Total Guards</span>
+                            </div>
+                        </div>
+                        <div class="stat-card luxury-tilt">
+                            <div class="stat-icon-wrapper green-glow">
+                                <i data-lucide="shield"></i>
+                            </div>
+                            <div class="stat-numbers">
+                                <span class="stat-value" id="stat-active-employees">0</span>
+                                <span class="stat-label">Active Deployments</span>
+                            </div>
+                        </div>
+                        <div class="stat-card luxury-tilt">
+                            <div class="stat-icon-wrapper yellow-glow">
+                                <i data-lucide="alert-triangle"></i>
+                            </div>
+                            <div class="stat-numbers">
+                                <span class="stat-value" id="stat-expired-ids">0</span>
+                                <span class="stat-label">ID Expirations</span>
+                            </div>
+                        </div>
+                        <div class="stat-card luxury-tilt">
+                            <div class="stat-icon-wrapper gold-glow">
+                                <i data-lucide="map-pin"></i>
+                            </div>
+                            <div class="stat-numbers">
+                                <span class="stat-value" id="stat-total-clients">0</span>
+                                <span class="stat-label">Active Clients</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Columns -->
+                    <div class="dashboard-row">
+                        <!-- Chart Card -->
+                        <div class="dashboard-card col-8">
+                            <div class="card-header">
+                                <h3>Client-wise Guard Distribution</h3>
+                                <span class="badge badge-gold">Real-time</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" id="distribution-chart-container">
+                                    <!-- Rendered dynamically via SVG in JS -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Sidebar Alerts Card -->
+                        <div class="dashboard-card col-4">
+                            <div class="card-header">
+                                <h3>Urgent Actions</h3>
+                            </div>
+                            <div class="card-body alert-list" id="dashboard-alerts">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Deployments -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Recently Registered Personnel</h3>
+                            <button class="btn btn-outline nav-shortcut" data-target="employees">View All Personnel</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Employee ID</th>
+                                            <th>Name</th>
+                                            <th>Designation</th>
+                                            <th>Assigned Client</th>
+                                            <th>Joining Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-employees-table">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. EMPLOYEES VIEW (VIEW MODE) -->
+                <section id="view-employees" class="app-view hidden">
+                    <!-- Select Criteria panel matching user mockup -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Select Criteria</h3>
+                            <button class="btn btn-primary" id="btn-add-employee">
+                                <i data-lucide="user-plus"></i> Register New Employee
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <form id="employees-criteria-form" class="luxury-form" onsubmit="event.preventDefault(); renderEmployeeDirectory();">
+                                <div class="form-row col-4 align-center">
+                                    <div class="form-group">
+                                        <label for="emp-filter-designation">Role *</label>
+                                        <select id="emp-filter-designation">
+                                            <option value="">Select Role</option>
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="emp-filter-status">Status</label>
+                                        <select id="emp-filter-status">
+                                            <option value="">All Statuses</option>
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Suspended">Suspended</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="emp-filter-search">Search By Keyword</label>
+                                        <input type="text" id="emp-filter-search" placeholder="Search By Staff ID, Name, Mobile etc...">
+                                    </div>
+                                    <div class="form-group flex-end">
+                                        <button type="submit" class="btn btn-primary w-100" id="btn-criteria-search">
+                                            <i data-lucide="search"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- View Toolbar: View Toggles & Inline Bulk Actions -->
+                    <div class="view-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+                        <div class="classification-tabs" style="margin-bottom: 0;">
+                            <button class="classification-tab-btn active" id="btn-view-card" type="button">
+                                <i data-lucide="layout-grid" style="display:inline-block; vertical-align:middle; width:16px; margin-right:4px;"></i> Card View
+                            </button>
+                            <button class="classification-tab-btn" id="btn-view-list" type="button">
+                                <i data-lucide="list" style="display:inline-block; vertical-align:middle; width:16px; margin-right:4px;"></i> List View
+                            </button>
+                        </div>
+                        
+                        <!-- Inline Bulk Action Panel -->
+                        <div id="bulk-action-banner" class="bulk-action-inline hidden">
+                            <div class="bulk-action-info">
+                                <span class="bulk-select-count" id="bulk-selected-count">0</span>
+                                <span style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Selected</span>
+                            </div>
+                            <div style="width: 170px;">
+                                <select id="bulk-select-template" class="form-control" style="color: #ffffff; background: #0d0e12; height: 34px; padding: 4px 10px; border: 1px solid rgba(var(--theme-accent-rgb), 0.15); border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                    <!-- Populated dynamically with templates -->
+                                </select>
+                            </div>
+                            <button class="btn btn-success btn-xs" id="btn-bulk-print" style="height: 34px; padding: 6px 12px; font-weight: 600;">
+                                <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Bulk Print
+                            </button>
+                            <button class="btn btn-outline btn-xs" id="btn-bulk-download" style="height: 34px; padding: 6px 12px; border-color: rgba(255,255,255,0.08); font-weight: 600;">
+                                <i data-lucide="download" style="width: 14px; height: 14px;"></i> Bulk Photo Download
+                            </button>
+                            <button class="btn btn-xs" id="btn-bulk-clear" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 4px; font-size: 11px; height: 34px;">
+                                Clear Selection
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cards Grid (Shown by default) -->
+                    <div id="employees-card-grid-container">
+                        <div class="directory-card-grid" id="employees-card-grid">
+                            <!-- Populated dynamically with .directory-card elements -->
+                        </div>
+                    </div>
+
+                    <!-- List Table (Hidden by default) -->
+                    <div id="employees-list-table-container" class="dashboard-card hidden">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-employees" style="cursor: pointer; transform: scale(1.1);"></th>
+                                        <th>Staff ID</th>
+                                        <th>Name</th>
+                                        <th>Designation</th>
+                                        <th>Client Location</th>
+                                        <th>Mobile</th>
+                                        <th>Doc Check</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-list-tbody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2B. EMPLOYEE REGISTRATION FORM (ADD/EDIT MODE) -->
+                <section id="view-emp-registration" class="app-view hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>Employee Registration Form</h1>
+                            <p class="text-muted">Fill in the form to register a new security personnel or update existing employee information.</p>
+                        </div>
+                        <button class="btn btn-outline" id="btn-back-to-list">
+                            <i data-lucide="arrow-left"></i> Back to Employees
+                        </button>
+                    </div>
+                    <div class="registration-form-wrapper">
+                        <form id="employee-registration-form" class="professional-form">
+                            <input type="hidden" id="reg-emp-id">
+                            
+                            <div class="form-card">
+                                <div class="form-card-header">
+                                    <h2><i data-lucide="user"></i> Employee ID Card Details</h2>
+                                </div>
+                                <div class="form-card-body">
+                                    <!-- Row 1: Name and Relation -->
+                                    <div class="form-row col-3">
+                                        <div class="form-group">
+                                            <label for="reg-name">Full Name *</label>
+                                            <input type="text" id="reg-name" required placeholder="Enter full name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-relation-type">Relation Mode</label>
+                                            <select id="reg-relation-type" class="form-control" style="color: #ffffff; background: #161a23;">
+                                                <option value="Father" selected>Father</option>
+                                                <option value="Husband">Husband</option>
+                                                <option value="Guardian">Guardian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label id="reg-father-label" for="reg-father">Father's Name *</label>
+                                            <input type="text" id="reg-father" required placeholder="Enter father's name">
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: DOB, Gender, Blood Group, Mobile -->
+                                    <div class="form-row col-4">
+                                        <div class="form-group">
+                                            <label for="reg-dob">Date of Birth *</label>
+                                            <input type="date" id="reg-dob" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-gender">Gender *</label>
+                                            <select id="reg-gender" required style="color: #ffffff; background: #161a23;">
+                                                <option value="">Select Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-blood">Blood Group *</label>
+                                            <select id="reg-blood" required style="color: #ffffff; background: #161a23;">
+                                                <option value="">Select Blood Group</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-mobile">Mobile Number *</label>
+                                            <input type="tel" id="reg-mobile" required placeholder="10 digit number" pattern="[0-9]{10}">
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: Designation, Department, Client Location -->
+                                    <div class="form-row col-3">
+                                        <div class="form-group">
+                                            <label for="reg-designation">Designation *</label>
+                                            <select id="reg-designation" required style="color: #ffffff; background: #161a23;">
+                                                <option value="">Select Designation</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-department">Department *</label>
+                                            <select id="reg-department" required style="color: #ffffff; background: #161a23;">
+                                                <option value="">Select Department</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-client">Working Place *</label>
+                                            <select id="reg-client" required style="color: #ffffff; background: #161a23;">
+                                                <option value="">Select Working Place</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3B: Joining Date, Card Validity -->
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="reg-joining-date">Joining Date *</label>
+                                            <input type="date" id="reg-joining-date" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-card-validity">Card Validity *</label>
+                                            <select id="reg-card-validity" required style="color: #ffffff; background: #161a23;">
+                                                <option value="1">1 Year</option>
+                                                <option value="2">2 Years</option>
+                                                <option value="3" selected>3 Years</option>
+                                                <option value="5">5 Years</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 4: Address Details -->
+                                    <div class="form-row col-1">
+                                        <div class="form-group">
+                                            <label for="reg-curr-address">Address Details *</label>
+                                            <textarea id="reg-curr-address" required rows="2" placeholder="Enter complete address details"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 5: Photo and Signature Uploads -->
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="reg-photo">Passport Size Photograph *</label>
+                                            <input type="file" id="reg-photo" accept="image/*">
+                                            <div class="preview-upload-box" id="reg-photo-preview">
+                                                <span class="preview-placeholder">Click to upload photo</span>
+                                            </div>
+                                            <small class="text-muted">Required for card printing</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-signature">Signature Scan (Optional)</label>
+                                            <input type="file" id="reg-signature" accept="image/*">
+                                            <div class="preview-upload-box" id="reg-signature-preview">
+                                                <span class="preview-placeholder">Click to upload signature</span>
+                                            </div>
+                                            <small class="text-muted">Leave empty to use template's default authority signature</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-outline" id="btn-reg-cancel">Cancel</button>
+                                <button type="submit" class="btn btn-success" id="btn-reg-save">
+                                    <i data-lucide="save"></i> Save & Generate ID Card
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- 3. DEPLOYMENTS VIEW -->
+                <section id="view-deployments" class="app-view hidden">
+                    <div class="dashboard-row">
+                        <!-- Client list -->
+                        <div class="dashboard-card col-4">
+                            <div class="card-header">
+                                <h3>Client Sites</h3>
+                                <button class="btn btn-xs btn-outline" id="btn-add-client">Add Site</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="client-list-group" id="client-list-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deployments / Staff at location -->
+                        <div class="dashboard-card col-8">
+                            <div class="card-header">
+                                <h3 id="current-selected-client-title">Select a Client Site</h3>
+                                <span class="badge badge-gold" id="client-guard-count">0 Guards</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="client-details-section" class="hidden">
+                                    <div class="client-meta-grid">
+                                        <div><strong>Site Manager:</strong> <span id="client-meta-manager">-</span></div>
+                                        <div><strong>Contact Phone:</strong> <span id="client-meta-contact">-</span></div>
+                                        <div><strong>Location:</strong> <span id="client-meta-location">-</span></div>
+                                    </div>
+                                    <h4 class="mt-4 mb-2">Deployed Personnel</h4>
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Name</th>
+                                                    <th>Designation</th>
+                                                    <th>Transfer Deployment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="deployed-guards-tbody">
+                                                <!-- Dynamic list -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="client-placeholder-message" class="placeholder-message">
+                                    <i data-lucide="map-pin" style="font-size: 48px; opacity: 0.3;"></i>
+                                    <p class="text-muted mt-2">Select a client site from the sidebar list to manage active security guard deployments.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- 5. ID CARD SYSTEM VIEW -->
+                <section id="view-id-cards" class="app-view hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>ID Card Generation System</h1>
+                            <p class="text-muted">Select an employee to generate and print their official security agency ID card.</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row">
+                        <!-- Left Panel: Employee Selection -->
+                        <div class="dashboard-card col-7">
+                            <div class="card-header">
+                                <h3><i data-lucide="settings"></i> Card Settings & Batch Generator</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-row col-3" style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="id-search-employee" style="font-size: 11px;">Search Guard</label>
+                                        <input type="text" id="id-search-employee" class="form-control" placeholder="Name or ID..." style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px; margin-bottom: 0;">
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="id-filter-location" style="font-size: 11px;">Place of Work</label>
+                                        <select id="id-filter-location" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="">All Locations</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="id-filter-designation" style="font-size: 11px;">Designation</label>
+                                        <select id="id-filter-designation" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="">All Designations</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Select Guards for Printing / Batch Download</label>
+                                <div class="id-employee-checklist" id="id-employees-list-box">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
+
+                                <!-- Hidden select element to keep backward compatibility with existing JS selectors -->
+                                <select id="id-select-employee" style="display: none;">
+                                    <option value="">Choose an employee...</option>
+                                </select>
+
+                                <div class="form-row col-2" style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="id-select-template" style="font-size: 11px;">Select Template</label>
+                                        <select id="id-select-template" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="id-validity-years" style="font-size: 11px;">Card Validity</label>
+                                        <select id="id-validity-years" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="1">1 Year</option>
+                                            <option value="2">2 Years</option>
+                                            <option value="3" selected>3 Years</option>
+                                            <option value="5">5 Years</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions" style="margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 16px;">
+                                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                        <button class="btn btn-outline w-100" id="btn-id-bulk-download" style="padding: 8px 12px; font-size: 11px; height: 36px; border-color: rgba(212, 175, 55, 0.25); color: var(--theme-accent); font-weight: 600;">
+                                            <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download ZIP
+                                        </button>
+                                        <button class="btn btn-success w-100" id="btn-id-bulk-print" style="padding: 8px 12px; font-size: 11px; height: 36px; font-weight: 600;">
+                                            <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Bulk Print
+                                        </button>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn btn-outline w-100" id="btn-download-id-card" style="padding: 8px 12px; font-size: 11px; height: 36px; border-color: rgba(255, 255, 255, 0.08); font-weight: 600;">
+                                            <i data-lucide="image" style="width: 14px; height: 14px;"></i> Save Preview
+                                        </button>
+                                        <button class="btn btn-outline w-100" id="btn-print-id-card" style="padding: 8px 12px; font-size: 11px; height: 36px; border-color: rgba(255, 255, 255, 0.08); font-weight: 600;">
+                                            <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Print Preview
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Single-Sided ID Card Preview -->
+                        <div class="dashboard-card col-5 id-card-preview-container">
+                            <div class="card-header">
+                                <h3><i data-lucide="credit-card"></i> ID Card Preview (Print Size)</h3>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="printable-id-card" id="printable-id-single">
+                                <div class="id-card-portrait">
+                                    <!-- Header: Logo and Agency Details -->
+                                    <div class="id-portrait-header">
+                                        <div class="id-portrait-logo">
+                                            <!-- Simple interlocking vector style design -->
+                                            <div class="company-logo-v">VS</div>
+                                        </div>
+                                        <div class="id-portrait-brand">
+                                            <h1 class="id-portrait-title">Valley Securities Services</h1>
+                                            <p class="id-portrait-subtitle">ShahidGunj Srinagar Kashmir</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Photo Box -->
+                                    <div class="id-portrait-photo-box">
+                                        <img id="card-photo" src="" alt="Employee Photo" class="employee-photo" style="display:none;">
+                                        <span id="photo-placeholder" class="photo-placeholder">No Photo</span>
+                                    </div>
+
+                                    <!-- Name & Designation -->
+                                    <div class="id-portrait-meta">
+                                        <h2 id="card-name" class="id-portrait-name">-</h2>
+                                        <h3 id="card-designation" class="id-portrait-designation">-</h3>
+                                    </div>
+
+                                    <!-- Two-column data list -->
+                                    <table class="id-portrait-table">
+                                        <tr>
+                                            <td class="id-table-label">Staff ID</td>
+                                            <td id="card-empid" class="id-table-value">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="id-table-label">Department</td>
+                                            <td id="card-workplace" class="id-table-value">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="id-table-label">Father Name</td>
+                                            <td id="card-father" class="id-table-value">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="id-table-label">Address</td>
+                                            <td id="card-address" class="id-table-value">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="id-table-label">Phone</td>
+                                            <td id="card-phone" class="id-table-value">-</td>
+                                        </tr>
+                                        <!-- Hidden parameters, kept for script compatibility -->
+                                        <tr style="display: none;">
+                                            <td id="card-blood">-</td>
+                                            <td id="card-validity">-</td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Signature Box -->
+                                    <div class="id-portrait-signature-box">
+                                        <div class="id-portrait-signature">
+                                            <img id="card-signature" src="" alt="Signature" class="signature-img hidden">
+                                            <span id="sig-placeholder" class="sig-placeholder">Signature Scan</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- QR Code -->
+                                    <div class="id-portrait-qr">
+                                        <canvas id="card-qr-canvas" class="qr-canvas"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5C. ID CARD TEMPLATES MANAGER VIEW -->
+                <section id="view-templates" class="app-view hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>ID Card Templates</h1>
+                            <p class="text-muted">Create and manage customized designs for employee security ID cards.</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row">
+                        <!-- Left Panel: Template Form -->
+                        <div class="dashboard-card col-5">
+                            <div class="card-header">
+                                <h3 id="template-form-title"><i data-lucide="layout"></i> Create New Template</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="template-builder-form" class="luxury-form">
+                                    <input type="hidden" id="template-id">
+                                    <div class="form-group">
+                                        <label for="template-name">Template Name *</label>
+                                        <input type="text" id="template-name" required placeholder="e.g. Standard Security Force">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="template-layout">Layout Mode</label>
+                                        <select id="template-layout" class="form-control" style="color: #ffffff; background: #161a23;">
+                                            <option value="vertical" selected>Vertical (Standard Portrait)</option>
+                                            <option value="horizontal">Horizontal (Landscape)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="template-header-text">Organization Name / Header *</label>
+                                        <input type="text" id="template-header-text" required placeholder="e.g. VALLEY SECURITY SERVICES">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="template-subheader-text">Sub-Header / Address</label>
+                                        <input type="text" id="template-subheader-text" placeholder="e.g. ShahidGunj Srinagar Kashmir">
+                                    </div>
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="template-header-bg">Header BG Color</label>
+                                            <input type="color" id="template-header-bg" value="#0f1218" style="height: 38px; padding: 2px; cursor: pointer; border: 1.5px solid rgba(212, 175, 55, 0.2); background: transparent;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="template-accent-color">Accent Gold Color</label>
+                                            <input type="color" id="template-accent-color" value="#d4af37" style="height: 38px; padding: 2px; cursor: pointer; border: 1.5px solid rgba(212, 175, 55, 0.2); background: transparent;">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 5px; margin-bottom: 15px;">
+                                        <button type="button" class="btn btn-outline w-100" id="btn-autofill-assets" style="border-color: rgba(212, 175, 55, 0.5); color: #d4af37; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Autofill Official VSA Assets
+                                        </button>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Logo (PNG/JPG)</label>
+                                        <input type="file" id="template-logo-file" accept="image/*">
+                                        <div class="preview-upload-box" id="template-logo-preview">
+                                            <span class="preview-placeholder">Click to upload logo (Optional)</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Background Image (Optional)</label>
+                                        <input type="file" id="template-bg-file" accept="image/*">
+                                        <div class="preview-upload-box" id="template-bg-preview">
+                                            <span class="preview-placeholder">Click to upload background (Optional)</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Authority Signature (Optional)</label>
+                                        <input type="file" id="template-sig-file" accept="image/*">
+                                        <div class="preview-upload-box" id="template-sig-preview">
+                                            <span class="preview-placeholder">Click to upload signature (Optional)</span>
+                                        </div>
+                                    </div>
+
+                                    <h3 class="form-section-title">Field Visibility</h3>
+                                    
+                                    <div class="form-group" style="display: flex; flex-direction: column; gap: 10px; padding: 10px 0;">
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-name" checked>
+                                            <span class="switch-label">Show Employee Name</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-empid" checked>
+                                            <span class="switch-label">Show Employee ID</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-designation" checked>
+                                            <span class="switch-label">Show Designation</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-department" checked>
+                                            <span class="switch-label">Show Department / Client Location</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-father" checked>
+                                            <span class="switch-label">Show Father's Name</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-phone" checked>
+                                            <span class="switch-label">Show Mobile Number</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-blood" checked>
+                                            <span class="switch-label">Show Blood Group</span>
+                                        </label>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="field-show-address" checked>
+                                            <span class="switch-label">Show Address</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-actions mt-4">
+                                        <button type="submit" class="btn btn-primary w-100" id="btn-save-template">
+                                            <i data-lucide="save"></i> Save Template
+                                        </button>
+                                        <button type="button" class="btn btn-outline w-100 mt-2" id="btn-reset-template-form">
+                                            Cancel / Reset
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Templates List -->
+                        <div class="dashboard-card col-7">
+                            <div class="card-header">
+                                <h3><i data-lucide="list"></i> Available Layout Designs</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Layout</th>
+                                                <th>Header Text</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="templates-list-tbody">
+                                            <!-- Dynamically populated -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                             </div>
+                         </div>
+                     </div>
+                 </section>
+
+                 <!-- 5B. EMPLOYEE RECORD (LETTERHEAD PRINTABLE FORM) -->
+                <section id="view-emp-record" class="app-view hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>Employee Record - Print on Letterhead</h1>
+                            <p class="text-muted">Select an employee to print their record form on company letterhead with photo.</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row">
+                        <!-- Left Panel: Employee Selection -->
+                        <div class="dashboard-card col-4">
+                            <div class="card-header">
+                                <h3>Select Employee</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-row col-3" style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="rec-search-employee" style="font-size: 11px;">Search Guard</label>
+                                        <input type="text" id="rec-search-employee" class="form-control" placeholder="Name or ID..." style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px; margin-bottom: 0;">
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="rec-filter-location" style="font-size: 11px;">Place of Work</label>
+                                        <select id="rec-filter-location" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="">All Locations</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label for="rec-filter-designation" style="font-size: 11px;">Designation</label>
+                                        <select id="rec-filter-designation" class="form-control" style="color: #ffffff; background: #161a23; height: 32px; padding: 4px 8px; font-size: 11px;">
+                                            <option value="">All Designations</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Choose Guard Profile to View</label>
+                                <div class="id-employee-checklist" id="rec-employees-list-box" style="max-height: 250px;">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
+
+                                <!-- Hidden select element to keep backward compatibility with existing JS selectors -->
+                                <select id="rec-select-employee" style="display: none;">
+                                    <option value="">Choose an employee...</option>
+                                </select>
+
+                                <button class="btn btn-success w-100 mt-2" id="btn-print-employee-record" style="height: 38px; font-weight: 600;">
+                                    <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Print Employee Record
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Printable Record Preview -->
+                        <div class="dashboard-card col-8">
+                            <div class="card-header">
+                                <h3>Employee Record Preview</h3>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="printable-letterhead" id="printable-letterhead">
+                                    <!-- Letterhead Header -->
+                                    <div class="letterhead-header">
+                                        <div class="letterhead-logo-section">
+                                            <div class="letterhead-logo">
+                                                <i data-lucide="shield-check"></i>
+                                            </div>
+                                        </div>
+                                        <div class="letterhead-text">
+                                            <h1>VALLEY SECURITY SERVICE AGENCY</h1>
+                                            <p class="letterhead-address">SHAHEED GUNJ NATH COMPLEX SRINAGAR 190001</p>
+                                            <p class="letterhead-contact">Phone: 7889311608 | Email: VLLSCRTSERVICE@GMAIL.COM</p>
+                                            <p class="letterhead-license">PSARA License: PSA | L | 99 | JK |2024 | DEC | 3| 62</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Document Title -->
+                                    <div class="document-title">
+                                        <h2>EMPLOYEE RECORD FORM</h2>
+                                        <p>For Official Record Keeping</p>
+                                    </div>
+
+                                    <!-- Main Record Content -->
+                                    <div class="record-content">
+                                        <table class="record-table">
+                                            <tr>
+                                                <td colspan="2" class="record-photo-cell">
+                                                    <div class="record-photo-box">
+                                                        <img id="rec-photo" src="" alt="Employee Photo" class="rec-photo">
+                                                        <span id="rec-photo-placeholder" class="rec-photo-placeholder">PHOTO</span>
+                                                    </div>
+                                                </td>
+                                                <td colspan="2" class="record-details-cell">
+                                                    <table class="inner-record-table">
+                                                        <tr>
+                                                            <td class="label">Employee ID:</td>
+                                                            <td id="rec-empid" class="value">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="label">Name:</td>
+                                                            <td id="rec-name" class="value">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="label" id="rec-relation-label">Father's Name:</td>
+                                                            <td id="rec-father" class="value">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="label">Date of Birth:</td>
+                                                            <td id="rec-dob" class="value">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="label">Gender:</td>
+                                                            <td id="rec-gender" class="value">-</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="label">Blood Group:</td>
+                                                            <td id="rec-blood" class="value">-</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Employment & Details -->
+                                        <div class="record-section">
+                                            <h3>EMPLOYMENT DETAILS</h3>
+                                            <table class="record-details-table">
+                                                <tr>
+                                                    <td class="label-bold">Designation:</td>
+                                                    <td id="rec-designation">-</td>
+                                                    <td class="label-bold">Department:</td>
+                                                    <td id="rec-department">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label-bold">Place of Work:</td>
+                                                    <td id="rec-workplace" class="value-wide">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label-bold">Joining Date:</td>
+                                                    <td id="rec-joining">-</td>
+                                                    <td class="label-bold">Card Validity:</td>
+                                                    <td id="rec-validity">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label-bold">Status:</td>
+                                                    <td id="rec-status">-</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+
+                                        <!-- Contact & Address Details -->
+                                        <div class="record-section">
+                                            <h3>CONTACT & ADDRESS DETAILS</h3>
+                                            <table class="record-details-table">
+                                                <tr>
+                                                    <td class="label-bold">Mobile Number:</td>
+                                                    <td id="rec-mobile">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="label-bold">Contact Address:</td>
+                                                    <td id="rec-curr-address" class="value-wide">-</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Footer with Signature -->
+                                    <div class="letterhead-footer" style="margin-top: 40px; display: flex; justify-content: space-between; border-top: 1px dashed var(--glass-border); padding-top: 20px;">
+                                        <div class="footer-signature" style="text-align: center; flex: 1;">
+                                            <div id="rec-signature-container" style="height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                                                <img id="rec-signature-img" src="" alt="Signature" style="max-height: 50px; display: none; filter: contrast(1.4) brightness(1.1); mix-blend-mode: multiply;">
+                                                <span id="rec-sig-placeholder" style="color: var(--text-muted); font-size: 11px; font-style: italic;">No Signature Uploaded</span>
+                                            </div>
+                                            <div class="sig-line" style="border-top: 1px solid var(--text-secondary); padding-top: 4px; font-size: 11px; color: var(--text-secondary);">Employee Signature</div>
+                                        </div>
+                                        <div class="footer-signature" style="text-align: center; flex: 1;">
+                                            <div style="height: 60px;"></div>
+                                            <div class="sig-line" style="border-top: 1px solid var(--text-secondary); padding-top: 4px; font-size: 11px; color: var(--text-secondary);">Authorized Signatory</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Letterhead Footer -->
+                                    <div class="letterhead-bottom">
+                                        <p>This is an official record of Valley Security Service Agency. For internal record keeping only.</p>
+                                        <p>Generated: <span id="rec-generated-date">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. REPORTS VIEW -->
+                <section id="view-reports" class="app-view hidden">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Generate Operational Reports</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="report-filter-form" class="luxury-form mb-4">
+                                <div class="form-row col-4">
+                                    <div class="form-group">
+                                        <label for="rep-type">Report Type</label>
+                                        <select id="rep-type" required>
+                                            <option value="master">All Personnel Master List</option>
+                                            <option value="active">Active Personnel</option>
+                                            <option value="inactive">Inactive / Suspended</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rep-client">Filter by Site</label>
+                                        <select id="rep-client">
+                                            <option value="">All Locations</option>
+                                            <!-- Dynamically filled -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group flex-end">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i data-lucide="play"></i> Compile Report
+                                        </button>
+                                    </div>
+                                    <div class="form-group flex-end">
+                                        <button type="button" class="btn btn-outline w-100" id="btn-export-csv">
+                                            <i data-lucide="file-spreadsheet"></i> Export Excel CSV
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="report-result-section">
+                                <h4 id="report-title-compiled" class="mb-3">Compiled Report Preview</h4>
+                                <div class="table-responsive">
+                                    <table class="table" id="report-result-table">
+                                        <thead>
+                                            <tr id="report-headers">
+                                                <!-- Dynamic headers -->
+                                            </tr>
+                                        </thead>
+                                        <tbody id="report-tbody">
+                                            <!-- Dynamic list -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. SETTINGS VIEW -->
+                <section id="view-settings" class="app-view hidden">
+                    <div class="dashboard-row">
+                        <!-- Backup controls -->
+                        <div class="dashboard-card col-6">
+                            <div class="card-header">
+                                <h3>Local Cloud Backups</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-4">Export or import the full database file of Valley Security Service Agency. Safe for sharing or migrations.</p>
+                                <div class="settings-actions">
+                                    <button class="btn btn-outline mb-3 w-100 justify-start" id="btn-backup-download">
+                                        <i data-lucide="download-cloud"></i> Export Backup JSON File
+                                    </button>
+                                    
+                                    <div class="backup-import-container">
+                                        <label for="file-backup-import" class="btn btn-primary w-100 cursor-pointer">
+                                            <i data-lucide="upload-cloud"></i> Import Backup File...
+                                        </label>
+                                        <input type="file" id="file-backup-import" accept=".json" class="hidden">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Configuration -->
+                        <div class="dashboard-card col-6">
+                            <div class="card-header">
+                                <h3>Company Profile Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <form class="luxury-form" id="settings-company-form">
+                                    <div class="form-group">
+                                        <label>Agency Name</label>
+                                        <input type="text" value="Valley Security Service Agency" disabled>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Corporate Head Office Address</label>
+                                        <input type="text" value="SHAHEED GUNJ NATH COMPLEX SRINAGAR 190001" disabled>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Licence / PSARA Registration Number</label>
+                                        <input type="text" value="PSA | L | 99 | JK |2024 | DEC | 3| 62" disabled>
+                                    </div>
+                                    <div class="alert-info-box mt-3">
+                                        <i data-lucide="info" class="gold-text"></i>
+                                        <span>Company Profile details are embedded into printed employee badges.</span>
+                                    </div>
+                                </form>
+                        </div>
+                    </div>
+                    <div class="dashboard-row mt-4">
+                        <div class="dashboard-card col-12">
+                            <div class="card-header">
+                                <h3>Manpower Classifications Manager</h3>
+                                <span class="badge badge-gold">Configuration</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-4">Add, view, or remove custom roles, departments, and employee types to match your agency's manpower requirements.</p>
+                                
+                                <div class="classification-tabs">
+                                    <button class="classification-tab-btn active" data-tab="depts" type="button">Departments</button>
+                                    <button class="classification-tab-btn" data-tab="desigs" type="button">Designations</button>
+                                    <button class="classification-tab-btn" data-tab="types" type="button">Manpower Types</button>
+                                </div>
+                                
+                                <!-- Departments Tab -->
+                                <div class="classification-pane active" id="pane-depts">
+                                    <div class="classification-list" id="class-list-depts"></div>
+                                    <form class="classification-add-form" id="form-add-dept">
+                                        <input type="text" id="input-add-dept" required placeholder="e.g. Healthcare Services, Valet Parking...">
+                                        <button type="submit" class="btn btn-primary">Add Department</button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Designations Tab -->
+                                <div class="classification-pane" id="pane-desigs">
+                                    <div class="classification-list" id="class-list-desigs"></div>
+                                    <form class="classification-add-form" id="form-add-desig">
+                                        <input type="text" id="input-add-desig" required placeholder="e.g. Head Nurse, Bouncer, Valet Driver...">
+                                        <button type="submit" class="btn btn-primary">Add Designation</button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Manpower Types Tab -->
+                                <div class="classification-pane" id="pane-types">
+                                    <div class="classification-list" id="class-list-types"></div>
+                                    <form class="classification-add-form" id="form-add-type">
+                                        <input type="text" id="input-add-type" required placeholder="e.g. Healthcare Staff, Driver Force...">
+                                        <button type="submit" class="btn btn-primary">Add Manpower Type</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row mt-4">
+                        <div class="dashboard-card col-6">
+                            <div class="card-header">
+                                <h3><i data-lucide="info"></i> System Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-section">
+                                    <span class="info-label">Application Name</span>
+                                    <span class="info-value">Valley Security Service Agency</span>
+                                </div>
+                                <div class="info-section">
+                                    <span class="info-label">Version</span>
+                                    <span class="info-value">1.0.0 Professional</span>
+                                </div>
+                                <div class="info-section">
+                                    <span class="info-label">Developed By</span>
+                                    <span class="info-value" style="color: #d4af37; font-weight: 600;">SALIM ILYAS BHAT</span>
+                                </div>
+                                <div class="info-section">
+                                    <span class="info-label">Release Date</span>
+                                    <span class="info-value">June 2026</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card col-6">
+                            <div class="card-header">
+                                <h3>🏆 Creator Attribution</h3>
+                                <span class="badge badge-gold">Developer</span>
+                            </div>
+                            <div class="card-body" style="text-align: center;">
+                                <div style="padding: 16px; background: rgba(212, 175, 55, 0.05); border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.15);">
+                                    <h4 style="font-size: 16px; font-weight: 700; color: #d4af37; margin: 0;">SALIM ILYAS BHAT</h4>
+                                    <p style="color: #86868b; margin: 8px 0 0 0; font-size: 12px;">Full-Stack Developer & Designer</p>
+                                    <p style="color: #6b7280; margin: 10px 0 0 0; font-size: 11px; line-height: 1.5;">This system was built from concept to production by SALIM ILYAS BHAT.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- EMPLOYEE MODAL (ADD / EDIT FORM) -->
+    <div id="employee-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="employee-modal-title">Register New Security Personnel</h2>
+                <button class="modal-close" id="btn-close-emp-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="employee-form" class="luxury-form">
+                    <input type="hidden" id="form-emp-id">
+                    
+                    <h3 class="form-section-title">1. Personal & Contact Information</h3>
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-name">Full Name *</label>
+                            <input type="text" id="form-name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-father">Father's Name *</label>
+                            <input type="text" id="form-father" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-dob">Date of Birth *</label>
+                            <input type="date" id="form-dob" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-gender">Gender *</label>
+                            <select id="form-gender" required>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-blood">Blood Group *</label>
+                            <select id="form-blood" required>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-marital">Marital Status *</label>
+                            <select id="form-marital" required>
+                                <option value="Single">Single</option>
+                                <option value="Married">Married</option>
+                                <option value="Divorced">Divorced</option>
+                                <option value="Widowed">Widowed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-mobile">Mobile Number *</label>
+                            <input type="tel" id="form-mobile" required pattern="[0-9]{10}" placeholder="10 digit number">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-alt-mobile">Alternate Number</label>
+                            <input type="tel" id="form-alt-mobile" pattern="[0-9]{10}">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-email">Email Address</label>
+                            <input type="email" id="form-email" placeholder="name@domain.com">
+                        </div>
+                    </div>
+
+                    <h3 class="form-section-title">2. Address Details</h3>
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label for="form-perm-address">Permanent Address *</label>
+                            <input type="text" id="form-perm-address" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-curr-address">Current Address *</label>
+                            <input type="text" id="form-curr-address" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row col-4">
+                        <div class="form-group">
+                            <label for="form-district">District *</label>
+                            <input type="text" id="form-district" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-state">State *</label>
+                            <input type="text" id="form-state" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-pin">PIN Code *</label>
+                            <input type="text" id="form-pin" required pattern="[0-9]{6}">
+                        </div>
+                    </div>
+
+                    <h3 class="form-section-title">3. Employment & Location Assignment</h3>
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-designation">Designation *</label>
+                            <select id="form-designation" required>
+                                <option value="Security Guard">Security Guard</option>
+                                <option value="Supervisor">Supervisor</option>
+                                <option value="Bodyguard">Bodyguard</option>
+                                <option value="Security Manager">Security Manager</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-client">Client Deployment Site *</label>
+                            <select id="form-client" required>
+                                <!-- Populated dynamically from Client list -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-manager">Reporting Manager *</label>
+                            <input type="text" id="form-manager" required value="Vikram Rathore">
+                        </div>
+                    </div>
+
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-joining-date">Joining Date *</label>
+                            <input type="date" id="form-joining-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-status">Employment Status *</label>
+                            <select id="form-status" required>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Suspended">Suspended</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-category">Category *</label>
+                            <select id="form-category" required>
+                                <option value="Unskilled">Unskilled</option>
+                                <option value="Semi-Skilled">Semi-Skilled</option>
+                                <option value="Skilled">Skilled</option>
+                                <option value="Highly Skilled">Highly Skilled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h3 class="form-section-title">4. Emergency Contact</h3>
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-emergency-name">Contact Person *</label>
+                            <input type="text" id="form-emergency-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-emergency-relation">Relationship *</label>
+                            <input type="text" id="form-emergency-relation" required placeholder="e.g. Father, Spouse">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-emergency-mobile">Mobile Number *</label>
+                            <input type="tel" id="form-emergency-mobile" required pattern="[0-9]{10}">
+                        </div>
+                    </div>
+
+                    <h3 class="form-section-title">5. Photo, Signature & Document Scans</h3>
+                    <div class="form-row col-2">
+                        <div class="form-group">
+                            <label for="form-photo-upload">Passport Size Photograph *</label>
+                            <input type="file" id="form-photo-upload" accept="image/*">
+                            <div class="preview-upload-box" id="form-photo-preview-box">
+                                <span class="preview-placeholder">No image selected (Required for ID card)</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-sig-upload">Guard Signature Scan *</label>
+                            <input type="file" id="form-sig-upload" accept="image/*">
+                            <div class="preview-upload-box" id="form-sig-preview-box">
+                                <span class="preview-placeholder">No signature selected (Required for ID card)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row col-3">
+                        <div class="form-group">
+                            <label for="form-aadhaar-check">Aadhaar Verification Status</label>
+                            <select id="form-aadhaar-check">
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-pan-check">PAN Verification Status</label>
+                            <select id="form-pan-check">
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-police-check">Police Clearance Report</label>
+                            <select id="form-police-check">
+                                <option value="Pending">Pending</option>
+                                <option value="Verified">Verified</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions modal-footer">
+                        <button type="button" class="btn btn-outline" id="btn-cancel-emp">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-employee">Register Employee</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENT MODAL -->
+    <div id="client-modal" class="modal-overlay hidden">
+        <div class="modal-container size-sm">
+            <div class="modal-header">
+                <h2>Register New Client Deployment Site</h2>
+                <button class="modal-close" id="btn-close-client-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="client-form" class="luxury-form">
+                    <div class="form-group">
+                        <label for="form-client-name">Client Site/Company Name *</label>
+                        <input type="text" id="form-client-name" required placeholder="e.g. Wave Mall - Jammu">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-client-location">Location Address *</label>
+                        <input type="text" id="form-client-location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-client-manager">Client Site Manager Name *</label>
+                        <input type="text" id="form-client-manager" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-client-contact">Site Contact Phone *</label>
+                        <input type="tel" id="form-client-contact" required pattern="[0-9]{10}">
+                    </div>
+                    <div class="form-actions modal-footer mt-4">
+                        <button type="button" class="btn btn-outline" id="btn-cancel-client">Cancel</button>
+                        <submit class="btn btn-primary" id="btn-submit-client">Create Client Site</submit>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Profile Modal -->
+    <div id="developer-modal" class="modal-backdrop hidden">
+        <div class="modal-content developer-modal-content">
+            <button class="modal-close-btn" id="btn-close-developer-modal">&times;</button>
+            <div class="developer-profile-wrapper">
+                <div class="developer-portrait-container">
+                    <img src="developer.jpg" alt="Salim Ilyas Bhat" class="developer-portrait-img">
+                </div>
+                <div class="developer-info">
+                    <h2 class="developer-name">Salim Ilyas Bhat</h2>
+                    <h4 class="developer-title">Lead Architect & Systems Developer</h4>
+                    <p class="developer-description">Designed and developed the Valley Security Service Agency (VSA) Employee Management & Identity Verification Platform. Focused on creating zero-lag, highly responsive operations systems with state-of-the-art security badge generation utilities.</p>
+                    
+                    <div class="developer-quote-box">
+                        <p class="developer-quote">"We are what we repeatedly do. Excellence, then, is not an act but a habit."</p>
+                        <span class="developer-quote-author">— Aristotle</span>
+                    </div>
+                    
+                    <div class="developer-tech-badges">
+                        <span class="tech-badge">Node.js</span>
+                        <span class="tech-badge">Vanilla CSS</span>
+                        <span class="tech-badge">Glassmorphism</span>
+                        <span class="tech-badge">html2canvas</span>
+                        <span class="tech-badge">QRious API</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Printable Container -->
+    <div id="printable-id-bulk" class="hidden"></div>
+
+    <!-- Script Entrypoint -->
+    <script src="app.js"></script>
+</body>
+</html>

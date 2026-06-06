@@ -1,0 +1,812 @@
+/* ============================================================================
+   VALLEY SECURITY SYSTEM - WORLD-CLASS MASTER UI DESIGN SYSTEM
+   Designed for: Apple × Stripe × Linear × Vercel × Notion standards
+   ============================================================================ */
+
+/* ============================================================================
+   1. DESIGN TOKENS & VARIABLES (Fully Customizable)
+   ============================================================================ */
+
+:root {
+    /* COLORS - Premium Dark Mode (True OLED Black) */
+    --color-bg-primary: #000000;
+    --color-bg-secondary: #0a0a0a;
+    --color-bg-tertiary: #1a1a1a;
+    --color-surface: #0f0f0f;
+    --color-surface-hover: #1a1a1a;
+    
+    /* Accent Colors - Dynamic System */
+    --color-accent: #d4af37;
+    --color-accent-light: #e8c547;
+    --color-accent-dark: #b89a2b;
+    --color-accent-rgb: 212, 175, 55;
+    
+    /* Text Colors - Premium Hierarchy */
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #a3a3a3;
+    --color-text-tertiary: #6f6f6f;
+    
+    /* Semantic Colors */
+    --color-success: #34c759;
+    --color-success-light: #64d257;
+    --color-success-dark: #1ea94c;
+    --color-error: #ff3b30;
+    --color-error-light: #ff6b62;
+    --color-error-dark: #e61a0f;
+    --color-warning: #ff9500;
+    --color-warning-light: #ffb340;
+    --color-warning-dark: #e67e0f;
+    --color-info: #0a84ff;
+    --color-info-light: #3499ff;
+    --color-info-dark: #0066e6;
+    
+    /* Borders & Dividers */
+    --color-border: rgba(255, 255, 255, 0.08);
+    --color-border-hover: rgba(255, 255, 255, 0.12);
+    --color-divider: rgba(255, 255, 255, 0.04);
+    
+    /* SPACING SYSTEM - 4px base unit */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    --space-9: 96px;
+    --space-10: 128px;
+    
+    /* TYPOGRAPHY SYSTEM */
+    --font-family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-family-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Courier, monospace;
+    
+    /* Font Sizes (Modular Scale 1.125) */
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 21px;
+    --font-size-3xl: 24px;
+    --font-size-4xl: 28px;
+    --font-size-5xl: 32px;
+    --font-size-6xl: 40px;
+    --font-size-7xl: 48px;
+    
+    /* Font Weights */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Line Heights */
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.8;
+    
+    /* BORDER RADIUS - Apple-style Rounded Corners */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-full: 9999px;
+    
+    /* SHADOWS - Layered Depth System */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.6);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.8);
+    --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.85);
+    --shadow-2xl: 0 20px 48px rgba(0, 0, 0, 0.9);
+    --shadow-inner: inset 0 1px 2px rgba(255, 255, 255, 0.05);
+    
+    /* TRANSITIONS - 60fps Apple Spring Animations */
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+    --duration-slow: 350ms;
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* GLASS MORPHISM */
+    --glass-bg: rgba(10, 10, 10, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(20px);
+    
+    /* LAYOUT CONSTANTS */
+    --sidebar-width: 280px;
+    --sidebar-width-mini: 80px;
+    --header-height: 72px;
+    --max-width: 1440px;
+    
+    /* Z-INDEX SYSTEM */
+    --z-base: 1;
+    --z-dropdown: 100;
+    --z-modal: 1000;
+    --z-tooltip: 1100;
+    --z-notification: 1200;
+}
+
+/* ============================================================================
+   2. RESET & BASE STYLES
+   ============================================================================ */
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-family-primary);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-normal);
+    overflow-x: hidden;
+}
+
+/* Selection Styling */
+::selection {
+    background-color: rgba(var(--color-accent-rgb), 0.25);
+    color: var(--color-text-primary);
+}
+
+::-moz-selection {
+    background-color: rgba(var(--color-accent-rgb), 0.25);
+    color: var(--color-text-primary);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(var(--color-accent-rgb), 0.3);
+    border-radius: var(--radius-full);
+    transition: background var(--duration-fast) var(--ease-smooth);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--color-accent-rgb), 0.5);
+}
+
+/* ============================================================================
+   3. TYPOGRAPHY SYSTEM
+   ============================================================================ */
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--color-text-primary);
+}
+
+h1 {
+    font-size: var(--font-size-7xl);
+    font-weight: var(--font-weight-bold);
+}
+
+h2 {
+    font-size: var(--font-size-5xl);
+    font-weight: var(--font-weight-bold);
+}
+
+h3 {
+    font-size: var(--font-size-3xl);
+}
+
+h4 {
+    font-size: var(--font-size-2xl);
+}
+
+h5 {
+    font-size: var(--font-size-xl);
+}
+
+h6 {
+    font-size: var(--font-size-lg);
+}
+
+p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+}
+
+a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+a:hover {
+    color: var(--color-accent-light);
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   4. COMPONENT LIBRARY - BUTTONS
+   ============================================================================ */
+
+button {
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-lg);
+    white-space: nowrap;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Primary Button - Accent Colored */
+.btn-primary {
+    background-color: var(--color-accent);
+    color: #000000;
+    box-shadow: 0 8px 16px rgba(var(--color-accent-rgb), 0.3);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-accent-light);
+    box-shadow: 0 12px 24px rgba(var(--color-accent-rgb), 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Secondary Button - Outlined */
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-text-primary);
+    border: 1.5px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-surface-hover);
+    border-color: var(--color-border-hover);
+    color: var(--color-accent);
+}
+
+/* Tertiary Button - Ghost */
+.btn-tertiary {
+    background-color: transparent;
+    color: var(--color-text-secondary);
+}
+
+.btn-tertiary:hover {
+    background-color: rgba(var(--color-accent-rgb), 0.08);
+    color: var(--color-accent);
+}
+
+/* Button Sizes */
+.btn-sm {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+}
+
+.btn-lg {
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--font-size-lg);
+}
+
+/* ============================================================================
+   5. COMPONENT LIBRARY - CARDS & CONTAINERS
+   ============================================================================ */
+
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    transition: all var(--duration-base) var(--ease-smooth);
+    box-shadow: var(--shadow-md);
+}
+
+.card:hover {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-divider);
+}
+
+.card-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.card-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    margin-top: var(--space-1);
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-divider);
+}
+
+/* ============================================================================
+   6. COMPONENT LIBRARY - FORMS
+   ============================================================================ */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+}
+
+label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+label:hover {
+    color: var(--color-text-primary);
+}
+
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-text-tertiary);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    background-color: var(--color-surface-hover);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* ============================================================================
+   7. LAYOUTS & SECTION STYLING
+   ============================================================================ */
+
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--color-bg-primary);
+}
+
+.app-sidebar {
+    width: var(--sidebar-width);
+    background: var(--color-bg-secondary);
+    border-right: 1px solid var(--color-border);
+    padding: var(--space-5);
+    overflow-y: auto;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+}
+
+.app-main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-header {
+    height: var(--header-height);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-6);
+    gap: var(--space-6);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-base);
+}
+
+.app-content {
+    flex: 1;
+    padding: var(--space-6);
+    overflow-y: auto;
+}
+
+/* ============================================================================
+   8. RESPONSIVE DESIGN - MOBILE FIRST
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+    .app-sidebar {
+        width: var(--sidebar-width-mini);
+        padding: var(--space-3);
+    }
+    
+    .app-main {
+        margin-left: var(--sidebar-width-mini);
+    }
+    
+    .sidebar-text {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --space-4: 14px;
+        --space-5: 20px;
+        --space-6: 24px;
+    }
+    
+    .app-sidebar {
+        position: fixed;
+        left: -100%;
+        width: 70%;
+        height: 100vh;
+        transition: left var(--duration-base) var(--ease-smooth);
+        z-index: 999;
+        border-right: 1px solid var(--color-border);
+    }
+    
+    .app-sidebar.open {
+        left: 0;
+    }
+    
+    .app-main {
+        margin-left: 0;
+    }
+    
+    .app-header {
+        padding: 0 var(--space-4);
+    }
+    
+    .app-content {
+        padding: var(--space-4);
+    }
+    
+    h1 { font-size: var(--font-size-5xl); }
+    h2 { font-size: var(--font-size-3xl); }
+}
+
+@media (max-width: 480px) {
+    :root {
+        font-size: 14px;
+    }
+    
+    .card {
+        padding: var(--space-4);
+    }
+    
+    .btn {
+        padding: var(--space-2) var(--space-4);
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* ============================================================================
+   9. UTILITY CLASSES
+   ============================================================================ */
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-5 { gap: var(--space-5); }
+
+.p-1 { padding: var(--space-1); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-5 { padding: var(--space-5); }
+.p-6 { padding: var(--space-6); }
+
+.m-1 { margin: var(--space-1); }
+.m-2 { margin: var(--space-2); }
+.m-3 { margin: var(--space-3); }
+.m-4 { margin: var(--space-4); }
+.m-5 { margin: var(--space-5); }
+.m-6 { margin: var(--space-6); }
+
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary { color: var(--color-text-tertiary); }
+
+.font-light { font-weight: var(--font-weight-light); }
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-2xl { border-radius: var(--radius-2xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* ============================================================================
+   10. ANIMATIONS & TRANSITIONS - 60FPS
+   ============================================================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideRight {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn var(--duration-base) var(--ease-smooth);
+}
+
+.animate-slideUp {
+    animation: slideUp var(--duration-base) var(--ease-smooth);
+}
+
+.animate-slideDown {
+    animation: slideDown var(--duration-base) var(--ease-smooth);
+}
+
+.animate-slideLeft {
+    animation: slideLeft var(--duration-base) var(--ease-smooth);
+}
+
+.animate-slideRight {
+    animation: slideRight var(--duration-base) var(--ease-smooth);
+}
+
+.animate-pulse {
+    animation: pulse var(--duration-slow) infinite;
+}
+
+/* ============================================================================
+   11. DARK MODE & ACCESSIBILITY
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Already in dark mode by default */
+}
+
+/* ============================================================================
+   12. LEGACY STYLES COMPATIBILITY (Keep existing functionality)
+   ============================================================================ */
+
+.nav-item {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-smooth);
+    color: var(--color-text-secondary);
+}
+
+.nav-item:hover {
+    background-color: rgba(var(--color-accent-rgb), 0.1);
+    color: var(--color-accent);
+}
+
+.nav-item.active {
+    background-color: rgba(var(--color-accent-rgb), 0.15);
+    color: var(--color-accent);
+}
+
+.page-title {
+    font-size: var(--font-size-5xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--space-2);
+}
+
+.page-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-5);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-active {
+    background-color: rgba(52, 199, 89, 0.15);
+    color: var(--color-success);
+}
+
+.status-suspended {
+    background-color: rgba(255, 59, 48, 0.15);
+    color: var(--color-error);
+}
+
+.status-pending {
+    background-color: rgba(255, 149, 0, 0.15);
+    color: var(--color-warning);
+}
+
+/* ============================================================================
+   13. PRINT & EXPORT STYLES
+   ============================================================================ */
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+}
+
+/* ============================================================================
+   END OF STYLE SHEET
+   ============================================================================ */
+
+
+/* Global Animation & Transition Reset (CLEAN, VERY VERY FAST) */
+*, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+}
