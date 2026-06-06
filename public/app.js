@@ -1296,6 +1296,10 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             logoSize: 50,
             headerHeight: 90,
             headerFontSize: 14,
+            photoWidth: 85,
+            photoHeight: 105,
+            qrSize: 70,
+            detailsFontSize: 8,
             fields: {
                 photo: true, name: true, designation: true, department: true, empid: true,
                 father: true, phone: true, blood: true, address: true, signature: true,
@@ -1308,6 +1312,10 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
     const logoSize = template.logoSize || 50;
     const headerHeight = template.headerHeight || 90;
     const headerFontSize = template.headerFontSize || 14;
+    const photoWidth = template.photoWidth || (template.layout === 'horizontal' ? 90 : 85);
+    const photoHeight = template.photoHeight || (template.layout === 'horizontal' ? 110 : 105);
+    const qrSize = template.qrSize || 70;
+    const detailsFontSize = template.detailsFontSize || (template.layout === 'horizontal' ? 7.5 : 8);
 
     // Normalize fields to support both DB format and Form format
     const showPhoto = fields.photo !== false;
@@ -1424,16 +1432,16 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                 <div style="display: flex; gap: 15px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 8px;">
                     
                     <!-- Column 1: Photo and Signature -->
-                    <div style="width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <div style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
                         <!-- Photo -->
                         ${showPhoto ? `
-                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: 90px; height: 110px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
                             <img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                         ` : ''}
                         
                         <!-- Signature (always visible) -->
-                        <div style="width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
+                        <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.4) brightness(1.1);">
                             </div>
@@ -1461,65 +1469,65 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
                             ${showEmpId ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
                             </tr>
                             ` : ''}
                             ${showFather ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Father:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Father:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showDepartment ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Dept:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Dept:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showPhone ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showBlood ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Blood:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Blood:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
                             </tr>
                             ` : ''}
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Validity:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Validity:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
                             </tr>
                             ${showAddress ? `
                             <tr>
-                                <td style="font-size: 7.5px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Address:</td>
-                                <td style="font-size: 7.5px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Address:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
                             </tr>
                             ` : ''}
                         </table>
                     </div>
                     
                     <!-- Column 3: QR Code, Barcode, and terms -->
-                    <div style="width: 85px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
                         <!-- QR Code -->
                         ${showQrCode ? `
-                        <div style="width: 70px; height: 70px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 5px;">
-                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="64" style="width: 64px; height: 64px; display: block;"></canvas>
+                        <div style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 5px;">
+                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
                         </div>
                         ` : ''}
                         
                         <!-- Instructions -->
-                        <div style="font-size: 4.8px; color: ${subtextColor}; line-height: 1.2; text-align: center; width: 100%; padding: 3px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); margin-bottom: 5px;">
+                        <div style="font-size: ${Math.max(4.2, detailsFontSize * 0.6)}px; color: ${subtextColor}; line-height: 1.2; text-align: center; width: 100%; padding: 3px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); margin-bottom: 5px;">
                             VSA property.<br>Return: Shaheed Gunj Srinagar.
                         </div>
                         
                         <!-- Barcode -->
                         ${showBarcode ? `
                         <div style="width: 100%; display: flex; justify-content: center; align-items: center; height: 20px; flex-shrink: 0; margin-top: auto;">
-                            <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: 85px; height: 18px;"></canvas>
+                            <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: ${Math.max(85, qrSize + 15)}px; height: 18px;"></canvas>
                         </div>
                         ` : ''}
                     </div>
@@ -1548,23 +1556,23 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                 <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 5px;">
                     
                     <!-- Left column: Photo, QR Code, Signature -->
-                    <div style="width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <div style="width: ${Math.max(85, photoWidth, qrSize)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
                         <!-- Photo -->
                         ${showPhoto ? `
-                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: 85px; height: 105px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
                             <img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                         ` : ''}
                         
                         <!-- QR Code -->
                         ${showQrCode ? `
-                        <div style="width: 70px; height: 70px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
-                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="64" style="width: 64px; height: 64px; display: block;"></canvas>
+                        <div style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
+                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
                         </div>
                         ` : ''}
                         
                         <!-- Signature (always visible) -->
-                        <div style="width: 85px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
+                        <div style="width: ${Math.max(85, photoWidth)}px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.4) brightness(1.1);">
                             </div>
@@ -1592,48 +1600,48 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
                             ${showEmpId ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
                             </tr>
                             ` : ''}
                             ${showFather ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Father:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Father:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showDepartment ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Dept:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Dept:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showPhone ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showBlood ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Blood:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Blood:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
                             </tr>
                             ` : ''}
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Validity:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Validity:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
                             </tr>
                             ${showAddress ? `
                             <tr>
-                                <td style="font-size: 8px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Address:</td>
-                                <td style="font-size: 8px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Address:</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
                             </tr>
                             ` : ''}
                         </table>
                         
                         <!-- Instructions/Footer -->
-                        <div style="font-size: 5.5px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">
+                        <div style="font-size: ${Math.max(4.5, detailsFontSize * 0.65)}px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">
                             1. Card is VSA property, display on duty.<br>2. Return to Shaheed Gunj Srinagar 190001.
                         </div>
                     </div>
@@ -3661,6 +3669,22 @@ function loadTemplateInStudio(id) {
     document.getElementById('tpl-header-font-size').value = headerFontSizeVal;
     document.getElementById('lbl-header-font-size').textContent = headerFontSizeVal;
 
+    const photoWidthVal = tpl.photoWidth || 85;
+    document.getElementById('tpl-photo-width').value = photoWidthVal;
+    document.getElementById('lbl-photo-width').textContent = photoWidthVal;
+
+    const photoHeightVal = tpl.photoHeight || 105;
+    document.getElementById('tpl-photo-height').value = photoHeightVal;
+    document.getElementById('lbl-photo-height').textContent = photoHeightVal;
+
+    const qrSizeVal = tpl.qrSize || 70;
+    document.getElementById('tpl-qr-size').value = qrSizeVal;
+    document.getElementById('lbl-qr-size').textContent = qrSizeVal;
+
+    const detailsFontSizeVal = tpl.detailsFontSize || 8;
+    document.getElementById('tpl-details-font-size').value = detailsFontSizeVal;
+    document.getElementById('lbl-details-font-size').textContent = detailsFontSizeVal;
+
     // Active background pattern preset
     document.querySelectorAll('.btn-bg-preset').forEach(btn => {
         if (btn.getAttribute('data-bg') === (tpl.backgroundImage || '')) {
@@ -3737,6 +3761,10 @@ function getActiveTemplateFromForm() {
     const logoSize = parseInt(document.getElementById('tpl-logo-size').value) || 50;
     const headerHeight = parseInt(document.getElementById('tpl-header-height').value) || 90;
     const headerFontSize = parseInt(document.getElementById('tpl-header-font-size').value) || 14;
+    const photoWidth = parseInt(document.getElementById('tpl-photo-width').value) || 85;
+    const photoHeight = parseInt(document.getElementById('tpl-photo-height').value) || 105;
+    const qrSize = parseInt(document.getElementById('tpl-qr-size').value) || 70;
+    const detailsFontSize = parseInt(document.getElementById('tpl-details-font-size').value) || 8;
 
     // Active background pattern preset
     const activeBgBtn = document.querySelector('.btn-bg-preset.active');
@@ -3785,6 +3813,10 @@ function getActiveTemplateFromForm() {
         logoSize,
         headerHeight,
         headerFontSize,
+        photoWidth,
+        photoHeight,
+        qrSize,
+        detailsFontSize,
         backgroundImage,
         logo,
         signature,
@@ -3884,6 +3916,18 @@ function resetTemplateForm() {
     document.getElementById('tpl-header-font-size').value = 14;
     document.getElementById('lbl-header-font-size').textContent = 14;
 
+    document.getElementById('tpl-photo-width').value = 85;
+    document.getElementById('lbl-photo-width').textContent = 85;
+
+    document.getElementById('tpl-photo-height').value = 105;
+    document.getElementById('lbl-photo-height').textContent = 105;
+
+    document.getElementById('tpl-qr-size').value = 70;
+    document.getElementById('lbl-qr-size').textContent = 70;
+
+    document.getElementById('tpl-details-font-size').value = 8;
+    document.getElementById('lbl-details-font-size').textContent = 8;
+
     VSA_STATE.customLogoBase64 = null;
     VSA_STATE.customSigBase64 = null;
     document.getElementById('tpl-logo-filename').textContent = "";
@@ -3929,7 +3973,10 @@ function setupTemplatesManager() {
     });
 
     // 1B. Range sliders listeners
-    const rangeSliders = ['tpl-logo-size', 'tpl-header-height', 'tpl-header-font-size'];
+    const rangeSliders = [
+        'tpl-logo-size', 'tpl-header-height', 'tpl-header-font-size',
+        'tpl-photo-width', 'tpl-photo-height', 'tpl-qr-size', 'tpl-details-font-size'
+    ];
     rangeSliders.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -3938,6 +3985,10 @@ function setupTemplatesManager() {
                 if (id === 'tpl-logo-size') document.getElementById('lbl-logo-size').textContent = val;
                 if (id === 'tpl-header-height') document.getElementById('lbl-header-height').textContent = val;
                 if (id === 'tpl-header-font-size') document.getElementById('lbl-header-font-size').textContent = val;
+                if (id === 'tpl-photo-width') document.getElementById('lbl-photo-width').textContent = val;
+                if (id === 'tpl-photo-height') document.getElementById('lbl-photo-height').textContent = val;
+                if (id === 'tpl-qr-size') document.getElementById('lbl-qr-size').textContent = val;
+                if (id === 'tpl-details-font-size') document.getElementById('lbl-details-font-size').textContent = val;
                 updateLivePreview();
             });
         }
