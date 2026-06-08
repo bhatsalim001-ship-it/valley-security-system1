@@ -1465,7 +1465,10 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
         photoSrc = getFallbackAvatarData(initial);
     }
 
-    const qrHost = (VSA_STATE.lanIp && !VSA_STATE.lanIp.startsWith('localhost')) ? VSA_STATE.lanIp : window.location.host;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const qrHost = (isLocalhost && VSA_STATE.lanIp && !VSA_STATE.lanIp.startsWith('localhost'))
+        ? VSA_STATE.lanIp
+        : window.location.host;
     const verificationUrl = `${window.location.protocol}//${qrHost}/verification.html?id=${emp.id}`;
 
     if (template.layout === 'horizontal') {
