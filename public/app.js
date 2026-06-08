@@ -477,6 +477,8 @@ function renderEmployeeDirectory() {
     // Apply Filter Criteria
     const searchVal = document.getElementById('emp-filter-search').value.toLowerCase();
     const designationVal = document.getElementById('emp-filter-designation').value;
+    const departmentVal = document.getElementById('emp-filter-department').value;
+    const locationVal = document.getElementById('emp-filter-location').value;
     const statusVal = document.getElementById('emp-filter-status').value;
 
     const filtered = VSA_STATE.employees.filter(emp => {
@@ -484,9 +486,11 @@ function renderEmployeeDirectory() {
                               emp.id.toLowerCase().includes(searchVal) || 
                               emp.mobile.includes(searchVal);
         const matchesDesignation = !designationVal || emp.designation === designationVal;
+        const matchesDepartment = !departmentVal || emp.department === departmentVal;
+        const matchesLocation = !locationVal || emp.clientLocation === locationVal;
         const matchesStatus = !statusVal || emp.status === statusVal;
 
-        return matchesSearch && matchesDesignation && matchesStatus;
+        return matchesSearch && matchesDesignation && matchesDepartment && matchesLocation && matchesStatus;
     });
 
     // Toggle view containers based on directoryViewMode
@@ -783,6 +787,26 @@ function populateSelectors() {
         empFilterDesigSel.innerHTML = '<option value="">Select Role</option>';
         VSA_STATE.designations.forEach(d => {
             empFilterDesigSel.innerHTML += `<option value="${d}">${d}</option>`;
+        });
+    }
+
+    const empFilterDeptSel = document.getElementById('emp-filter-department');
+    if (empFilterDeptSel) {
+        empFilterDeptSel.innerHTML = '<option value="">All Departments</option>';
+        VSA_STATE.departments.forEach(d => {
+            empFilterDeptSel.innerHTML += `<option value="${d}">${d}</option>`;
+        });
+    }
+
+    const empFilterLocSel = document.getElementById('emp-filter-location');
+    if (empFilterLocSel) {
+        empFilterLocSel.innerHTML = '<option value="">All Places</option>';
+        const uniqueLocations = [...new Set(VSA_STATE.employees
+            .map(e => e.clientLocation)
+            .filter(loc => loc && loc.trim() !== ''))]
+            .sort();
+        uniqueLocations.forEach(loc => {
+            empFilterLocSel.innerHTML += `<option value="${loc}">${loc}</option>`;
         });
     }
 }
@@ -1460,10 +1484,10 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                 </div>
 
                 <!-- Body Content Split -->
-                <div style="display: flex; gap: 15px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 8px;">
+                <div class="id-horizontal-body" style="display: flex; gap: 15px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 8px;">
                     
                     <!-- Column 1: Photo and Signature -->
-                    <div style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <div class="id-horizontal-left" style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
                         <!-- Photo -->
                         ${showPhoto ? `
                         <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
@@ -1481,7 +1505,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                     </div>
                     
                     <!-- Column 2: Name, Designation, and Details Table -->
-                    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.15); padding-right: 10px;">
+                    <div class="id-horizontal-right" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.15); padding-right: 10px;">
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
                             ${showName ? `
@@ -1551,8 +1575,8 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                     <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
                         <!-- QR Code -->
                         ${showQrCode ? `
-                        <div style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 5px;">
-                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
+                        <div class="id-portrait-qr" style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 5px;">
+                            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
                         </div>
                         ` : ''}
                         
@@ -1603,8 +1627,8 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         
                         <!-- QR Code -->
                         ${showQrCode ? `
-                        <div style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
-                            <canvas class="qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
+                        <div class="id-portrait-qr" style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
+                            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
                         </div>
                         ` : ''}
                         
@@ -1998,6 +2022,12 @@ function setupEventHandlers() {
     document.getElementById('emp-filter-search').addEventListener('input', renderEmployeeDirectory);
     document.getElementById('emp-filter-designation').addEventListener('change', renderEmployeeDirectory);
     document.getElementById('emp-filter-status').addEventListener('change', renderEmployeeDirectory);
+    
+    const empFilterDept = document.getElementById('emp-filter-department');
+    if (empFilterDept) empFilterDept.addEventListener('change', renderEmployeeDirectory);
+    
+    const empFilterLoc = document.getElementById('emp-filter-location');
+    if (empFilterLoc) empFilterLoc.addEventListener('change', renderEmployeeDirectory);
 
     // View Toggles: Card View & List View
     document.getElementById('btn-view-card').addEventListener('click', function() {

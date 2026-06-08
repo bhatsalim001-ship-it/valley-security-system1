@@ -263,11 +263,25 @@
                         </div>
                         <div class="card-body">
                             <form id="employees-criteria-form" class="luxury-form" onsubmit="event.preventDefault(); renderEmployeeDirectory();">
-                                <div class="form-row col-4 align-center">
+                                <div class="form-row col-6 align-center">
                                     <div class="form-group">
                                         <label for="emp-filter-designation">Role *</label>
                                         <select id="emp-filter-designation">
                                             <option value="">Select Role</option>
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="emp-filter-department">Department</label>
+                                        <select id="emp-filter-department">
+                                            <option value="">All Departments</option>
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="emp-filter-location">Place</label>
+                                        <select id="emp-filter-location">
+                                            <option value="">All Places</option>
                                             <!-- Populated dynamically -->
                                         </select>
                                     </div>

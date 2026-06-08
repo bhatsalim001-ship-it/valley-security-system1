@@ -1513,6 +1513,14 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: repeat(4, 1fr);
 }
 
+.form-row.col-5 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.form-row.col-6 {
+    grid-template-columns: repeat(6, 1fr);
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -2055,8 +2063,6 @@ input:focus, select:focus, textarea:focus {
 }
 
 .qr-canvas {
-    width: 65px !important;
-    height: 65px !important;
     background: #ffffff;
     border: 1px solid #dddddd;
     padding: 2px;
@@ -3049,16 +3055,13 @@ input[type="checkbox"].directory-select-item:checked::after {
 }
 
 .id-card-horizontal .id-portrait-qr {
-    width: 75px;
-    height: 75px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .id-card-horizontal .id-portrait-qr canvas {
-    width: 75px !important;
-    height: 75px !important;
+    display: block;
 }
 
 .id-card-horizontal .id-portrait-meta {
@@ -3800,4 +3803,24 @@ input[type="checkbox"].directory-select-item:checked::after {
     border-radius: 4px;
     width: 180px;
 }
+
+/* Responsive grid rows for Select Criteria and general forms */
+@media (max-width: 1024px) {
+    .form-row.col-4, .form-row.col-5, .form-row.col-6 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row.col-3, .form-row.col-4, .form-row.col-5, .form-row.col-6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .form-row.col-2, .form-row.col-3, .form-row.col-4, .form-row.col-5, .form-row.col-6 {
+        grid-template-columns: 1fr;
+    }
+}
+
 
