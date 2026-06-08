@@ -297,17 +297,15 @@
             }
 
             try {
-                // Fetch list from Server
-                const response = await fetch('/api/employees');
-                if (!response.ok) throw new Error("Verification network node unreachable.");
-                
-                const employees = await response.json();
-                const guard = employees.find(e => e.id === empId);
-
-                if (!guard) {
+                // Fetch details for this specific guard from the public lookup API
+                const response = await fetch('/api/employees/' + encodeURIComponent(empId));
+                if (response.status === 404) {
                     renderError(contentDiv, "Guardsman Profile Record Missing", `No registered personnel fits the identity key <strong>${escapeHtml(empId)}</strong> in our active database.`);
                     return;
                 }
+                if (!response.ok) throw new Error("Verification network node unreachable.");
+                
+                const guard = await response.json();
 
                 // Render success status card details
                 renderGuardDetails(contentDiv, guard);
