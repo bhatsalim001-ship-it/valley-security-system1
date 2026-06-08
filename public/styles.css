@@ -2452,9 +2452,8 @@ input:focus, select:focus, textarea:focus {
     .id-portrait-designation {
         font-size: 7pt !important;
         margin-bottom: 1.2mm !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
         max-width: 48mm !important;
     }
 
@@ -2599,9 +2598,8 @@ input:focus, select:focus, textarea:focus {
 
     .id-card-horizontal .id-portrait-designation {
         font-size: 7.5pt !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
         max-width: 55mm !important;
     }
 
@@ -2613,9 +2611,6 @@ input:focus, select:focus, textarea:focus {
     .id-card-horizontal .id-portrait-table td {
         font-size: 6.8pt !important;
         padding: 0.4mm 0 !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
     }
 
     .id-card-horizontal .id-table-label {

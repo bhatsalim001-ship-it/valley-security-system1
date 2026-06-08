@@ -1509,19 +1509,19 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
                             ${showName ? `
-                            <h2 style="color: ${textColor}; font-size: 13px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: 13px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                 ${emp.name}
                             </h2>
                             ` : ''}
                             ${showDesignation ? `
-                            <h3 style="color: ${template.accentColor || '#dfba5f'}; font-size: 9px; font-weight: 700; text-transform: uppercase; margin: 1px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: 9px; font-weight: 700; text-transform: uppercase; margin: 1px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word;">
                                 ${emp.designation}
                             </h3>
                             ` : ''}
                         </div>
                         
                         <!-- Details Table -->
-                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
                             ${showEmpId ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
@@ -1537,7 +1537,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                             ${showDepartment ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 2px 0; width: 45%; text-transform: uppercase;">Dept:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 2px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showBlood ? `
@@ -1646,19 +1646,19 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 6px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 4px;">
                             ${showName ? `
-                            <h2 style="color: ${textColor}; font-size: 14px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: 14px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                 ${emp.name}
                             </h2>
                             ` : ''}
                             ${showDesignation ? `
-                            <h3 style="color: ${template.accentColor || '#dfba5f'}; font-size: 10px; font-weight: 700; text-transform: uppercase; margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: 10px; font-weight: 700; text-transform: uppercase; margin: 2px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word;">
                                 ${emp.designation}
                             </h3>
                             ` : ''}
                         </div>
                         
                         <!-- Details Table -->
-                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
+                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
                             ${showEmpId ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
@@ -1674,7 +1674,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                             ${showDepartment ? `
                             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Dept:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.department || '-'}</td>
+                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
                             </tr>
                             ` : ''}
                             ${showBlood ? `
