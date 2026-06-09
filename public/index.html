@@ -661,7 +661,7 @@
                         </div>
 
                         <!-- Right Panel: Single-Sided ID Card Preview -->
-                        <div class="dashboard-card col-5 id-card-preview-container">
+                        <div class="dashboard-card col-5 id-card-preview-container" style="position: sticky; top: 20px; align-self: flex-start;">
                             <div class="card-header">
                                 <h3><i data-lucide="credit-card"></i> ID Card Preview (Print Size)</h3>
                             </div>
@@ -751,7 +751,7 @@
                                     <i data-lucide="plus"></i> New Template
                                 </button>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body" style="max-height: calc(100vh - 290px); overflow-y: auto; padding-right: 6px;">
                                 <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
                                     <input type="hidden" id="tpl-id">
                                     
