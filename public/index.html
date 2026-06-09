@@ -741,17 +741,17 @@
                 </section>
 
                 <!-- 5C. ID CARD TEMPLATES MANAGER VIEW -->
-                <section id="view-templates" class="app-view hidden" style="height: calc(100vh - 160px); display: flex; flex-direction: column; overflow: hidden;">
-                    <div class="dashboard-row" style="align-items: stretch; flex: 1; overflow: hidden; margin-bottom: 0; gap: 20px;">
+                <section id="view-templates" class="app-view hidden">
+                    <div class="dashboard-row" style="align-items: flex-start;">
                         <!-- Left Panel: Simple Form Controls -->
-                        <div class="dashboard-card col-6" style="display:flex; flex-direction:column; overflow:hidden; height:100%;">
-                            <div class="card-header" style="flex-shrink:0;">
+                        <div class="dashboard-card col-6">
+                            <div class="card-header">
                                 <h3><i data-lucide="sliders"></i> Template Settings Form</h3>
                                 <button class="btn btn-primary btn-xs" id="btn-tpl-new">
                                     <i data-lucide="plus"></i> New Template
                                 </button>
                             </div>
-                            <div class="card-body" style="flex:1; overflow-y:auto; padding-right:6px;">
+                            <div class="card-body">
                                 <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
                                     <input type="hidden" id="tpl-id">
                                     
@@ -960,12 +960,12 @@
                         </div>
 
                         <!-- Right Panel: Live Mock Preview -->
-                        <div class="dashboard-card col-6" style="display:flex; flex-direction:column; overflow:hidden; height:100%;">
-                            <div class="card-header" style="flex-shrink:0;">
+                        <div class="dashboard-card col-6" style="position: sticky; top: 20px; align-self: flex-start;">
+                            <div class="card-header">
                                 <h3><i data-lucide="eye"></i> Live ID Card Preview</h3>
                             </div>
-                            <div class="card-body" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:15px; padding:20px; background:var(--input-bg); border-radius:8px;">
-                                <div id="live-tpl-preview-container" style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; align-items:center; width:100%;">
+                            <div class="card-body" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 20px; min-height: 480px; background: var(--input-bg); border-radius: 8px;">
+                                <div id="live-tpl-preview-container" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
                                     <!-- Rendered dynamically -->
                                 </div>
                             </div>

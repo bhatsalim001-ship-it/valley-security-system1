@@ -4092,7 +4092,8 @@ function setupTemplatesManager() {
     // 1B. Range sliders listeners
     const rangeSliders = [
         'tpl-logo-size', 'tpl-header-height', 'tpl-header-font-size',
-        'tpl-photo-width', 'tpl-photo-height', 'tpl-qr-size', 'tpl-details-font-size'
+        'tpl-photo-width', 'tpl-photo-height', 'tpl-qr-size', 'tpl-details-font-size',
+        'tpl-row-padding', 'tpl-label-width'
     ];
     rangeSliders.forEach(id => {
         const el = document.getElementById(id);
