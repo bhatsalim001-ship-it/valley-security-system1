@@ -742,7 +742,7 @@
 
                 <!-- 5C. ID CARD TEMPLATES MANAGER VIEW -->
                 <section id="view-templates" class="app-view hidden">
-                    <div class="dashboard-row">
+                    <div class="dashboard-row" style="align-items: flex-start;">
                         <!-- Left Panel: Simple Form Controls -->
                         <div class="dashboard-card col-6">
                             <div class="card-header">
@@ -751,7 +751,7 @@
                                     <i data-lucide="plus"></i> New Template
                                 </button>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body" style="max-height: calc(100vh - 160px); overflow-y: auto; padding-right: 6px;">
                                 <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
                                     <input type="hidden" id="tpl-id">
                                     
@@ -960,7 +960,7 @@
                         </div>
 
                         <!-- Right Panel: Live Mock Preview -->
-                        <div class="dashboard-card col-6">
+                        <div class="dashboard-card col-6" style="position: sticky; top: 70px; align-self: flex-start;">
                             <div class="card-header">
                                 <h3><i data-lucide="eye"></i> Live ID Card Preview (Auto-Positioning)</h3>
                             </div>
