@@ -52,6 +52,12 @@ function readLocalDb() {
     if (fs.existsSync(DB_PATH)) {
       const data = fs.readFileSync(DB_PATH, 'utf8');
       return JSON.parse(data);
+    } else {
+      const backupPath = path.join(__dirname, 'db.json.backup');
+      if (fs.existsSync(backupPath)) {
+        const data = fs.readFileSync(backupPath, 'utf8');
+        return JSON.parse(data);
+      }
     }
   } catch (e) {
     console.error('Error reading local JSON database:', e);
@@ -233,18 +239,22 @@ async function initDatabase() {
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
-    // Seed database from local db.json if database is completely empty
-    const userCheck = await pool.query('SELECT COUNT(*) FROM users');
-    if (parseInt(userCheck.rows[0].count, 10) === 0) {
-      console.log('🔄 PostgreSQL is empty. Running auto-migration seed from local db.json...');
-      const localDb = readLocalDb();
+    // Seed database from local db.json / backup individually if tables are empty
+    const localDb = readLocalDb();
 
-      // Seed settings classifications
+    // 1. Seed settings classifications
+    const settingsCheck = await pool.query('SELECT COUNT(*) FROM settings');
+    if (parseInt(settingsCheck.rows[0].count, 10) === 0) {
+      console.log('🔄 Seeding settings classifications...');
       if (localDb.departments) await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['departments', JSON.stringify(localDb.departments)]);
       if (localDb.designations) await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['designations', JSON.stringify(localDb.designations)]);
       if (localDb.manpowerTypes) await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['manpowerTypes', JSON.stringify(localDb.manpowerTypes)]);
+    }
 
-      // Seed users with BCrypt hashing
+    // 2. Seed users
+    const userCheck = await pool.query('SELECT COUNT(*) FROM users');
+    if (parseInt(userCheck.rows[0].count, 10) === 0) {
+      console.log('🔄 Seeding admin users...');
       for (const u of (localDb.users || [])) {
         const hash = await bcrypt.hash(u.password, 10);
         await pool.query('INSERT INTO users (email, password, data) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [
@@ -253,23 +263,33 @@ async function initDatabase() {
           JSON.stringify({ name: u.name, role: u.role, createdAt: u.createdAt })
         ]);
       }
+    }
 
-      // Seed templates
+    // 3. Seed templates
+    const templatesCheck = await pool.query('SELECT COUNT(*) FROM templates');
+    if (parseInt(templatesCheck.rows[0].count, 10) === 0) {
+      console.log('🔄 Seeding badge templates...');
       for (const t of (localDb.templates || [])) {
         await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2) ON CONFLICT DO NOTHING', [t.id, JSON.stringify(t)]);
       }
+    }
 
-      // Seed clients
+    // 4. Seed clients
+    const clientsCheck = await pool.query('SELECT COUNT(*) FROM clients');
+    if (parseInt(clientsCheck.rows[0].count, 10) === 0) {
+      console.log('🔄 Seeding clients...');
       for (const c of (localDb.clients || [])) {
         await pool.query('INSERT INTO clients (name, data) VALUES ($1, $2) ON CONFLICT DO NOTHING', [c.name, JSON.stringify(c)]);
       }
+    }
 
-      // Seed employees
+    // 5. Seed employees
+    const employeesCheck = await pool.query('SELECT COUNT(*) FROM employees');
+    if (parseInt(employeesCheck.rows[0].count, 10) === 0) {
+      console.log('🔄 Seeding employees...');
       for (const emp of (localDb.employees || [])) {
         await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2) ON CONFLICT DO NOTHING', [emp.id, JSON.stringify(emp)]);
       }
-
-      console.log('✅ PostgreSQL Seeded successfully from db.json');
     }
 
     // Clean up target phone number in templates, settings, and employees in PostgreSQL
