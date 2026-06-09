@@ -842,7 +842,27 @@
                                         </div>
                                     </div>
 
+                                    <!-- NEW: Label/Value Colors + Row Height + Spacing -->
                                     <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="tpl-label-color">Label Color <small style="opacity:0.6">(NAME:, DEPT: etc)</small></label>
+                                            <input type="color" id="tpl-label-color" value="#555555" style="width:100%;height:36px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-value-color">Value Color <small style="opacity:0.6">(Salim, Guard etc)</small></label>
+                                            <input type="color" id="tpl-value-color" value="#111111" style="width:100%;height:36px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">
+                                        </div>
+                                    </div>
+                                    <div class="form-row col-2">
+                                        <div class="form-group">
+                                            <label for="tpl-row-padding">Row Height (<span id="lbl-row-padding">3</span>px)</label>
+                                            <input type="range" id="tpl-row-padding" min="1" max="10" value="3" style="width: 100%; accent-color: var(--theme-gold);">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tpl-label-width">Label Width (<span id="lbl-label-width">45</span>%)</label>
+                                            <input type="range" id="tpl-label-width" min="25" max="65" value="45" style="width: 100%; accent-color: var(--theme-gold);">
+                                        </div>
+                                    </div>
                                         <div class="form-group">
                                             <label for="tpl-header-text">Agency Title Text *</label>
                                             <input type="text" id="tpl-header-text" required placeholder="VALLEY SECURITY AGENCY">
