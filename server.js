@@ -266,12 +266,9 @@ async function initDatabase() {
     }
 
     // 3. Seed templates
-    const templatesCheck = await pool.query('SELECT COUNT(*) FROM templates');
-    if (parseInt(templatesCheck.rows[0].count, 10) === 0) {
-      console.log('🔄 Seeding badge templates...');
-      for (const t of (localDb.templates || [])) {
-        await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2) ON CONFLICT DO NOTHING', [t.id, JSON.stringify(t)]);
-      }
+    console.log('🔄 Seeding badge templates...');
+    for (const t of (localDb.templates || [])) {
+      await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING', [t.id, JSON.stringify(t)]);
     }
 
     // 4. Seed clients
