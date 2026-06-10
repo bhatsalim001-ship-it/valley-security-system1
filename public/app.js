@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventHandlers();
     setupClassificationsManager();
     setupTemplatesManager();
+    setupCropperControls();
     
     // Bind afterprint event to clean print classes
     window.addEventListener('afterprint', () => {
@@ -1993,7 +1994,7 @@ function setupEventHandlers() {
 
     // Photo and Signature upload handlers
     document.getElementById('reg-photo').addEventListener('change', function(e) {
-        handleImageUpload(e, 'reg-photo-preview');
+        openPhotoCropper(this, 'reg-photo-preview');
     });
 
     document.getElementById('reg-signature').addEventListener('change', function(e) {
@@ -2056,7 +2057,7 @@ function setupEventHandlers() {
 
     // Image Upload Handlers (old modal)
     document.getElementById('form-photo-upload').addEventListener('change', function() {
-        handleImageCompression(this, 'form-photo-preview-box', () => {});
+        openPhotoCropper(this, 'form-photo-preview-box');
     });
     document.getElementById('form-sig-upload').addEventListener('change', function() {
         handleImageCompression(this, 'form-sig-preview-box', () => {});
@@ -4436,6 +4437,138 @@ function setupTemplatesManager() {
         loadTemplateInStudio(VSA_STATE.templates[0].id);
     } else {
         resetTemplateForm();
+    }
+}
+
+// --- Image Cropper Logic ---
+let activeCropper = null;
+let cropperTriggerInputId = null;
+let cropperPreviewBoxId = null;
+
+function openPhotoCropper(fileInput, previewBoxId) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const targetImage = document.getElementById('cropper-target-image');
+        targetImage.src = e.target.result;
+        
+        cropperTriggerInputId = fileInput.id;
+        cropperPreviewBoxId = previewBoxId;
+        
+        const modal = document.getElementById('cropper-modal');
+        modal.classList.remove('hidden');
+        
+        // Initialize Cropper.js after modal is visible and Lucide icons are rendered
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // Destroy previous instance if any
+        if (activeCropper) {
+            activeCropper.destroy();
+        }
+
+        activeCropper = new Cropper(targetImage, {
+            aspectRatio: 1, // Lock to perfect square for profile pictures
+            viewMode: 1,    // Restrict crop box to canvas bounds
+            dragMode: 'move',
+            autoCropArea: 0.9,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+    };
+    reader.readAsDataURL(file);
+}
+
+// Bind Cropper UI controls
+function setupCropperControls() {
+    const closeModal = () => {
+        document.getElementById('cropper-modal').classList.add('hidden');
+        if (activeCropper) {
+            activeCropper.destroy();
+            activeCropper = null;
+        }
+        // Reset file input so same file can be uploaded again if needed
+        if (cropperTriggerInputId) {
+            const inputEl = document.getElementById(cropperTriggerInputId);
+            if (inputEl) inputEl.value = '';
+        }
+    };
+
+    const closeBtn = document.getElementById('btn-close-cropper');
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    
+    const cancelBtn = document.getElementById('btn-cancel-cropper');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    const zoomInBtn = document.getElementById('btn-crop-zoom-in');
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => {
+            if (activeCropper) activeCropper.zoom(0.1);
+        });
+    }
+    
+    const zoomOutBtn = document.getElementById('btn-crop-zoom-out');
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => {
+            if (activeCropper) activeCropper.zoom(-0.1);
+        });
+    }
+
+    const rotateLeftBtn = document.getElementById('btn-crop-rotate-left');
+    if (rotateLeftBtn) {
+        rotateLeftBtn.addEventListener('click', () => {
+            if (activeCropper) activeCropper.rotate(-90);
+        });
+    }
+
+    const rotateRightBtn = document.getElementById('btn-crop-rotate-right');
+    if (rotateRightBtn) {
+        rotateRightBtn.addEventListener('click', () => {
+            if (activeCropper) activeCropper.rotate(90);
+        });
+    }
+
+    const saveBtn = document.getElementById('btn-save-cropped');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (!activeCropper) return;
+            
+            // Get 300x300 canvas (matching the server side target dimensions)
+            const canvas = activeCropper.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            if (canvas) {
+                // Compress automatically on client side to high quality JPEG
+                const base64Str = canvas.toDataURL('image/jpeg', 0.85);
+                
+                // Save base64 string to the target input element's dataset
+                const inputEl = document.getElementById(cropperTriggerInputId);
+                if (inputEl) {
+                    inputEl.dataset.imageData = base64Str;
+                }
+                
+                // Show preview in target box
+                const previewBox = document.getElementById(cropperPreviewBoxId);
+                if (previewBox) {
+                    previewBox.innerHTML = `<img src="${base64Str}" style="max-height: 100px;">`;
+                }
+            }
+            
+            // Close modal
+            closeModal();
+        });
     }
 }
 
