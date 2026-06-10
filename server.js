@@ -255,6 +255,14 @@ async function initDatabase() {
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
+    // Check if initial seeding has already been performed in the past
+    const seedCheck = await pool.query("SELECT value FROM settings WHERE key = 'initial_seeding_done'");
+    if (seedCheck.rows.length > 0 && (seedCheck.rows[0].value === true || seedCheck.rows[0].value === 'true')) {
+      console.log('✅ Database already seeded. Skipping initial migration seeding.');
+      return;
+    }
+
+    console.log('🔄 Seeding database for the first time...');
     // Seed database from local db.json / backup individually if tables are empty
     const localDb = readLocalDb();
 
@@ -310,6 +318,10 @@ async function initDatabase() {
     await pool.query("UPDATE employees SET data = REPLACE(data::text, '6006495505', '7889311608')::jsonb");
     await pool.query("UPDATE settings SET value = REPLACE(value::text, '6006495505', '7889311608')::jsonb");
     console.log('✅ PostgreSQL database records cleaned (phone number updated)');
+
+    // Mark initial seeding as completed
+    await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['initial_seeding_done', JSON.stringify(true)]);
+    console.log('✅ Initial database seeding marked completed.');
   } catch (err) {
     console.error('❌ PostgreSQL Initialization Error:', err.message);
   }
