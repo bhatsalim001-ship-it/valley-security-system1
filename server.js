@@ -164,18 +164,34 @@ app.get('/login', (req, res) => {
   res.redirect('/login.html');
 });
 
-// Serve protected dashboard index page
+// Serve protected dashboard index page with disabled cache headers
+const noCacheOptions = {
+  headers: {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  }
+};
+
 app.get('/', protectHtmlPages, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'), noCacheOptions);
 });
 
 app.get('/index.html', protectHtmlPages, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'), noCacheOptions);
 });
 
-// Serve public login and other static assets
+// Serve public login and other static assets with absolute no-cache headers
 app.use(protectHtmlPages);
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  maxAge: 0,
+  setHeaders: function (res, path) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 
 // --------------------------------------------------------------------------
 // POSTGRESQL TABLE INIT & AUTO-MIGRATION
