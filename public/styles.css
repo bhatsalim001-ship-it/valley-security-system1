@@ -3818,4 +3818,74 @@ input[type="checkbox"].directory-select-item:checked::after {
     }
 }
 
+/* Draggable Field Reordering Row */
+.draggable-field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(22, 26, 35, 0.65);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.draggable-field-row:hover {
+    background: rgba(22, 26, 35, 0.85);
+    border-color: var(--theme-gold);
+}
+.draggable-field-row.dragging {
+    opacity: 0.4;
+    border-style: dashed;
+    background: rgba(22, 26, 35, 0.3);
+}
+.draggable-field-row.drag-over {
+    border-top: 2px solid var(--theme-gold);
+    background: rgba(223, 186, 95, 0.1);
+}
+.draggable-field-row .drag-handle {
+    cursor: grab;
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+}
+.draggable-field-row .field-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.draggable-field-row .field-info input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+.draggable-field-row .reorder-actions {
+    display: flex;
+    gap: 4px;
+}
+.draggable-field-row .reorder-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s ease;
+}
+.draggable-field-row .reorder-btn:hover {
+    background: var(--theme-gold);
+    color: #000000;
+    border-color: var(--theme-gold);
+}
+
+
 

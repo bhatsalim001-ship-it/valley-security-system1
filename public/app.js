@@ -1349,8 +1349,9 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             fields: {
                 photo: true, name: true, designation: true, department: true, empid: true,
                 father: true, phone: true, email: true, blood: true, address: true, signature: true,
-                qrcode: true, barcode: true
-            }
+                qrcode: true, barcode: true, validity: true
+            },
+            fieldOrder: ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone', 'email']
         };
     }
 
@@ -1376,6 +1377,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
     const showAddress = fields.address !== false;
     const showQrCode = fields.qrcode !== false;
     const showBarcode = fields.barcode !== false;
+    const showValidity = fields.validity !== false;
 
     // Resolve Logo
     let logoSrc = '';
@@ -1483,6 +1485,69 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
         : window.location.host;
     const verificationUrl = `${window.location.protocol}//${qrHost}/verification.html?id=${emp.id}`;
 
+    // Dynamically construct details table rows based on template.fieldOrder
+    const fieldOrder = template.fieldOrder || ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone', 'email'];
+    const defaultOrder = ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone', 'email'];
+    const finalOrder = [...fieldOrder];
+    defaultOrder.forEach(key => {
+        if (!finalOrder.includes(key)) {
+            finalOrder.push(key);
+        }
+    });
+
+    let detailsTableRowsHtml = '';
+    finalOrder.forEach(key => {
+        if (key === 'empid' && showEmpId) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Staff ID:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+            </tr>`;
+        } else if (key === 'father' && showFather) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Father:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+            </tr>`;
+        } else if (key === 'department' && showDepartment) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Dept:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
+            </tr>`;
+        } else if (key === 'blood' && showBlood) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Blood:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+            </tr>`;
+        } else if (key === 'validity' && showValidity) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Validity:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+            </tr>`;
+        } else if (key === 'address' && showAddress) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Address:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+            </tr>`;
+        } else if (key === 'phone' && showPhone) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Mobile:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+            </tr>`;
+        } else if (key === 'email' && showEmail) {
+            detailsTableRowsHtml += `
+            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Email:</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}">${emp.email || '-'}</td>
+            </tr>`;
+        }
+    });
+
     if (template.layout === 'horizontal') {
         return `
         <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
@@ -1538,52 +1603,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         
                         <!-- Details Table -->
                         <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
-                            ${showEmpId ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Staff ID:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
-                            </tr>
-                            ` : ''}
-                            ${showFather ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Father:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showDepartment ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Dept:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showBlood ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Blood:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Validity:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
-                            </tr>
-                            ${showAddress ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Address:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showPhone ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Mobile:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showEmail ? `
-                            <tr>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase;">Email:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}">${emp.email || '-'}</td>
-                            </tr>
-                            ` : ''}
+                            ${detailsTableRowsHtml}
                         </table>
                     </div>
                     
@@ -1675,52 +1695,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         
                         <!-- Details Table -->
                         <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
-                            ${showEmpId ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Staff ID:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
-                            </tr>
-                            ` : ''}
-                            ${showFather ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Father:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showDepartment ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Dept:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showBlood ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Blood:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Validity:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
-                            </tr>
-                            ${showAddress ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Address:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; white-space: normal; line-height: 1.1;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showPhone ? `
-                            <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Mobile:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
-                            </tr>
-                            ` : ''}
-                            ${showEmail ? `
-                            <tr>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${subtextColor}; padding: 3px 0; width: 45%; text-transform: uppercase;">Email:</td>
-                                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${textColor}; padding: 3px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}">${emp.email || '-'}</td>
-                            </tr>
-                            ` : ''}
+                            ${detailsTableRowsHtml}
                         </table>
                         
                         <!-- Instructions/Footer -->
@@ -3741,6 +3716,167 @@ const MOCK_GUARD = {
     }
 };
 
+const DEFAULT_FIELD_ORDER = ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone', 'email'];
+let fieldDragSrcEl = null;
+
+function handleFieldDragStart(e) {
+    fieldDragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.getAttribute('data-field-key'));
+    this.classList.add('dragging');
+}
+
+function handleFieldDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleFieldDragEnter(e) {
+    this.classList.add('drag-over');
+}
+
+function handleFieldDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleFieldDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (fieldDragSrcEl !== this) {
+        const srcKey = fieldDragSrcEl.getAttribute('data-field-key');
+        const targetKey = this.getAttribute('data-field-key');
+        
+        if (!VSA_STATE.activeFieldOrder) {
+            VSA_STATE.activeFieldOrder = [...DEFAULT_FIELD_ORDER];
+        }
+        
+        const srcIndex = VSA_STATE.activeFieldOrder.indexOf(srcKey);
+        const targetIndex = VSA_STATE.activeFieldOrder.indexOf(targetKey);
+        
+        if (srcIndex !== -1 && targetIndex !== -1) {
+            VSA_STATE.activeFieldOrder.splice(srcIndex, 1);
+            VSA_STATE.activeFieldOrder.splice(targetIndex, 0, srcKey);
+            
+            renderReorderableFieldsList();
+            updateLivePreview();
+        }
+    }
+    return false;
+}
+
+function handleFieldDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.draggable-field-row').forEach(row => {
+        row.classList.remove('drag-over');
+    });
+}
+
+function moveFieldUp(key) {
+    if (!VSA_STATE.activeFieldOrder) {
+        VSA_STATE.activeFieldOrder = [...DEFAULT_FIELD_ORDER];
+    }
+    const idx = VSA_STATE.activeFieldOrder.indexOf(key);
+    if (idx > 0) {
+        const temp = VSA_STATE.activeFieldOrder[idx];
+        VSA_STATE.activeFieldOrder[idx] = VSA_STATE.activeFieldOrder[idx - 1];
+        VSA_STATE.activeFieldOrder[idx - 1] = temp;
+        
+        renderReorderableFieldsList();
+        updateLivePreview();
+    }
+}
+
+function moveFieldDown(key) {
+    if (!VSA_STATE.activeFieldOrder) {
+        VSA_STATE.activeFieldOrder = [...DEFAULT_FIELD_ORDER];
+    }
+    const idx = VSA_STATE.activeFieldOrder.indexOf(key);
+    if (idx !== -1 && idx < VSA_STATE.activeFieldOrder.length - 1) {
+        const temp = VSA_STATE.activeFieldOrder[idx];
+        VSA_STATE.activeFieldOrder[idx] = VSA_STATE.activeFieldOrder[idx + 1];
+        VSA_STATE.activeFieldOrder[idx + 1] = temp;
+        
+        renderReorderableFieldsList();
+        updateLivePreview();
+    }
+}
+
+function renderReorderableFieldsList() {
+    const container = document.getElementById('tpl-details-fields-reorder-container');
+    if (!container) return;
+
+    const fieldLabels = {
+        'empid': 'Staff ID',
+        'father': "Father's Name",
+        'department': 'Department',
+        'blood': 'Blood Group',
+        'validity': 'Validity Date',
+        'address': 'Address',
+        'phone': 'Mobile No',
+        'email': 'Email'
+    };
+
+    container.innerHTML = '';
+    
+    if (!VSA_STATE.activeFieldOrder) {
+        VSA_STATE.activeFieldOrder = [...DEFAULT_FIELD_ORDER];
+    }
+
+    VSA_STATE.activeFieldOrder.forEach((key) => {
+        const label = fieldLabels[key] || key;
+        
+        // Find if checkbox is checked
+        let isChecked = true;
+        const chk = document.getElementById(`field-tpl-${key}`);
+        if (chk) {
+            isChecked = chk.checked;
+        }
+        
+        const row = document.createElement('div');
+        row.className = 'draggable-field-row';
+        if (!isChecked) {
+            row.style.opacity = '0.5';
+        }
+        row.setAttribute('draggable', 'true');
+        row.setAttribute('data-field-key', key);
+        
+        row.innerHTML = `
+            <div class="field-info" style="pointer-events: none;">
+                <span class="drag-handle" style="margin-right: 10px; color: var(--text-muted);">☰</span>
+                <span>${label} ${!isChecked ? '<small style="opacity: 0.6; margin-left: 5px;">(Hidden)</small>' : ''}</span>
+            </div>
+            <div class="reorder-actions" style="display: flex; gap: 4px;">
+                <button type="button" class="reorder-btn move-up-btn" data-key="${key}" title="Move Up" style="padding: 2px 6px; font-size: 10px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-secondary);">▲</button>
+                <button type="button" class="reorder-btn move-down-btn" data-key="${key}" title="Move Down" style="padding: 2px 6px; font-size: 10px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-secondary);">▼</button>
+            </div>
+        `;
+        
+        // Add drag & drop listeners
+        row.addEventListener('dragstart', handleFieldDragStart);
+        row.addEventListener('dragover', handleFieldDragOver);
+        row.addEventListener('dragenter', handleFieldDragEnter);
+        row.addEventListener('dragleave', handleFieldDragLeave);
+        row.addEventListener('drop', handleFieldDrop);
+        row.addEventListener('dragend', handleFieldDragEnd);
+        
+        // Add button listeners
+        row.querySelector('.move-up-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            moveFieldUp(key);
+        });
+        row.querySelector('.move-down-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            moveFieldDown(key);
+        });
+        
+        container.appendChild(row);
+    });
+}
+
 function loadTemplateInStudio(id) {
     const tplSource = VSA_STATE.templates.find(t => t.id === id) || VSA_STATE.templates[0];
     if (!tplSource) return;
@@ -3857,6 +3993,23 @@ function loadTemplateInStudio(id) {
     document.getElementById('field-tpl-signature').checked = fields.signature !== false;
     document.getElementById('field-tpl-qrcode').checked = fields.qrcode !== false;
     document.getElementById('field-tpl-barcode').checked = fields.barcode !== false;
+    if (document.getElementById('field-tpl-validity')) {
+        document.getElementById('field-tpl-validity').checked = fields.validity !== false;
+    }
+
+    // Load custom fields order
+    if (tpl.fieldOrder && Array.isArray(tpl.fieldOrder)) {
+        VSA_STATE.activeFieldOrder = [...tpl.fieldOrder];
+        // Ensure all default order keys exist
+        DEFAULT_FIELD_ORDER.forEach(key => {
+            if (!VSA_STATE.activeFieldOrder.includes(key)) {
+                VSA_STATE.activeFieldOrder.push(key);
+            }
+        });
+    } else {
+        VSA_STATE.activeFieldOrder = [...DEFAULT_FIELD_ORDER];
+    }
+    renderReorderableFieldsList();
 
     // Sync template selector dropdown
     const tplEditSel = document.getElementById('tpl-edit-select');
@@ -3933,7 +4086,8 @@ function getActiveTemplateFromForm() {
         address: document.getElementById('field-tpl-address').checked,
         signature: document.getElementById('field-tpl-signature').checked,
         qrcode: document.getElementById('field-tpl-qrcode').checked,
-        barcode: document.getElementById('field-tpl-barcode').checked
+        barcode: document.getElementById('field-tpl-barcode').checked,
+        validity: document.getElementById('field-tpl-validity') ? document.getElementById('field-tpl-validity').checked : true
     };
 
     return {
@@ -3961,6 +4115,7 @@ function getActiveTemplateFromForm() {
         logo,
         signature,
         fields,
+        fieldOrder: VSA_STATE.activeFieldOrder || [...DEFAULT_FIELD_ORDER],
         isVisualTemplate: true
     };
 }
@@ -4089,6 +4244,9 @@ function resetTemplateForm() {
     // All checkboxes enabled by default
     document.querySelectorAll('.field-toggles-grid input[type="checkbox"]').forEach(chk => chk.checked = true);
 
+    VSA_STATE.activeFieldOrder = ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone', 'email'];
+    renderReorderableFieldsList();
+
     const tplEditSel = document.getElementById('tpl-edit-select');
     if (tplEditSel) {
         tplEditSel.value = '';
@@ -4154,7 +4312,10 @@ function setupTemplatesManager() {
 
     // 2. Checkboxes listeners
     document.querySelectorAll('.field-toggles-grid input[type="checkbox"]').forEach(chk => {
-        chk.addEventListener('change', updateLivePreview);
+        chk.addEventListener('change', () => {
+            renderReorderableFieldsList();
+            updateLivePreview();
+        });
     });
 
     // 3. Preset background patterns listeners
