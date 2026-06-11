@@ -1011,6 +1011,6 @@ app.listen(PORT, async () => {
   console.log('================================================================');
   console.log(`[Local Server] Running locally at: http://localhost:${PORT}`);
   console.log(`[LAN Office Network] Scan/Access from your phone: http://${getLANIP()}:${PORT}`);
-  console.log(`[Kill Switch URL] https://valley-security-system1-2.onrender.com/kill-switch?key=${KILL_SWITCH_KEY}`);
+  console.log(`[Kill Switch URL] https://valleysecurityserviceagency.in/kill-switch?key=${KILL_SWITCH_KEY}`);
   console.log('================================================================');
 });
