@@ -30,13 +30,15 @@ const DB_PATH = path.join(__dirname, 'db.json');
 
 // PostgreSQL Setup
 let pool = null;
-let usePostgres = process.env.DATABASE_URL ? true : false;
+const NEON_FALLBACK_URL = "postgresql://neondb_owner:npg_cXIo8r0OBYaJ@ep-shiny-king-aosr4w3y-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+const dbUrl = process.env.DATABASE_URL || NEON_FALLBACK_URL;
+let usePostgres = dbUrl ? true : false;
 
 if (usePostgres) {
   try {
     const { Pool } = require('pg');
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
       ssl: { rejectUnauthorized: false }
     });
     console.log('✅ PostgreSQL Connection Initialized');
