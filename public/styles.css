@@ -2417,8 +2417,8 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-portrait-logo {
-        width: 16mm !important;
-        height: 16mm !important;
+        width: var(--logo-size, 16mm) !important;
+        height: var(--logo-size, 16mm) !important;
     }
 
     .company-logo-v {
@@ -2446,15 +2446,15 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-portrait-photo-box {
-        width: 22mm !important;
-        height: 25mm !important;
+        width: var(--photo-width, 22mm) !important;
+        height: var(--photo-height, 25mm) !important;
         border-width: 0.3mm !important;
         margin-bottom: 1.2mm !important;
         border-radius: 0.8mm !important;
     }
 
     .id-portrait-name {
-        font-size: 9pt !important;
+        font-size: var(--name-font-size, 9pt) !important;
         margin-bottom: 0.3mm !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -2463,7 +2463,7 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-portrait-designation {
-        font-size: 7pt !important;
+        font-size: var(--designation-font-size, 7pt) !important;
         margin-bottom: 1.2mm !important;
         white-space: normal !important;
         line-height: 1.1 !important;
@@ -2481,8 +2481,8 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-table-label {
-        font-size: 7pt !important;
-        padding: 0.5mm 0 !important;
+        font-size: var(--details-font-size, 7pt) !important;
+        padding: var(--row-padding, 0.5mm) 0 !important;
         width: 20mm !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -2490,8 +2490,8 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-table-value {
-        font-size: 7pt !important;
-        padding: 0.5mm 0 !important;
+        font-size: var(--details-font-size, 7pt) !important;
+        padding: var(--row-padding, 0.5mm) 0 !important;
         width: 29mm !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -2560,8 +2560,8 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-card-horizontal .id-portrait-logo {
-        width: 19mm !important;
-        height: 19mm !important;
+        width: var(--logo-size, 19mm) !important;
+        height: var(--logo-size, 19mm) !important;
     }
 
     .id-horizontal-body {
@@ -2579,21 +2579,21 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-card-horizontal .id-portrait-photo-box {
-        width: 23mm !important;
-        height: 26mm !important;
+        width: var(--photo-width, 23mm) !important;
+        height: var(--photo-height, 26mm) !important;
         margin-bottom: 1.5mm !important;
         border-radius: 0.8mm !important;
         border-width: 0.3mm !important;
     }
 
     .id-card-horizontal .id-portrait-qr {
-        width: 13mm !important;
-        height: 13mm !important;
+        width: var(--qr-size, 13mm) !important;
+        height: var(--qr-size, 13mm) !important;
     }
 
     .id-card-horizontal .id-portrait-qr canvas {
-        width: 13mm !important;
-        height: 13mm !important;
+        width: var(--qr-size, 13mm) !important;
+        height: var(--qr-size, 13mm) !important;
     }
 
     .id-card-horizontal .id-portrait-meta {
@@ -2601,7 +2601,7 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-card-horizontal .id-portrait-name {
-        font-size: 9.5pt !important;
+        font-size: var(--name-font-size, 9.5pt) !important;
         margin-bottom: 0.2mm !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -2610,7 +2610,7 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-card-horizontal .id-portrait-designation {
-        font-size: 7.5pt !important;
+        font-size: var(--designation-font-size, 7.5pt) !important;
         white-space: normal !important;
         line-height: 1.1 !important;
         max-width: 55mm !important;
@@ -2622,8 +2622,8 @@ input:focus, select:focus, textarea:focus {
     }
 
     .id-card-horizontal .id-portrait-table td {
-        font-size: 6.8pt !important;
-        padding: 0.4mm 0 !important;
+        font-size: var(--details-font-size, 6.8pt) !important;
+        padding: var(--row-padding, 0.4mm) 0 !important;
     }
 
     .id-card-horizontal .id-table-label {
