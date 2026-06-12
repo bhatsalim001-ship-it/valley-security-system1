@@ -4491,6 +4491,25 @@ function openPhotoCropper(fileInput, previewBoxId) {
     const file = fileInput.files[0];
     if (!file) return;
 
+    // Calculate aspect ratio dynamically based on the currently active template in single preview
+    let targetRatio = 85 / 105; // Default fallback vertical ratio (1:1.23)
+    try {
+        const idSelTpl = document.getElementById('id-select-template');
+        if (idSelTpl && idSelTpl.value) {
+            const template = VSA_STATE.templates.find(t => t.id === idSelTpl.value);
+            if (template && template.photoWidth && template.photoHeight) {
+                targetRatio = template.photoWidth / template.photoHeight;
+            }
+        } else if (VSA_STATE.templates && VSA_STATE.templates.length > 0) {
+            const template = VSA_STATE.templates[0];
+            if (template && template.photoWidth && template.photoHeight) {
+                targetRatio = template.photoWidth / template.photoHeight;
+            }
+        }
+    } catch (err) {
+        console.error("Error determining dynamic aspect ratio:", err);
+    }
+
     const reader = new FileReader();
     reader.onload = function(e) {
         const targetImage = document.getElementById('cropper-target-image');
@@ -4513,7 +4532,7 @@ function openPhotoCropper(fileInput, previewBoxId) {
         }
 
         activeCropper = new Cropper(targetImage, {
-            aspectRatio: 1, // Lock to perfect square for profile pictures
+            aspectRatio: targetRatio, // Match dynamic template aspect ratio
             viewMode: 1,    // Restrict crop box to canvas bounds
             dragMode: 'move',
             autoCropArea: 0.9,
@@ -4583,10 +4602,24 @@ function setupCropperControls() {
         saveBtn.addEventListener('click', () => {
             if (!activeCropper) return;
             
-            // Get 300x300 canvas (matching the server side target dimensions)
+            // Determine cropped canvas output dimensions based on crop box aspect ratio
+            let canvasWidth = 300;
+            let canvasHeight = 300;
+            const data = activeCropper.getData();
+            if (data && data.width && data.height) {
+                const ratio = data.width / data.height;
+                if (ratio < 1) {
+                    canvasHeight = 350;
+                    canvasWidth = Math.round(350 * ratio);
+                } else if (ratio > 1) {
+                    canvasWidth = 350;
+                    canvasHeight = Math.round(350 / ratio);
+                }
+            }
+            
             const canvas = activeCropper.getCroppedCanvas({
-                width: 300,
-                height: 300,
+                width: canvasWidth,
+                height: canvasHeight,
                 imageSmoothingEnabled: true,
                 imageSmoothingQuality: 'high'
             });
