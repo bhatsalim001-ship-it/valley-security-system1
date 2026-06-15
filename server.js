@@ -611,6 +611,104 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
+// Google Authentication Helper Function
+function verifyGoogleToken(token) {
+  const https = require('https');
+  return new Promise((resolve, reject) => {
+    const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (res.statusCode === 200) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.error_description || parsed.error || 'Failed to verify token'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+// Google Authentication Endpoints
+app.get('/api/auth/google-client-id', (req, res) => {
+  res.json({ clientId: process.env.GOOGLE_CLIENT_ID || null });
+});
+
+app.post('/api/auth/google-login', async (req, res) => {
+  const { token } = req.body;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+
+  if (!clientId) {
+    return res.status(500).json({ success: false, error: 'Google Login is not configured on the server.' });
+  }
+
+  if (!token) {
+    return res.status(400).json({ success: false, error: 'Google token is required.' });
+  }
+
+  try {
+    const payload = await verifyGoogleToken(token);
+
+    // Verify issuer
+    const validIssuers = ['https://accounts.google.com', 'accounts.google.com'];
+    if (!validIssuers.includes(payload.iss)) {
+      return res.status(401).json({ success: false, error: 'Access Denied: Invalid token issuer.' });
+    }
+
+    // Verify audience
+    if (payload.aud !== clientId) {
+      return res.status(401).json({ success: false, error: 'Access Denied: Invalid audience.' });
+    }
+
+    // Verify email verification status
+    if (payload.email_verified !== true && payload.email_verified !== 'true') {
+      return res.status(401).json({ success: false, error: 'Access Denied: Google email is not verified.' });
+    }
+
+    // Restrict access to exactly vllscrtservice@gmail.com
+    const allowedEmail = 'vllscrtservice@gmail.com';
+    if (payload.email !== allowedEmail) {
+      return res.status(403).json({ success: false, error: `Access Denied: Unauthorized Google account (${payload.email}).` });
+    }
+
+    // Setup session identical to normal login
+    const userRecord = {
+      email: payload.email,
+      name: payload.name || 'Salim Bhat',
+      role: 'admin'
+    };
+
+    const sessionToken = jwt.sign(userRecord, JWT_SECRET, { expiresIn: '7d' });
+    res.cookie('auth_token', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    return res.json({
+      success: true,
+      user: userRecord,
+      message: `Welcome back, ${userRecord.name} (signed in via Google)!`
+    });
+
+  } catch (error) {
+    console.error('Google login verification error:', error);
+    return res.status(401).json({ success: false, error: error.message || 'Failed to authenticate with Google.' });
+  }
+});
+
+
 // Helper to check if current request has a valid Admin session cookie
 function isAdmin(req) {
   const token = req.cookies.auth_token;

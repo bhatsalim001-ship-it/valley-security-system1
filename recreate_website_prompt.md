@@ -727,6 +727,104 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
+// Google Authentication Helper Function
+function verifyGoogleToken(token) {
+  const https = require('https');
+  return new Promise((resolve, reject) => {
+    const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (res.statusCode === 200) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.error_description || parsed.error || 'Failed to verify token'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+// Google Authentication Endpoints
+app.get('/api/auth/google-client-id', (req, res) => {
+  res.json({ clientId: process.env.GOOGLE_CLIENT_ID || null });
+});
+
+app.post('/api/auth/google-login', async (req, res) => {
+  const { token } = req.body;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+
+  if (!clientId) {
+    return res.status(500).json({ success: false, error: 'Google Login is not configured on the server.' });
+  }
+
+  if (!token) {
+    return res.status(400).json({ success: false, error: 'Google token is required.' });
+  }
+
+  try {
+    const payload = await verifyGoogleToken(token);
+
+    // Verify issuer
+    const validIssuers = ['https://accounts.google.com', 'accounts.google.com'];
+    if (!validIssuers.includes(payload.iss)) {
+      return res.status(401).json({ success: false, error: 'Access Denied: Invalid token issuer.' });
+    }
+
+    // Verify audience
+    if (payload.aud !== clientId) {
+      return res.status(401).json({ success: false, error: 'Access Denied: Invalid audience.' });
+    }
+
+    // Verify email verification status
+    if (payload.email_verified !== true && payload.email_verified !== 'true') {
+      return res.status(401).json({ success: false, error: 'Access Denied: Google email is not verified.' });
+    }
+
+    // Restrict access to exactly vllscrtservice@gmail.com
+    const allowedEmail = 'vllscrtservice@gmail.com';
+    if (payload.email !== allowedEmail) {
+      return res.status(403).json({ success: false, error: `Access Denied: Unauthorized Google account (${payload.email}).` });
+    }
+
+    // Setup session identical to normal login
+    const userRecord = {
+      email: payload.email,
+      name: payload.name || 'Salim Bhat',
+      role: 'admin'
+    };
+
+    const sessionToken = jwt.sign(userRecord, JWT_SECRET, { expiresIn: '7d' });
+    res.cookie('auth_token', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    return res.json({
+      success: true,
+      user: userRecord,
+      message: `Welcome back, ${userRecord.name} (signed in via Google)!`
+    });
+
+  } catch (error) {
+    console.error('Google login verification error:', error);
+    return res.status(401).json({ success: false, error: error.message || 'Failed to authenticate with Google.' });
+  }
+});
+
+
 // Helper to check if current request has a valid Admin session cookie
 function isAdmin(req) {
   const token = req.cookies.auth_token;
@@ -1280,6 +1378,7 @@ window.FIRM_CONFIG = {
     <title id="login-page-title">Login - Employee ID System</title>
     <!-- ⚙️ FIRM CONFIG — load FIRST -->
     <script src="firm-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1573,6 +1672,15 @@ window.FIRM_CONFIG = {
             </button>
         </form>
 
+        <div id="google-signin-container" style="display: none; margin-top: 16px; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; width: 100%; margin: 8px 0;">
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+                <span style="padding: 0 10px; color: #8e9a94; font-size: 12px; font-weight: 500; text-transform: uppercase;">Or</span>
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+            </div>
+            <div id="google-signin-btn"></div>
+        </div>
+
         <div class="demo-section" style="text-align: center; color: #9ca3af; font-size: 12px;">
             <p>🔒 Secured Admin Access Only</p>
             <p style="margin-top: 8px; font-size: 11px; color: #6b7280;" id="login-firm-footer-sub">Valley Security Service Agency</p>
@@ -1665,6 +1773,56 @@ window.FIRM_CONFIG = {
         window.addEventListener('load', () => {
             sessionStorage.removeItem('currentUser');
         });
+
+        async function handleCredentialResponse(response) {
+            errorMsg.style.display = 'none';
+            spinner.style.display = 'inline-block';
+            try {
+                const res = await fetch('/api/auth/google-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: response.credential
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+                    window.location.href = '/index.html';
+                } else {
+                    showError(data.error || 'Google login failed.');
+                    spinner.style.display = 'none';
+                }
+            } catch (err) {
+                showError('Connection error during Google authentication.');
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function initGoogleSignIn() {
+            try {
+                const configRes = await fetch('/api/auth/google-client-id');
+                const configData = await configRes.json();
+                if (configData.clientId) {
+                    const container = document.getElementById('google-signin-container');
+                    if (container) container.style.display = 'flex';
+                    
+                    google.accounts.id.initialize({
+                        client_id: configData.clientId,
+                        callback: handleCredentialResponse
+                    });
+                    
+                    google.accounts.id.renderButton(
+                        document.getElementById("google-signin-btn"),
+                        { theme: "outline", size: "large", width: 340, shape: "pill" }
+                    );
+                }
+            } catch (err) {
+                console.error("Failed to initialize Google Sign-In:", err);
+            }
+        }
     </script>
 </body>
 </html>

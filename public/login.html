@@ -6,6 +6,7 @@
     <title id="login-page-title">Login - Employee ID System</title>
     <!-- ⚙️ FIRM CONFIG — load FIRST -->
     <script src="firm-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -299,6 +300,15 @@
             </button>
         </form>
 
+        <div id="google-signin-container" style="display: none; margin-top: 16px; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; width: 100%; margin: 8px 0;">
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+                <span style="padding: 0 10px; color: #8e9a94; font-size: 12px; font-weight: 500; text-transform: uppercase;">Or</span>
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+            </div>
+            <div id="google-signin-btn"></div>
+        </div>
+
         <div class="demo-section" style="text-align: center; color: #9ca3af; font-size: 12px;">
             <p>🔒 Secured Admin Access Only</p>
             <p style="margin-top: 8px; font-size: 11px; color: #6b7280;" id="login-firm-footer-sub">Valley Security Service Agency</p>
@@ -391,6 +401,56 @@
         window.addEventListener('load', () => {
             sessionStorage.removeItem('currentUser');
         });
+
+        async function handleCredentialResponse(response) {
+            errorMsg.style.display = 'none';
+            spinner.style.display = 'inline-block';
+            try {
+                const res = await fetch('/api/auth/google-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: response.credential
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+                    window.location.href = '/index.html';
+                } else {
+                    showError(data.error || 'Google login failed.');
+                    spinner.style.display = 'none';
+                }
+            } catch (err) {
+                showError('Connection error during Google authentication.');
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function initGoogleSignIn() {
+            try {
+                const configRes = await fetch('/api/auth/google-client-id');
+                const configData = await configRes.json();
+                if (configData.clientId) {
+                    const container = document.getElementById('google-signin-container');
+                    if (container) container.style.display = 'flex';
+                    
+                    google.accounts.id.initialize({
+                        client_id: configData.clientId,
+                        callback: handleCredentialResponse
+                    });
+                    
+                    google.accounts.id.renderButton(
+                        document.getElementById("google-signin-btn"),
+                        { theme: "outline", size: "large", width: 340, shape: "pill" }
+                    );
+                }
+            } catch (err) {
+                console.error("Failed to initialize Google Sign-In:", err);
+            }
+        }
     </script>
 </body>
 </html>
