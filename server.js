@@ -337,8 +337,9 @@ function protectHtmlPages(req, res, next) {
   }
 
   const publicPages = ['/login.html', '/verification.html', '/styles.css', '/NEW_MASTER_STYLES.css', '/developer.jpg'];
+  const isGoogleVerification = req.path.match(/^\/google[a-f0-9]+\.html$/);
   
-  if (publicPages.some(page => req.path.endsWith(page))) {
+  if (publicPages.some(page => req.path.endsWith(page)) || isGoogleVerification) {
     return next();
   }
 
