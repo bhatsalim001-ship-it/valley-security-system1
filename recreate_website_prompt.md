@@ -1383,6 +1383,9 @@ window.FIRM_CONFIG = {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="login-page-title">Login - Employee ID System</title>
+    <meta name="description" content="Official Employee Verification and ID Card System of Valley Security Service Agency. Secure admin access portal.">
+    <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification, Admin Login, ID Badge">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <!-- ⚙️ FIRM CONFIG — load FIRST -->
     <script src="firm-config.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
@@ -1845,6 +1848,9 @@ window.FIRM_CONFIG = {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="verify-page-title">Employee Verification Portal</title>
+    <meta name="description" content="Official Employee Verification Portal of Valley Security Service Agency. Verify security guard credentials and active status instantly via QR code.">
+    <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification Portal, QR Code Verify, Active Guards">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <!-- ⚙️ FIRM CONFIG — load FIRST -->
     <script src="firm-config.js"></script>
     <!-- Google Fonts -->
@@ -7100,6 +7106,9 @@ input[type="checkbox"].directory-select-item:checked::after {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title-tag">Employee Management & ID System</title>
+    <meta name="description" content="Management & ID Card Suite of Valley Security Service Agency. Admin dashboard for security workforce database management.">
+    <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard Management, Guard Tracking, ID Card Generator">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <!-- ⚙️ FIRM CONFIG — Load FIRST before everything else -->
     <script src="firm-config.js"></script>
     <script>
