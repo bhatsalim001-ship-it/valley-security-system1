@@ -632,6 +632,14 @@ async function initDatabase() {
     await pool.query("UPDATE settings SET value = REPLACE(value::text, '6006495505', '7889311608')::jsonb");
     console.log('✅ PostgreSQL database records cleaned (phone number updated)');
 
+    // Synchronize PostgreSQL admin password with local db.json
+    const adminUser = localDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
+    if (adminUser) {
+      const hash = await bcrypt.hash(adminUser.password, 10);
+      await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'vllscrtservice@gmail.com']);
+      console.log('✅ PostgreSQL admin user password synchronized successfully');
+    }
+
     // Mark initial seeding as completed
     await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['initial_seeding_done', JSON.stringify(true)]);
     console.log('✅ Initial database seeding marked completed.');
@@ -692,7 +700,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     // Default fail-safe credentials (never locked out)
-    if (!authSuccess && email === 'vllscrtservice@gmail.com' && password === 'Salim@123') {
+    if (!authSuccess && email === 'vllscrtservice@gmail.com' && password === 'Lisa5198042022!@#$%^&*()') {
       authSuccess = true;
       userRecord = { email: 'vllscrtservice@gmail.com', name: 'Salim Bhat', role: 'admin' };
     }
