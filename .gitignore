@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+dist/
+build/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+# Local database file - never commit, Render uses PostgreSQL
+db.json

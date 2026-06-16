@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="login-page-title">Login - Employee ID System</title>
+    <meta name="description" content="Official Employee Verification and ID Card System of Valley Security Service Agency. Secure admin access portal.">
+    <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification, Admin Login, ID Badge">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <!-- ⚙️ FIRM CONFIG — load FIRST -->
+    <script src="firm-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f4f6f5 0%, #eef2f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1c2621;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            background: #ffffff;
+            border: 1px solid #e1e7e4;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(14, 62, 43, 0.03), 0 1px 2px rgba(14, 62, 43, 0.01);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: #0e3e2b;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .agency-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0e3e2b;
+            letter-spacing: 1px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1c2621;
+            margin-bottom: 8px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: #5a6560;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #0e3e2b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #f0f3f1;
+            border: 1px solid #e1e7e4;
+            border-radius: 12px;
+            color: #1c2621;
+            font-size: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.1s ease;
+        }
+
+        input::placeholder {
+            color: #8e9a94;
+        }
+
+        input:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: #52b788;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background: #0e3e2b;
+            border: none;
+            border-radius: 24px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .login-button:hover {
+            background: #52b788;
+        }
+
+        .demo-section {
+            margin-top: 36px;
+            padding-top: 24px;
+            border-top: 1px solid #e1e7e4;
+        }
+
+        .demo-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #8e9a94;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .demo-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .demo-button {
+            padding: 10px 12px;
+            background: rgba(14, 62, 43, 0.08);
+            border: 1px solid rgba(14, 62, 43, 0.15);
+            border-radius: 6px;
+            color: #0e3e2b;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .demo-button:hover {
+            background: rgba(14, 62, 43, 0.15);
+            border-color: #0e3e2b;
+        }
+
+        .error-message {
+            display: none;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            color: #ef4444;
+            font-size: 13px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .success-message {
+            display: none;
+            padding: 12px;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 6px;
+            color: #22c55e;
+            font-size: 13px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 20px;
+                padding: 32px 24px;
+            }
+
+            .login-title {
+                font-size: 24px;
+            }
+
+            .agency-name {
+                font-size: 18px;
+            }
+
+            .demo-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Disable all transitions and animations */
+        *, *::before, *::after {
+            transition: none !important;
+            animation: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Private Portal Security Warning to clear Google Phishing false positive -->
+        <div style="background-color: #fdf2f2; border: 1px solid #fde8e8; border-radius: 12px; padding: 12px; margin-bottom: 24px; text-align: center;">
+            <p style="color: #9b1c1c; font-size: 11px; font-weight: 600; line-height: 1.5; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                ⚠️ Private Administrative System
+            </p>
+            <p style="color: #c81e1e; font-size: 10px; font-weight: 500; line-height: 1.4; margin: 4px 0 0 0;">
+                Access restricted to authorized employees of Valley Security Service Agency.
+            </p>
+        </div>
+
+        <div class="login-header">
+            <div class="logo-section" style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <img src="/favicon.png" alt="Valley Security Logo" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #0e3e2b; box-shadow: 0 4px 10px rgba(14, 62, 43, 0.15);">
+                <div class="agency-name" id="login-firm-short" style="font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 700; color: #0e3e2b; letter-spacing: 1px;">VALLEY SECURITY</div>
+            </div>
+            <h1 class="login-title" style="font-size: 18px; font-weight: 700; color: #1c2621; margin-bottom: 4px; font-family: 'Outfit', sans-serif;">Admin Portal</h1>
+            <p class="login-subtitle" id="login-firm-full" style="font-size: 13px; color: #5a6560;">Valley Security Service Agency</p>
+        </div>
+
+        <div id="error-msg" class="error-message"></div>
+        <div id="success-msg" class="success-message"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    placeholder="admin@yourfirm.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    placeholder="••••••••"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-button">
+                <div class="button-content">
+                    <span>Sign In</span>
+                    <div class="loading-spinner" id="spinner"></div>
+                </div>
+            </button>
+        </form>
+
+        <div id="google-signin-container" style="display: none; margin-top: 16px; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; width: 100%; margin: 8px 0;">
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+                <span style="padding: 0 10px; color: #8e9a94; font-size: 12px; font-weight: 500; text-transform: uppercase;">Or</span>
+                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+            </div>
+            <div id="google-signin-btn"></div>
+        </div>
+
+        <div class="demo-section" style="text-align: center; color: #9ca3af; font-size: 12px;">
+            <p>🔒 Secured Admin Access Only</p>
+            <p style="margin-top: 8px; font-size: 11px; color: #6b7280;" id="login-firm-footer-sub">Valley Security Service Agency</p>
+        </div>
+
+        <footer class="login-footer">
+            <p style="margin: 0; font-size: 11px; color: #6b7280;">
+                Developed & Designed by <strong style="color: #d4af37;">SALIM ILYAS BHAT</strong>
+            </p>
+            <p style="margin: 4px 0 0 0; font-size: 10px; color: #4b5563;">
+                &copy; 2026 <span id="login-firm-copy">Valley Security Service Agency</span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Apply FIRM_CONFIG on login page
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof FIRM_CONFIG === 'undefined') return;
+            const C = FIRM_CONFIG;
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+            document.getElementById('login-page-title').innerText = C.nameShort + ' - Login';
+            set('login-firm-short', C.nameShort);
+            set('login-firm-full', C.name);
+            set('login-firm-footer-sub', C.name);
+            set('login-firm-copy', C.name);
+            const logoLetter = document.getElementById('login-logo-letter');
+            if (logoLetter) logoLetter.innerText = C.nameShort.charAt(0).toUpperCase();
+            const emailInput = document.getElementById('email');
+            if (emailInput) emailInput.placeholder = C.adminEmail;
+        });
+
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMsg = document.getElementById('error-msg');
+        const successMsg = document.getElementById('success-msg');
+        const spinner = document.getElementById('spinner');
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(msg) {
+            successMsg.textContent = msg;
+            successMsg.style.display = 'block';
+            errorMsg.style.display = 'none';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            spinner.style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+                    window.location.href = '/index.html';
+                } else {
+                    showError(data.error || 'Login failed. Please try again.');
+                    spinner.style.display = 'none';
+                }
+            } catch (err) {
+                showError('Connection error. Please try again.');
+                spinner.style.display = 'none';
+            }
+        });
+
+
+
+        // Clear old user session when on the login page to prevent redirect loops
+        window.addEventListener('load', () => {
+            sessionStorage.removeItem('currentUser');
+        });
+
+        async function handleCredentialResponse(response) {
+            errorMsg.style.display = 'none';
+            spinner.style.display = 'inline-block';
+            try {
+                const res = await fetch('/api/auth/google-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: response.credential
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+                    window.location.href = '/index.html';
+                } else {
+                    showError(data.error || 'Google login failed.');
+                    spinner.style.display = 'none';
+                }
+            } catch (err) {
+                showError('Connection error during Google authentication.');
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function initGoogleSignIn() {
+            try {
+                const configRes = await fetch('/api/auth/google-client-id');
+                const configData = await configRes.json();
+                if (configData.clientId) {
+                    const container = document.getElementById('google-signin-container');
+                    if (container) container.style.display = 'flex';
+                    
+                    google.accounts.id.initialize({
+                        client_id: configData.clientId,
+                        callback: handleCredentialResponse
+                    });
+                    
+                    google.accounts.id.renderButton(
+                        document.getElementById("google-signin-btn"),
+                        { theme: "outline", size: "large", width: 340, shape: "pill" }
+                    );
+                }
+            } catch (err) {
+                console.error("Failed to initialize Google Sign-In:", err);
+            }
+        }
+    </script>
+</body>
+</html>
