@@ -2220,10 +2220,7 @@ window.FIRM_CONFIG = {
                         <span class="info-label">${escapeHtml(guard.relationType || "Father")}'s Name</span>
                         <span class="info-value">${escapeHtml(guard.fatherName || "-")}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Reporting Officer</span>
-                        <span class="info-value">${escapeHtml(guard.reportingManager)}</span>
-                    </div>
+
                     <div class="info-item">
                         <span class="info-label">Blood Group</span>
                         <span class="info-value">${escapeHtml(guard.bloodGroup)}</span>
