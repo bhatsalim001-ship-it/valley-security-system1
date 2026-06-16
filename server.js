@@ -452,6 +452,15 @@ async function initDatabase() {
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
+    // Synchronize PostgreSQL admin password with local db.json unconditionally
+    const localDb = readLocalDb();
+    const adminUser = localDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
+    if (adminUser) {
+      const hash = await bcrypt.hash(adminUser.password, 10);
+      const updateRes = await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'vllscrtservice@gmail.com']);
+      console.log(`✅ PostgreSQL admin user password synchronized successfully (${updateRes.rowCount} rows updated)`);
+    }
+
     // Check if initial seeding has already been performed in the past
     const seedCheck = await pool.query("SELECT value FROM settings WHERE key = 'initial_seeding_done'");
     if (seedCheck.rows.length > 0 && (seedCheck.rows[0].value === true || seedCheck.rows[0].value === 'true')) {
@@ -460,8 +469,6 @@ async function initDatabase() {
     }
 
     console.log('🔄 Seeding database for the first time...');
-    // Seed database from local db.json / backup individually if tables are empty
-    const localDb = readLocalDb();
 
     // 1. Seed settings classifications
     const settingsCheck = await pool.query('SELECT COUNT(*) FROM settings');
@@ -515,14 +522,6 @@ async function initDatabase() {
     await pool.query("UPDATE employees SET data = REPLACE(data::text, '6006495505', '7889311608')::jsonb");
     await pool.query("UPDATE settings SET value = REPLACE(value::text, '6006495505', '7889311608')::jsonb");
     console.log('✅ PostgreSQL database records cleaned (phone number updated)');
-
-    // Synchronize PostgreSQL admin password with local db.json
-    const adminUser = localDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
-    if (adminUser) {
-      const hash = await bcrypt.hash(adminUser.password, 10);
-      await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'vllscrtservice@gmail.com']);
-      console.log('✅ PostgreSQL admin user password synchronized successfully');
-    }
 
     // Mark initial seeding as completed
     await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['initial_seeding_done', JSON.stringify(true)]);
