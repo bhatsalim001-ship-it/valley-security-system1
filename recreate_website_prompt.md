@@ -452,7 +452,7 @@ function protectHtmlPages(req, res, next) {
     return next();
   }
 
-  const publicPages = ['/login.html', '/verification.html', '/styles.css', '/NEW_MASTER_STYLES.css', '/developer.jpg'];
+  const publicPages = ['/login.html', '/verification.html', '/styles.css', '/NEW_MASTER_STYLES.css', '/developer.jpg', '/favicon.png'];
   const isGoogleVerification = req.path.match(/^\/google[a-f0-9]+\.html$/);
   
   if (publicPages.some(page => req.path.endsWith(page)) || isGoogleVerification) {
