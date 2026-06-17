@@ -452,13 +452,32 @@ async function initDatabase() {
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
-    // Synchronize PostgreSQL admin password with local db.json unconditionally
-    const localDb = readLocalDb();
-    const adminUser = localDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
-    if (adminUser) {
-      const hash = await bcrypt.hash(adminUser.password, 10);
-      const updateRes = await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'vllscrtservice@gmail.com']);
-      console.log(`✅ PostgreSQL admin user password synchronized successfully (${updateRes.rowCount} rows updated)`);
+    // 🔑 Secure Password Synchronization (Always from the git-tracked db.json.backup)
+    const backupPath = path.join(__dirname, 'db.json.backup');
+    if (fs.existsSync(backupPath)) {
+      try {
+        const backupDb = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+        const backupAdmin = backupDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
+        if (backupAdmin) {
+          // Sync to PostgreSQL
+          const hash = await bcrypt.hash(backupAdmin.password, 10);
+          const updateRes = await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'vllscrtservice@gmail.com']);
+          console.log(`✅ PostgreSQL admin user password synchronized from backup (${updateRes.rowCount} rows updated)`);
+
+          // Sync to local db.json if it exists (stale cleanup on persistent volume)
+          if (fs.existsSync(DB_PATH)) {
+            const localDb = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+            const localAdmin = localDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
+            if (localAdmin && localAdmin.password !== backupAdmin.password) {
+              localAdmin.password = backupAdmin.password;
+              fs.writeFileSync(DB_PATH, JSON.stringify(localDb, null, 2), 'utf8');
+              console.log('✅ Local db.json admin password updated to match backup');
+            }
+          }
+        }
+      } catch (err) {
+        console.error('❌ Failed to synchronize passwords on startup:', err.message);
+      }
     }
 
     // Check if initial seeding has already been performed in the past
@@ -469,6 +488,7 @@ async function initDatabase() {
     }
 
     console.log('🔄 Seeding database for the first time...');
+    const localDb = readLocalDb();
 
     // 1. Seed settings classifications
     const settingsCheck = await pool.query('SELECT COUNT(*) FROM settings');
@@ -484,7 +504,10 @@ async function initDatabase() {
     if (parseInt(userCheck.rows[0].count, 10) === 0) {
       console.log('🔄 Seeding admin users...');
       for (const u of (localDb.users || [])) {
-        const hash = await bcrypt.hash(u.password, 10);
+        let hash = u.password;
+        if (!hash.startsWith('$2')) {
+          hash = await bcrypt.hash(u.password, 10);
+        }
         await pool.query('INSERT INTO users (email, password, data) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [
           u.email,
           hash,
@@ -560,14 +583,11 @@ app.post('/api/login', async (req, res) => {
           userRecord = { email: dbUser.email, name: uData?.name || 'Admin', role: uData?.role || 'admin' };
         }
       }
-    }
-
-    // Local DB Fallback or initial migrations
-    if (!authSuccess) {
+    } else {
+      // Local DB Fallback (ONLY used if PostgreSQL is offline/disabled)
       const localDb = readLocalDb();
       const localUser = localDb.users.find(u => u.email === email);
       if (localUser) {
-        // Support either bcrypt comparison or plaintext comparison (migration helper)
         let passMatch = false;
         if (localUser.password.startsWith('$2')) {
           passMatch = await bcrypt.compare(password, localUser.password);
@@ -580,12 +600,6 @@ app.post('/api/login', async (req, res) => {
           userRecord = { email: localUser.email, name: localUser.name, role: localUser.role };
         }
       }
-    }
-
-    // Default fail-safe credentials (never locked out)
-    if (!authSuccess && email === 'vllscrtservice@gmail.com' && password === 'Lisa5198042022!@#$%^&*()') {
-      authSuccess = true;
-      userRecord = { email: 'vllscrtservice@gmail.com', name: 'Salim Bhat', role: 'admin' };
     }
 
     if (authSuccess && userRecord) {
