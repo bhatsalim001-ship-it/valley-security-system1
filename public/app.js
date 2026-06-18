@@ -1582,7 +1582,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
                     <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 700; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
                         <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                     </div>
                 </div>
@@ -1604,7 +1604,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.4) brightness(1.1);">
                             </div>
-                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
+                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; display: block; width: 100%;"><span style="display: inline-block; text-align: left; white-space: nowrap;">Authority Sig</span></span>
                         </div>
                     </div>
                     
@@ -1613,7 +1613,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
                             ${showName ? `
-                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 700; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                 ${emp.name}
                             </h2>
                             ` : ''}
@@ -1640,8 +1640,9 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         ` : ''}
                         
                         <!-- Instructions -->
-                        <div style="font-size: ${Math.max(4.2, detailsFontSize * 0.6)}px; color: ${subtextColor}; line-height: 1.2; text-align: center; width: 100%; padding: 3px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); margin-bottom: 5px;">
-                            VSA property.<br>Return: Shaheed Gunj Srinagar.
+                        <div style="font-size: ${Math.max(4.2, detailsFontSize * 0.6)}px; color: ${subtextColor}; line-height: 1.2; text-align: center; width: 100%; padding: 3px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); margin-bottom: 5px; display: flex; flex-direction: column; align-items: center;">
+                            <span style="display: inline-block; text-align: left; white-space: nowrap;">VSA property.</span>
+                            <span style="display: inline-block; text-align: left; white-space: nowrap;">Return: Shaheed Gunj Srinagar.</span>
                         </div>
                         
                         <!-- Barcode -->
@@ -1667,16 +1668,15 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
                     <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 700; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
                         <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                     </div>
                 </div>
 
                 <!-- Body Content Split -->
-                <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 5px;">
-                    
+                <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0; align-items: stretch;">
                     <!-- Left column: Photo, QR Code, Signature -->
-                    <div style="width: ${Math.max(85, photoWidth, qrSize)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <div style="width: ${Math.max(85, photoWidth)}px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; flex-shrink: 0; border-right: 1px solid rgba(128,128,128,0.15); padding-right: 5px;">
                         <!-- Photo -->
                         ${showPhoto ? `
                         <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
@@ -1696,7 +1696,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: contrast(1.4) brightness(1.1);">
                             </div>
-                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
+                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; display: block; width: 100%;"><span style="display: inline-block; text-align: left; white-space: nowrap;">Authority Sig</span></span>
                         </div>
                     </div>
                     
@@ -1705,7 +1705,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 6px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 4px;">
                             ${showName ? `
-                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 700; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                 ${emp.name}
                             </h2>
                             ` : ''}
@@ -1722,8 +1722,9 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         </table>
                         
                         <!-- Instructions/Footer -->
-                        <div style="font-size: ${Math.max(4.5, detailsFontSize * 0.65)}px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">
-                            1. Card is VSA property, display on duty.<br>2. Return to Shaheed Gunj Srinagar 190001.
+                        <div style="font-size: ${Math.max(4.5, detailsFontSize * 0.65)}px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                            <span style="display: inline-block; text-align: left; max-width: 100%;">1. Card is VSA property, display on duty.</span>
+                            <span style="display: inline-block; text-align: left; max-width: 100%;">2. Return to Shaheed Gunj Srinagar 190001.</span>
                         </div>
                     </div>
                 </div>
