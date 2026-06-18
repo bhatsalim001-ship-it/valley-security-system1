@@ -1366,6 +1366,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             photoHeight: 105,
             qrSize: 70,
             detailsFontSize: 8,
+            labelValueSpacing: 10,
             fields: {
                 photo: true, name: true, designation: true, department: true, empid: true,
                 father: true, phone: true, email: true, blood: true, address: true, signature: true,
@@ -1475,6 +1476,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
     const valueColor = template.valueColor || textColor;
     const rowPadding = template.rowPadding !== undefined ? template.rowPadding : 3;
     const labelWidth = template.labelWidth !== undefined ? template.labelWidth : 45;
+    const labelValueSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 10;
 
     // Header light/dark detection
     const isColorLight = (hexColor) => {
@@ -1524,49 +1526,49 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Staff ID:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.id}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: left; max-width: 100%; white-space: nowrap;">${emp.id}</span></td>
             </tr>`;
         } else if (key === 'father' && showFather) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Father:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;"><span style="display: inline-block; text-align: right; max-width: 100%;">${emp.fatherName || '-'}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1; word-break: break-word;"><span style="display: inline-block; text-align: left; max-width: 100%;">${emp.fatherName || '-'}</span></td>
             </tr>`;
         } else if (key === 'department' && showDepartment) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Dept:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;"><span style="display: inline-block; text-align: right; max-width: 100%;">${emp.department || '-'}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1; word-break: break-word;"><span style="display: inline-block; text-align: left; max-width: 100%;">${emp.department || '-'}</span></td>
             </tr>`;
         } else if (key === 'blood' && showBlood) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Blood:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.bloodGroup || '-'}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: left; max-width: 100%; white-space: nowrap;">${emp.bloodGroup || '-'}</span></td>
             </tr>`;
         } else if (key === 'validity' && showValidity) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Validity:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${validityStr}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: left; max-width: 100%; white-space: nowrap;">${validityStr}</span></td>
             </tr>`;
         } else if (key === 'address' && showAddress) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Address:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;" title="${emp.currentAddress || emp.permanentAddress || '-'}"><span style="display: inline-block; text-align: right; max-width: 100%;">${emp.currentAddress || emp.permanentAddress || '-'}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1; word-break: break-word;" title="${emp.currentAddress || emp.permanentAddress || '-'}"><span style="display: inline-block; text-align: left; max-width: 100%;">${emp.currentAddress || emp.permanentAddress || '-'}</span></td>
             </tr>`;
         } else if (key === 'phone' && showPhone) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Mobile:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.mobile || '-'}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: left; max-width: 100%; white-space: nowrap;">${emp.mobile || '-'}</span></td>
             </tr>`;
         } else if (key === 'email' && showEmail) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Email:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.email || '-'}</span></td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}"><span style="display: inline-block; text-align: left; max-width: 100%; white-space: nowrap;">${emp.email || '-'}</span></td>
             </tr>`;
         }
     });
@@ -3957,6 +3959,10 @@ function loadTemplateInStudio(id) {
     document.getElementById('tpl-label-width').value = labelWidthVal;
     document.getElementById('lbl-label-width').textContent = labelWidthVal;
 
+    const labelValueSpacingVal = tpl.labelValueSpacing !== undefined ? tpl.labelValueSpacing : 10;
+    document.getElementById('tpl-label-value-spacing').value = labelValueSpacingVal;
+    document.getElementById('lbl-label-value-spacing').textContent = labelValueSpacingVal;
+
     const nameFontSizeVal = tpl.nameFontSize !== undefined ? tpl.nameFontSize : (tpl.layout === 'horizontal' ? 13 : 14);
     document.getElementById('tpl-name-font-size').value = nameFontSizeVal;
     document.getElementById('lbl-name-font-size').textContent = nameFontSizeVal;
@@ -4085,6 +4091,7 @@ function getActiveTemplateFromForm() {
     const valueColor = document.getElementById('tpl-value-color').value || '#111111';
     const rowPadding = parseInt(document.getElementById('tpl-row-padding').value) || 3;
     const labelWidth = parseInt(document.getElementById('tpl-label-width').value) || 45;
+    const labelValueSpacing = parseInt(document.getElementById('tpl-label-value-spacing').value) || 10;
     const nameFontSize = parseInt(document.getElementById('tpl-name-font-size').value) || (layout === 'horizontal' ? 13 : 14);
     const designationFontSize = parseInt(document.getElementById('tpl-designation-font-size').value) || (layout === 'horizontal' ? 9 : 10);
 
@@ -4145,6 +4152,7 @@ function getActiveTemplateFromForm() {
         valueColor,
         rowPadding,
         labelWidth,
+        labelValueSpacing,
         nameFontSize,
         designationFontSize,
         backgroundImage,
@@ -4325,7 +4333,7 @@ function setupTemplatesManager() {
     const rangeSliders = [
         'tpl-logo-size', 'tpl-header-height', 'tpl-header-font-size',
         'tpl-photo-width', 'tpl-photo-height', 'tpl-qr-size', 'tpl-details-font-size',
-        'tpl-row-padding', 'tpl-label-width', 'tpl-name-font-size', 'tpl-designation-font-size'
+        'tpl-row-padding', 'tpl-label-width', 'tpl-label-value-spacing', 'tpl-name-font-size', 'tpl-designation-font-size'
     ];
     rangeSliders.forEach(id => {
         const el = document.getElementById(id);
@@ -4341,6 +4349,7 @@ function setupTemplatesManager() {
                 if (id === 'tpl-details-font-size') document.getElementById('lbl-details-font-size').textContent = val;
                 if (id === 'tpl-row-padding') document.getElementById('lbl-row-padding').textContent = val;
                 if (id === 'tpl-label-width') document.getElementById('lbl-label-width').textContent = val;
+                if (id === 'tpl-label-value-spacing') document.getElementById('lbl-label-value-spacing').textContent = val;
                 if (id === 'tpl-name-font-size') document.getElementById('lbl-name-font-size').textContent = val;
                 if (id === 'tpl-designation-font-size') document.getElementById('lbl-designation-font-size').textContent = val;
                 updateLivePreview();
