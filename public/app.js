@@ -1524,49 +1524,49 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Staff ID:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.id}</span></td>
             </tr>`;
         } else if (key === 'father' && showFather) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Father:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;"><span style="display: inline-block; text-align: right; max-width: 100%;">${emp.fatherName || '-'}</span></td>
             </tr>`;
         } else if (key === 'department' && showDepartment) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Dept:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;"><span style="display: inline-block; text-align: right; max-width: 100%;">${emp.department || '-'}</span></td>
             </tr>`;
         } else if (key === 'blood' && showBlood) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Blood:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.bloodGroup || '-'}</span></td>
             </tr>`;
         } else if (key === 'validity' && showValidity) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Validity:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${validityStr}</span></td>
             </tr>`;
         } else if (key === 'address' && showAddress) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Address:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; white-space: normal; line-height: 1.1; word-break: break-word;" title="${emp.currentAddress || emp.permanentAddress || '-'}"><span style="display: inline-block; text-align: right; max-width: 100%;">${emp.currentAddress || emp.permanentAddress || '-'}</span></td>
             </tr>`;
         } else if (key === 'phone' && showPhone) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Mobile:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.mobile || '-'}</span></td>
             </tr>`;
         } else if (key === 'email' && showEmail) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Email:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}">${emp.email || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}"><span style="display: inline-block; text-align: right; max-width: 100%; white-space: nowrap;">${emp.email || '-'}</span></td>
             </tr>`;
         }
     });
