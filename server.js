@@ -146,11 +146,15 @@ app.use(helmet({
       "default-src": ["'self'"],
       // app.js / verification.html use Google Fonts + jsPDF/QRious CDNs and inline styles
       "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://accounts.google.com"],
+      // The legacy vanilla-JS frontend uses inline onclick/onsubmit/onload handlers throughout.
+      // Without this, every button in the dashboard stops working.
+      "script-src-attr": ["'unsafe-inline'"],
       "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
       "img-src": ["'self'", "data:", "blob:", "https:"],
-      "connect-src": ["'self'", "https://accounts.google.com"],
+      "connect-src": ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
       "frame-src": ["'self'", "https://accounts.google.com"],
+      "form-action": ["'self'"],
       "frame-ancestors": ["'none'"],
       "object-src": ["'none'"],
       "base-uri": ["'self'"]
@@ -158,6 +162,8 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" },
+  // Google Sign-In needs to open its own popup/iframe – relax COOP from default
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   frameguard: { action: "deny" },
   hsts: NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false

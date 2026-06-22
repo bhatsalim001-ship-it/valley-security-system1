@@ -15,3 +15,9 @@ build/
 *~
 # Local database file - never commit, Render uses PostgreSQL
 db.json
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
