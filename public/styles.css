@@ -58,7 +58,11 @@
     --draggable-row-hover-bg: var(--input-bg);
     --reorder-btn-bg: rgba(0, 0, 0, 0.03);
     --reorder-btn-border: var(--glass-border);
-    --body-bg-gradient: none;
+    --body-bg-gradient: radial-gradient(at 10% 20%, rgba(224, 231, 255, 0.4) 0px, transparent 50%),
+                        radial-gradient(at 90% 10%, rgba(253, 244, 255, 0.5) 0px, transparent 50%),
+                        radial-gradient(at 50% 80%, rgba(240, 249, 255, 0.3) 0px, transparent 50%),
+                        radial-gradient(at 0% 80%, rgba(243, 232, 255, 0.2) 0px, transparent 40%),
+                        radial-gradient(at 80% 90%, rgba(254, 243, 199, 0.15) 0px, transparent 40%);
     --nav-active-bg: #f4f9f6;
     --ethereal-shadow-color: rgba(37, 99, 235, 0.40);
     --noise-opacity: 0.08;
