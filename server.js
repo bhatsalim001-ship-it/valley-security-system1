@@ -149,8 +149,14 @@ app.use(helmet({
     useDefaults: true,
     directives: {
       "default-src": ["'self'"],
-      // app.js / verification.html use Google Fonts + jsPDF/QRious CDNs and inline styles
-      "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://accounts.google.com"],
+      // Frontend loads: lucide (unpkg), jsbarcode (jsdelivr), qrious/html2canvas/jszip/cropperjs (cdnjs), Google GSI
+      "script-src": [
+        "'self'", "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com",
+        "https://cdn.jsdelivr.net",
+        "https://unpkg.com",
+        "https://accounts.google.com"
+      ],
       // The legacy vanilla-JS frontend uses inline onclick/onsubmit/onload handlers throughout.
       // Without this, every button in the dashboard stops working.
       "script-src-attr": ["'unsafe-inline'"],
