@@ -23,7 +23,7 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #030304;
+            background-color: #050507;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -36,10 +36,17 @@
             width: 100%;
             max-width: 420px;
             padding: 40px;
-            background: #0a0b0e;
+            background: rgba(10, 11, 14, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            position: relative;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: login-card-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
         }
 
         .login-header {
@@ -260,9 +267,127 @@
         *, *::before, *::after {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        /* Glow Horizon Animation & Layout */
+        .glow-horizon-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #050507;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .glow-horizon-parent {
+            position: absolute;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            isolation: isolate;
+            animation: glow-horizon-parent-anim 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes glow-horizon-parent-anim {
+            0% {
+                transform: translateY(-100%) scaleY(1.5);
+                opacity: 0;
+                filter: blur(15px);
+            }
+            100% {
+                transform: translateY(-50%) scaleY(1);
+                opacity: 1;
+                filter: blur(0px);
+            }
+        }
+
+        .glow-arc {
+            position: absolute;
+            inset: 0;
+            border-radius: 100%;
+            transform-origin: center;
+        }
+
+        .glow-arc-1 {
+            scale: 1.2;
+            background: #000000;
+            filter: blur(51px);
+            animation: glow-arc-slide-anim 2s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
+            transform: translateY(-40%);
+        }
+
+        .glow-arc-2 {
+            scale: 1.24;
+            background: #4922E5;
+            filter: blur(21px);
+            animation: glow-arc-slide-anim 2s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
+            transform: translateY(-40%);
+        }
+
+        .glow-arc-3 {
+            scale: 1.2;
+            background: #A558FB;
+            filter: blur(31px);
+            animation: glow-arc-slide-anim 2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+            transform: translateY(-40%);
+        }
+
+        .glow-arc-4 {
+            scale: 1.32;
+            background: #FFFFFF;
+            box-shadow: 0px -4px 23px 0px rgba(255, 255, 255, 0.71);
+            opacity: 0;
+            animation: glow-arc-fade-in 2s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+        }
+
+        @keyframes glow-arc-slide-anim {
+            0% {
+                transform: translateY(-40%);
+            }
+            100% {
+                transform: translateY(0%);
+            }
+        }
+
+        @keyframes glow-arc-fade-in {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes login-card-entrance {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Glow Horizon Backdrop -->
+    <div class="glow-horizon-container" aria-hidden="true">
+        <div class="glow-horizon-parent">
+            <!-- Arc 1: Black mask -->
+            <div class="glow-arc glow-arc-1"></div>
+            <!-- Arc 2: Deep violet -->
+            <div class="glow-arc glow-arc-2"></div>
+            <!-- Arc 3: Indigo/Purple -->
+            <div class="glow-arc glow-arc-3"></div>
+            <!-- Arc 4: White glow -->
+            <div class="glow-arc glow-arc-4"></div>
+        </div>
+    </div>
+
     <div class="login-container">
         <!-- Private Portal Security Warning to clear Google Phishing false positive -->
         <div style="background-color: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 12px; margin-bottom: 24px; text-align: center;">
