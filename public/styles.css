@@ -9,8 +9,8 @@
     --secondary-bg: rgba(255, 255, 255, 0.75);
     --dark-accent: #f0f3f1;
     
-    --theme-gold: #dfba5f;
-    --theme-gold-rgb: 223, 186, 95;
+    --theme-gold: #c8102e;
+    --theme-gold-rgb: 200, 16, 46;
     --theme-green: #0e3e2b;
     --theme-green-rgb: 14, 62, 43;
     --theme-sage: #52b788;
@@ -70,14 +70,14 @@
     --secondary-bg: rgba(10, 11, 14, 0.6);
     --dark-accent: #111218;
     
-    --theme-gold: #d4af37;
-    --theme-gold-rgb: 212, 175, 55;
-    --theme-green: #d4af37;
-    --theme-green-rgb: 212, 175, 55;
-    --theme-sage: #e5c158;
-    --theme-sage-rgb: 229, 193, 88;
-    --theme-accent: #d4af37;
-    --theme-accent-rgb: 212, 175, 55;
+    --theme-gold: #c8102e;
+    --theme-gold-rgb: 200, 16, 46;
+    --theme-green: #c8102e;
+    --theme-green-rgb: 200, 16, 46;
+    --theme-sage: #e31c3d;
+    --theme-sage-rgb: 227, 28, 61;
+    --theme-accent: #c8102e;
+    --theme-accent-rgb: 200, 16, 46;
 
     --text-primary: #ffffff;
     --text-secondary: #a0aec0;
@@ -108,8 +108,8 @@
 
 /* Multi-theme support dynamically toggled via JS */
 .card-theme-gold {
-    --theme-accent: #dfba5f;
-    --theme-accent-rgb: 223, 186, 95;
+    --theme-accent: #c8102e;
+    --theme-accent-rgb: 200, 16, 46;
 }
 .card-theme-blue {
     --theme-accent: #0a84ff;
@@ -1727,7 +1727,7 @@ input:focus, select:focus, textarea:focus {
     justify-content: center;
     gap: 20px;
     text-align: center;
-    border-bottom: 3px solid #d4af37;
+    border-bottom: 3px solid var(--theme-gold);
     padding-bottom: 15px;
     margin-bottom: 30px;
 }
@@ -1735,7 +1735,7 @@ input:focus, select:focus, textarea:focus {
 .letterhead-logo {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #d4af37, #c19a2b);
+    background: linear-gradient(135deg, var(--theme-gold), #9b0b20);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1807,7 +1807,7 @@ input:focus, select:focus, textarea:focus {
     width: 150px;
     height: 180px;
     background: #f0f0f0;
-    border: 2px solid #d4af37;
+    border: 2px solid var(--theme-gold);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1870,7 +1870,7 @@ input:focus, select:focus, textarea:focus {
     color: #1a1a2e;
     margin: 0 0 10px 0;
     padding-bottom: 5px;
-    border-bottom: 1px solid #d4af37;
+    border-bottom: 1px solid var(--theme-gold);
 }
 
 .record-details-table {
@@ -2480,7 +2480,7 @@ input:focus, select:focus, textarea:focus {
 
     /* Portrait Inner Element Shrinkage for Print */
     .id-portrait-header {
-        border-bottom: 0.4mm solid #d4af37 !important;
+        border-bottom: 0.4mm solid var(--theme-gold) !important;
         padding-bottom: 0.8mm !important;
         margin-bottom: 1.2mm !important;
         margin-top: -2.5mm !important;
@@ -3250,8 +3250,8 @@ input[type="checkbox"].directory-select-item:checked::after {
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #d4af37 0%, #f0d96f 100%);
-    color: #0f1218;
+    background: linear-gradient(135deg, var(--theme-gold) 0%, #f0333b 100%);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3275,7 +3275,7 @@ input[type="checkbox"].directory-select-item:checked::after {
 .user-role {
     font-size: 11px;
     font-weight: 500;
-    color: #d4af37;
+    color: var(--theme-gold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

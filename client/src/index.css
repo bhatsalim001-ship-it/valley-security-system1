@@ -2,9 +2,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold: #d4af37;
-  --color-gold-light: #e8c547;
-  --color-gold-dark: #b89a2b;
+  --color-gold: #c8102e;
+  --color-gold-light: #f0333b;
+  --color-gold-dark: #9b0b20;
   --font-family-sans: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-family-display: Outfit, Inter, sans-serif;
 
@@ -38,8 +38,8 @@
   --card-foreground: 0 0% 98%;
   --popover: 240 10% 4%;
   --popover-foreground: 0 0% 98%;
-  --primary: 43 74% 52%;
-  --primary-foreground: 0 0% 0%;
+  --primary: 351 85% 42%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 240 4% 16%;
   --secondary-foreground: 0 0% 98%;
   --muted: 240 4% 16%;
@@ -50,7 +50,7 @@
   --destructive-foreground: 0 0% 98%;
   --border: 240 4% 16%;
   --input: 240 4% 16%;
-  --ring: 43 74% 52%;
+  --ring: 351 85% 42%;
   --radius: 0.75rem;
 }
 
@@ -61,7 +61,7 @@
   --card-foreground: 240 10% 4%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 4%;
-  --primary: 43 74% 42%;
+  --primary: 351 85% 38%;
   --primary-foreground: 0 0% 100%;
   --secondary: 240 5% 96%;
   --secondary-foreground: 240 6% 10%;
@@ -73,7 +73,7 @@
   --destructive-foreground: 0 0% 98%;
   --border: 240 6% 90%;
   --input: 240 6% 90%;
-  --ring: 43 74% 42%;
+  --ring: 351 85% 38%;
 }
 
 * {

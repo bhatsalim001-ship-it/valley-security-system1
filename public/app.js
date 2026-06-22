@@ -1339,21 +1339,21 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
     const validityStr = `${formatDateDDMMYYYYLocal(issueDate)} - ${formatDateDDMMYYYYLocal(expDate)}`;
 
     const getFallbackAvatarData = (initial) => {
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23d4af37'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${initial}</text></svg>`;
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23c8102e'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${initial}</text></svg>`;
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
     };
 
-    const getPresetShield = (color = '#dfba5f') => {
+    const getPresetShield = (color = '#c8102e') => {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
     };
 
-    const getPresetStar = (color = '#dfba5f') => {
+    const getPresetStar = (color = '#c8102e') => {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
     };
 
-    const getPresetEagle = (color = '#dfba5f') => {
+    const getPresetEagle = (color = '#c8102e') => {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
     };
@@ -1375,7 +1375,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             font: "'Outfit', sans-serif",
             backgroundColor: '#ffffff',
             headerBgColor: '#0e3e2b',
-            accentColor: '#dfba5f',
+            accentColor: '#c8102e',
             headerText: 'VALLEY SECURITY AGENCY',
             subheaderText: 'SHAHIDGUNJ SRINAGAR KASHMIR',
             backgroundImage: '',
@@ -3330,7 +3330,7 @@ let STUDIO_STATE = {
     clipboard: null,
     uploads: [],
     brandKits: [
-        { name: "VSA Luxury Gold", primary: "#0f1218", accent: "#d4af37", text: "#ffffff" },
+        { name: "VSA Luxury Crimson", primary: "#0f1218", accent: "#c8102e", text: "#ffffff" },
         { name: "VSA Forest Green", primary: "#0e3e2b", accent: "#52b788", text: "#ffffff" },
         { name: "Navy Guard", primary: "#0b1d33", accent: "#e2b23c", text: "#ffffff" },
         { name: "Steel Patrol", primary: "#1f2937", accent: "#9ca3af", text: "#ffffff" },
@@ -3339,7 +3339,7 @@ let STUDIO_STATE = {
     logoPresets: [
         {
             name: "Classic Shield",
-            src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M50,10 L85,25 L85,55 C85,75 50,90 50,90 C50,90 15,75 15,55 L15,25 Z" fill="%230f1218" stroke="%23d4af37" stroke-width="4"/><path d="M50,20 L75,32 L75,55 C75,70 50,80 50,80 C50,80 25,70 25,55 L25,32 Z" fill="none" stroke="%23d4af37" stroke-width="1.5" stroke-dasharray="3,3"/><text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="22" fill="%23d4af37" text-anchor="middle">VSA</text></svg>'
+            src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M50,10 L85,25 L85,55 C85,75 50,90 50,90 C50,90 15,75 15,55 L15,25 Z" fill="%230f1218" stroke="%23c8102e" stroke-width="4"/><path d="M50,20 L75,32 L75,55 C75,70 50,80 50,80 C50,80 25,70 25,55 L25,32 Z" fill="none" stroke="%23c8102e" stroke-width="1.5" stroke-dasharray="3,3"/><text x="50" y="58" font-family="sans-serif" font-weight="900" font-size="22" fill="%23c8102e" text-anchor="middle">VSA</text></svg>'
         },
         {
             name: "Star Seal",
@@ -3408,7 +3408,7 @@ function convertToVisualTemplate(template) {
             fontFamily: "'Inter', sans-serif",
             fontSize: 8,
             fontWeight: '500',
-            color: template.accentColor || '#dfba5f',
+            color: template.accentColor || '#c8102e',
             textAlign: 'center',
             left: 10,
             top: 38,
@@ -3935,7 +3935,7 @@ function loadTemplateInStudio(id) {
     document.getElementById('tpl-font').value = tpl.font || "'Outfit', sans-serif";
     document.getElementById('tpl-bg-color').value = tpl.backgroundColor || '#ffffff';
     document.getElementById('tpl-header-bg').value = tpl.headerBgColor || '#0e3e2b';
-    document.getElementById('tpl-accent-color').value = tpl.accentColor || '#dfba5f';
+    document.getElementById('tpl-accent-color').value = tpl.accentColor || '#c8102e';
     document.getElementById('tpl-header-text').value = tpl.headerText || '';
     document.getElementById('tpl-subheader-text').value = tpl.subheaderText || '';
 
@@ -4254,7 +4254,7 @@ function resetTemplateForm() {
     document.getElementById('tpl-font').value = "'Outfit', sans-serif";
     document.getElementById('tpl-bg-color').value = '#ffffff';
     document.getElementById('tpl-header-bg').value = '#0e3e2b';
-    document.getElementById('tpl-accent-color').value = '#dfba5f';
+    document.getElementById('tpl-accent-color').value = '#c8102e';
     document.getElementById('tpl-header-text').value = '';
     document.getElementById('tpl-subheader-text').value = '';
 
