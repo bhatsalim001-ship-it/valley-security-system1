@@ -74,12 +74,14 @@ function initThemeSwitch() {
     const themeBtn = document.getElementById('theme-toggle-btn');
     if (!themeBtn) return;
 
-    // Check saved theme or default to light
-    const savedTheme = localStorage.getItem('vsa-theme') || 'light';
+    // Check saved theme or default to dark
+    const savedTheme = localStorage.getItem('vsa-theme') || 'dark';
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-theme');
-        themeBtn.querySelector('.theme-icon-dark').classList.add('hidden');
-        themeBtn.querySelector('.theme-icon-light').classList.remove('hidden');
+        const darkIcon = themeBtn.querySelector('.theme-icon-dark');
+        const lightIcon = themeBtn.querySelector('.theme-icon-light');
+        if (darkIcon) darkIcon.classList.add('hidden');
+        if (lightIcon) lightIcon.classList.remove('hidden');
     }
 
     themeBtn.addEventListener('click', () => {

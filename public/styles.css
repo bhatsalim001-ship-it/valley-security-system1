@@ -44,9 +44,9 @@
     --glass-blur: none;
     --card-shadow: 0 4px 20px rgba(14, 62, 43, 0.03), 0 1px 2px rgba(14, 62, 43, 0.01);
     
-    /* High Performance Apple Spring Curve Transitions - Disabled */
-    --transition-smooth: none;
-    --transition-fast: none;
+    /* High Performance Apple Spring Curve Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 
     /* Dynamic Theme Variables */
     --input-bg: #f0f3f1;
@@ -60,30 +60,42 @@
     --reorder-btn-border: var(--glass-border);
 }
 
-/* Dark Mode (Donezo premium dark forest green variant) */
+/* Dark Mode (Donezo premium dark gold and OLED black variant) */
 .dark-theme {
-    --primary-bg: #080d0a;
-    --secondary-bg: #0e1813;
-    --dark-accent: #050a07;
+    --primary-bg: #030304;
+    --secondary-bg: #0a0b0e;
+    --dark-accent: #111218;
     
-    --text-primary: #ebf3ef;
-    --text-secondary: #91a39a;
-    --text-muted: #4e5f56;
-    
-    --glass-border: rgba(235, 243, 239, 0.08);
-    --glass-border-focus: var(--theme-sage);
-    --glass-background: rgba(14, 24, 19, 0.7);
-    --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.05);
+    --theme-gold: #d4af37;
+    --theme-gold-rgb: 212, 175, 55;
+    --theme-green: #d4af37;
+    --theme-green-rgb: 212, 175, 55;
+    --theme-sage: #e5c158;
+    --theme-sage-rgb: 229, 193, 88;
+    --theme-accent: #d4af37;
+    --theme-accent-rgb: 212, 175, 55;
 
-    --input-bg: rgba(0, 0, 0, 0.3);
-    --hover-bg: rgba(255, 255, 255, 0.04);
-    --hover-bg-subtle: rgba(255, 255, 255, 0.01);
-    --form-card-bg: rgba(31, 40, 51, 0.6);
-    --form-card-hover-bg: rgba(31, 40, 51, 0.8);
-    --draggable-row-bg: rgba(22, 26, 35, 0.65);
-    --draggable-row-hover-bg: rgba(22, 26, 35, 0.85);
+    --text-primary: #ffffff;
+    --text-secondary: #a0aec0;
+    --text-muted: #718096;
+    
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-focus: var(--theme-sage);
+    --glass-background: rgba(10, 11, 14, 0.7);
+    --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.05);
+
+    --input-bg: rgba(0, 0, 0, 0.4);
+    --hover-bg: rgba(212, 175, 55, 0.08);
+    --hover-bg-subtle: rgba(212, 175, 55, 0.02);
+    --form-card-bg: rgba(10, 11, 14, 0.7);
+    --form-card-hover-bg: rgba(15, 17, 22, 0.8);
+    --draggable-row-bg: rgba(0, 0, 0, 0.3);
+    --draggable-row-hover-bg: rgba(212, 175, 55, 0.04);
     --reorder-btn-bg: rgba(255, 255, 255, 0.05);
     --reorder-btn-border: rgba(255, 255, 255, 0.1);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Multi-theme support dynamically toggled via JS */
@@ -178,7 +190,7 @@ input, textarea {
     width: 40px;
     height: 40px;
     border-radius: var(--border-radius-sm);
-    background: rgba(14, 62, 43, 0.08);
+    background: rgba(var(--theme-green-rgb), 0.08);
     border: 1px solid var(--theme-green);
     display: flex;
     align-items: center;
@@ -837,7 +849,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .badge-gold {
-    background: rgba(14, 62, 43, 0.08);
+    background: rgba(var(--theme-green-rgb), 0.08);
     color: var(--theme-green);
     border: 1px solid var(--theme-green);
 }
@@ -2979,11 +2991,11 @@ input[type="checkbox"].directory-select-item:checked::after {
 /* Selected row/card states */
 .directory-card.selected {
     border-color: var(--theme-accent) !important;
-    background: rgba(14, 62, 43, 0.05) !important;
+    background: rgba(var(--theme-green-rgb), 0.05) !important;
 }
 
 #employee-directory-body tr.selected {
-    background: rgba(14, 62, 43, 0.04) !important;
+    background: rgba(var(--theme-green-rgb), 0.04) !important;
 }
 
 /* ========================================================================
@@ -3305,7 +3317,7 @@ input[type="checkbox"].directory-select-item:checked::after {
 
 .creator-badge {
     position: relative;
-    background: linear-gradient(135deg, var(--theme-green) 0%, #051d13 100%);
+    background: linear-gradient(135deg, var(--theme-green) 0%, rgba(var(--theme-green-rgb), 0.15) 100%);
     border-radius: var(--border-radius-sm);
     padding: 16px;
     display: flex;
@@ -3316,7 +3328,7 @@ input[type="checkbox"].directory-select-item:checked::after {
     width: 100%;
     box-sizing: border-box;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(14, 62, 43, 0.15);
+    box-shadow: 0 4px 15px rgba(var(--theme-green-rgb), 0.15);
     border: none;
 }
 
@@ -3328,8 +3340,8 @@ input[type="checkbox"].directory-select-item:checked::after {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 100% 100%, rgba(82, 183, 136, 0.15) 0%, transparent 60%),
-                radial-gradient(circle at 0% 0%, rgba(82, 183, 136, 0.1) 0%, transparent 50%);
+    background: radial-gradient(circle at 100% 100%, rgba(var(--theme-sage-rgb), 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 0% 0%, rgba(var(--theme-sage-rgb), 0.15) 0%, transparent 50%);
     pointer-events: none;
 }
 
@@ -3388,7 +3400,7 @@ input[type="checkbox"].directory-select-item:checked::after {
 
 .creator-badge-btn {
     background: var(--theme-sage);
-    color: #0e3e2b;
+    color: #030304;
     border: none;
     border-radius: 20px;
     padding: 8px 16px;
