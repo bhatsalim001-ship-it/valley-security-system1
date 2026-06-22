@@ -135,6 +135,11 @@ async function compressImageBase64(base64Str, width, height, fit = 'cover') {
 
 const app = express();
 
+// SECURITY: trust exactly 1 proxy hop (Render's edge / Cloudflare in front of us).
+// Without this, express-rate-limit cannot read the real client IP from X-Forwarded-For
+// and throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR on every /api/* request.
+app.set('trust proxy', 1);
+
 // SECURITY: disable framework fingerprint leak
 app.disable('x-powered-by');
 
