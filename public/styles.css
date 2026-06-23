@@ -4007,7 +4007,75 @@ input[type="checkbox"].directory-select-item:checked::after {
 .hsl-slider-input::-moz-range-thumb:hover {
     transform: scale(1.2);
 }
-
-
-
-
+/* iOS-style Cropper Handles & Box Styling */
+.cropper-view-box {
+    outline: 2px solid #ffffff !important;
+    outline-color: rgba(255, 255, 255, 0.95) !important;
+}
+.cropper-line {
+    background-color: rgba(255, 255, 255, 0.45) !important;
+}
+.cropper-line.line-e, .cropper-line.line-w {
+    width: 2px !important;
+}
+.cropper-line.line-n, .cropper-line.line-s {
+    height: 2px !important;
+}
+.cropper-point {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+}
+/* Corner brackets - rectangular iOS bars */
+.cropper-point.point-nw {
+    width: 20px !important;
+    height: 20px !important;
+    border-top: 4px solid #ffffff !important;
+    border-left: 4px solid #ffffff !important;
+    background: transparent !important;
+    top: -3px !important;
+    left: -3px !important;
+    border-radius: 0 !important;
+}
+.cropper-point.point-ne {
+    width: 20px !important;
+    height: 20px !important;
+    border-top: 4px solid #ffffff !important;
+    border-right: 4px solid #ffffff !important;
+    background: transparent !important;
+    top: -3px !important;
+    right: -3px !important;
+    border-radius: 0 !important;
+}
+.cropper-point.point-sw {
+    width: 20px !important;
+    height: 20px !important;
+    border-bottom: 4px solid #ffffff !important;
+    border-left: 4px solid #ffffff !important;
+    background: transparent !important;
+    bottom: -3px !important;
+    left: -3px !important;
+    border-radius: 0 !important;
+}
+.cropper-point.point-se {
+    width: 20px !important;
+    height: 20px !important;
+    border-bottom: 4px solid #ffffff !important;
+    border-right: 4px solid #ffffff !important;
+    background: transparent !important;
+    bottom: -3px !important;
+    right: -3px !important;
+    border-radius: 0 !important;
+}
+/* Side bars - long handles */
+.cropper-point.point-n, .cropper-point.point-s {
+    width: 28px !important;
+    height: 4px !important;
+    margin-left: -14px !important;
+    border-radius: 2px !important;
+}
+.cropper-point.point-e, .cropper-point.point-w {
+    width: 4px !important;
+    height: 28px !important;
+    margin-top: -14px !important;
+    border-radius: 2px !important;
+}
