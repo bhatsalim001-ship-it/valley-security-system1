@@ -4713,6 +4713,7 @@ function setupTemplatesManager() {
 let activeCropper = null;
 let cropperTriggerInputId = null;
 let cropperPreviewBoxId = null;
+let isAspectLocked = false; // Default to free crop (like a phone)
 
 function openPhotoCropper(fileInput, previewBoxId) {
     const file = fileInput.files[0];
@@ -4748,6 +4749,17 @@ function openPhotoCropper(fileInput, previewBoxId) {
         const modal = document.getElementById('cropper-modal');
         modal.classList.remove('hidden');
         
+        // Update aspect toggle button text & icon initially
+        const aspectText = document.getElementById('crop-aspect-text');
+        const aspectIcon = document.querySelector('#btn-crop-aspect-toggle i');
+        if (aspectText) {
+            aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
+        }
+        if (aspectIcon) {
+            aspectIcon.className = ''; // Reset classes
+            aspectIcon.setAttribute('data-lucide', isAspectLocked ? 'lock' : 'unlock');
+        }
+
         // Initialize Cropper.js after modal is visible and Lucide icons are rendered
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
@@ -4759,7 +4771,7 @@ function openPhotoCropper(fileInput, previewBoxId) {
         }
 
         activeCropper = new Cropper(targetImage, {
-            aspectRatio: targetRatio, // Match dynamic template aspect ratio
+            aspectRatio: isAspectLocked ? targetRatio : NaN, // Free crop by default unless locked
             viewMode: 1,    // Restrict crop box to canvas bounds
             dragMode: 'move',
             autoCropArea: 0.9,
@@ -4821,6 +4833,46 @@ function setupCropperControls() {
     if (rotateRightBtn) {
         rotateRightBtn.addEventListener('click', () => {
             if (activeCropper) activeCropper.rotate(90);
+        });
+    }
+
+    // Toggle Aspect Ratio click handler
+    const aspectToggleBtn = document.getElementById('btn-crop-aspect-toggle');
+    if (aspectToggleBtn) {
+        aspectToggleBtn.addEventListener('click', () => {
+            if (!activeCropper) return;
+            isAspectLocked = !isAspectLocked;
+            
+            let targetRatio = 85 / 105;
+            try {
+                const idSelTpl = document.getElementById('id-select-template');
+                if (idSelTpl && idSelTpl.value) {
+                    const template = VSA_STATE.templates.find(t => t.id === idSelTpl.value);
+                    if (template && template.photoWidth && template.photoHeight) {
+                        targetRatio = template.photoWidth / template.photoHeight;
+                    }
+                } else if (VSA_STATE.templates && VSA_STATE.templates.length > 0) {
+                    const template = VSA_STATE.templates[0];
+                    if (template && template.photoWidth && template.photoHeight) {
+                        targetRatio = template.photoWidth / template.photoHeight;
+                    }
+                }
+            } catch (err) {
+                console.error("Error determining aspect ratio for toggle:", err);
+            }
+            
+            activeCropper.setAspectRatio(isAspectLocked ? targetRatio : NaN);
+            
+            const aspectText = document.getElementById('crop-aspect-text');
+            const aspectIcon = document.querySelector('#btn-crop-aspect-toggle i');
+            if (aspectText) {
+                aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
+            }
+            if (aspectIcon) {
+                aspectIcon.className = '';
+                aspectIcon.setAttribute('data-lucide', isAspectLocked ? 'lock' : 'unlock');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
         });
     }
 
