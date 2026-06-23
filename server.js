@@ -1028,7 +1028,7 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
     // Server-Side Compression of Profile Photo and Signature
     if (newEmp.documents) {
       if (newEmp.documents.photo) {
-        newEmp.documents.photo = await compressImageBase64(newEmp.documents.photo, 300, 300, 'cover');
+        newEmp.documents.photo = await compressImageBase64(newEmp.documents.photo, 300, null);
       }
       if (newEmp.documents.signature) {
         newEmp.documents.signature = await compressImageBase64(newEmp.documents.signature, 300, 150, 'contain');
@@ -1074,7 +1074,7 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
     // Apply compression to updated photo or signature if changed
     if (mergedEmp.documents) {
       if (mergedEmp.documents.photo && mergedEmp.documents.photo !== existingEmp.documents?.photo) {
-        mergedEmp.documents.photo = await compressImageBase64(mergedEmp.documents.photo, 300, 300, 'cover');
+        mergedEmp.documents.photo = await compressImageBase64(mergedEmp.documents.photo, 300, null);
       }
       if (mergedEmp.documents.signature && mergedEmp.documents.signature !== existingEmp.documents?.signature) {
         mergedEmp.documents.signature = await compressImageBase64(mergedEmp.documents.signature, 300, 150, 'contain');
