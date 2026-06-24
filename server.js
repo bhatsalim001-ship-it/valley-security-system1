@@ -160,7 +160,7 @@ app.use(helmet({
       // The legacy vanilla-JS frontend uses inline onclick/onsubmit/onload handlers throughout.
       // Without this, every button in the dashboard stops working.
       "script-src-attr": ["'unsafe-inline'"],
-      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
       "img-src": ["'self'", "data:", "blob:", "https:"],
       "connect-src": ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],

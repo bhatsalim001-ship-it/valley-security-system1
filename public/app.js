@@ -4719,8 +4719,8 @@ function openPhotoCropper(fileInput, previewBoxId) {
     const file = fileInput.files[0];
     if (!file) return;
 
-    // Calculate aspect ratio dynamically based on the currently active template in single preview
-    let targetRatio = 85 / 105; // Default fallback vertical ratio (1:1.23)
+    // Calculate aspect ratio from active template
+    let targetRatio = 85 / 105;
     try {
         const idSelTpl = document.getElementById('id-select-template');
         if (idSelTpl && idSelTpl.value) {
@@ -4740,60 +4740,93 @@ function openPhotoCropper(fileInput, previewBoxId) {
 
     const reader = new FileReader();
     reader.onload = function(e) {
+        // Step 1: destroy any stale cropper
+        if (activeCropper) {
+            activeCropper.destroy();
+            activeCropper = null;
+        }
+
+        // Step 2: set tracking vars
+        cropperTriggerInputId = fileInput.id;
+        cropperPreviewBoxId = previewBoxId;
+
+        // Step 3: get elements
         const targetImage = document.getElementById('cropper-target-image');
-        
-        // Wait for image to load to get correct dimensions before initializing Cropper
-        targetImage.onload = function() {
-            // Destroy previous instance if any
+        const modal = document.getElementById('cropper-modal');
+
+        // Step 4: reset image src so onload always fires (even for cached images)
+        targetImage.src = '';
+        targetImage.onload = null;
+
+        // Step 5: show modal FIRST so container has real pixel size
+        modal.classList.remove('hidden');
+
+        // Step 6: update aspect toggle button
+        const aspectText = document.getElementById('crop-aspect-text');
+        const aspectIcon = document.querySelector('#btn-crop-aspect-toggle i');
+        if (aspectText) aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
+        if (aspectIcon) {
+            aspectIcon.className = '';
+            aspectIcon.setAttribute('data-lucide', isAspectLocked ? 'lock' : 'unlock');
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Step 7: define the init function
+        function initCropper() {
+            console.log('=== CROPPER INIT ===');
+            console.log('window.Cropper exists:', typeof window.Cropper);
+            console.log('targetImage element:', targetImage);
+            console.log('targetImage dimensions:', targetImage.offsetWidth, 'x', targetImage.offsetHeight);
+            console.log('targetImage naturalSize:', targetImage.naturalWidth, 'x', targetImage.naturalHeight);
+            console.log('targetImage src length:', targetImage.src ? targetImage.src.length : 0);
+
+            if (!window.Cropper) {
+                console.error('CROPPER ERROR: window.Cropper is not defined! CDN script not loaded.');
+                return;
+            }
+            if (!targetImage) {
+                console.error('CROPPER ERROR: targetImage element not found!');
+                return;
+            }
+
             if (activeCropper) {
                 activeCropper.destroy();
                 activeCropper = null;
             }
+            try {
+                activeCropper = new Cropper(targetImage, {
+                    aspectRatio: isAspectLocked ? targetRatio : NaN,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.85,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    movable: true,
+                    scalable: true,
+                    zoomable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+                console.log('Cropper initialized OK:', activeCropper);
+            } catch(err) {
+                console.error('CROPPER ERROR during new Cropper():', err);
+            }
+        }
 
-            activeCropper = new Cropper(targetImage, {
-                aspectRatio: isAspectLocked ? targetRatio : NaN, // Free crop by default unless locked
-                viewMode: 1,    // Restrict crop box to canvas bounds
-                dragMode: 'move',
-                autoCropArea: 0.9,
-                restore: false,
-                guides: true,
-                center: true,
-                highlight: false,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                toggleDragModeOnDblclick: false,
-            });
-            
-            // Unbind onload to prevent loops on internal changes
-            targetImage.onload = null;
-        };
-
+        // Step 8: set image src and init after 150ms
+        // 150ms gives the browser time to: show modal + render image
+        // Works even if image is cached (doesn't rely on onload firing)
         targetImage.src = e.target.result;
-        
-        cropperTriggerInputId = fileInput.id;
-        cropperPreviewBoxId = previewBoxId;
-        
-        const modal = document.getElementById('cropper-modal');
-        modal.classList.remove('hidden');
-        
-        // Update aspect toggle button text & icon initially
-        const aspectText = document.getElementById('crop-aspect-text');
-        const aspectIcon = document.querySelector('#btn-crop-aspect-toggle i');
-        if (aspectText) {
-            aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
-        }
-        if (aspectIcon) {
-            aspectIcon.className = ''; // Reset classes
-            aspectIcon.setAttribute('data-lucide', isAspectLocked ? 'lock' : 'unlock');
-        }
-
-        // Initialize Lucide icons after modal is visible
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
+        setTimeout(initCropper, 150);
     };
     reader.readAsDataURL(file);
 }
+
+
+
 
 // Bind Cropper UI controls
 function setupCropperControls() {
