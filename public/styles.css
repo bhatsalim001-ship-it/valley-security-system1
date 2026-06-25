@@ -2141,7 +2141,10 @@ input:focus, select:focus, textarea:focus {
     max-width: 150px;
     object-fit: contain;
     mix-blend-mode: multiply;
-    filter: contrast(1.4) brightness(1.1);
+    opacity: 0.93;
+    filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45));
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
 }
 
 .sig-placeholder {
@@ -2600,7 +2603,9 @@ input:focus, select:focus, textarea:focus {
         max-height: 5mm !important;
         max-width: 22mm !important;
         mix-blend-mode: multiply !important;
-        filter: contrast(1.4) brightness(1.1) !important;
+        opacity: 0.93 !important;
+        filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)) !important;
+        image-rendering: auto !important;
     }
 
     .id-portrait-qr {
@@ -3205,7 +3210,9 @@ input[type="checkbox"].directory-select-item:checked::after {
     max-height: 100%;
     object-fit: contain;
     mix-blend-mode: multiply;
-    filter: contrast(1.4) brightness(1.1);
+    opacity: 0.93;
+    filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45));
+    image-rendering: auto;
 }
 
 /* ========================================================================
