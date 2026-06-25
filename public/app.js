@@ -2050,49 +2050,49 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Staff ID:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.id}</td>
             </tr>`;
         } else if (key === 'father' && showFather) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Father:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${toTitleCase(emp.fatherName || '-')}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${toTitleCase(emp.fatherName || '-')}</td>
             </tr>`;
         } else if (key === 'department' && showDepartment) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Dept:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1; word-break: break-word;">${emp.department || '-'}</td>
             </tr>`;
         } else if (key === 'blood' && showBlood) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Blood:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.bloodGroup || '-'}</td>
             </tr>`;
         } else if (key === 'validity' && showValidity) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Validity:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${validityStr}</td>
             </tr>`;
         } else if (key === 'address' && showAddress) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Address:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1;" title="${toTitleCase(emp.currentAddress || emp.permanentAddress || '-')}">${toTitleCase(emp.currentAddress || emp.permanentAddress || '-')}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1;" title="${toTitleCase(emp.currentAddress || emp.permanentAddress || '-')}">${toTitleCase(emp.currentAddress || emp.permanentAddress || '-')}</td>
             </tr>`;
         } else if (key === 'phone' && showPhone) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Mobile:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.mobile || '-'}</td>
             </tr>`;
         } else if (key === 'email' && showEmail) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Email:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}">${emp.email || '-'}</td>
+                <td class="id-table-value" style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${emp.email || '-'}">${emp.email || '-'}</td>
             </tr>`;
         }
     });
@@ -2266,6 +2266,152 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
     }
 }
 
+function adjustCardTextSizes(container) {
+    const cards = container.querySelectorAll('.visual-id-card-render');
+    cards.forEach(card => {
+        const isHorizontal = card.classList.contains('id-card-horizontal');
+        
+        // 1. Fit Header Brand Title and Subtitle
+        const titleEl = card.querySelector('.id-portrait-title');
+        const subtitleEl = card.querySelector('.id-portrait-subtitle');
+        if (titleEl) {
+            let originalSize = parseFloat(window.getComputedStyle(titleEl).fontSize) || 14;
+            if (!titleEl.dataset.originalSize) {
+                titleEl.dataset.originalSize = originalSize;
+            }
+            let size = originalSize;
+            const targetWidth = titleEl.clientWidth || (isHorizontal ? 400 : 230);
+            const origWhiteSpace = titleEl.style.whiteSpace;
+            titleEl.style.whiteSpace = 'nowrap';
+            while (titleEl.scrollWidth > targetWidth + 2 && size > 7.5) {
+                size -= 0.5;
+                titleEl.style.fontSize = size + 'px';
+            }
+            if (origWhiteSpace) {
+                titleEl.style.whiteSpace = origWhiteSpace;
+            }
+        }
+        if (subtitleEl) {
+            let originalSize = parseFloat(window.getComputedStyle(subtitleEl).fontSize) || 8;
+            if (!subtitleEl.dataset.originalSize) {
+                subtitleEl.dataset.originalSize = originalSize;
+            }
+            let size = originalSize;
+            const targetWidth = subtitleEl.clientWidth || (isHorizontal ? 400 : 230);
+            const origWhiteSpace = subtitleEl.style.whiteSpace;
+            subtitleEl.style.whiteSpace = 'nowrap';
+            while (subtitleEl.scrollWidth > targetWidth + 2 && size > 6.0) {
+                size -= 0.5;
+                subtitleEl.style.fontSize = size + 'px';
+            }
+            if (origWhiteSpace) {
+                subtitleEl.style.whiteSpace = origWhiteSpace;
+            }
+        }
+
+        // 2. Fit Name
+        const nameEl = card.querySelector('.id-portrait-name');
+        const designationEl = card.querySelector('.id-portrait-designation');
+        
+        if (nameEl) {
+            let originalSize = parseFloat(window.getComputedStyle(nameEl).fontSize) || (isHorizontal ? 13 : 14);
+            if (!nameEl.dataset.originalSize) {
+                nameEl.dataset.originalSize = originalSize;
+            }
+            let size = originalSize;
+            const targetWidth = nameEl.clientWidth || (isHorizontal ? 240 : 200);
+            const origWhiteSpace = nameEl.style.whiteSpace;
+            nameEl.style.whiteSpace = 'nowrap';
+            while (nameEl.scrollWidth > targetWidth + 2 && size > 7.5) {
+                size -= 0.5;
+                nameEl.style.fontSize = size + 'px';
+            }
+            if (origWhiteSpace) {
+                nameEl.style.whiteSpace = origWhiteSpace;
+            }
+        }
+
+        // 3. Fit nowrap table values horizontally
+        const nowrapValues = card.querySelectorAll('.id-table-value');
+        nowrapValues.forEach(valEl => {
+            const style = window.getComputedStyle(valEl);
+            if (style.whiteSpace === 'nowrap' || valEl.style.whiteSpace === 'nowrap' || valEl.style.textOverflow === 'ellipsis') {
+                let originalSize = parseFloat(style.fontSize) || 8;
+                if (!valEl.dataset.originalSize) {
+                    valEl.dataset.originalSize = originalSize;
+                }
+                let size = originalSize;
+                const targetWidth = valEl.clientWidth || (isHorizontal ? 130 : 110);
+                
+                // Temporarily force nowrap for accurate measurement
+                const origWhiteSpace = valEl.style.whiteSpace;
+                valEl.style.whiteSpace = 'nowrap';
+                
+                while (valEl.scrollWidth > targetWidth + 2 && size > 7.5) {
+                    size -= 0.5;
+                    valEl.style.fontSize = size + 'px';
+                    // Scale label as well
+                    const tr = valEl.closest('tr');
+                    if (tr) {
+                        const labelEl = tr.querySelector('td:first-child');
+                        if (labelEl) {
+                            labelEl.style.fontSize = size + 'px';
+                        }
+                    }
+                }
+                if (origWhiteSpace) {
+                    valEl.style.whiteSpace = origWhiteSpace;
+                }
+            }
+        });
+
+        // 4. Vertical Fit Pass
+        // If the card scrollHeight is larger than the card clientHeight, scale down designation & all table rows.
+        const targetCardHeight = card.clientHeight || (isHorizontal ? 320 : 500);
+        let maxIterations = 20;
+        
+        while (card.scrollHeight > targetCardHeight + 4 && maxIterations > 0) {
+            let reducedAny = false;
+            const resizableElements = [];
+            
+            // Add designation
+            if (designationEl) {
+                const currentSize = parseFloat(window.getComputedStyle(designationEl).fontSize) || (isHorizontal ? 9 : 10);
+                if (currentSize > 7.5) {
+                    resizableElements.push({ el: designationEl, currentSize });
+                }
+            }
+            
+            // Add all table values/labels
+            const tableRows = card.querySelectorAll('.id-portrait-table tr');
+            tableRows.forEach(tr => {
+                const label = tr.querySelector('td:first-child');
+                const val = tr.querySelector('.id-table-value');
+                if (val) {
+                    const currentSize = parseFloat(window.getComputedStyle(val).fontSize) || 8;
+                    if (currentSize > 7.5) {
+                        resizableElements.push({ el: val, labelEl: label, currentSize });
+                    }
+                }
+            });
+            
+            if (resizableElements.length === 0) break;
+            
+            resizableElements.forEach(item => {
+                const newSize = item.currentSize - 0.5;
+                item.el.style.fontSize = newSize + 'px';
+                if (item.labelEl) {
+                    item.labelEl.style.fontSize = newSize + 'px';
+                }
+                reducedAny = true;
+            });
+            
+            if (!reducedAny) break;
+            maxIterations--;
+        }
+    });
+}
+
 function renderQrsInContainer(container) {
     // Render QRs
     const canvases = container.querySelectorAll('.qr-canvas-rendered');
@@ -2318,6 +2464,9 @@ function renderQrsInContainer(container) {
         }
         canvas.classList.remove('barcode-canvas-rendered');
     });
+
+    // Auto-adjust font sizes to fit card layout perfectly
+    adjustCardTextSizes(container);
 }
 
 async function updateEmployeeValidity(empId, validity) {
