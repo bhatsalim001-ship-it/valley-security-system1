@@ -2070,7 +2070,6 @@ input:focus, select:focus, textarea:focus {
     font-weight: 900;
     color: #000000;
     margin: 0 0 2px 0;
-    text-transform: uppercase;
     letter-spacing: 0.2px;
 }
 
@@ -2079,7 +2078,6 @@ input:focus, select:focus, textarea:focus {
     font-weight: bold;
     color: #a30000;
     margin: 0;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
@@ -2116,7 +2114,6 @@ input:focus, select:focus, textarea:focus {
     width: 68%;
     text-align: left;
     vertical-align: top;
-    text-transform: uppercase;
 }
 
 .id-portrait-signature-box {

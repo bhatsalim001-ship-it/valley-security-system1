@@ -16,6 +16,28 @@ let VSA_STATE = {
 
 // Selection pointers
 let selectedClientId = null;
+
+// Formatting helper to convert strings to Title Case (e.g. "salim ilyas bhat" -> "Salim Ilyas Bhat")
+function toTitleCase(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Attach a live Title Case auto-formatting listener to input elements
+function setupLiveTitleCaseInput(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('input', function() {
+        const selectionStart = this.selectionStart;
+        const selectionEnd = this.selectionEnd;
+        const val = this.value;
+        const formatted = toTitleCase(val);
+        if (val !== formatted) {
+            this.value = formatted;
+            this.setSelectionRange(selectionStart, selectionEnd);
+        }
+    });
+}
 let activeIdCardSide = 'front'; // 'front' or 'back'
 let currentRegistrationMode = 'add'; // 'add' or 'edit'
 let currentRegistrationEmpId = null;
@@ -654,9 +676,9 @@ function renderRecentEmployeesTable() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><strong>${emp.id}</strong></td>
-            <td>${emp.name}</td>
-            <td>${emp.designation}</td>
-            <td>${emp.department || '-'}</td>
+            <td>${toTitleCase(emp.name)}</td>
+            <td>${toTitleCase(emp.designation)}</td>
+            <td>${toTitleCase(emp.department || '-')}</td>
             <td>${emp.joiningDate}</td>
             <td><span class="badge ${emp.status === 'Active' ? 'badge-active' : 'badge-suspended'}">${emp.status}</span></td>
         `;
@@ -736,10 +758,10 @@ function renderEmployeeDirectory() {
                     ${showPhoto}
                 </div>
                 <div class="directory-card-info">
-                    <div class="directory-card-name" title="${emp.name}">${emp.name}</div>
+                    <div class="directory-card-name" title="${toTitleCase(emp.name)}">${toTitleCase(emp.name)}</div>
                     <div class="directory-card-empid">${emp.id}</div>
-                    <div class="directory-card-subtext" title="${emp.designation}">${emp.designation}</div>
-                    <div class="directory-card-client" title="${emp.department || '-'}">${emp.department || '<span class="text-muted">-</span>'}</div>
+                    <div class="directory-card-subtext" title="${toTitleCase(emp.designation)}">${toTitleCase(emp.designation)}</div>
+                    <div class="directory-card-client" title="${toTitleCase(emp.department || '-')}">${toTitleCase(emp.department || '-')}</div>
                     <div class="directory-card-chips" style="align-items: center; gap: 6px;">
                         <span class="directory-card-chip">${emp.manpowerType || 'Security'}</span>
                         <select class="directory-status-select" data-id="${emp.id}" data-status="${emp.status}" style="font-size: 10px; padding: 2px 6px;">
@@ -767,11 +789,11 @@ function renderEmployeeDirectory() {
                         <div class="directory-list-avatar" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--glass-border); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--input-bg);">
                             ${photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-muted);"></i>`}
                         </div>
-                        <span>${emp.name}</span>
+                        <span>${toTitleCase(emp.name)}</span>
                     </div>
                 </td>
-                <td>${emp.designation}</td>
-                <td>${emp.department || '-'}</td>
+                <td>${toTitleCase(emp.designation)}</td>
+                <td>${toTitleCase(emp.department || '-')}</td>
                 <td>${emp.mobile}</td>
                 <td><span class="text-muted" style="font-size: 11px;">${docsText}</span></td>
                 <td>
@@ -1093,8 +1115,8 @@ function populateIdEmployeeChecklist() {
                         ${avatarHtml}
                     </div>
                     <div class="id-checklist-item-info">
-                        <span class="id-checklist-item-name">${emp.name}</span>
-                        <span class="id-checklist-item-sub">${emp.id} | ${emp.designation} | ${emp.department || '-'}</span>
+                        <span class="id-checklist-item-name">${toTitleCase(emp.name)}</span>
+                        <span class="id-checklist-item-sub">${emp.id} | ${toTitleCase(emp.designation)} | ${toTitleCase(emp.department || '-')}</span>
                     </div>
                 </div>
             `;
@@ -1298,10 +1320,10 @@ function openEmployeeModal(empId = null) {
         const emp = VSA_STATE.employees.find(e => e.id === empId);
         if (!emp) return;
 
-        title.textContent = `Edit Details: ${emp.name} (${emp.id})`;
+        title.textContent = `Edit Details: ${toTitleCase(emp.name)} (${emp.id})`;
         document.getElementById('form-emp-id').value = emp.id;
-        document.getElementById('form-name').value = emp.name;
-        document.getElementById('form-father').value = emp.fatherName;
+        document.getElementById('form-name').value = toTitleCase(emp.name);
+        document.getElementById('form-father').value = toTitleCase(emp.fatherName);
         document.getElementById('form-dob').value = emp.dob;
         document.getElementById('form-gender').value = emp.gender;
         document.getElementById('form-blood').value = emp.bloodGroup;
@@ -1309,12 +1331,12 @@ function openEmployeeModal(empId = null) {
         document.getElementById('form-mobile').value = emp.mobile;
         document.getElementById('form-alt-mobile').value = emp.altMobile || '';
         document.getElementById('form-email').value = emp.email || '';
-        document.getElementById('form-perm-address').value = emp.permanentAddress;
-        document.getElementById('form-curr-address').value = emp.currentAddress;
+        document.getElementById('form-perm-address').value = toTitleCase(emp.permanentAddress);
+        document.getElementById('form-curr-address').value = toTitleCase(emp.currentAddress);
         document.getElementById('form-district').value = emp.district;
         document.getElementById('form-state').value = emp.state;
         document.getElementById('form-pin').value = emp.pinCode;
-        document.getElementById('form-designation').value = emp.designation;
+        document.getElementById('form-designation').value = toTitleCase(emp.designation);
         document.getElementById('form-manager').value = emp.reportingManager || '';
         document.getElementById('form-joining-date').value = emp.joiningDate;
         document.getElementById('form-status').value = emp.status;
@@ -1935,7 +1957,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Father:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${emp.fatherName || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${toTitleCase(emp.fatherName || '-')}</td>
             </tr>`;
         } else if (key === 'department' && showDepartment) {
             detailsTableRowsHtml += `
@@ -1959,7 +1981,7 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
             detailsTableRowsHtml += `
             <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                 <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPadding}px 0; width: ${labelWidth}%; text-transform: uppercase; text-align: left;">Address:</td>
-                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1;" title="${emp.currentAddress || emp.permanentAddress || '-'}">${emp.currentAddress || emp.permanentAddress || '-'}</td>
+                <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPadding}px 0; text-align: left; padding-left: ${labelValueSpacing}px; white-space: normal; line-height: 1.1;" title="${toTitleCase(emp.currentAddress || emp.permanentAddress || '-')}">${toTitleCase(emp.currentAddress || emp.permanentAddress || '-')}</td>
             </tr>`;
         } else if (key === 'phone' && showPhone) {
             detailsTableRowsHtml += `
@@ -2018,13 +2040,13 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
                             ${showName ? `
-                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                                ${emp.name}
+                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                ${toTitleCase(emp.name)}
                             </h2>
                             ` : ''}
                             ${showDesignation ? `
-                            <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; text-transform: uppercase; margin: 1px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word;">
-                                ${emp.designation}
+                            <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word;">
+                                ${toTitleCase(emp.designation)}
                             </h3>
                             ` : ''}
                         </div>
@@ -2110,13 +2132,13 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
                         <!-- Name & Designation -->
                         <div style="margin-bottom: 6px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 4px;">
                             ${showName ? `
-                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                                ${emp.name}
+                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                ${toTitleCase(emp.name)}
                             </h2>
                             ` : ''}
                             ${showDesignation ? `
-                            <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; text-transform: uppercase; margin: 2px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word;">
-                                ${emp.designation}
+                            <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word;">
+                                ${toTitleCase(emp.designation)}
                             </h3>
                             ` : ''}
                         </div>
@@ -2376,6 +2398,15 @@ function exportReportToCSV() {
    7. EVENT HANDLERS & BACKUPS
    ========================================================================== */
 function setupEventHandlers() {
+    // Setup live Title Case auto-capitalization on input fields
+    setupLiveTitleCaseInput('reg-name');
+    setupLiveTitleCaseInput('reg-father');
+    setupLiveTitleCaseInput('reg-curr-address');
+    setupLiveTitleCaseInput('form-name');
+    setupLiveTitleCaseInput('form-father');
+    setupLiveTitleCaseInput('form-curr-address');
+    setupLiveTitleCaseInput('form-perm-address');
+
     // === EMPLOYEE RECORD (LETTERHEAD) FORM HANDLERS ===
     document.getElementById('rec-select-employee').addEventListener('change', function() {
         loadEmployeeRecord(this.value);
@@ -2692,8 +2723,8 @@ function handleGlobalSearchInput() {
     } else {
         dropdown.innerHTML = matches.map(emp => `
             <div class="search-dropdown-item cursor-pointer" data-id="${emp.id}">
-                <span class="search-dropdown-name">${emp.name} (${emp.id})</span>
-                <span class="search-dropdown-meta">${emp.designation} • Status: ${emp.status}</span>
+                <span class="search-dropdown-name">${toTitleCase(emp.name)} (${emp.id})</span>
+                <span class="search-dropdown-meta">${toTitleCase(emp.designation)} • Status: ${emp.status}</span>
             </div>
         `).join('');
 
@@ -2805,7 +2836,7 @@ function resetRegistrationForm() {
 
 function populateRegistrationForm(emp) {
     document.getElementById('reg-emp-id').value = emp.id;
-    document.getElementById('reg-name').value = emp.name;
+    document.getElementById('reg-name').value = toTitleCase(emp.name);
     
     const relationType = emp.relationType || 'Father';
     document.getElementById('reg-relation-type').value = relationType;
@@ -2817,17 +2848,17 @@ function populateRegistrationForm(emp) {
     if (input) {
         input.placeholder = `Enter ${relationType.toLowerCase()}'s name`;
     }
-    document.getElementById('reg-father').value = emp.fatherName || '';
+    document.getElementById('reg-father').value = toTitleCase(emp.fatherName || '');
     
     document.getElementById('reg-dob').value = emp.dob;
     document.getElementById('reg-gender').value = emp.gender;
     document.getElementById('reg-blood').value = emp.bloodGroup;
     
     document.getElementById('reg-mobile').value = emp.mobile;
-    document.getElementById('reg-curr-address').value = emp.currentAddress || emp.permanentAddress || '';
+    document.getElementById('reg-curr-address').value = toTitleCase(emp.currentAddress || emp.permanentAddress || '');
     
-    document.getElementById('reg-designation').value = emp.designation || '';
-    document.getElementById('reg-department').value = emp.department || '';
+    document.getElementById('reg-designation').value = toTitleCase(emp.designation || '');
+    document.getElementById('reg-department').value = toTitleCase(emp.department || '');
 
     document.getElementById('reg-joining-date').value = emp.joiningDate;
     document.getElementById('reg-card-validity').value = emp.cardValidity || 3;
@@ -3584,19 +3615,19 @@ function loadEmployeeRecord(empId) {
 
     // Populate all record fields
     setSafeText('rec-empid', emp.id || '-');
-    setSafeText('rec-name', emp.name || '-');
+    setSafeText('rec-name', toTitleCase(emp.name) || '-');
     const relationType = emp.relationType || 'Father';
     const relationLabel = document.getElementById('rec-relation-label');
     if (relationLabel) {
         relationLabel.textContent = `${relationType}'s Name:`;
     }
-    setSafeText('rec-father', emp.fatherName || '-');
+    setSafeText('rec-father', toTitleCase(emp.fatherName) || '-');
     setSafeText('rec-dob', emp.dob || '-');
     setSafeText('rec-gender', emp.gender || '-');
     setSafeText('rec-blood', emp.bloodGroup || '-');
     
     setSafeText('rec-mobile', emp.mobile || '-');
-    setSafeText('rec-curr-address', emp.currentAddress || emp.permanentAddress || '-');
+    setSafeText('rec-curr-address', toTitleCase(emp.currentAddress || emp.permanentAddress) || '-');
     
     setSafeText('rec-designation', emp.designation || '-');
     setSafeText('rec-department', emp.department || '-');
@@ -3620,7 +3651,7 @@ function loadEmployeeRecord(empId) {
     setSafeText('rec-company', emp.companyName || 'Valley Security Service Agency Pvt Ltd.');
     setSafeText('rec-salary', emp.salaryMonth || '-');
     setSafeText('rec-remarks', emp.remarks || '-');
-    setSafeText('rec-agreement-name', emp.name || '-');
+    setSafeText('rec-agreement-name', toTitleCase(emp.name) || '-');
 
     // DOJ boxes split
     const dojVal = emp.joiningDate || '';
