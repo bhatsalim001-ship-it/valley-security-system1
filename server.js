@@ -151,7 +151,7 @@ app.use(helmet({
       "default-src": ["'self'"],
       // Frontend loads: lucide (unpkg), jsbarcode (jsdelivr), qrious/html2canvas/jszip/cropperjs (cdnjs), Google GSI
       "script-src": [
-        "'self'", "'unsafe-inline'",
+        "'self'", "'unsafe-inline'", "'unsafe-eval'", "'wasm-unsafe-eval'",
         "https://cdnjs.cloudflare.com",
         "https://cdn.jsdelivr.net",
         "https://unpkg.com",
@@ -165,6 +165,7 @@ app.use(helmet({
       "img-src": ["'self'", "data:", "blob:", "https:"],
       "connect-src": ["'self'", "https://accounts.google.com", "https://oauth2.googleapis.com"],
       "frame-src": ["'self'", "https://accounts.google.com"],
+      "worker-src": ["'self'", "blob:"],
       "form-action": ["'self'"],
       "frame-ancestors": ["'none'"],
       "object-src": ["'none'"],
