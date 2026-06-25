@@ -3046,7 +3046,7 @@ function removePortraitBackground(base64Str, threshold = 40) {
                     });
                     
                     selfieSegmentation.setOptions({
-                        modelSelection: 1, // landscape model for speed
+                        modelSelection: 0, // General model (highly precise head/shoulder outlines)
                     });
                     
                     // Set a timeout of 3.5 seconds to prevent hanging if WebGL context creation fails
@@ -3086,13 +3086,24 @@ function removePortraitBackground(base64Str, threshold = 40) {
                             const mData = maskData.data;
                             
                             // MediaPipe mask outputs white (255) for person, black (0) for background.
-                            // We replace any pixel with low mask probability (< 110) with solid white background.
+                            // We replace any pixel with low mask probability (< 125) with solid white background.
+                            // For transitional edge pixels (125 to 230), we blend smoothly with white to eliminate halos.
+                            const lowerVal = 125;
+                            const upperVal = 230;
+                            const range = upperVal - lowerVal;
+                            
                             for (let i = 0; i < data.length; i += 4) {
                                 const maskVal = mData[i]; // Grayscale/Red channel
-                                if (maskVal < 110) {
+                                if (maskVal < lowerVal) {
                                     data[i] = 255;
                                     data[i+1] = 255;
                                     data[i+2] = 255;
+                                    data[i+3] = 255;
+                                } else if (maskVal < upperVal) {
+                                    const alpha = (maskVal - lowerVal) / range;
+                                    data[i] = Math.round(data[i] * alpha + 255 * (1 - alpha));
+                                    data[i+1] = Math.round(data[i+1] * alpha + 255 * (1 - alpha));
+                                    data[i+2] = Math.round(data[i+2] * alpha + 255 * (1 - alpha));
                                     data[i+3] = 255;
                                 }
                             }
