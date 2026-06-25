@@ -104,6 +104,8 @@ function initThemeSwitch() {
 }
 
 function initEtherealShadowAnimation() {
+    // Disabled to optimize performance and prevent dashboard rendering lag
+    return;
     const canvas = document.getElementById('lightning-bg-canvas');
     if (!canvas) return;
 
