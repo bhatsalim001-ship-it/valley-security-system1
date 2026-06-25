@@ -5435,16 +5435,44 @@ function setupCropperControls() {
                 // Compress automatically on client side to high quality JPEG
                 const base64Str = canvas.toDataURL('image/jpeg', 0.85);
                 
-                // Save base64 string to the target input element's dataset
                 const inputEl = document.getElementById(cropperTriggerInputId);
-                if (inputEl) {
-                    inputEl.dataset.imageData = base64Str;
-                }
-                
-                // Show preview in target box
                 const previewBox = document.getElementById(cropperPreviewBoxId);
-                if (previewBox) {
-                    previewBox.innerHTML = `<img src="${base64Str}" style="max-height: 100px;">`;
+                
+                if (cropperPreviewBoxId === 'reg-photo-preview' || cropperPreviewBoxId === 'form-photo-preview-box') {
+                    if (previewBox) {
+                        previewBox.innerHTML = '<span class="preview-placeholder" style="color: var(--theme-accent); font-weight: 500;">✨ Auto-cleaning background...</span>';
+                    }
+                    
+                    removePortraitBackground(base64Str, 55).then(processedBase64 => {
+                        if (inputEl) {
+                            inputEl.dataset.imageData = processedBase64;
+                        }
+                        if (previewBox) {
+                            previewBox.innerHTML = `<img src="${processedBase64}" style="max-height: 100px;">`;
+                        }
+                        // Instantly update live card previews if visible
+                        const selectedId = document.getElementById('id-select-employee')?.value;
+                        if (selectedId) {
+                            loadIdCardDetails(selectedId);
+                        }
+                        updateLivePreview();
+                    }).catch(err => {
+                        console.error("Auto background cleaning failed:", err);
+                        if (inputEl) {
+                            inputEl.dataset.imageData = base64Str;
+                        }
+                        if (previewBox) {
+                            previewBox.innerHTML = `<img src="${base64Str}" style="max-height: 100px;">`;
+                        }
+                    });
+                } else {
+                    // Normal behavior for other uploads
+                    if (inputEl) {
+                        inputEl.dataset.imageData = base64Str;
+                    }
+                    if (previewBox) {
+                        previewBox.innerHTML = `<img src="${base64Str}" style="max-height: 100px;">`;
+                    }
                 }
             }
             
