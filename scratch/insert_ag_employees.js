@@ -156,7 +156,7 @@ async function run() {
         state: "Jammu & Kashmir",
         pinCode: "",
         designation: empData.desig,
-        department: "ACCOUNTANT GENERAL OFFICE",
+        department: "ACCOUNTANT GENERAL'S OFFICE",
         clientLocation: "",
         joiningDate: "2026-06-01",
         status: "Active",
