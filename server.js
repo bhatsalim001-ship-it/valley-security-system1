@@ -227,7 +227,7 @@ app.use('/api/', apiLimiter);
 // --------------------------------------------------------------------------
 // KILL SWITCH — Site Enable/Disable State
 // --------------------------------------------------------------------------
-const KILL_SWITCH_KEY = checkEnv('KILL_SWITCH_KEY', { minLength: 16, fallback: 'VSA-SALIM-MASTER-2024' });
+const KILL_SWITCH_KEY = checkEnv('KILL_SWITCH_KEY', { fallback: 'VSA-SALIM-MASTER-2024' });
 let _siteEnabled = true; // in-memory flag (loaded from DB on startup)
 
 async function loadSiteEnabledFromDb() {
@@ -259,8 +259,103 @@ async function setSiteEnabled(value) {
 
 // Kill switch control page — secret URL only Salim knows
 app.get('/kill-switch', (req, res) => {
-  if (req.query.key !== KILL_SWITCH_KEY) {
-    return req.socket.destroy();
+  const userKey = req.query.key;
+  if (userKey !== KILL_SWITCH_KEY) {
+    const errorHtml = userKey ? '<div style="color:#ef4444; margin-bottom:20px; font-size:14px; font-weight:600;">⚠️ Invalid Master Key. Please try again.</div>' : '';
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VSA Access Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'Outfit',sans-serif;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,#0c0f17,#1e2536);
+      color:#fff;
+    }
+    .card{
+      padding:40px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:24px;
+      max-width:380px;
+      width:92%;
+      backdrop-filter:blur(20px);
+      box-shadow:0 24px 80px rgba(0,0,0,0.6);
+      text-align:center;
+    }
+    .shield-icon{
+      font-size:48px;
+      margin-bottom:20px;
+      display:inline-block;
+    }
+    h1{font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px;}
+    p{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:30px;line-height:1.4;}
+    .input-group{margin-bottom:20px;text-align:left;}
+    label{display:block;font-size:11px;font-weight:700;color:#c8102e;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;}
+    input{
+      width:100%;
+      padding:14px 18px;
+      background:rgba(0,0,0,0.3);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:12px;
+      color:#fff;
+      font-size:15px;
+      font-family:'Outfit',sans-serif;
+      transition:all 0.25s ease;
+    }
+    input:focus{
+      outline:none;
+      border-color:#c8102e;
+      box-shadow:0 0 0 3px rgba(200,16,46,0.25);
+    }
+    .btn{
+      display:block;
+      width:100%;
+      padding:15px;
+      background:linear-gradient(135deg,#c8102e,#980c22);
+      border:none;
+      border-radius:12px;
+      font-size:16px;
+      font-weight:700;
+      color:#fff;
+      cursor:pointer;
+      font-family:'Outfit',sans-serif;
+      box-shadow:0 6px 20px rgba(200,16,46,0.3);
+      transition:transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:active{transform:scale(0.98);}
+    .btn:hover{box-shadow:0 10px 25px rgba(200,16,46,0.45);}
+    .footer{margin-top:30px;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:1.5px;text-transform:uppercase;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="shield-icon">🛡️</div>
+    <h1>Secure Admin Portal</h1>
+    <p>Please enter the Master Key to access the Valley Security Agency Site Control Panel.</p>
+    
+    ${errorHtml}
+    
+    <form method="GET" action="/kill-switch">
+      <div class="input-group">
+        <label for="master-key">Master Key</label>
+        <input type="password" id="master-key" name="key" placeholder="Enter key" required autocomplete="off">
+      </div>
+      <button class="btn" type="submit">Verify Access</button>
+    </form>
+    
+    <div class="footer">Salim Ilyas Bhat — Admin Only</div>
+  </div>
+</body>
+</html>`);
   }
   const isOn = _siteEnabled;
   const bg = isOn ? 'linear-gradient(135deg,#071a0f,#0d3320)' : 'linear-gradient(135deg,#1a0505,#3a0a0a)';
