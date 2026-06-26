@@ -82,6 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setupClassificationsManager();
     setupTemplatesManager();
     setupCropperControls();
+
+    // Set today's date as default for Card Issue Date input
+    const issueDateInput = document.getElementById('id-card-issue-date');
+    if (issueDateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        issueDateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
     
     // Start background status heartbeat
     startServerStatusHeartbeat();
@@ -1334,6 +1344,7 @@ async function triggerIdBulkPrint() {
 
     let bulkHtml = '';
     const cardsPerPage = template.layout === 'vertical' ? 9 : 8;
+    const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
 
     for (let i = 0; i < VSA_STATE.idSelectedEmployeeIds.length; i += cardsPerPage) {
         const pageItems = VSA_STATE.idSelectedEmployeeIds.slice(i, i + cardsPerPage);
@@ -1341,7 +1352,7 @@ async function triggerIdBulkPrint() {
         pageItems.forEach(empId => {
             const emp = VSA_STATE.employees.find(e => e.id === empId);
             if (emp) {
-                pageHtml += generateIdCardHtml(emp, template, emp.cardValidity || validity);
+                pageHtml += generateIdCardHtml(emp, template, emp.cardValidity || validity, issueDateVal);
             }
         });
         pageHtml += `</div>`;
@@ -1386,12 +1397,14 @@ async function triggerIdBulkDownload() {
     const zip = new JSZip();
     let renderCount = 0;
 
+    const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
+
     for (let i = 0; i < VSA_STATE.idSelectedEmployeeIds.length; i++) {
         const empId = VSA_STATE.idSelectedEmployeeIds[i];
         const emp = VSA_STATE.employees.find(e => e.id === empId);
         if (!emp) continue;
 
-        bulkContainer.innerHTML = generateIdCardHtml(emp, template, emp.cardValidity || validity);
+        bulkContainer.innerHTML = generateIdCardHtml(emp, template, emp.cardValidity || validity, issueDateVal);
         renderQrsInContainer(bulkContainer);
 
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -1856,7 +1869,7 @@ function ensureFontLoaded(fontFamilyStr) {
     document.head.appendChild(link);
 }
 
-function generateIdCardHtml(emp, template, validityYears = 3) {
+function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) {
     if (template && template.font) {
         ensureFontLoaded(template.font);
     }
@@ -1871,10 +1884,23 @@ function generateIdCardHtml(emp, template, validityYears = 3) {
         return `${d}-${m}-${y}`;
     };
 
-    const issueDate = new Date(emp.joiningDate || new Date());
-    const expDate = new Date(issueDate);
-    expDate.setFullYear(issueDate.getFullYear() + validityYears);
-    const validityStr = `${formatDateDDMMYYYYLocal(issueDate)} - ${formatDateDDMMYYYYLocal(expDate)}`;
+    // Determine the card issue date (priority: passed param > emp.cardIssueDate > today)
+    let issueDateObj;
+    if (issueDate) {
+        issueDateObj = new Date(issueDate);
+    } else if (emp.cardIssueDate) {
+        issueDateObj = new Date(emp.cardIssueDate);
+    } else {
+        issueDateObj = new Date(); // Default to today, NOT joining date
+    }
+    // Fallback: if date is invalid, use today
+    if (isNaN(issueDateObj.getTime())) {
+        issueDateObj = new Date();
+    }
+
+    const expDate = new Date(issueDateObj);
+    expDate.setFullYear(issueDateObj.getFullYear() + validityYears);
+    const validityStr = `${formatDateDDMMYYYYLocal(issueDateObj)} - ${formatDateDDMMYYYYLocal(expDate)}`;
 
     const getFallbackAvatarData = (initial) => {
         const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23c8102e'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${initial}</text></svg>`;
@@ -2597,8 +2623,9 @@ function loadIdCardDetails(empId) {
     const template = VSA_STATE.templates.find(t => t.id === tplId) || VSA_STATE.templates[0];
 
     const validityYears = parseInt(document.getElementById('id-validity-years').value) || 3;
+    const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
 
-    container.innerHTML = generateIdCardHtml(emp, template, validityYears);
+    container.innerHTML = generateIdCardHtml(emp, template, validityYears, issueDateVal);
     renderQrsInContainer(container);
 }
 
@@ -3015,6 +3042,15 @@ function setupEventHandlers() {
         loadIdCardDetails(empId);
     });
 
+    // Refresh card preview when issue date changes
+    const issueDateInputEl = document.getElementById('id-card-issue-date');
+    if (issueDateInputEl) {
+        issueDateInputEl.addEventListener('change', function() {
+            const empId = document.getElementById('id-select-employee').value;
+            if (empId) loadIdCardDetails(empId);
+        });
+    }
+
     // Print handler
     document.getElementById('btn-print-id-card').addEventListener('click', triggerIDCardPrint);
     document.getElementById('btn-download-id-card').addEventListener('click', downloadIdCardImage);
@@ -3272,6 +3308,9 @@ function populateRegistrationForm(emp) {
 
     document.getElementById('reg-joining-date').value = emp.joiningDate;
     document.getElementById('reg-card-validity').value = emp.cardValidity || 3;
+    if (document.getElementById('reg-card-issue-date')) {
+        document.getElementById('reg-card-issue-date').value = emp.cardIssueDate || '';
+    }
     
     // Populate new VSA form fields
     document.getElementById('reg-bank-account').value = emp.bankAccount || '';
@@ -3663,6 +3702,7 @@ async function saveEmployeeFromRegistration(e) {
     const address = document.getElementById('reg-curr-address').value;
     const mobile = document.getElementById('reg-mobile').value;
     const cardValidity = parseInt(document.getElementById('reg-card-validity').value) || 3;
+    const cardIssueDateVal = document.getElementById('reg-card-issue-date')?.value || null;
 
     const empData = {
         id: empId || generateEmployeeId(),
@@ -3687,6 +3727,7 @@ async function saveEmployeeFromRegistration(e) {
         manpowerType: 'Security Force',
         joiningDate: document.getElementById('reg-joining-date').value,
         cardValidity: cardValidity,
+        cardIssueDate: cardIssueDateVal,
         reportingManager: 'Vikram Rathore',
         status: 'Active',
         emergencyContactName: fatherName,
@@ -3847,7 +3888,8 @@ async function downloadIndividualCardImage(empId) {
     const templateId = document.getElementById('id-select-template').value;
     const template = VSA_STATE.templates.find(t => t.id === templateId) || VSA_STATE.templates[0];
     
-    const cardHtml = generateIdCardHtml(emp, template, emp.cardValidity || 3);
+    const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
+    const cardHtml = generateIdCardHtml(emp, template, emp.cardValidity || 3, issueDateVal);
     
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -4445,10 +4487,11 @@ async function triggerBulkPrint() {
         const pageCards = selectedEmps.slice(i, i + cardsPerPage);
         
         bulkHtml += `<div class="print-page ${gridClass}">`;
+        const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
         pageCards.forEach(emp => {
             bulkHtml += `
             <div class="printable-id-card-wrapper">
-                ${generateIdCardHtml(emp, template, emp.cardValidity || 3)}
+                ${generateIdCardHtml(emp, template, emp.cardValidity || 3, issueDateVal)}
             </div>
             `;
         });
@@ -4492,12 +4535,14 @@ async function triggerBulkDownload() {
     const zip = new JSZip();
     let renderCount = 0;
 
+    const bulkIssueDateVal = document.getElementById('id-card-issue-date')?.value || null;
+
     for (let i = 0; i < VSA_STATE.selectedEmployeeIds.length; i++) {
         const empId = VSA_STATE.selectedEmployeeIds[i];
         const emp = VSA_STATE.employees.find(e => e.id === empId);
         if (!emp) continue;
 
-        bulkContainer.innerHTML = generateIdCardHtml(emp, template, emp.cardValidity || 3);
+        bulkContainer.innerHTML = generateIdCardHtml(emp, template, emp.cardValidity || 3, bulkIssueDateVal);
         renderQrsInContainer(bulkContainer);
 
         await new Promise(resolve => setTimeout(resolve, 300));
