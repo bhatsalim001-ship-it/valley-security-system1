@@ -1435,7 +1435,7 @@ function openEmployeeModal(empId = null) {
         document.getElementById('form-district').value = emp.district;
         document.getElementById('form-state').value = emp.state;
         document.getElementById('form-pin').value = emp.pinCode;
-        document.getElementById('form-designation').value = toTitleCase(emp.designation);
+        document.getElementById('form-designation').value = emp.designation || '';
         document.getElementById('form-manager').value = emp.reportingManager || '';
         document.getElementById('form-joining-date').value = emp.joiningDate;
         document.getElementById('form-status').value = emp.status;
@@ -3196,8 +3196,8 @@ function populateRegistrationForm(emp) {
     document.getElementById('reg-mobile').value = emp.mobile;
     document.getElementById('reg-curr-address').value = toTitleCase(emp.currentAddress || emp.permanentAddress || '');
     
-    document.getElementById('reg-designation').value = toTitleCase(emp.designation || '');
-    document.getElementById('reg-department').value = toTitleCase(emp.department || '');
+    document.getElementById('reg-designation').value = emp.designation || '';
+    document.getElementById('reg-department').value = emp.department || '';
 
     document.getElementById('reg-joining-date').value = emp.joiningDate;
     document.getElementById('reg-card-validity').value = emp.cardValidity || 3;
