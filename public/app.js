@@ -1059,6 +1059,26 @@ function populateSelectors() {
 
     populateIdEmployeeSelect();
 
+    // Populate templates preview employee select
+    const tplPreviewEmpSel = document.getElementById('tpl-preview-emp-select');
+    if (tplPreviewEmpSel) {
+        const currentVal = tplPreviewEmpSel.value;
+        let empHtml = '';
+        if (VSA_STATE.employees.length === 0) {
+            empHtml = '<option value="">No Guards/Employees</option>';
+        } else {
+            VSA_STATE.employees.forEach(e => {
+                empHtml += `<option value="${e.id}">${e.name} (${e.id})</option>`;
+            });
+        }
+        tplPreviewEmpSel.innerHTML = empHtml;
+        if (currentVal && VSA_STATE.employees.some(e => e.id == currentVal)) {
+            tplPreviewEmpSel.value = currentVal;
+        } else if (VSA_STATE.employees.length > 0) {
+            tplPreviewEmpSel.value = VSA_STATE.employees[0].id;
+        }
+    }
+
     // 4B. Populate templates select
     const idTplSel = document.getElementById('id-select-template');
     const bulkTplSel = document.getElementById('bulk-select-template');
@@ -5412,7 +5432,17 @@ function updateLivePreview() {
     if (!container) return;
 
     const activeTpl = getActiveTemplateFromForm();
-    const previewEmp = VSA_STATE.employees.length > 0 ? VSA_STATE.employees[0] : MOCK_GUARD;
+    let previewEmp = MOCK_GUARD;
+    const previewEmpSel = document.getElementById('tpl-preview-emp-select');
+    if (previewEmpSel && previewEmpSel.value) {
+        const empId = previewEmpSel.value;
+        const found = VSA_STATE.employees.find(e => e.id == empId);
+        if (found) {
+            previewEmp = found;
+        }
+    } else if (VSA_STATE.employees.length > 0) {
+        previewEmp = VSA_STATE.employees[0];
+    }
     
     container.innerHTML = generateIdCardHtml(previewEmp, activeTpl);
     renderQrsInContainer(container);
@@ -5579,7 +5609,7 @@ function setupTemplatesManager() {
         if (el) el.addEventListener('input', updateLivePreview);
     });
 
-    const selects = ['tpl-layout', 'tpl-font'];
+    const selects = ['tpl-layout', 'tpl-font', 'tpl-preview-emp-select'];
     selects.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', updateLivePreview);
