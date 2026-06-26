@@ -12,3 +12,4 @@ build/
 *~
 # Local database file - never commit, Render uses PostgreSQL
 db.json
+photos.json

@@ -49,6 +49,7 @@ const BCRYPT_COST = parseInt(process.env.BCRYPT_COST || '12', 10);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const DB_PATH = path.join(__dirname, 'db.json');
+const PHOTOS_DB_PATH = path.join(__dirname, 'photos.json');
 
 // PostgreSQL Setup – connection string with a fallback.
 let pool = null;
@@ -94,6 +95,26 @@ function writeLocalDb(data) {
     fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
   } catch (e) {
     console.error('Error writing local JSON database:', e);
+  }
+}
+
+function readPhotosDb() {
+  try {
+    if (fs.existsSync(PHOTOS_DB_PATH)) {
+      const data = fs.readFileSync(PHOTOS_DB_PATH, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('Error reading local photos JSON database:', e);
+  }
+  return {};
+}
+
+function writePhotosDb(data) {
+  try {
+    fs.writeFileSync(PHOTOS_DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error writing local photos JSON database:', e);
   }
 }
 
@@ -622,6 +643,111 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // --------------------------------------------------------------------------
+// IMAGE SEPARATION & STORAGE MIGRATION
+// --------------------------------------------------------------------------
+async function runImageMigration() {
+  console.log('🔄 Running image separation & storage migration check...');
+  let migratedCount = 0;
+
+  try {
+    if (usePostgres && pool) {
+      // Ensure employee_photos table exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS employee_photos (
+          employee_id TEXT PRIMARY KEY,
+          photo TEXT,
+          signature TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Fetch employee IDs
+      const res = await pool.query('SELECT id FROM employees ORDER BY id ASC');
+      for (const row of res.rows) {
+        const empRes = await pool.query('SELECT data FROM employees WHERE id = $1', [row.id]);
+        if (empRes.rows.length === 0) continue;
+
+        let emp = typeof empRes.rows[0].data === 'string' ? JSON.parse(empRes.rows[0].data) : empRes.rows[0].data;
+        let modified = false;
+        let photoBase64 = null;
+        let signatureBase64 = null;
+
+        if (emp.documents) {
+          if (emp.documents.photo && emp.documents.photo.startsWith('data:image/')) {
+            photoBase64 = emp.documents.photo;
+            emp.documents.photo = `/api/employees/${row.id}/photo`;
+            modified = true;
+          }
+          if (emp.documents.signature && emp.documents.signature.startsWith('data:image/')) {
+            signatureBase64 = emp.documents.signature;
+            emp.documents.signature = `/api/employees/${row.id}/signature`;
+            modified = true;
+          }
+        }
+
+        if (modified) {
+          // Save base64 strings to employee_photos
+          await pool.query(`
+            INSERT INTO employee_photos (employee_id, photo, signature)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (employee_id) DO UPDATE SET
+              photo = COALESCE(EXCLUDED.photo, employee_photos.photo),
+              signature = COALESCE(EXCLUDED.signature, employee_photos.signature),
+              updated_at = NOW()
+          `, [row.id, photoBase64, signatureBase64]);
+
+          // Update main employees table
+          await pool.query('UPDATE employees SET data = $2, updated_at = NOW() WHERE id = $1', [row.id, JSON.stringify(emp)]);
+          migratedCount++;
+        }
+      }
+    } else {
+      // Local fallback migration
+      const db = readLocalDb();
+      const photosDb = readPhotosDb();
+      let modified = false;
+
+      for (const emp of db.employees) {
+        let empModified = false;
+        let photoBase64 = null;
+        let signatureBase64 = null;
+
+        if (emp.documents) {
+          if (emp.documents.photo && emp.documents.photo.startsWith('data:image/')) {
+            photoBase64 = emp.documents.photo;
+            emp.documents.photo = `/api/employees/${emp.id}/photo`;
+            empModified = true;
+            modified = true;
+          }
+          if (emp.documents.signature && emp.documents.signature.startsWith('data:image/')) {
+            signatureBase64 = emp.documents.signature;
+            emp.documents.signature = `/api/employees/${emp.id}/signature`;
+            empModified = true;
+            modified = true;
+          }
+        }
+
+        if (empModified) {
+          if (!photosDb[emp.id]) photosDb[emp.id] = {};
+          if (photoBase64) photosDb[emp.id].photo = photoBase64;
+          if (signatureBase64) photosDb[emp.id].signature = signatureBase64;
+          migratedCount++;
+        }
+      }
+
+      if (modified) {
+        writePhotosDb(photosDb);
+        writeLocalDb(db);
+      }
+    }
+    console.log(`✅ Image separation migration complete. Migrated ${migratedCount} records.`);
+  } catch (err) {
+    console.error('❌ Image separation migration failed:', err.message);
+  }
+}
+
+// --------------------------------------------------------------------------
 // POSTGRESQL TABLE INIT & AUTO-MIGRATION
 // --------------------------------------------------------------------------
 async function initDatabase() {
@@ -642,6 +768,16 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS employees (
         id TEXT PRIMARY KEY,
         data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS employee_photos (
+        employee_id TEXT PRIMARY KEY,
+        photo TEXT,
+        signature TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -1126,6 +1262,105 @@ function isAdmin(req) {
   }
 }
 
+// Helper to verify if the request has access to the employee's photo/signature
+async function verifyImageAccess(req, res, empId) {
+  if (isAdmin(req)) return true;
+
+  const queryToken = req.query.token;
+  if (queryToken) {
+    let empData = null;
+    if (usePostgres && pool) {
+      const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
+      if (dbRes.rows.length > 0) empData = dbRes.rows[0].data;
+    } else {
+      const db = readLocalDb();
+      empData = db.employees.find(e => e.id === empId);
+    }
+    if (empData && empData.secureToken === queryToken) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Serving binary photo
+app.get('/api/employees/:id/photo', async (req, res) => {
+  const empId = req.params.id;
+  try {
+    const hasAccess = await verifyImageAccess(req, res, empId);
+    if (!hasAccess) {
+      return res.status(401).json({ error: 'Unauthorized image access.' });
+    }
+
+    let base64Str = null;
+    if (usePostgres && pool) {
+      const dbRes = await pool.query('SELECT photo FROM employee_photos WHERE employee_id = $1', [empId]);
+      if (dbRes.rows.length > 0) base64Str = dbRes.rows[0].photo;
+    } else {
+      const photosDb = readPhotosDb();
+      if (photosDb[empId]) base64Str = photosDb[empId].photo;
+    }
+
+    if (!base64Str || !base64Str.startsWith('data:image/')) {
+      return res.status(404).json({ error: 'Photo not found.' });
+    }
+
+    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(500).json({ error: 'Invalid photo format.' });
+    }
+
+    const mimeType = matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    return res.send(buffer);
+  } catch (e) {
+    console.error('Error serving photo:', e);
+    return res.status(500).json({ error: 'Failed to serve photo.' });
+  }
+});
+
+// Serving binary signature
+app.get('/api/employees/:id/signature', async (req, res) => {
+  const empId = req.params.id;
+  try {
+    const hasAccess = await verifyImageAccess(req, res, empId);
+    if (!hasAccess) {
+      return res.status(401).json({ error: 'Unauthorized signature access.' });
+    }
+
+    let base64Str = null;
+    if (usePostgres && pool) {
+      const dbRes = await pool.query('SELECT signature FROM employee_photos WHERE employee_id = $1', [empId]);
+      if (dbRes.rows.length > 0) base64Str = dbRes.rows[0].signature;
+    } else {
+      const photosDb = readPhotosDb();
+      if (photosDb[empId]) base64Str = photosDb[empId].signature;
+    }
+
+    if (!base64Str || !base64Str.startsWith('data:image/')) {
+      return res.status(404).json({ error: 'Signature not found.' });
+    }
+
+    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(500).json({ error: 'Invalid signature format.' });
+    }
+
+    const mimeType = matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    return res.send(buffer);
+  } catch (e) {
+    console.error('Error serving signature:', e);
+    return res.status(500).json({ error: 'Failed to serve signature.' });
+  }
+});
+
 // 3. Employee GET Details (Public for QR Code Verification with security token check)
 app.get('/api/employees/:id', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -1157,7 +1392,18 @@ app.get('/api/employees/:id', async (req, res) => {
       }
     }
 
-    return res.json(empData);
+    // Dynamically append verification token to image URLs so client can fetch them securely
+    const responseData = JSON.parse(JSON.stringify(empData));
+    if (responseData.documents) {
+      if (responseData.documents.photo && responseData.documents.photo.startsWith('/api/')) {
+        responseData.documents.photo = `${responseData.documents.photo}?token=${responseData.secureToken}`;
+      }
+      if (responseData.documents.signature && responseData.documents.signature.startsWith('/api/')) {
+        responseData.documents.signature = `${responseData.documents.signature}?token=${responseData.secureToken}`;
+      }
+    }
+
+    return res.json(responseData);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Failed to retrieve employee.' });
@@ -1177,14 +1423,30 @@ app.get('/api/db-status', authenticateToken, (req, res) => {
 // 4. Employee GET Directory List
 app.get('/api/employees', authenticateToken, async (req, res) => {
   try {
+    let emps = [];
     if (usePostgres && pool) {
       const dbRes = await pool.query('SELECT data FROM employees ORDER BY id ASC');
-      const emps = dbRes.rows.map(r => r.data);
-      return res.json(emps);
+      emps = dbRes.rows.map(r => r.data);
     } else {
       const db = readLocalDb();
-      return res.json(db.employees);
+      emps = db.employees;
     }
+
+    // Append security tokens to image URLs for frontend fetching
+    const processedEmps = emps.map(emp => {
+      const responseData = JSON.parse(JSON.stringify(emp));
+      if (responseData.documents) {
+        if (responseData.documents.photo && responseData.documents.photo.startsWith('/api/')) {
+          responseData.documents.photo = `${responseData.documents.photo}?token=${responseData.secureToken}`;
+        }
+        if (responseData.documents.signature && responseData.documents.signature.startsWith('/api/')) {
+          responseData.documents.signature = `${responseData.documents.signature}?token=${responseData.secureToken}`;
+        }
+      }
+      return responseData;
+    });
+
+    return res.json(processedEmps);
   } catch (e) {
     return res.status(500).json({ error: 'Failed to load guard directory.' });
   }
@@ -1217,24 +1479,50 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
     newEmp.id = `VSA-${nextNum}`;
     newEmp.secureToken = crypto.randomBytes(16).toString('hex');
 
-    // Server-Side Compression of Profile Photo and Signature
+    // Server-Side Compression and separation of Profile Photo and Signature
+    let photoBase64 = null;
+    let signatureBase64 = null;
+
     if (newEmp.documents) {
-      if (newEmp.documents.photo) {
+      if (newEmp.documents.photo && newEmp.documents.photo.startsWith('data:image/')) {
         newEmp.documents.photo = await compressImageBase64(newEmp.documents.photo, 300, null);
+        photoBase64 = newEmp.documents.photo;
+        newEmp.documents.photo = `/api/employees/${newEmp.id}/photo`;
       }
-      if (newEmp.documents.signature) {
+      if (newEmp.documents.signature && newEmp.documents.signature.startsWith('data:image/')) {
         newEmp.documents.signature = await compressImageBase64(newEmp.documents.signature, 300, 150, 'contain');
+        signatureBase64 = newEmp.documents.signature;
+        newEmp.documents.signature = `/api/employees/${newEmp.id}/signature`;
       }
     }
 
     if (usePostgres && pool) {
+      if (photoBase64 || signatureBase64) {
+        await pool.query('INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)', [newEmp.id, photoBase64, signatureBase64]);
+      }
       await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2)', [newEmp.id, JSON.stringify(newEmp)]);
     } else {
+      if (photoBase64 || signatureBase64) {
+        const photosDb = readPhotosDb();
+        photosDb[newEmp.id] = { photo: photoBase64, signature: signatureBase64 };
+        writePhotosDb(photosDb);
+      }
       db.employees.push(newEmp);
       writeLocalDb(db);
     }
 
-    return res.status(201).json(newEmp);
+    // Dynamic token append for response
+    const responseData = JSON.parse(JSON.stringify(newEmp));
+    if (responseData.documents) {
+      if (responseData.documents.photo && responseData.documents.photo.startsWith('/api/')) {
+        responseData.documents.photo = `${responseData.documents.photo}?token=${responseData.secureToken}`;
+      }
+      if (responseData.documents.signature && responseData.documents.signature.startsWith('/api/')) {
+        responseData.documents.signature = `${responseData.documents.signature}?token=${responseData.secureToken}`;
+      }
+    }
+
+    return res.status(201).json(responseData);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Failed to register guard profile.' });
@@ -1263,25 +1551,102 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
 
     const mergedEmp = { ...existingEmp, ...updateData, id: empId };
 
-    // Apply compression to updated photo or signature if changed
+    // Apply compression and separate updated photo or signature if changed
+    let photoBase64 = null;
+    let signatureBase64 = null;
+    let updatePhoto = false;
+    let updateSignature = false;
+
     if (mergedEmp.documents) {
-      if (mergedEmp.documents.photo && mergedEmp.documents.photo !== existingEmp.documents?.photo) {
-        mergedEmp.documents.photo = await compressImageBase64(mergedEmp.documents.photo, 300, null);
+      // Photo processing
+      if (mergedEmp.documents.photo) {
+        if (mergedEmp.documents.photo.startsWith('data:image/')) {
+          mergedEmp.documents.photo = await compressImageBase64(mergedEmp.documents.photo, 300, null);
+          photoBase64 = mergedEmp.documents.photo;
+          mergedEmp.documents.photo = `/api/employees/${empId}/photo`;
+          updatePhoto = true;
+        } else if (mergedEmp.documents.photo.startsWith('/api/') || mergedEmp.documents.photo.startsWith('http')) {
+          // Keep existing clean URL
+          mergedEmp.documents.photo = `/api/employees/${empId}/photo`;
+        }
+      } else {
+        // Photo deleted
+        updatePhoto = true;
       }
-      if (mergedEmp.documents.signature && mergedEmp.documents.signature !== existingEmp.documents?.signature) {
-        mergedEmp.documents.signature = await compressImageBase64(mergedEmp.documents.signature, 300, 150, 'contain');
+
+      // Signature processing
+      if (mergedEmp.documents.signature) {
+        if (mergedEmp.documents.signature.startsWith('data:image/')) {
+          mergedEmp.documents.signature = await compressImageBase64(mergedEmp.documents.signature, 300, 150, 'contain');
+          signatureBase64 = mergedEmp.documents.signature;
+          mergedEmp.documents.signature = `/api/employees/${empId}/signature`;
+          updateSignature = true;
+        } else if (mergedEmp.documents.signature.startsWith('/api/') || mergedEmp.documents.signature.startsWith('http')) {
+          // Keep existing clean URL
+          mergedEmp.documents.signature = `/api/employees/${empId}/signature`;
+        }
+      } else {
+        // Signature deleted
+        updateSignature = true;
       }
     }
 
     if (usePostgres && pool) {
+      if (updatePhoto || updateSignature) {
+        // Check if record exists in employee_photos
+        const checkRes = await pool.query('SELECT 1 FROM employee_photos WHERE employee_id = $1', [empId]);
+        if (checkRes.rows.length > 0) {
+          let query = 'UPDATE employee_photos SET updated_at = NOW()';
+          let params = [empId];
+          let paramIdx = 2;
+          if (updatePhoto) {
+            query += `, photo = $${paramIdx}`;
+            params.push(photoBase64);
+            paramIdx++;
+          }
+          if (updateSignature) {
+            query += `, signature = $${paramIdx}`;
+            params.push(signatureBase64);
+            paramIdx++;
+          }
+          query += ` WHERE employee_id = $1`;
+          await pool.query(query, params);
+        } else {
+          await pool.query('INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)', [empId, photoBase64, signatureBase64]);
+        }
+      }
       await pool.query('UPDATE employees SET data = $2, updated_at = NOW() WHERE id = $1', [empId, JSON.stringify(mergedEmp)]);
     } else {
+      if (updatePhoto || updateSignature) {
+        const photosDb = readPhotosDb();
+        if (!photosDb[empId]) photosDb[empId] = {};
+        if (updatePhoto) {
+          if (photoBase64) photosDb[empId].photo = photoBase64;
+          else delete photosDb[empId].photo;
+        }
+        if (updateSignature) {
+          if (signatureBase64) photosDb[empId].signature = signatureBase64;
+          else delete photosDb[empId].signature;
+        }
+        writePhotosDb(photosDb);
+      }
       const idx = db.employees.findIndex(e => e.id === empId);
       db.employees[idx] = mergedEmp;
       writeLocalDb(db);
     }
 
-    return res.json(mergedEmp);
+    // Dynamic token append for response
+    const responseData = JSON.parse(JSON.stringify(mergedEmp));
+    if (responseData.documents) {
+      if (responseData.documents.photo && responseData.documents.photo.startsWith('/api/')) {
+        responseData.documents.photo = `${responseData.documents.photo}?token=${responseData.secureToken}`;
+      }
+      if (responseData.documents.signature && responseData.documents.signature.startsWith('/api/')) {
+        responseData.documents.signature = `${responseData.documents.signature}?token=${responseData.secureToken}`;
+      }
+    }
+
+    return res.json(responseData);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Failed to update employee details.' });
@@ -1293,9 +1658,13 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
   const empId = req.params.id;
   try {
     if (usePostgres && pool) {
+      await pool.query('DELETE FROM employee_photos WHERE employee_id = $1', [empId]);
       await pool.query('DELETE FROM employees WHERE id = $1', [empId]);
     } else {
       const db = readLocalDb();
+      const photosDb = readPhotosDb();
+      delete photosDb[empId];
+      writePhotosDb(photosDb);
       const idx = db.employees.findIndex(e => e.id === empId);
       if (idx !== -1) {
         db.employees.splice(idx, 1);
@@ -1424,6 +1793,7 @@ app.get('/api/db', authenticateToken, async (req, res) => {
   try {
     if (usePostgres && pool) {
       const empsRes = await pool.query('SELECT data FROM employees');
+      const photosRes = await pool.query('SELECT employee_id, photo, signature FROM employee_photos');
       const clientsRes = await pool.query('SELECT data FROM clients');
       const templatesRes = await pool.query('SELECT data FROM templates');
       const usersRes = await pool.query('SELECT email, password, data FROM users');
@@ -1431,8 +1801,23 @@ app.get('/api/db', authenticateToken, async (req, res) => {
       const desigs = await pool.query('SELECT "value" FROM settings WHERE key = \'designations\'');
       const manpower = await pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'');
 
+      // Create a map for fast lookup of photos/signatures
+      const photosMap = {};
+      photosRes.rows.forEach(r => {
+        photosMap[r.employee_id] = r;
+      });
+
       const dbPayload = {
-        employees: empsRes.rows.map(r => r.data),
+        employees: empsRes.rows.map(r => {
+          const emp = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+          const photoRec = photosMap[emp.id];
+          if (photoRec) {
+            if (!emp.documents) emp.documents = {};
+            if (photoRec.photo) emp.documents.photo = photoRec.photo;
+            if (photoRec.signature) emp.documents.signature = photoRec.signature;
+          }
+          return emp;
+        }),
         clients: clientsRes.rows.map(r => r.data),
         assetsCatalog: [], // Add if needed, or query from a settings/catalog table
         departments: depts.rows.length > 0 ? depts.rows[0].value : [],
@@ -1451,7 +1836,18 @@ app.get('/api/db', authenticateToken, async (req, res) => {
       
       return res.json(dbPayload);
     } else {
-      return res.json(readLocalDb());
+      const localDb = readLocalDb();
+      const photosDb = readPhotosDb();
+      localDb.employees = localDb.employees.map(emp => {
+        const photoRec = photosDb[emp.id];
+        if (photoRec) {
+          if (!emp.documents) emp.documents = {};
+          if (photoRec.photo) emp.documents.photo = photoRec.photo;
+          if (photoRec.signature) emp.documents.signature = photoRec.signature;
+        }
+        return emp;
+      });
+      return res.json(localDb);
     }
   } catch (e) {
     return res.status(500).json({ error: 'Failed to export database backup.' });
@@ -1467,6 +1863,7 @@ app.post('/api/db/import', authenticateToken, async (req, res) => {
 
   try {
     if (usePostgres && pool) {
+      await pool.query('DELETE FROM employee_photos');
       await pool.query('DELETE FROM employees');
       await pool.query('DELETE FROM clients');
       await pool.query('DELETE FROM templates');
@@ -1498,8 +1895,13 @@ app.post('/api/db/import', authenticateToken, async (req, res) => {
         await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2)', [emp.id, JSON.stringify(emp)]);
       }
     } else {
+      writePhotosDb({}); // Clear local photos database
       writeLocalDb(incoming);
     }
+    
+    // Automatically trigger migration to separate any imported base64 photos/signatures
+    await runImageMigration();
+    
     return res.json({ success: true, message: 'Database imported successfully.' });
   } catch (e) {
     console.error(e);
@@ -1615,6 +2017,7 @@ process.on('unhandledRejection', async (reason, promise) => {
 // Start Server
 app.listen(PORT, async () => {
   await initDatabase();
+  await runImageMigration();
   await ensureAllEmployeesHaveTokens();
   await loadSiteEnabledFromDb();
   console.log('================================================================');
