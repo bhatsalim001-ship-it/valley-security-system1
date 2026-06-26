@@ -189,12 +189,30 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow same-origin requests (no Origin header from server-to-server / curl / mobile apps)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.length === 0) {
-      // No allowlist configured: only permit same-origin – browsers will block cross-origin.
-      return callback(null, false);
+    
+    try {
+      const originUrl = new URL(origin);
+      const hostname = originUrl.hostname;
+      
+      // Always allow the site's own hostnames and subdomains (same-origin & production domains)
+      if (
+        hostname === 'valleysecurityserviceagency.in' ||
+        hostname === 'www.valleysecurityserviceagency.in' ||
+        hostname.endsWith('.onrender.com') ||
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1'
+      ) {
+        return callback(null, true);
+      }
+    } catch (urlErr) {
+      // If the origin is not a valid URL, ignore URL parsing error
     }
+
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS: origin ${origin} not allowed`));
+    
+    // Instead of throwing an Error (which crashes the request with a 500 Internal Server Error),
+    // return false as standard CORS behavior to block the browser's access gracefully.
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
@@ -671,6 +689,9 @@ async function initDatabase() {
         stack TEXT
       )
     `);
+
+    // Persist actual kill switch key for verification/diagnostics
+    await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET "value" = EXCLUDED."value"', ['actual_kill_switch_key', JSON.stringify(KILL_SWITCH_KEY)]);
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
