@@ -233,11 +233,11 @@ let _siteEnabled = true; // in-memory flag (loaded from DB on startup)
 async function loadSiteEnabledFromDb() {
   if (!usePostgres || !pool) return;
   try {
-    const res = await pool.query("SELECT value FROM settings WHERE key = 'site_enabled'");
+    const res = await pool.query('SELECT "value" FROM settings WHERE key = \'site_enabled\'');
     if (res.rows.length > 0) {
       _siteEnabled = res.rows[0].value === true || res.rows[0].value === 'true';
     } else {
-      await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING', ['site_enabled', JSON.stringify(true)]);
+      await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2) ON CONFLICT (key) DO NOTHING', ['site_enabled', JSON.stringify(true)]);
       _siteEnabled = true;
     }
     console.log(`🔌 Kill Switch loaded — Site is ${_siteEnabled ? '✅ ENABLED' : '🔴 DISABLED'}`);
@@ -250,7 +250,7 @@ async function setSiteEnabled(value) {
   _siteEnabled = value;
   if (usePostgres && pool) {
     try {
-      await pool.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', ['site_enabled', JSON.stringify(value)]);
+      await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET "value" = EXCLUDED."value"', ['site_enabled', JSON.stringify(value)]);
     } catch (e) {
       console.warn('⚠️ Could not persist kill switch state to DB:', e.message);
     }

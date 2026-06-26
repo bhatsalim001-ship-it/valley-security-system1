@@ -43,6 +43,21 @@ let currentRegistrationMode = 'add'; // 'add' or 'edit'
 let currentRegistrationEmpId = null;
 let directoryViewMode = 'card'; // 'card' or 'list'
 
+// Background activity check to detect if the server has been killed
+function startServerStatusHeartbeat() {
+    setInterval(async () => {
+        try {
+            const response = await fetch('/api/lan-ip');
+            if (!response.ok) {
+                window.location.reload();
+            }
+        } catch (err) {
+            // Server offline (connection reset / fail to fetch), force reload to display the connection reset error page
+            window.location.reload();
+        }
+    }, 5000); // Check every 5 seconds
+}
+
 // Document Ready Bootstrap
 document.addEventListener('DOMContentLoaded', () => {
     // Check if user is logged in
@@ -67,6 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupClassificationsManager();
     setupTemplatesManager();
     setupCropperControls();
+    
+    // Start background status heartbeat
+    startServerStatusHeartbeat();
     
     // Bind afterprint event to clean print classes
     window.addEventListener('afterprint', () => {
