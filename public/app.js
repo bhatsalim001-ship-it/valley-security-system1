@@ -1424,7 +1424,8 @@ async function triggerIdBulkDownload() {
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
-                    logging: false
+                    logging: false,
+                    letterRendering: true
                 });
                 
                 const base64Data = canvas.toDataURL('image/png').split(',')[1];
@@ -3868,7 +3869,8 @@ async function downloadIdCardImage() {
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
-                logging: false
+                logging: false,
+                letterRendering: true
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `VSA_ID_Card_${sideName}_${selectedId}.png`;
@@ -3890,7 +3892,8 @@ async function downloadIdCardImage() {
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            letterRendering: true
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `VSA_ID_Card_${selectedId}.png`;
@@ -3951,7 +3954,8 @@ async function downloadIndividualCardImage(empId) {
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
-                    logging: false
+                    logging: false,
+                    letterRendering: true
                 });
                 const link = document.createElement('a');
                 link.download = `VSA_ID_Card_${sideName}_${emp.id}.png`;
@@ -3977,7 +3981,8 @@ async function downloadIndividualCardImage(empId) {
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            letterRendering: true
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `VSA_ID_Card_${emp.id}.png`;
@@ -4592,7 +4597,8 @@ async function triggerBulkDownload() {
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
-                    logging: false
+                    logging: false,
+                    letterRendering: true
                 });
                 
                 const base64Data = canvas.toDataURL('image/png').split(',')[1];
