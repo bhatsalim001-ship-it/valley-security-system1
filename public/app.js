@@ -6661,9 +6661,6 @@ function openOnboardingPreview(empId) {
     document.getElementById('onboarding-preview-modal').classList.remove('hidden');
     lucide.createIcons();
 }
-    
-    lucide.createIcons();
-}
 
 // Render the rejected submissions log
 function renderInboxRejectedList() {
