@@ -41,6 +41,7 @@ function setupLiveTitleCaseInput(inputId) {
 let activeIdCardSide = 'front'; // 'front' or 'back'
 let currentRegistrationMode = 'add'; // 'add' or 'edit'
 let currentRegistrationEmpId = null;
+let isApprovalAction = false;
 let directoryViewMode = 'card'; // 'card' or 'list'
 
 // Background activity check to detect if the server has been killed
@@ -518,6 +519,18 @@ async function fetchData() {
 function renderDashboard() {
     const totalGuards = VSA_STATE.employees.length;
     const activeGuards = VSA_STATE.employees.filter(e => e.status === 'Active').length;
+    const pendingGuards = VSA_STATE.employees.filter(e => e.status === 'Pending').length;
+
+    const alertBanner = document.getElementById('pending-approval-alert');
+    const alertText = document.getElementById('pending-approval-alert-text');
+    if (alertBanner && alertText) {
+        if (pendingGuards > 0) {
+            alertText.textContent = `You have ${pendingGuards} pending employee registration${pendingGuards > 1 ? 's' : ''} awaiting review.`;
+            alertBanner.classList.remove('hidden');
+        } else {
+            alertBanner.classList.add('hidden');
+        }
+    }
     
     // Check ID expirations (Expired or expiring within next 30 days)
     let expiredOrExpiring = 0;
@@ -561,6 +574,18 @@ function renderDashboard() {
     // Render Recent Personnel
     renderRecentEmployeesTable();
 }
+
+window.showPendingApprovals = function() {
+    document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+    document.getElementById('view-employees').classList.remove('hidden');
+    updateNavActive('employees');
+
+    const statusFilter = document.getElementById('emp-filter-status');
+    if (statusFilter) {
+        statusFilter.value = 'Pending';
+    }
+    renderEmployeeDirectory();
+};
 
 function renderDistributionChart() {
     const container = document.getElementById('distribution-chart-container');
@@ -771,7 +796,7 @@ function renderRecentEmployeesTable() {
             <td>${emp.joiningDate}</td>
             <td>
                 <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
-                    <span class="badge ${emp.status === 'Active' ? 'badge-active' : 'badge-suspended'}">${emp.status}</span>
+                    <span class="badge ${emp.status === 'Active' ? 'badge-active' : (emp.status === 'Pending' ? 'badge-pending' : 'badge-suspended')}">${emp.status}</span>
                     <div style="display: flex; gap: 4px;">
                         <button class="btn btn-xs btn-outline btn-recent-edit" data-id="${emp.id}" title="Edit details" style="padding: 2px 6px; font-size: 10px; min-width: 24px;"><i data-lucide="edit-3" style="width: 10px; height: 10px;"></i></button>
                         <button class="btn btn-xs btn-outline btn-recent-card" data-id="${emp.id}" title="Download ID" style="color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15); padding: 2px 6px; font-size: 10px; min-width: 24px;"><i data-lucide="credit-card" style="width: 10px; height: 10px;"></i></button>
@@ -2901,6 +2926,46 @@ function setupEventHandlers() {
         resetRegistrationForm();
     });
 
+    const regApproveBtn = document.getElementById('btn-reg-approve');
+    if (regApproveBtn) {
+        regApproveBtn.addEventListener('click', async () => {
+            const empId = document.getElementById('reg-emp-id').value;
+            if (!empId) return;
+
+            const confirmApprove = confirm(`Are you sure you want to APPROVE and ACTIVATE guard ${empId}?`);
+            if (!confirmApprove) return;
+
+            isApprovalAction = true;
+            // Submit form to save edits and set status to Active
+            document.getElementById('employee-registration-form').requestSubmit();
+        });
+    }
+
+    const regRejectBtn = document.getElementById('btn-reg-reject');
+    if (regRejectBtn) {
+        regRejectBtn.addEventListener('click', async () => {
+            const empId = document.getElementById('reg-emp-id').value;
+            if (!empId) return;
+
+            const confirmReject = confirm(`Are you sure you want to REJECT and DELETE guard registration ${empId}?`);
+            if (!confirmReject) return;
+
+            try {
+                const response = await fetch(`/api/employees/${empId}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Rejection failed');
+                alert('Registration rejected and deleted.');
+                
+                document.getElementById('view-emp-registration').classList.add('hidden');
+                document.getElementById('view-employees').classList.remove('hidden');
+                updateNavActive('employees');
+                resetRegistrationForm();
+                fetchData();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
     // Photo and Signature upload handlers
     document.getElementById('reg-photo').addEventListener('change', function(e) {
         openPhotoCropper(this, 'reg-photo-preview');
@@ -3255,16 +3320,33 @@ function showRegistrationForm(mode = 'add', empId = null) {
     document.getElementById('view-emp-registration').classList.remove('hidden');
     updateNavActive('emp-registration');
     
+    const approveBtn = document.getElementById('btn-reg-approve');
+    const rejectBtn = document.getElementById('btn-reg-reject');
+    const saveBtn = document.getElementById('btn-reg-save');
+
     if (mode === 'edit' && empId) {
         // Load existing employee data
         const emp = VSA_STATE.employees.find(e => e.id === empId);
         if (emp) {
             populateRegistrationForm(emp);
             document.querySelector('.section-header h1').textContent = 'Edit Employee Record';
+            
+            if (emp.status === 'Pending') {
+                if (approveBtn) approveBtn.classList.remove('hidden');
+                if (rejectBtn) rejectBtn.classList.remove('hidden');
+                if (saveBtn) saveBtn.classList.add('hidden');
+            } else {
+                if (approveBtn) approveBtn.classList.add('hidden');
+                if (rejectBtn) rejectBtn.classList.add('hidden');
+                if (saveBtn) saveBtn.classList.remove('hidden');
+            }
         }
     } else {
         resetRegistrationForm();
         document.querySelector('.section-header h1').textContent = 'Register New Employee';
+        if (approveBtn) approveBtn.classList.add('hidden');
+        if (rejectBtn) rejectBtn.classList.add('hidden');
+        if (saveBtn) saveBtn.classList.remove('hidden');
     }
 }
 
@@ -3744,7 +3826,7 @@ async function saveEmployeeFromRegistration(e) {
         cardValidity: cardValidity,
         cardIssueDate: cardIssueDateVal,
         reportingManager: 'Vikram Rathore',
-        status: 'Active',
+        status: isApprovalAction ? 'Active' : (currentRegistrationMode === 'edit' ? (VSA_STATE.employees.find(emp => emp.id === empId)?.status || 'Active') : 'Active'),
         emergencyContactName: fatherName,
         emergencyContactRelation: relationType,
         emergencyContactMobile: mobile,
@@ -3805,6 +3887,8 @@ async function saveEmployeeFromRegistration(e) {
         }
     } catch (err) {
         alert('Error: ' + err.message);
+    } finally {
+        isApprovalAction = false;
     }
 }
 

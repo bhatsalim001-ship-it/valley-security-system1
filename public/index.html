@@ -193,6 +193,15 @@
 
                 <!-- 1. DASHBOARD VIEW -->
                 <section id="view-dashboard" class="app-view">
+                    <!-- Pending Submissions Alert Banner -->
+                    <div id="pending-approval-alert" class="hidden" style="background: rgba(207, 161, 92, 0.08); border: 1px solid rgba(207, 161, 92, 0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-sizing: border-box;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i data-lucide="alert-circle" style="color: #cfa15c; flex-shrink: 0; width: 20px; height: 20px;"></i>
+                            <span id="pending-approval-alert-text" style="font-size: 13.5px; font-weight: 500; color: #e5b36a;">You have 0 pending employee registrations awaiting review.</span>
+                        </div>
+                        <button class="btn btn-xs btn-primary" onclick="showPendingApprovals()" style="padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; background: #cfa15c; border-color: #cfa15c; color: #000;">Review Submissions</button>
+                    </div>
+
                     <!-- Stats Grid -->
                     <div class="stats-grid">
                         <div class="stat-card accented" style="position: relative; overflow: hidden;" id="stat-card-total">
@@ -381,6 +390,7 @@
                                         <label for="emp-filter-status">Status</label>
                                         <select id="emp-filter-status">
                                             <option value="">All Statuses</option>
+                                            <option value="Pending">Pending Approval</option>
                                             <option value="Active">Active</option>
                                             <option value="Inactive">Inactive</option>
                                             <option value="Suspended">Suspended</option>
@@ -692,8 +702,14 @@
 
                             <div class="form-actions">
                                 <button type="button" class="btn btn-outline" id="btn-reg-cancel">Cancel</button>
+                                <button type="button" class="btn btn-danger hidden" id="btn-reg-reject" style="background-color: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="x-circle" style="width:16px;"></i> Reject & Delete
+                                </button>
                                 <button type="submit" class="btn btn-success" id="btn-reg-save">
                                     <i data-lucide="save"></i> Save & Generate ID Card
+                                </button>
+                                <button type="button" class="btn btn-success hidden" id="btn-reg-approve" style="background-color: #10b981; border-color: #10b981; color: #fff; display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="check-circle" style="width:16px;"></i> Approve & Activate
                                 </button>
                             </div>
                         </form>

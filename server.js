@@ -259,6 +259,14 @@ const apiLimiter = rateLimit({
   message: { success: false, error: 'Rate limit exceeded. Please slow down.' }
 });
 
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,   // 1 hour
+  max: 10,                    // 10 submissions per IP per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many registration attempts. Please try again in an hour.' }
+});
+
 // Apply general API limiter to every /api/* route
 app.use('/api/', apiLimiter);
 
@@ -1053,6 +1061,86 @@ function recordFailedAttempt(email) {
 function clearFailedAttempts(email) {
   loginAttempts.delete(email);
 }
+
+app.post('/api/public/register', registerLimiter, async (req, res) => {
+  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, gender, currentAddress, photoBase64 } = req.body;
+  
+  if (!name || !mobile || !photoBase64) {
+    return res.status(400).json({ error: 'Name, Mobile, and Photo are required.' });
+  }
+
+  try {
+    const db = readLocalDb();
+    
+    // Auto calculate ID (VSA-XXXX)
+    let nextNum = 1001;
+    let allIds = [];
+
+    if (usePostgres && pool) {
+      const dbRes = await pool.query('SELECT id FROM employees');
+      allIds = dbRes.rows.map(r => parseInt(r.id.replace('VSA-', ''))).filter(n => !isNaN(n));
+    } else {
+      allIds = db.employees.map(e => parseInt(e.id.replace('VSA-', ''))).filter(n => !isNaN(n));
+    }
+
+    if (allIds.length > 0) {
+      nextNum = Math.max(...allIds) + 1;
+    }
+    
+    const empId = `VSA-${nextNum}`;
+    const secureToken = crypto.randomBytes(16).toString('hex');
+
+    // Server-Side Compression of Profile Photo
+    let compressedPhoto = null;
+    if (photoBase64.startsWith('data:image/')) {
+      compressedPhoto = await compressImageBase64(photoBase64, 300, null);
+    } else {
+      return res.status(400).json({ error: 'Invalid photo format.' });
+    }
+
+    const empData = {
+      id: empId,
+      name,
+      mobile,
+      guardianName,
+      relationType,
+      dob,
+      bloodGroup,
+      department,
+      gender,
+      currentAddress,
+      permanentAddress: currentAddress,
+      status: 'Pending',
+      joiningDate: new Date().toISOString().substring(0, 10),
+      cardValidity: 3,
+      secureToken,
+      documents: {
+        aadhaar: "Pending Verification",
+        policeVerification: "Pending Verification",
+        pan: "Pending Verification",
+        photo: `/api/employees/${empId}/photo`,
+        signature: ""
+      }
+    };
+
+    if (usePostgres && pool) {
+      await pool.query('INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)', [empId, compressedPhoto, ""]);
+      await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2)', [empId, JSON.stringify(empData)]);
+    } else {
+      const photosDb = readPhotosDb();
+      photosDb[empId] = { photo: compressedPhoto, signature: "" };
+      writePhotosDb(photosDb);
+
+      db.employees.push(empData);
+      writeLocalDb(db);
+    }
+
+    return res.json({ success: true, employeeId: empId });
+  } catch (err) {
+    console.error("Self-registration error:", err);
+    return res.status(500).json({ error: 'Internal server error during registration.' });
+  }
+});
 
 app.post('/api/login', authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
