@@ -13,6 +13,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.321.0/dist/umd/lucide.min.js"></script>
     
+    <!-- Cropper.js for image sizing & cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    
     <!-- Config & Styles -->
     <script src="firm-config.js"></script>
     <style>
@@ -491,6 +495,144 @@
             line-height: 1.6;
             margin-bottom: 25px;
         }
+
+        /* Cropper Modal Overlay */
+        .cropper-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .cropper-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .cropper-container {
+            width: 95%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .cropper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .cropper-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .btn-cropper-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .cropper-body-wrapper {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 380px;
+            border: 1px dashed var(--border-color);
+            position: relative;
+            width: 100%;
+        }
+
+        .cropper-target-img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .cropper-controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-crop-tool {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-crop-tool:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .cropper-footer {
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .btn-crop-action {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-crop-cancel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: #fff;
+        }
+
+        .btn-crop-save {
+            background: var(--theme-gold, #cfa15c);
+            border: 1px solid var(--theme-gold, #cfa15c);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -682,6 +824,38 @@
         </button>
     </div>
 
+    <!-- ✂️ Image Cropper Modal -->
+    <div id="cropper-modal" class="cropper-overlay">
+        <div class="cropper-container">
+            <div class="cropper-header">
+                <h3>Crop & Resize Photo</h3>
+                <button type="button" class="btn-cropper-close" id="btn-close-cropper">&times;</button>
+            </div>
+            
+            <div class="cropper-body-wrapper">
+                <img id="cropper-target-image" class="cropper-target-img" src="" alt="Source Image">
+            </div>
+
+            <!-- Controls Row -->
+            <div class="cropper-controls-row">
+                <button type="button" class="btn-crop-tool" id="btn-crop-zoom-in" title="Zoom In"><i data-lucide="zoom-in" style="width: 18px; height: 18px;"></i></button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-zoom-out" title="Zoom Out"><i data-lucide="zoom-out" style="width: 18px; height: 18px;"></i></button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-rotate-left" title="Rotate Left"><i data-lucide="rotate-ccw" style="width: 18px; height: 18px;"></i></button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-rotate-right" title="Rotate Right"><i data-lucide="rotate-cw" style="width: 18px; height: 18px;"></i></button>
+                
+                <button type="button" class="btn-crop-tool" id="btn-crop-aspect-toggle" title="Toggle Crop Ratio">
+                    <i data-lucide="unlock" style="width: 18px; height: 18px;"></i>
+                    <span id="crop-aspect-text">Free Crop</span>
+                </button>
+            </div>
+
+            <div class="cropper-footer">
+                <button type="button" class="btn-crop-action btn-crop-cancel" id="btn-cancel-cropper">Cancel</button>
+                <button type="button" class="btn-crop-action btn-crop-save" id="btn-save-cropped">Crop & Save Photo</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Apply configuration values dynamically
         if (typeof VSA_CONFIG !== 'undefined') {
@@ -697,6 +871,8 @@
 
         let base64PhotoData = null;
         let activeStream = null;
+        let activeCropper = null;
+        let isAspectLocked = true; // Lock aspect ratio to 3:4 by default for official IDs
 
         // Trigger hidden file input
         function triggerFileInput() {
@@ -710,7 +886,7 @@
             processImageFile(file);
         }
 
-        // Convert file to Base64 and render preview
+        // Convert file to Base64 and open cropper
         function processImageFile(file) {
             if (!file.type.startsWith('image/')) {
                 alert('Please select a valid image file.');
@@ -719,14 +895,116 @@
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                base64PhotoData = e.target.result;
+                startCropper(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Open Cropper Modal
+        function startCropper(base64Source) {
+            if (activeCropper) {
+                activeCropper.destroy();
+                activeCropper = null;
+            }
+
+            const targetImage = document.getElementById('cropper-target-image');
+            targetImage.src = base64Source;
+
+            const modal = document.getElementById('cropper-modal');
+            modal.classList.add('active');
+
+            const aspectText = document.getElementById('crop-aspect-text');
+            if (aspectText) aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
+
+            function initCropper() {
+                if (!window.Cropper) {
+                    console.error('Cropper.js is not loaded.');
+                    return;
+                }
+                activeCropper = new Cropper(targetImage, {
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.85,
+                    restore: false,
+                    modal: true,
+                    guides: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    aspectRatio: isAspectLocked ? 3 / 4 : NaN
+                });
+            }
+
+            setTimeout(initCropper, 150);
+        }
+
+        // Bind Cropper UI controls
+        function setupCropperControls() {
+            const closeCropper = () => {
+                document.getElementById('cropper-modal').classList.remove('active');
+                if (activeCropper) {
+                    activeCropper.destroy();
+                    activeCropper = null;
+                }
+            };
+
+            document.getElementById('btn-close-cropper').addEventListener('click', closeCropper);
+            document.getElementById('btn-cancel-cropper').addEventListener('click', closeCropper);
+
+            document.getElementById('btn-crop-zoom-in').addEventListener('click', () => {
+                if (activeCropper) activeCropper.zoom(0.1);
+            });
+            document.getElementById('btn-crop-zoom-out').addEventListener('click', () => {
+                if (activeCropper) activeCropper.zoom(-0.1);
+            });
+            document.getElementById('btn-crop-rotate-left').addEventListener('click', () => {
+                if (activeCropper) activeCropper.rotate(-90);
+            });
+            document.getElementById('btn-crop-rotate-right').addEventListener('click', () => {
+                if (activeCropper) activeCropper.rotate(90);
+            });
+
+            document.getElementById('btn-crop-aspect-toggle').addEventListener('click', () => {
+                if (!activeCropper) return;
+                isAspectLocked = !isAspectLocked;
+                activeCropper.setAspectRatio(isAspectLocked ? 3 / 4 : NaN);
+                
+                const aspectText = document.getElementById('crop-aspect-text');
+                const aspectIcon = document.querySelector('#btn-crop-aspect-toggle i');
+                if (aspectText) {
+                    aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
+                }
+                if (aspectIcon) {
+                    aspectIcon.className = isAspectLocked ? 'lucide-lock' : 'lucide-unlock';
+                }
+                lucide.createIcons();
+            });
+
+            document.getElementById('btn-save-cropped').addEventListener('click', () => {
+                if (!activeCropper) return;
+
+                const canvas = activeCropper.getCroppedCanvas({
+                    width: 300,
+                    height: 400,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                });
+
+                base64PhotoData = canvas.toDataURL('image/jpeg', 0.9);
+
+                // Render preview
                 const previewImg = document.getElementById('photo-preview-img');
                 previewImg.src = base64PhotoData;
                 previewImg.style.display = 'block';
                 document.getElementById('preview-placeholder').style.display = 'none';
-            };
-            reader.readAsDataURL(file);
+
+                closeCropper();
+            });
         }
+
+        // Call setup on script load
+        setupCropperControls();
 
         // Open live camera capture modal
         async function openLiveCamera() {
@@ -774,16 +1052,10 @@
             // Draw video frame on canvas
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Save base64 JPEG
-            base64PhotoData = canvas.toDataURL('image/jpeg', 0.9);
-            
-            // Render preview
-            const previewImg = document.getElementById('photo-preview-img');
-            previewImg.src = base64PhotoData;
-            previewImg.style.display = 'block';
-            document.getElementById('preview-placeholder').style.display = 'none';
-            
+            // Get base64 JPEG from canvas screenshot
+            const selfieBase64 = canvas.toDataURL('image/jpeg', 0.9);
             closeLiveCamera();
+            startCropper(selfieBase64);
         }
 
         // Drag and drop dropzone listeners

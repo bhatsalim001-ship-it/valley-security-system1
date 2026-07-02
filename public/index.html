@@ -2094,6 +2094,61 @@
         </div>
     </div>
 
+    <!-- ONBOARDING PREVIEW MODAL -->
+    <div id="onboarding-preview-modal" class="modal-overlay hidden" style="z-index: 10600;">
+        <div class="modal-container" style="max-width: 500px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="user-check"></i> Onboarding Profile Details</h3>
+                <button type="button" class="modal-close" id="btn-close-onboarding-preview" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="color: #fff; padding: 0;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px;">
+                    <img id="preview-onboard-photo" src="" style="width: 140px; height: 175px; object-fit: cover; border-radius: 12px; border: 2px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.4);" alt="Onboarding Photo">
+                    <div style="text-align: center;">
+                        <h2 id="preview-onboard-name" style="font-size: 20px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px;"></h2>
+                        <span id="preview-onboard-designation" style="font-size: 13px; font-weight: 700; color: var(--theme-accent, #cfa15c); text-transform: uppercase; letter-spacing: 1px;"></span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; margin-bottom: 25px; font-size: 13px; box-sizing: border-box;">
+                    <div>
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Mobile Number</div>
+                        <div id="preview-onboard-mobile" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Date of Birth</div>
+                        <div id="preview-onboard-dob" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Gender</div>
+                        <div id="preview-onboard-gender" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Blood Group</div>
+                        <div id="preview-onboard-blood" style="font-weight: 600;"></div>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Guardian Name & Relation</div>
+                        <div id="preview-onboard-guardian" style="font-weight: 600;"></div>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Assigned Place / Department</div>
+                        <div id="preview-onboard-department" style="font-weight: 600;"></div>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Current Address</div>
+                        <div id="preview-onboard-address" style="font-weight: 600; line-height: 1.4; word-break: break-word;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button type="button" class="btn btn-outline" id="btn-preview-close" style="flex: 1; padding: 12px; font-weight: 600; cursor:pointer;">Cancel</button>
+                <button type="button" class="btn" id="btn-preview-reject" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; cursor:pointer;"><i data-lucide="x" style="width: 16px;"></i> Reject</button>
+                <button type="button" class="btn" id="btn-preview-approve" style="background: #10b981; border-color: #10b981; color: #fff; padding: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; flex: 1.2; cursor:pointer;"><i data-lucide="check" style="width: 16px;"></i> Proceed to Edit</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bulk Printable Container -->
     <div id="printable-id-bulk" class="hidden"></div>
 

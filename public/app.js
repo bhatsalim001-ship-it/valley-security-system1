@@ -6456,7 +6456,8 @@ function renderInboxPendingList() {
             <td style="padding: 10px; vertical-align: middle;">${emp.designation || '-'}</td>
             <td style="padding: 10px; vertical-align: middle;">${emp.department || '-'}</td>
             <td style="padding: 10px; vertical-align: middle; text-align: right;">
-                <div style="display: inline-flex; gap: 8px;">
+                <div style="display: inline-flex; gap: 6px;">
+                    <button class="btn btn-xs btn-outline btn-inbox-view" data-id="${emp.id}" style="border-color: rgba(255,255,255,0.15); color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer; background: rgba(255,255,255,0.03);"><i data-lucide="eye" style="width:12px;"></i> View</button>
                     <button class="btn btn-xs btn-success btn-inbox-approve" data-id="${emp.id}" style="background: #10b981; border-color: #10b981; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="check" style="width:12px;"></i> Approve</button>
                     <button class="btn btn-xs btn-danger btn-inbox-reject" data-id="${emp.id}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="x" style="width:12px;"></i> Reject</button>
                 </div>
@@ -6467,6 +6468,13 @@ function renderInboxPendingList() {
     });
     
     // Wire up buttons
+    tbody.querySelectorAll('.btn-inbox-view').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const empId = btn.getAttribute('data-id');
+            openOnboardingPreview(empId);
+        });
+    });
+
     tbody.querySelectorAll('.btn-inbox-approve').forEach(btn => {
         btn.addEventListener('click', () => {
             const empId = btn.getAttribute('data-id');
@@ -6508,6 +6516,84 @@ function renderInboxPendingList() {
             }
         });
     });
+    lucide.createIcons();
+}
+
+// Open onboarding preview detailed modal
+function openOnboardingPreview(empId) {
+    const emp = VSA_STATE.employees.find(e => e.id === empId);
+    if (!emp) return;
+    
+    document.getElementById('preview-onboard-name').textContent = toTitleCase(emp.name);
+    document.getElementById('preview-onboard-designation').textContent = emp.designation || '-';
+    document.getElementById('preview-onboard-mobile').textContent = emp.mobile || '-';
+    document.getElementById('preview-onboard-dob').textContent = emp.dob || '-';
+    document.getElementById('preview-onboard-gender').textContent = emp.gender || '-';
+    document.getElementById('preview-onboard-blood').textContent = emp.bloodGroup || '-';
+    document.getElementById('preview-onboard-guardian').textContent = `${emp.guardianName || '-'} (${emp.relationType || '-'})`;
+    document.getElementById('preview-onboard-department').textContent = emp.department || '-';
+    document.getElementById('preview-onboard-address').textContent = emp.currentAddress || '-';
+    
+    const photoUrl = emp.documents?.photo ? `${emp.documents.photo}?token=${emp.secureToken}` : '';
+    document.getElementById('preview-onboard-photo').src = photoUrl || '/placeholder.jpg';
+    
+    // Wire modal actions
+    const approveBtn = document.getElementById('btn-preview-approve');
+    const rejectBtn = document.getElementById('btn-preview-reject');
+    
+    // Clone and replace button elements to clean up previous event listeners
+    const newApproveBtn = approveBtn.cloneNode(true);
+    const newRejectBtn = rejectBtn.cloneNode(true);
+    approveBtn.parentNode.replaceChild(newApproveBtn, approveBtn);
+    rejectBtn.parentNode.replaceChild(newRejectBtn, rejectBtn);
+    
+    newApproveBtn.addEventListener('click', () => {
+        document.getElementById('onboarding-preview-modal').classList.add('hidden');
+        document.getElementById('inbox-modal').classList.add('hidden');
+        showRegistrationForm('edit', empId);
+    });
+    
+    newRejectBtn.addEventListener('click', async () => {
+        const reason = prompt("Enter the reason for rejecting this onboarding profile (this will be logged):");
+        if (reason === null) return;
+        const cleanReason = reason.trim() || "Details or photo did not meet requirements.";
+        
+        try {
+            emp.status = 'Rejected';
+            emp.rejectionReason = cleanReason;
+            emp.rejectionDate = new Date().toISOString().substring(0, 10);
+            
+            const response = await fetch(`/api/employees/${empId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emp)
+            });
+            
+            if (!response.ok) throw new Error('Failed to reject registration');
+            
+            document.getElementById('onboarding-preview-modal').classList.add('hidden');
+            await fetchData();
+            renderInbox();
+            alert('Registration successfully rejected and logged.');
+        } catch (err) {
+            alert('Error rejecting: ' + err.message);
+        }
+    });
+    
+    // Wire close triggers
+    const closePreviewBtn = document.getElementById('btn-close-onboarding-preview');
+    const cancelPreviewBtn = document.getElementById('btn-preview-close');
+    
+    const closeFn = () => {
+        document.getElementById('onboarding-preview-modal').classList.add('hidden');
+    };
+    
+    closePreviewBtn.onclick = closeFn;
+    cancelPreviewBtn.onclick = closeFn;
+    
+    document.getElementById('onboarding-preview-modal').classList.remove('hidden');
+    lucide.createIcons();
+}
     
     lucide.createIcons();
 }
