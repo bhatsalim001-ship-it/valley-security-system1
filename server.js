@@ -303,7 +303,7 @@ async function setSiteEnabled(value) {
 }
 
 // Kill switch control page — secret URL only Salim knows
-app.get('/kill-switch', (req, res) => {
+app.get('/kill-switch', async (req, res) => {
   const userKey = req.query.key;
   if (userKey !== KILL_SWITCH_KEY) {
     const errorHtml = userKey ? '<div style="color:#ef4444; margin-bottom:20px; font-size:14px; font-weight:600;">⚠️ Invalid Master Key. Please try again.</div>' : '';
@@ -407,6 +407,46 @@ app.get('/kill-switch', (req, res) => {
   const dotColor = isOn ? '#22c55e' : '#ef4444';
   const dotGlow = isOn ? 'rgba(34,197,94,0.45)' : 'rgba(239,68,68,0.45)';
   const stateText = isOn ? 'LIVE' : 'OFFLINE';
+
+  // Calculate database size info dynamically
+  let dbSizeInfo = { used: '0 MB', free: '512 MB', total: '512 MB', percentage: 1 };
+  if (usePostgres && pool) {
+    try {
+      const sizeRes = await pool.query("SELECT pg_database_size('neondb') AS bytes");
+      if (sizeRes.rows.length > 0) {
+        const bytes = parseInt(sizeRes.rows[0].bytes);
+        const limitBytes = 512 * 1024 * 1024; // 512 MB
+        const usedMB = (bytes / (1024 * 1024)).toFixed(1);
+        const freeMB = Math.max(0, (limitBytes - bytes) / (1024 * 1024)).toFixed(1);
+        const percentage = Math.min(100, Math.max(1, Math.round((bytes / limitBytes) * 100)));
+        dbSizeInfo = {
+          used: `${usedMB} MB`,
+          free: `${freeMB} MB`,
+          total: '512 MB',
+          percentage
+        };
+      }
+    } catch (e) {
+      console.error('Error fetching db size in kill switch:', e.message);
+    }
+  } else {
+    try {
+      if (fs.existsSync(DB_PATH)) {
+        const stats = fs.statSync(DB_PATH);
+        const bytes = stats.size;
+        const limitBytes = 50 * 1024 * 1024; // 50MB local
+        const usedMB = (bytes / (1024 * 1024)).toFixed(2);
+        const freeMB = Math.max(0, (limitBytes - bytes) / (1024 * 1024)).toFixed(2);
+        const percentage = Math.min(100, Math.max(1, Math.round((bytes / limitBytes) * 100)));
+        dbSizeInfo = {
+          used: `${usedMB} MB`,
+          free: `${freeMB} MB`,
+          total: '50 MB',
+          percentage
+        };
+      }
+    } catch (e) {}
+  }
 
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -513,6 +553,28 @@ app.get('/kill-switch', (req, res) => {
     </form>
     <div class="confirm-txt">Tap to restore the site for everyone</div>
     `}
+    
+    <!-- Dynamic Storage Status Bar (Mobile Phone style) -->
+    <div class="storage-card" style="margin-top: 28px; padding: 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+        <span>Database Storage</span>
+        <span>${dbSizeInfo.percentage}% Used</span>
+      </div>
+      <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; margin-bottom: 12px; position: relative;">
+        <div style="width: ${dbSizeInfo.percentage}%; height: 100%; background: linear-gradient(90deg, #c8102e, #ff4d6d); border-radius: 5px; box-shadow: 0 0 10px rgba(200, 16, 46, 0.5);"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+        <div>
+          <span style="color: #fff;">${dbSizeInfo.used}</span>
+          <span style="color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 500;">used</span>
+        </div>
+        <div style="text-align: right;">
+          <span style="color: #fff;">${dbSizeInfo.free}</span>
+          <span style="color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 500;">free of ${dbSizeInfo.total}</span>
+        </div>
+      </div>
+    </div>
+
     <div class="owner">Salim Ilyas Bhat — Admin Only</div>
   </div>
 </body>
