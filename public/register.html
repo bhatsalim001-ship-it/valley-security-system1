@@ -603,6 +603,17 @@
                     </select>
                 </div>
 
+                <!-- Designation -->
+                <div class="form-group">
+                    <label for="guard-designation">Designation</label>
+                    <select id="guard-designation" required>
+                        <option value="Security Guard">Security Guard</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Head Guard">Head Guard</option>
+                        <option value="Gunman">Gunman</option>
+                    </select>
+                </div>
+
                 <!-- Deputed Location / Department -->
                 <div class="form-group">
                     <label for="guard-department">Deputed Location / Department</label>
@@ -820,6 +831,7 @@
                 dob: document.getElementById('guard-dob').value,
                 bloodGroup: document.getElementById('guard-blood').value,
                 department: document.getElementById('guard-department').value,
+                designation: document.getElementById('guard-designation').value,
                 gender: document.getElementById('guard-gender').value,
                 currentAddress: document.getElementById('guard-address').value.trim(),
                 photoBase64: base64PhotoData
@@ -868,6 +880,47 @@
             btnSubmit.innerHTML = '<i data-lucide="check" style="width: 18px; height: 18px;"></i> Submit Onboarding Form';
             lucide.createIcons();
         }
+
+        // Fetch classifications dynamically
+        async function fetchClassifications() {
+            try {
+                const response = await fetch('/api/public/classifications');
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data = await response.json();
+                
+                if (data.departments && data.departments.length > 0) {
+                    const deptSelect = document.getElementById('guard-department');
+                    deptSelect.innerHTML = '';
+                    data.departments.forEach(dept => {
+                        const opt = document.createElement('option');
+                        opt.value = dept;
+                        opt.textContent = dept;
+                        if (dept === "ACCOUNTANT GENERAL'S OFFICE") {
+                            opt.selected = true;
+                        }
+                        deptSelect.appendChild(opt);
+                    });
+                }
+                
+                if (data.designations && data.designations.length > 0) {
+                    const desSelect = document.getElementById('guard-designation');
+                    desSelect.innerHTML = '';
+                    data.designations.forEach(des => {
+                        const opt = document.createElement('option');
+                        opt.value = des;
+                        opt.textContent = des;
+                        if (des === "Security Guard") {
+                            opt.selected = true;
+                        }
+                        desSelect.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.warn("Could not load dynamic classifications. Using defaults.", err);
+            }
+        }
+        
+        fetchClassifications();
     </script>
 </body>
 </html>

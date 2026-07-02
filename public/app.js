@@ -502,6 +502,7 @@ async function fetchData() {
         populateSelectors();
         renderClassificationsManager();
         renderTemplatesList();
+        if (typeof updateInboxBadgeCounter === 'function') updateInboxBadgeCounter();
         
         lucide.createIcons();
     } catch (err) {
@@ -3218,7 +3219,6 @@ function setupEventHandlers() {
             developerModal.classList.add('hidden');
         });
     }
-
     if (developerModal) {
         developerModal.addEventListener('click', (e) => {
             if (e.target === developerModal) {
@@ -3226,6 +3226,7 @@ function setupEventHandlers() {
             }
         });
     }
+    setupInboxModalHandlers();
 }
 
 // Global search handling
@@ -6334,6 +6335,255 @@ function updateHslSlidersUI(h, s, l) {
         targetInput.value = hslString;
         targetInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
+}
+
+/* ==========================================================================
+   10. ONBOARDING INBOX MODAL & LOGGING SYSTEM
+   ========================================================================== */
+
+function setupInboxModalHandlers() {
+    const inboxModal = document.getElementById('inbox-modal');
+    const btnOpenInbox = document.getElementById('btn-header-inbox');
+    const btnCloseInbox = document.getElementById('btn-close-inbox-modal');
+    
+    if (btnOpenInbox && inboxModal) {
+        btnOpenInbox.addEventListener('click', () => {
+            renderInbox();
+            inboxModal.classList.remove('hidden');
+        });
+    }
+    
+    if (btnCloseInbox && inboxModal) {
+        btnCloseInbox.addEventListener('click', () => {
+            inboxModal.classList.add('hidden');
+        });
+    }
+    
+    // Tab switching listeners
+    const tabPending = document.getElementById('tab-inbox-pending');
+    const tabRejected = document.getElementById('tab-inbox-rejected');
+    const secPending = document.getElementById('inbox-pending-section');
+    const secRejected = document.getElementById('inbox-rejected-section');
+    
+    if (tabPending && tabRejected) {
+        tabPending.addEventListener('click', () => {
+            tabPending.classList.add('active');
+            tabRejected.classList.remove('active');
+            tabPending.style.borderBottom = '2px solid var(--theme-accent, #cfa15c)';
+            tabPending.style.color = 'var(--text-color, #fff)';
+            tabRejected.style.borderBottom = 'none';
+            tabRejected.style.color = 'var(--text-secondary)';
+            secPending.classList.remove('hidden');
+            secRejected.classList.add('hidden');
+            renderInboxPendingList();
+        });
+        
+        tabRejected.addEventListener('click', () => {
+            tabRejected.classList.add('active');
+            tabPending.classList.remove('active');
+            tabRejected.style.borderBottom = '2px solid var(--theme-accent, #cfa15c)';
+            tabRejected.style.color = 'var(--text-color, #fff)';
+            tabPending.style.borderBottom = 'none';
+            tabPending.style.color = 'var(--text-secondary)';
+            secRejected.classList.remove('hidden');
+            secPending.classList.add('hidden');
+            renderInboxRejectedList();
+        });
+    }
+    
+    // Location filter change listener
+    const filterLoc = document.getElementById('inbox-filter-location');
+    if (filterLoc) {
+        filterLoc.addEventListener('change', () => {
+            renderInboxPendingList();
+            renderInboxRejectedList();
+        });
+    }
+}
+
+// Render the entire Inbox (both tabs, update counter dot in header)
+function renderInbox() {
+    renderInboxPendingList();
+    renderInboxRejectedList();
+    updateInboxBadgeCounter();
+}
+
+// Update the red notification dot on the mail icon in the header
+function updateInboxBadgeCounter() {
+    const pendingCount = VSA_STATE.employees.filter(e => e.status === 'Pending').length;
+    const badge = document.getElementById('inbox-notification-badge');
+    if (badge) {
+        if (pendingCount > 0) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+// Render the pending submissions list
+function renderInboxPendingList() {
+    const tbody = document.getElementById('inbox-pending-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const filterLocVal = document.getElementById('inbox-filter-location')?.value || '';
+    const pendingList = VSA_STATE.employees.filter(emp => {
+        const matchesStatus = emp.status === 'Pending';
+        const matchesLocation = !filterLocVal || emp.department === filterLocVal;
+        return matchesStatus && matchesLocation;
+    });
+    
+    if (pendingList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-secondary);">No pending submissions found.</td></tr>`;
+        return;
+    }
+    
+    pendingList.forEach(emp => {
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid var(--border-color)';
+        
+        const photoUrl = emp.documents?.photo ? `${emp.documents.photo}?token=${emp.secureToken}` : '';
+        const avatarHtml = photoUrl ? 
+            `<img src="${photoUrl}" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="photo">` : 
+            `<div style="width: 44px; height: 55px; background: rgba(255,255,255,0.05); border-radius: 6px; display:flex; align-items:center; justify-content:center; color: var(--text-secondary);"><i data-lucide="user" style="width:18px;"></i></div>`;
+            
+        row.innerHTML = `
+            <td style="padding: 10px; vertical-align: middle;">${avatarHtml}</td>
+            <td style="padding: 10px; vertical-align: middle; font-weight:600; color: #fff;">${toTitleCase(emp.name)}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.mobile || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.dob || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.designation || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.department || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle; text-align: right;">
+                <div style="display: inline-flex; gap: 8px;">
+                    <button class="btn btn-xs btn-success btn-inbox-approve" data-id="${emp.id}" style="background: #10b981; border-color: #10b981; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="check" style="width:12px;"></i> Approve</button>
+                    <button class="btn btn-xs btn-danger btn-inbox-reject" data-id="${emp.id}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="x" style="width:12px;"></i> Reject</button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    // Wire up buttons
+    tbody.querySelectorAll('.btn-inbox-approve').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const empId = btn.getAttribute('data-id');
+            // Close inbox modal and open registration edit form for this pending guard
+            document.getElementById('inbox-modal').classList.add('hidden');
+            showRegistrationForm('edit', empId);
+        });
+    });
+    
+    tbody.querySelectorAll('.btn-inbox-reject').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const empId = btn.getAttribute('data-id');
+            const reason = prompt("Enter the reason for rejecting this onboarding profile (this will be logged):");
+            if (reason === null) return; // user cancelled prompt
+            
+            const cleanReason = reason.trim() || "Details or photo did not meet requirements.";
+            
+            // Reject & save as status 'Rejected'
+            try {
+                const emp = VSA_STATE.employees.find(e => e.id === empId);
+                if (!emp) return;
+                
+                emp.status = 'Rejected';
+                emp.rejectionReason = cleanReason;
+                emp.rejectionDate = new Date().toISOString().substring(0, 10);
+                
+                const response = await fetch(`/api/employees/${empId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(emp)
+                });
+                
+                if (!response.ok) throw new Error('Failed to reject registration');
+                alert('Registration successfully rejected and logged.');
+                await fetchData();
+                renderInbox();
+            } catch (err) {
+                alert('Error rejecting: ' + err.message);
+            }
+        });
+    });
+    
+    lucide.createIcons();
+}
+
+// Render the rejected submissions log
+function renderInboxRejectedList() {
+    const tbody = document.getElementById('inbox-rejected-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const filterLocVal = document.getElementById('inbox-filter-location')?.value || '';
+    const rejectedList = VSA_STATE.employees.filter(emp => {
+        const matchesStatus = emp.status === 'Rejected';
+        const matchesLocation = !filterLocVal || emp.department === filterLocVal;
+        return matchesStatus && matchesLocation;
+    });
+    
+    if (rejectedList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-secondary);">No rejected submissions found in log.</td></tr>`;
+        return;
+    }
+    
+    rejectedList.forEach(emp => {
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid var(--border-color)';
+        
+        row.innerHTML = `
+            <td style="padding: 10px; vertical-align: middle; font-weight:600; color: #fff;">${toTitleCase(emp.name)}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.mobile || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.dob || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.designation || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.department || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle;">${emp.rejectionDate || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle; color: #f87171; font-style: italic;">${emp.rejectionReason || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle; text-align: right;">
+                <div style="display: inline-flex; gap: 8px;">
+                    <button class="btn btn-xs btn-outline btn-inbox-reopen" data-id="${emp.id}" style="display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer; color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15);"><i data-lucide="edit" style="width:12px;"></i> Re-review</button>
+                    <button class="btn btn-xs btn-danger btn-inbox-delete-log" data-id="${emp.id}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="trash-2" style="width:12px;"></i> Clear</button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    // Wire up buttons
+    tbody.querySelectorAll('.btn-inbox-reopen').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const empId = btn.getAttribute('data-id');
+            // Reopen in registration form
+            document.getElementById('inbox-modal').classList.add('hidden');
+            // Temporarily set its status to pending when re-reviewing so approval buttons display
+            const emp = VSA_STATE.employees.find(e => e.id === empId);
+            if (emp) emp.status = 'Pending';
+            showRegistrationForm('edit', empId);
+        });
+    });
+    
+    tbody.querySelectorAll('.btn-inbox-delete-log').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const empId = btn.getAttribute('data-id');
+            if (!confirm(`Are you sure you want to permanently delete rejected log for guard ${empId}?`)) return;
+            
+            try {
+                const response = await fetch(`/api/employees/${empId}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Deletion failed');
+                alert('Rejected submission record deleted.');
+                await fetchData();
+                renderInbox();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    });
+    
+    lucide.createIcons();
 }
 
 

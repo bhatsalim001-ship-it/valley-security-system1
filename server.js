@@ -1062,11 +1062,26 @@ function clearFailedAttempts(email) {
   loginAttempts.delete(email);
 }
 
+app.get('/api/public/classifications', async (req, res) => {
+  try {
+    const db = readLocalDb();
+    if (usePostgres && pool) {
+      const dbRes = await pool.query("SELECT data FROM settings WHERE id = 'classifications'");
+      if (dbRes.rows.length > 0) {
+        return res.json(dbRes.rows[0].data);
+      }
+    }
+    return res.json(db.classifications || { departments: [], designations: [], manpowerTypes: [] });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to load classifications.' });
+  }
+});
+
 app.post('/api/public/register', registerLimiter, async (req, res) => {
-  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, gender, currentAddress, photoBase64 } = req.body;
+  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, designation, gender, currentAddress, photoBase64 } = req.body;
   
-  if (!name || !mobile || !photoBase64) {
-    return res.status(400).json({ error: 'Name, Mobile, and Photo are required.' });
+  if (!name || !mobile || !photoBase64 || !designation || !department) {
+    return res.status(400).json({ error: 'Name, Mobile, Photo, Designation, and Department are required.' });
   }
 
   try {
@@ -1107,6 +1122,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       dob,
       bloodGroup,
       department,
+      designation,
       gender,
       currentAddress,
       permanentAddress: currentAddress,

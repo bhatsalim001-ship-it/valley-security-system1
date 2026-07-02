@@ -170,7 +170,7 @@
                     <div id="search-results-dropdown" class="search-dropdown hidden"></div>
                 </div>
                 <div class="header-right">
-                    <button class="header-icon-btn" aria-label="Mail inbox"><i data-lucide="mail"></i></button>
+                    <button class="header-icon-btn" id="btn-header-inbox" aria-label="Mail inbox" style="position: relative;"><i data-lucide="mail"></i><span id="inbox-notification-badge" class="hidden" style="position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%;"></span></button>
                     <button class="header-icon-btn" aria-label="Notifications"><i data-lucide="bell"></i></button>
                     <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle theme">
                         <i data-lucide="moon" class="theme-icon-dark"></i>
@@ -2011,6 +2011,85 @@
             <div class="modal-footer" style="border-top: 1px solid var(--glass-border); padding-top: 15px;">
                 <button type="button" class="btn btn-outline" id="btn-cancel-cropper" style="min-width: 100px; padding: 10px 20px; font-weight: 600;">Cancel</button>
                 <button type="button" class="btn btn-primary" id="btn-save-cropped" style="min-width: 120px; padding: 10px 20px; font-weight: 600; background: var(--theme-gold, #cfa15c); border-color: var(--theme-gold, #cfa15c); color: #ffffff;">Crop & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INBOX MODAL -->
+    <div id="inbox-modal" class="modal-overlay hidden" style="z-index: 10500;">
+        <div class="modal-container" style="max-width: 900px; width: 95%;">
+            <div class="modal-header">
+                <h2 style="display: flex; align-items: center; gap: 10px;"><i data-lucide="mail"></i> Onboarding Submissions Inbox</h2>
+                <button class="modal-close" id="btn-close-inbox-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <!-- Tabs: Pending Submissions & Rejected List -->
+                <div class="inbox-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; gap: 20px;">
+                    <button class="inbox-tab-btn active" id="tab-inbox-pending" style="background:none; border:none; border-bottom: 2px solid var(--theme-accent, #cfa15c); color: var(--text-color, #fff); padding: 10px 5px; font-weight:600; cursor:pointer; font-family: inherit;">
+                        Pending Reviews
+                    </button>
+                    <button class="inbox-tab-btn" id="tab-inbox-rejected" style="background:none; border:none; color: var(--text-secondary); padding: 10px 5px; font-weight:600; cursor:pointer; font-family: inherit;">
+                        Rejected Submissions Log
+                    </button>
+                </div>
+
+                <!-- Filters (visible for both tabs) -->
+                <div class="inbox-filters-bar" style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
+                    <label for="inbox-filter-location" style="font-size: 12px; font-weight:600; text-transform:uppercase; color: var(--text-secondary);">Filter Place / Department:</label>
+                    <select id="inbox-filter-location" class="form-control" style="max-width: 250px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 12px; font-size:13px; outline:none; height:auto;">
+                        <option value="">All Places</option>
+                        <option value="ACCOUNTANT GENERAL'S OFFICE">Accountant General's Office</option>
+                        <option value="NIFT">NIFT Srinagar</option>
+                        <option value="CHILDREN HOSPITAL">Children Hospital</option>
+                        <option value="SUPER SPECIALTY HOSPITAL">Super Specialty Hospital</option>
+                        <option value="OTHER">Other / Head Office</option>
+                    </select>
+                </div>
+
+                <!-- PENDING VIEW -->
+                <div id="inbox-pending-section">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 10px;">Photo</th>
+                                    <th style="padding: 10px;">Guard Name</th>
+                                    <th style="padding: 10px;">Phone</th>
+                                    <th style="padding: 10px;">DOB</th>
+                                    <th style="padding: 10px;">Designation</th>
+                                    <th style="padding: 10px;">Department</th>
+                                    <th style="padding: 10px; text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inbox-pending-table-body">
+                                <!-- Dynamic pending rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REJECTED VIEW -->
+                <div id="inbox-rejected-section" class="hidden">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 10px;">Guard Name</th>
+                                    <th style="padding: 10px;">Phone</th>
+                                    <th style="padding: 10px;">DOB</th>
+                                    <th style="padding: 10px;">Designation</th>
+                                    <th style="padding: 10px;">Department</th>
+                                    <th style="padding: 10px;">Rejection Date</th>
+                                    <th style="padding: 10px;">Rejection Reason</th>
+                                    <th style="padding: 10px; text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inbox-rejected-table-body">
+                                <!-- Dynamic rejected rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
