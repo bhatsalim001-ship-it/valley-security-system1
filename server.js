@@ -51,10 +51,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const DB_PATH = path.join(__dirname, 'db.json');
 const PHOTOS_DB_PATH = path.join(__dirname, 'photos.json');
 
-// PostgreSQL Setup – connection string with a fallback.
 let pool = null;
-const NEON_FALLBACK_URL = "postgresql://neondb_owner:npg_cXIo8r0OBYaJ@ep-shiny-king-aosr4w3y-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
-const dbUrl = checkEnv('DATABASE_URL', { fallback: NEON_FALLBACK_URL });
+const dbUrl = checkEnv('DATABASE_URL', { fallback: '' });
 let usePostgres = dbUrl ? true : false;
 
 if (usePostgres) {
@@ -1123,19 +1121,29 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid photo format.' });
     }
 
+    // Input sanitization against Stored XSS
+    const sanitizeHtml = (str) => {
+      if (typeof str !== 'string') return str;
+      return str.replace(/<[^>]*>/g, '').trim();
+    };
+
+    const sanitizedName = sanitizeHtml(name);
+    const sanitizedGuardian = sanitizeHtml(guardianName);
+    const sanitizedAddress = sanitizeHtml(currentAddress);
+
     const empData = {
       id: empId,
-      name,
+      name: sanitizedName,
       mobile,
-      guardianName,
+      guardianName: sanitizedGuardian,
       relationType,
       dob,
       bloodGroup,
       department,
       designation,
       gender,
-      currentAddress,
-      permanentAddress: currentAddress,
+      currentAddress: sanitizedAddress,
+      permanentAddress: sanitizedAddress,
       status: 'Pending',
       joiningDate: new Date().toISOString().substring(0, 10),
       cardValidity: 3,
