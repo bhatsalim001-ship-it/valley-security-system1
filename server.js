@@ -1063,9 +1063,11 @@ function clearFailedAttempts(email) {
 app.get('/api/public/classifications', async (req, res) => {
   try {
     if (usePostgres && pool) {
-      const depts = await pool.query('SELECT "value" FROM settings WHERE key = \'departments\'');
-      const desigs = await pool.query('SELECT "value" FROM settings WHERE key = \'designations\'');
-      const manpower = await pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'');
+      const [depts, desigs, manpower] = await Promise.all([
+        pool.query('SELECT "value" FROM settings WHERE key = \'departments\''),
+        pool.query('SELECT "value" FROM settings WHERE key = \'designations\''),
+        pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'')
+      ]);
       
       return res.json({
         departments: depts.rows.length > 0 ? depts.rows[0].value : [],
