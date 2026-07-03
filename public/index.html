@@ -75,9 +75,6 @@
     <!-- Cropper.js for image sizing & cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <!-- Leaflet.js Map Library -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Google MediaPipe Selfie Segmentation for background removal -->
     <script src="lib/selfie_segmentation/selfie_segmentation.js"></script>
     <link rel="stylesheet" href="styles.css?v=6.3">
@@ -101,10 +98,6 @@
                 <a href="#dashboard" class="nav-item active" data-view="dashboard">
                     <i data-lucide="layout-dashboard"></i>
                     <span>Dashboard</span>
-                </a>
-                <a href="#gis-map" class="nav-item" data-view="gis-map">
-                    <i data-lucide="map-pin"></i>
-                    <span>Map Radar</span>
                 </a>
                 <a href="#employees" class="nav-item" data-view="employees">
                     <i data-lucide="users"></i>
@@ -359,43 +352,7 @@
                     </div>
                 </section>
 
-                <!-- GIS MAP VIEW -->
-                <section id="view-gis-map" class="app-view hidden">
-                    <div class="section-header" style="margin-bottom: 20px;">
-                        <div>
-                            <h1>GIS Map Radar - Live Deployments</h1>
-                            <p class="text-muted">Interactive operational map showing security sites and active guard deployments across the region.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="dashboard-row" style="gap: 20px; align-items: stretch;">
-                        <!-- Map Container Card -->
-                        <div class="dashboard-card col-8" style="margin-bottom: 0; min-height: 500px; display: flex; flex-direction: column;">
-                            <div class="card-header">
-                                <h3><i data-lucide="map"></i> Active Deployment Map</h3>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-outline btn-xs" id="btn-map-refresh" style="padding: 4px 8px; font-size: 11px; font-weight: 600;"><i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Refresh Map</button>
-                                </div>
-                            </div>
-                            <div class="card-body" style="flex: 1; padding: 0; position: relative; border-radius: 0 0 12px 12px; overflow: hidden; background: #121620;">
-                                <div id="gis-radar-map" style="width: 100%; height: 450px; z-index: 1;"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Side Details Panel -->
-                        <div class="dashboard-card col-4" style="margin-bottom: 0; display: flex; flex-direction: column;">
-                            <div class="card-header">
-                                <h3><i data-lucide="info"></i> Site Deployment Summary</h3>
-                            </div>
-                            <div class="card-body" style="flex: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; max-height: 450px;">
-                                <div id="map-site-summary-list" style="display: flex; flex-direction: column; gap: 10px;">
-                                    <!-- Populated dynamically via JS -->
-                                    <div class="text-muted" style="text-align: center; padding: 40px 0;">Loading map data...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+
 
                 <!-- 2. EMPLOYEES VIEW (VIEW MODE) -->
                 <section id="view-employees" class="app-view hidden">

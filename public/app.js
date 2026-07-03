@@ -468,10 +468,6 @@ function switchToView(targetView) {
 
     // Update Headers Text
     updateHeaderTitles(targetView);
-
-    if (targetView === 'gis-map') {
-        initializeGisMap();
-    }
 }
 
 function initSpaRouter() {
@@ -6820,122 +6816,7 @@ function renderInboxRejectedList() {
     lucide.createIcons();
 }
 
-// --- GIS MAP RADAR LOGIC ---
-let gisMapInstance = null;
 
-async function initializeGisMap() {
-    const mapContainer = document.getElementById('gis-radar-map');
-    if (!mapContainer) return;
-
-    if (gisMapInstance) {
-        gisMapInstance.remove();
-        gisMapInstance = null;
-    }
-
-    try {
-        const response = await fetch('/api/dashboard/map-data');
-        if (!response.ok) throw new Error('Failed to load map data');
-        const data = await response.json();
-        
-        if (!data.success || !data.sites) {
-            document.getElementById('map-site-summary-list').innerHTML = `<div class="text-muted" style="text-align: center; padding: 20px;">No operational site data available.</div>`;
-            return;
-        }
-
-        gisMapInstance = L.map('gis-radar-map').setView([34.0837, 74.7973], 11);
-
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(gisMapInstance);
-
-        const summaryList = document.getElementById('map-site-summary-list');
-        summaryList.innerHTML = '';
-
-        data.sites.forEach(site => {
-            const coords = site.coordinates;
-            if (!coords || coords.length !== 2) return;
-
-            const guards = site.guardsCount || 0;
-            const dotColor = guards > 0 ? '#10b981' : '#cfa15c';
-
-            const customIcon = L.divIcon({
-                className: 'custom-map-marker',
-                html: `<div style="position: relative; width: 18px; height: 18px;">
-                        <span class="pulsing-ring" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: ${dotColor}; opacity: 0.6; animation: markerPulse 1.8s infinite ease-in-out;"></span>
-                        <span class="marker-dot" style="position: absolute; top: 4px; left: 4px; width: 10px; height: 10px; border-radius: 50%; background: ${dotColor}; border: 1.5px solid #000; box-shadow: 0 0 10px ${dotColor};"></span>
-                       </div>`,
-                iconSize: [18, 18],
-                iconAnchor: [9, 9]
-            });
-
-            const marker = L.marker(coords, { icon: customIcon }).addTo(gisMapInstance);
-            
-            const popupContent = `
-                <div style="font-family: 'Outfit', sans-serif; color: #fff; background: #0c0f17; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; min-width: 160px; line-height: 1.4;">
-                    <h4 style="margin: 0 0 4px 0; color: var(--theme-gold); font-size: 13px; font-weight: 700;">${toTitleCase(site.name)}</h4>
-                    <p style="margin: 0 0 6px 0; font-size: 11px; color: rgba(255,255,255,0.6);">${toTitleCase(site.address)}</p>
-                    <div style="font-size: 11px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
-                        <span>Active Guards:</span>
-                        <span style="color: #10b981; font-weight: 800;">${guards}</span>
-                    </div>
-                </div>
-            `;
-            marker.bindPopup(popupContent, {
-                closeButton: false,
-                className: 'premium-leaflet-popup'
-            });
-
-            const listItem = document.createElement('div');
-            listItem.className = 'map-site-list-item';
-            listItem.style.cssText = `
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 16px;
-                background: rgba(255,255,255,0.02);
-                border: 1px solid var(--glass-border);
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.25s ease;
-            `;
-            listItem.innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex-grow: 1; padding-right: 10px;">
-                    <span style="font-weight: 600; font-size: 13px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${toTitleCase(site.name)}</span>
-                    <span style="font-size: 11px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${toTitleCase(site.address)}</span>
-                </div>
-                <div style="text-align: right; flex-shrink: 0;">
-                    <span style="font-size: 11px; font-weight: 700; background: ${guards > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(207, 161, 92, 0.15)'}; border: 1px solid ${guards > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(207, 161, 92, 0.25)'}; color: ${guards > 0 ? '#10b981' : '#cfa15c'}; padding: 2px 8px; border-radius: 50px;">
-                        ${guards} On-duty
-                    </span>
-                </div>
-            `;
-
-            listItem.addEventListener('click', () => {
-                gisMapInstance.flyTo(coords, 14, { duration: 1.5 });
-                marker.openPopup();
-                
-                document.querySelectorAll('.map-site-list-item').forEach(el => {
-                    el.style.borderColor = 'var(--glass-border)';
-                    el.style.background = 'rgba(255,255,255,0.02)';
-                });
-                listItem.style.borderColor = 'var(--theme-gold)';
-                listItem.style.background = 'rgba(207, 161, 92, 0.04)';
-            });
-
-            summaryList.appendChild(listItem);
-        });
-
-        setTimeout(() => {
-            if (gisMapInstance) gisMapInstance.invalidateSize();
-        }, 200);
-
-    } catch (err) {
-        console.error('GIS Map Initialization error:', err);
-        document.getElementById('map-site-summary-list').innerHTML = `<div class="text-muted" style="text-align: center; padding: 20px; color: #ef4444;">Error loading radar data: ${err.message}</div>`;
-    }
-}
 
 // --- AI OCR SCANNER FRONTEND LOGIC ---
 function setupOcrScanner() {
