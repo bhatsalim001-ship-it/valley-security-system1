@@ -494,28 +494,55 @@
                         <form id="employee-registration-form" class="professional-form">
                             <input type="hidden" id="reg-emp-id">
                             
-                            <!-- AI OCR Drag-and-Drop ID Scanner Banner -->
-                            <div class="dashboard-card ocr-scanner-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px dashed rgba(212, 175, 55, 0.25); border-radius: 12px;">
-                                <div class="card-body" style="padding: 24px; text-align: center; position: relative;">
-                                    <!-- Scanning shimmer backdrop overlay -->
-                                    <div id="ocr-scanning-overlay" class="ocr-loading-overlay hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(13, 14, 18, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 12px;">
-                                        <div class="shimmer-scanner-bar" style="width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--theme-gold), transparent); position: absolute; top:0; animation: scanAnimation 2s infinite linear;"></div>
-                                        <i data-lucide="brain-circuit" class="animate-pulse" style="width: 40px; height: 40px; color: var(--theme-gold); margin-bottom: 12px;"></i>
-                                        <h4 style="font-weight: 700; color: #fff; margin-bottom: 4px;">Gemini AI Analyzing Document...</h4>
-                                        <p class="text-muted" style="font-size: 12px; margin: 0;">Extracting name, DOB, address, Aadhaar number and other details.</p>
-                                    </div>
+                            <!-- AI OCR & Form Scanner Banners -->
+                            <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; width: 100%;">
+                                <!-- Left Column: ID Card Scanner -->
+                                <div class="dashboard-card ocr-scanner-card" style="flex: 1; min-width: 300px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px dashed rgba(212, 175, 55, 0.25); border-radius: 12px; margin-bottom: 0; box-sizing: border-box;">
+                                    <div class="card-body" style="padding: 24px; text-align: center; position: relative;">
+                                        <!-- Scanning shimmer backdrop overlay -->
+                                        <div id="ocr-scanning-overlay" class="ocr-loading-overlay hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(13, 14, 18, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 12px;">
+                                            <div class="shimmer-scanner-bar" style="width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--theme-gold), transparent); position: absolute; top:0; animation: scanAnimation 2s infinite linear;"></div>
+                                            <i data-lucide="brain-circuit" class="animate-pulse" style="width: 40px; height: 40px; color: var(--theme-gold); margin-bottom: 12px;"></i>
+                                            <h4 style="font-weight: 700; color: #fff; margin-bottom: 4px;">Gemini AI Analyzing Document...</h4>
+                                            <p class="text-muted" style="font-size: 12px; margin: 0;">Extracting name, DOB, address, Aadhaar number and other details.</p>
+                                        </div>
 
-                                    <div id="ocr-dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 8px;">
-                                        <i data-lucide="scan-face" style="width: 36px; height: 36px; color: var(--theme-gold); opacity: 0.8;"></i>
-                                        <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0;">AI Instant Enroll (Drag & Drop Card)</h3>
-                                        <p class="text-muted" style="font-size: 11.5px; max-width: 480px; margin: 0 auto; line-height: 1.4;">
-                                            Drop a clean photo of the employee's **Aadhaar Card** or **PAN Card** here, or click to upload. 
-                                            Gemini AI will automatically parse the fields and auto-fill the form below.
-                                        </p>
-                                        <input type="file" id="ocr-file-input" accept="image/*" style="display: none;">
-                                        <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('ocr-file-input').click();" style="margin-top: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600;">
-                                            <i data-lucide="upload" style="width: 12px; height: 12px;"></i> Select ID Card Image
-                                        </button>
+                                        <div id="ocr-dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 8px;">
+                                            <i data-lucide="scan-face" style="width: 36px; height: 36px; color: var(--theme-gold); opacity: 0.8;"></i>
+                                            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0;">AI Instant Enroll (Aadhaar/PAN)</h3>
+                                            <p class="text-muted" style="font-size: 11.5px; max-width: 480px; margin: 0 auto; line-height: 1.4;">
+                                                Drop a clean photo of the **Aadhaar/PAN Card** here. Gemini AI will auto-fill the form fields below.
+                                            </p>
+                                            <input type="file" id="ocr-file-input" accept="image/*" style="display: none;">
+                                            <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('ocr-file-input').click();" style="margin-top: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600;">
+                                                <i data-lucide="upload" style="width: 12px; height: 12px;"></i> Select ID Card Image
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: One-Shot Form Scanner -->
+                                <div class="dashboard-card ocr-scanner-card" style="flex: 1; min-width: 300px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: 12px; margin-bottom: 0; box-sizing: border-box;">
+                                    <div class="card-body" style="padding: 24px; text-align: center; position: relative;">
+                                        <!-- Scanning shimmer backdrop overlay -->
+                                        <div id="form-scanning-overlay" class="ocr-loading-overlay hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(13, 14, 18, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 12px;">
+                                            <div class="shimmer-scanner-bar" style="width: 100%; height: 4px; background: linear-gradient(90deg, transparent, #10b981, transparent); position: absolute; top:0; animation: scanAnimation 2s infinite linear;"></div>
+                                            <i data-lucide="file-text" class="animate-pulse" style="width: 40px; height: 40px; color: #10b981; margin-bottom: 12px;"></i>
+                                            <h4 style="font-weight: 700; color: #fff; margin-bottom: 4px;">Gemini AI Scanning Registration Sheet...</h4>
+                                            <p class="text-muted" style="font-size: 12px; margin: 0;">Extracting all details, photo crop, and signature crop.</p>
+                                        </div>
+
+                                        <div id="form-scan-dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 8px;">
+                                            <i data-lucide="scroll" style="width: 36px; height: 36px; color: #10b981; opacity: 0.8;"></i>
+                                            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0;">One-Shot Form Scanner (A4 Sheet)</h3>
+                                            <p class="text-muted" style="font-size: 11.5px; max-width: 480px; margin: 0 auto; line-height: 1.4;">
+                                                Drop a photo of the completed **Handwritten Registration Form**. Gemini will auto-fill text, crop photo, and crop signature.
+                                            </p>
+                                            <input type="file" id="form-scan-file-input" accept="image/*" style="display: none;">
+                                            <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('form-scan-file-input').click();" style="margin-top: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
+                                                <i data-lucide="upload" style="width: 12px; height: 12px;"></i> Select Completed Form
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -667,6 +694,20 @@
                                         <div class="form-group">
                                             <label for="reg-aadhaar-no">Aadhaar Card No.</label>
                                             <input type="text" id="reg-aadhaar-no" placeholder="12-digit number">
+                                        </div>
+                                    </div>
+                                    <div class="form-row col-3" style="margin-top: 15px;">
+                                        <div class="form-group">
+                                            <label for="reg-pincode">Pincode</label>
+                                            <input type="text" id="reg-pincode" placeholder="6-digit PIN code" pattern="[0-9]{6}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-esic-no">ESIC No.</label>
+                                            <input type="text" id="reg-esic-no" placeholder="ESIC number">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="reg-uan-no">UAN / PF No.</label>
+                                            <input type="text" id="reg-uan-no" placeholder="12-digit UAN number">
                                         </div>
                                     </div>
                                 </div>

@@ -1819,6 +1819,28 @@ Do not include markdown or code block tags. Return only the raw JSON.`;
   }
 });
 
+// 5B. One-Shot Form Scanner
+app.post('/api/employees/scan-form', authenticateToken, async (req, res) => {
+  const { image } = req.body;
+  if (!image) {
+    return res.status(400).json({ error: 'Form image data is required.' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.trim() === '') {
+    return res.status(400).json({ error: 'Gemini API Key is not configured on the server. Please add GEMINI_API_KEY to your env.' });
+  }
+
+  try {
+    const { processRegistrationForm } = require('./formProcessor');
+    const result = await processRegistrationForm(image, apiKey);
+    return res.json(result);
+  } catch (error) {
+    console.error('Form Scanner error:', error);
+    return res.status(500).json({ error: 'Form processing failed: ' + error.message });
+  }
+});
+
 // 6. Employee Update Profile
 app.put('/api/employees/:id', authenticateToken, async (req, res) => {
   const empId = req.params.id;

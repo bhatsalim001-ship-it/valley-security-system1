@@ -3507,6 +3507,9 @@ function populateRegistrationForm(emp) {
     document.getElementById('reg-bank-account').value = emp.bankAccount || '';
     document.getElementById('reg-ifsc').value = emp.ifsc || '';
     document.getElementById('reg-aadhaar-no').value = emp.aadhaarNo || '';
+    document.getElementById('reg-pincode').value = emp.pinCode || '';
+    document.getElementById('reg-esic-no').value = emp.esicNo || '';
+    document.getElementById('reg-uan-no').value = emp.uanNo || '';
     document.getElementById('reg-guardian-name').value = emp.guardianName || '';
     document.getElementById('reg-guardian-mobile').value = emp.guardianMobile || '';
     document.getElementById('reg-verification-by').value = emp.verificationIssuedBy || '';
@@ -3912,7 +3915,7 @@ async function saveEmployeeFromRegistration(e) {
         currentAddress: address,
         district: 'Srinagar',
         state: 'Jammu & Kashmir',
-        pinCode: '190001',
+        pinCode: document.getElementById('reg-pincode').value || '190001',
         designation: document.getElementById('reg-designation').value,
         department: document.getElementById('reg-department').value,
         manpowerType: 'Security Force',
@@ -3929,6 +3932,8 @@ async function saveEmployeeFromRegistration(e) {
         bankAccount: document.getElementById('reg-bank-account').value,
         ifsc: document.getElementById('reg-ifsc').value,
         aadhaarNo: document.getElementById('reg-aadhaar-no').value,
+        esicNo: document.getElementById('reg-esic-no').value,
+        uanNo: document.getElementById('reg-uan-no').value,
         guardianName: document.getElementById('reg-guardian-name').value,
         guardianMobile: document.getElementById('reg-guardian-mobile').value,
         verificationIssuedBy: document.getElementById('reg-verification-by').value,
@@ -6945,13 +6950,187 @@ function setupOcrScanner() {
                 document.getElementById('reg-mobile').value = cleanMobile;
             }
         }
-        if (data.permanentAddress) {
-            document.getElementById('reg-curr-address').value = toTitleCase(data.permanentAddress);
+        if (data.permanentAddress || data.address) {
+            document.getElementById('reg-curr-address').value = toTitleCase(data.permanentAddress || data.address);
         }
-        if (data.documentNumber) {
-            const cleanNum = data.documentNumber.replace(/\s/g, '');
+        if (data.pincode) {
+            document.getElementById('reg-pincode').value = data.pincode.replace(/\D/g, '');
+        }
+        if (data.documentNumber || data.aadhaar) {
+            const cleanNum = (data.documentNumber || data.aadhaar).replace(/\s/g, '');
             if (cleanNum.length === 12 && /^\d+$/.test(cleanNum)) {
                 document.getElementById('reg-aadhaar-no').value = cleanNum;
+            }
+        }
+    }
+
+    // --- ONE-SHOT FORM SCANNER FRONTEND LOGIC ---
+    const formDropzone = document.getElementById('form-scan-dropzone');
+    const formFileInput = document.getElementById('form-scan-file-input');
+    const formOverlay = document.getElementById('form-scanning-overlay');
+
+    if (formDropzone && formFileInput) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            formDropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            formDropzone.addEventListener(eventName, () => {
+                formDropzone.style.borderColor = '#10b981';
+                formDropzone.style.background = 'rgba(16, 185, 129, 0.08)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            formDropzone.addEventListener(eventName, () => {
+                formDropzone.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+                formDropzone.style.background = 'transparent';
+            }, false);
+        });
+
+        formDropzone.addEventListener('drop', e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                processFormFile(files[0]);
+            }
+        });
+
+        formFileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                processFormFile(this.files[0]);
+                this.value = '';
+            }
+        });
+
+        formDropzone.addEventListener('click', e => {
+            if (e.target !== formFileInput && !e.target.closest('button')) {
+                formFileInput.click();
+            }
+        });
+
+        async function processFormFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file of the completed registration form.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async function() {
+                const base64Image = reader.result;
+                
+                if (formOverlay) formOverlay.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/employees/scan-form', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('vsa_token')
+                        },
+                        body: JSON.stringify({ image: base64Image })
+                    });
+
+                    const result = await response.json();
+                    if (formOverlay) formOverlay.classList.add('hidden');
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Form processing failed');
+                    }
+
+                    if (result.success && result.data) {
+                        populateFieldsFromFormScan(result.data);
+                        alert('AI Form Scanner Successful! Details extracted, photo cropped, and signature processed.');
+                    } else {
+                        throw new Error('AI was unable to parse the registration form.');
+                    }
+
+                } catch (err) {
+                    if (formOverlay) formOverlay.classList.add('hidden');
+                    console.error('Form scanner processing error:', err);
+                    alert('AI Scanner Error: ' + err.message);
+                }
+            };
+        }
+
+        function populateFieldsFromFormScan(data) {
+            // Fill standard text fields first
+            populateFieldsFromOcr(data);
+
+            // Fill designation, department, ESIC, UAN
+            if (data.designation) {
+                const desigVal = toTitleCase(data.designation);
+                const options = Array.from(document.getElementById('reg-designation').options).map(o => o.value);
+                if (options.includes(desigVal)) {
+                    document.getElementById('reg-designation').value = desigVal;
+                } else {
+                    // If not in standard list, append a temporary option so it saves
+                    const opt = document.createElement('option');
+                    opt.value = desigVal;
+                    opt.textContent = desigVal;
+                    document.getElementById('reg-designation').appendChild(opt);
+                    document.getElementById('reg-designation').value = desigVal;
+                }
+            }
+            if (data.department) {
+                const deptVal = toTitleCase(data.department);
+                const options = Array.from(document.getElementById('reg-department').options).map(o => o.value);
+                if (options.includes(deptVal)) {
+                    document.getElementById('reg-department').value = deptVal;
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = deptVal;
+                    opt.textContent = deptVal;
+                    document.getElementById('reg-department').appendChild(opt);
+                    document.getElementById('reg-department').value = deptVal;
+                }
+            }
+            if (data.esic) {
+                document.getElementById('reg-esic-no').value = data.esic.replace(/\D/g, '');
+            }
+            if (data.uan) {
+                document.getElementById('reg-uan-no').value = data.uan.replace(/\D/g, '');
+            }
+            if (data.bankAccount) {
+                document.getElementById('reg-bank-account').value = data.bankAccount.replace(/\s/g, '');
+            }
+            if (data.ifsc) {
+                document.getElementById('reg-ifsc').value = data.ifsc.toUpperCase().trim();
+            }
+            if (data.joiningDate) {
+                let cleanJoining = data.joiningDate;
+                const match = cleanJoining.match(/(\d{4})[-/](\d{2})[-/](\d{2})/);
+                if (match) {
+                    cleanJoining = `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                document.getElementById('reg-joining-date').value = cleanJoining;
+            }
+            if (data.salary) {
+                document.getElementById('reg-salary').value = data.salary.replace(/\D/g, '');
+            }
+
+            // Fill cropped photo & signature base64 images
+            if (data.photo) {
+                const photoInput = document.getElementById('reg-photo');
+                const photoPreview = document.getElementById('reg-photo-preview');
+                if (photoInput) {
+                    photoInput.dataset.imageData = data.photo;
+                }
+                if (photoPreview) {
+                    photoPreview.innerHTML = `<img src="${data.photo}" style="max-height: 100px; border-radius: 8px;">`;
+                }
+            }
+
+            if (data.signature) {
+                const sigInput = document.getElementById('reg-signature');
+                const sigPreview = document.getElementById('reg-signature-preview');
+                if (sigInput) {
+                    sigInput.dataset.imageData = data.signature;
+                }
+                if (sigPreview) {
+                    sigPreview.innerHTML = `<img src="${data.signature}" style="max-height: 50px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">`;
+                }
             }
         }
     }
