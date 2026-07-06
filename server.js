@@ -337,16 +337,27 @@ async function setSiteEnabled(value) {
   }
 }
 
-// Helper to verify kill switch session cookie
+// Generate a signed kill-switch session token (HMAC-SHA256 of a nonce)
+function generateKillSwitchSession() {
+  const nonce = crypto.randomBytes(32).toString('hex');
+  const sig = crypto.createHmac('sha256', KILL_SWITCH_KEY).update(nonce).digest('hex');
+  return `${nonce}.${sig}`;
+}
+
+// Verify the signed session token — never stores the raw key in the cookie
 function isKillSwitchAuthenticated(req) {
   const session = req.cookies ? req.cookies.vsa_kill_session : null;
-  if (!session) return false;
-  
-  // Timing-safe comparison to prevent timing side-channel attacks
+  if (!session || !session.includes('.')) return false;
+
   try {
-    const crypto = require('crypto');
-    const a = Buffer.from(session);
-    const b = Buffer.from(KILL_SWITCH_KEY);
+    const dotIdx = session.lastIndexOf('.');
+    const nonce = session.substring(0, dotIdx);
+    const providedSig = session.substring(dotIdx + 1);
+    const expectedSig = crypto.createHmac('sha256', KILL_SWITCH_KEY).update(nonce).digest('hex');
+
+    // Timing-safe comparison of HMAC signatures
+    const a = Buffer.from(providedSig, 'hex');
+    const b = Buffer.from(expectedSig, 'hex');
     if (a.length !== b.length) return false;
     return crypto.timingSafeEqual(a, b);
   } catch (err) {
@@ -653,13 +664,19 @@ app.post('/kill-switch/login', async (req, res) => {
     return res.redirect('/kill-switch?error=invalid');
   }
 
-  // Secure timing-safe string comparison
+  // Secure timing-safe key comparison
   try {
-    const crypto = require('crypto');
     const a = Buffer.from(key);
     const b = Buffer.from(KILL_SWITCH_KEY);
     if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
-      res.cookie('vsa_kill_session', KILL_SWITCH_KEY, { httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'strict' });
+      // Store a signed HMAC nonce — never store the raw key in the cookie
+      const sessionToken = generateKillSwitchSession();
+      res.cookie('vsa_kill_session', sessionToken, {
+        httpOnly: true,
+        secure: NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 4 * 60 * 60 * 1000 // 4 hours
+      });
       return res.redirect('/kill-switch');
     }
   } catch (err) {}
@@ -989,8 +1006,6 @@ async function initDatabase() {
       )
     `);
 
-    // Persist actual kill switch key for verification/diagnostics
-    await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET "value" = EXCLUDED."value"', ['actual_kill_switch_key', JSON.stringify(KILL_SWITCH_KEY)]);
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
@@ -2203,7 +2218,8 @@ app.get('/api/db', authenticateToken, async (req, res) => {
       const photosRes = await pool.query('SELECT employee_id, photo, signature FROM employee_photos');
       const clientsRes = await pool.query('SELECT data FROM clients');
       const templatesRes = await pool.query('SELECT data FROM templates');
-      const usersRes = await pool.query('SELECT email, password, data FROM users');
+      // SECURITY: Do NOT fetch password column — hashes must never leave the server
+      const usersRes = await pool.query('SELECT email, data FROM users');
       const depts = await pool.query('SELECT "value" FROM settings WHERE key = \'departments\'');
       const desigs = await pool.query('SELECT "value" FROM settings WHERE key = \'designations\'');
       const manpower = await pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'');
@@ -2226,14 +2242,15 @@ app.get('/api/db', authenticateToken, async (req, res) => {
           return emp;
         }),
         clients: clientsRes.rows.map(r => r.data),
-        assetsCatalog: [], // Add if needed, or query from a settings/catalog table
+        assetsCatalog: [],
         departments: depts.rows.length > 0 ? depts.rows[0].value : [],
         designations: desigs.rows.length > 0 ? desigs.rows[0].value : [],
         manpowerTypes: manpower.rows.length > 0 ? manpower.rows[0].value : [],
         templates: templatesRes.rows.map(r => r.data),
+        // SECURITY: password field intentionally excluded from backup export
         users: usersRes.rows.map(r => {
           const uData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-          return { email: r.email, password: r.password, name: uData?.name, role: uData?.role, createdAt: uData?.createdAt };
+          return { email: r.email, name: uData?.name, role: uData?.role, createdAt: uData?.createdAt };
         })
       };
       
@@ -2270,36 +2287,42 @@ app.post('/api/db/import', authenticateToken, async (req, res) => {
 
   try {
     if (usePostgres && pool) {
-      await pool.query('DELETE FROM employee_photos');
-      await pool.query('DELETE FROM employees');
-      await pool.query('DELETE FROM clients');
-      await pool.query('DELETE FROM templates');
-      await pool.query('DELETE FROM users');
-      await pool.query('DELETE FROM settings');
+      // SAFETY: Wrap entire import in a transaction so a mid-import crash cannot leave an empty DB
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
 
-      if (incoming.departments) await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['departments', JSON.stringify(incoming.departments)]);
-      if (incoming.designations) await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['designations', JSON.stringify(incoming.designations)]);
-      if (incoming.manpowerTypes) await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['manpowerTypes', JSON.stringify(incoming.manpowerTypes)]);
-      if (incoming.assetsCatalog) await pool.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['assetsCatalog', JSON.stringify(incoming.assetsCatalog)]);
+        await client.query('DELETE FROM employee_photos');
+        await client.query('DELETE FROM employees');
+        await client.query('DELETE FROM clients');
+        await client.query('DELETE FROM templates');
+        // Preserve system settings (kill switch, seeding flags) — only wipe classification data
+        await client.query("DELETE FROM settings WHERE key IN ('departments','designations','manpowerTypes','assetsCatalog')");
 
-      for (const u of (incoming.users || [])) {
-        await pool.query('INSERT INTO users (email, password, data) VALUES ($1, $2, $3)', [
-          u.email,
-          u.password, // Keep current hashed or plaintext password
-          JSON.stringify({ name: u.name, role: u.role, createdAt: u.createdAt })
-        ]);
-      }
+        if (incoming.departments) await client.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['departments', JSON.stringify(incoming.departments)]);
+        if (incoming.designations) await client.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['designations', JSON.stringify(incoming.designations)]);
+        if (incoming.manpowerTypes) await client.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['manpowerTypes', JSON.stringify(incoming.manpowerTypes)]);
+        if (incoming.assetsCatalog) await client.query('INSERT INTO settings (key, "value") VALUES ($1, $2)', ['assetsCatalog', JSON.stringify(incoming.assetsCatalog)]);
 
-      for (const t of (incoming.templates || [])) {
-        await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2)', [t.id, JSON.stringify(t)]);
-      }
+        // NOTE: Users are intentionally NOT deleted/replaced during import to prevent accidental lockout
+        for (const t of (incoming.templates || [])) {
+          await client.query('INSERT INTO templates (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data', [t.id, JSON.stringify(t)]);
+        }
 
-      for (const c of (incoming.clients || [])) {
-        await pool.query('INSERT INTO clients (name, data) VALUES ($1, $2)', [c.name, JSON.stringify(c)]);
-      }
+        for (const c of (incoming.clients || [])) {
+          await client.query('INSERT INTO clients (name, data) VALUES ($1, $2) ON CONFLICT DO NOTHING', [c.name, JSON.stringify(c)]);
+        }
 
-      for (const emp of (incoming.employees || [])) {
-        await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2)', [emp.id, JSON.stringify(emp)]);
+        for (const emp of (incoming.employees || [])) {
+          await client.query('INSERT INTO employees (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data', [emp.id, JSON.stringify(emp)]);
+        }
+
+        await client.query('COMMIT');
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
       }
     } else {
       writePhotosDb({}); // Clear local photos database
@@ -2399,14 +2422,17 @@ app.use(async (err, req, res, next) => {
   res.status(500).send('Internal Server Error: ' + err.message);
 });
 
-// Capture and log process uncaught exceptions to PostgreSQL
+// Capture and log process uncaught exceptions to PostgreSQL, then exit safely
 process.on('uncaughtException', async (err) => {
-  console.error('Uncaught Exception:', err);
+  console.error('💥 Uncaught Exception — forcing clean exit:', err);
   if (usePostgres && pool) {
     try {
       await pool.query('INSERT INTO server_errors (message, stack) VALUES ($1, $2)', ['Uncaught Exception: ' + err.message, err.stack || '']);
     } catch (e) {}
   }
+  // REQUIRED: Node.js process is in an undefined state after uncaughtException.
+  // Render will automatically restart the container (keeps the service alive).
+  process.exit(1);
 });
 
 // Capture and log process unhandled rejections to PostgreSQL
