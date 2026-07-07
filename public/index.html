@@ -2153,6 +2153,14 @@
 
                 <!-- PENDING VIEW -->
                 <div id="inbox-pending-section">
+                    <!-- Approve All bar -->
+                    <div id="inbox-approve-all-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 16px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.18); border-radius: 12px;">
+                        <span id="inbox-pending-count-label" style="font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 500;">Loading...</span>
+                        <button id="btn-approve-all" onclick="approveAllPending()" style="background: #10b981; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; padding: 8px 18px; display: flex; align-items: center; gap: 7px; cursor: pointer; transition: background 0.2s ease;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                            <i data-lucide="check-check" style="width:15px; height:15px;"></i>
+                            Approve All Visible
+                        </button>
+                    </div>
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table" style="width: 100%; border-collapse: collapse;">
                             <thead>

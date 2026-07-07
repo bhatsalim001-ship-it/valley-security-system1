@@ -6716,6 +6716,60 @@ function updateInboxBadgeCounter() {
     }
 }
 
+// Approve ALL currently visible pending submissions in one click
+async function approveAllPending() {
+    const filterLocVal = document.getElementById('inbox-filter-location')?.value || '';
+    const pendingList = VSA_STATE.employees.filter(emp => {
+        const matchesStatus = emp.status === 'Pending';
+        const matchesLocation = !filterLocVal || emp.department === filterLocVal;
+        return matchesStatus && matchesLocation;
+    });
+
+    if (pendingList.length === 0) {
+        alert('No pending submissions to approve.');
+        return;
+    }
+
+    const confirmed = confirm(`Approve all ${pendingList.length} pending submission${pendingList.length > 1 ? 's' : ''}? This will set all of them to Active status.`);
+    if (!confirmed) return;
+
+    const btn = document.getElementById('btn-approve-all');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader" style="width:15px;height:15px;animation:spin 1s linear infinite;"></i> Approving...';
+        lucide.createIcons();
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const emp of pendingList) {
+        try {
+            emp.status = 'Active';
+            const response = await fetch(`/api/employees/${emp.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emp)
+            });
+            if (!response.ok) throw new Error(`Failed for ${emp.id}`);
+            successCount++;
+        } catch (err) {
+            emp.status = 'Pending'; // revert on failure
+            failCount++;
+            console.error('Approve all error:', err);
+        }
+    }
+
+    await fetchData();
+    renderInbox();
+
+    if (failCount === 0) {
+        alert(`✅ All ${successCount} submission${successCount > 1 ? 's' : ''} approved successfully!`);
+    } else {
+        alert(`⚠️ ${successCount} approved, ${failCount} failed. Check console for details.`);
+    }
+}
+
 // Render the pending submissions list
 function renderInboxPendingList() {
     const tbody = document.getElementById('inbox-pending-table-body');
@@ -6738,12 +6792,20 @@ function renderInboxPendingList() {
         const row = document.createElement('tr');
         row.style.borderBottom = '1px solid var(--border-color)';
         
-        let photoUrl = '';
+        // Fix: handle base64 data URIs correctly (same fix as onboarding preview)
+        let avatarSrc = '';
         if (emp.documents?.photo) {
-            photoUrl = emp.documents.photo.includes('token=') ? emp.documents.photo : `${emp.documents.photo}?token=${emp.secureToken}`;
+            const rawPhoto = emp.documents.photo;
+            if (rawPhoto.startsWith('data:image/')) {
+                avatarSrc = rawPhoto;
+            } else if (rawPhoto.startsWith('http') || rawPhoto.startsWith('/')) {
+                avatarSrc = rawPhoto.includes('token=') ? rawPhoto : `${rawPhoto}?token=${emp.secureToken || ''}`;
+            } else {
+                avatarSrc = rawPhoto;
+            }
         }
-        const avatarHtml = photoUrl ? 
-            `<img src="${photoUrl}" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="photo">` : 
+        const avatarHtml = avatarSrc ? 
+            `<img src="${avatarSrc}" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="photo">` : 
             `<div style="width: 44px; height: 55px; background: rgba(255,255,255,0.05); border-radius: 6px; display:flex; align-items:center; justify-content:center; color: var(--text-secondary);"><i data-lucide="user" style="width:18px;"></i></div>`;
             
         row.innerHTML = `
@@ -6764,6 +6826,19 @@ function renderInboxPendingList() {
         
         tbody.appendChild(row);
     });
+
+    // Update the pending count label and show/hide Approve All bar
+    const countLabel = document.getElementById('inbox-pending-count-label');
+    const approveAllBar = document.getElementById('inbox-approve-all-bar');
+    if (countLabel) {
+        if (pendingList.length === 0) {
+            countLabel.textContent = 'No pending submissions.';
+            if (approveAllBar) approveAllBar.style.display = 'none';
+        } else {
+            countLabel.textContent = `${pendingList.length} pending submission${pendingList.length > 1 ? 's' : ''} awaiting review`;
+            if (approveAllBar) approveAllBar.style.display = 'flex';
+        }
+    }
     
     // Wire up buttons
     tbody.querySelectorAll('.btn-inbox-view').forEach(btn => {
