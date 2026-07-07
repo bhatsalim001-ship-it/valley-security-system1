@@ -244,6 +244,7 @@ app.use(cors({
 
 // SECURITY: 10mb limit prevents DoS via huge payloads (photos go through dedicated endpoints)
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // SECURITY: Global Input Sanitization Middleware to prevent XSS
