@@ -6845,11 +6845,31 @@ function openOnboardingPreview(empId) {
     document.getElementById('preview-onboard-department').textContent = emp.department || '-';
     document.getElementById('preview-onboard-address').textContent = emp.currentAddress || '-';
     
-    let photoUrl = '';
+    // Fix: handle both base64 data URIs and URL-based photos correctly
+    const photoEl = document.getElementById('preview-onboard-photo');
+    let photoSrc = '';
     if (emp.documents?.photo) {
-        photoUrl = emp.documents.photo.includes('token=') ? emp.documents.photo : `${emp.documents.photo}?token=${emp.secureToken}`;
+        const rawPhoto = emp.documents.photo;
+        if (rawPhoto.startsWith('data:image/')) {
+            // It's a base64 data URI — set directly, no token needed
+            photoSrc = rawPhoto;
+        } else if (rawPhoto.startsWith('http') || rawPhoto.startsWith('/')) {
+            // It's a URL — append the secure token
+            photoSrc = rawPhoto.includes('token=') ? rawPhoto : `${rawPhoto}?token=${emp.secureToken || ''}`;
+        } else {
+            photoSrc = rawPhoto;
+        }
     }
-    document.getElementById('preview-onboard-photo').src = photoUrl || '/placeholder.jpg';
+    photoEl.src = photoSrc;
+    photoEl.onerror = () => {
+        photoEl.style.display = 'none';
+        const placeholder = document.createElement('div');
+        placeholder.style.cssText = 'width:140px;height:175px;border-radius:12px;border:2px solid var(--border-color);display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);color:var(--text-muted);flex-direction:column;gap:8px;font-size:12px;';
+        placeholder.innerHTML = '<i data-lucide="user" style="width:40px;height:40px;opacity:0.4;"></i><span>No Photo</span>';
+        photoEl.parentNode.insertBefore(placeholder, photoEl);
+        lucide.createIcons();
+    };
+    photoEl.style.display = '';
     
     // Wire modal actions
     const approveBtn = document.getElementById('btn-preview-approve');
