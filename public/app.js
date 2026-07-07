@@ -246,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupClassificationsManager();
     setupTemplatesManager();
     setupCropperControls();
+    setupModalA11y();
 
     // Set today's date as default for Card Issue Date input
     const issueDateInput = document.getElementById('id-card-issue-date');
@@ -577,9 +578,53 @@ function initSpaRouter() {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const targetView = item.getAttribute('data-view');
-            switchToView(targetView);
+            window.location.hash = targetView;
         });
     });
+
+    // Listen to hash changes in URL
+    window.addEventListener('hashchange', handleHashRoute);
+    
+    // Initial route invocation
+    handleHashRoute();
+}
+
+function handleHashRoute() {
+    const defaultView = 'dashboard';
+    const hashStr = window.location.hash.substring(1); // strip '#'
+    
+    if (!hashStr) {
+        window.location.hash = defaultView;
+        return;
+    }
+    
+    const parts = hashStr.split('?');
+    const targetView = parts[0];
+    const queryStr = parts[1] || '';
+    
+    const validViews = ['dashboard', 'employees', 'emp-registration', 'deployments', 'id-cards', 'templates', 'emp-record', 'reports', 'settings'];
+    
+    if (!validViews.includes(targetView)) {
+        window.location.hash = defaultView;
+        return;
+    }
+    
+    // Parse query params
+    const params = {};
+    queryStr.split('&').forEach(pair => {
+        const [k, v] = pair.split('=');
+        if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+    });
+    
+    // Perform standard view switching
+    switchToView(targetView);
+    
+    // Execute specific setup logic for certain views if needed
+    if (targetView === 'emp-registration') {
+        const mode = params.mode || 'add';
+        const empId = params.id || null;
+        showRegistrationForm(mode, empId);
+    }
 }
 
 function updateHeaderTitles(view) {
@@ -744,15 +789,14 @@ function renderDashboard() {
 }
 
 window.showPendingApprovals = function() {
-    document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
-    document.getElementById('view-employees').classList.remove('hidden');
-    updateNavActive('employees');
-
-    const statusFilter = document.getElementById('emp-filter-status');
-    if (statusFilter) {
-        statusFilter.value = 'Pending';
-    }
-    renderEmployeeDirectory();
+    window.location.hash = 'employees';
+    setTimeout(() => {
+        const statusFilter = document.getElementById('emp-filter-status');
+        if (statusFilter) {
+            statusFilter.value = 'Pending';
+        }
+        renderEmployeeDirectory();
+    }, 50);
 };
 
 function renderDistributionChart() {
@@ -926,7 +970,7 @@ function renderDashboardAlerts() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const empId = this.getAttribute('data-id');
-            showRegistrationForm('edit', empId);
+            window.location.hash = `emp-registration?mode=edit&id=${empId}`;
         });
     });
 }
@@ -983,7 +1027,7 @@ function renderRecentEmployeesTable() {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const empId = btn.getAttribute('data-id');
-            showRegistrationForm('edit', empId);
+            window.location.hash = `emp-registration?mode=edit&id=${empId}`;
         });
     });
 
@@ -1170,7 +1214,7 @@ function renderEmployeeDirectory() {
         btn.addEventListener('click', (e) => {
             e.stopPropagation(); // Stop card click selection toggle
             const empId = btn.getAttribute('data-id');
-            showRegistrationForm('edit', empId);
+            window.location.hash = `emp-registration?mode=edit&id=${empId}`;
         });
     });
 
@@ -3056,7 +3100,7 @@ function setupEventHandlers() {
     const qaRegister = document.getElementById('qa-register-new');
     if (qaRegister) {
         qaRegister.addEventListener('click', () => {
-            showRegistrationForm('add');
+            window.location.hash = 'emp-registration';
         });
     }
 
@@ -3070,14 +3114,14 @@ function setupEventHandlers() {
     const qaTemplates = document.getElementById('qa-manage-templates');
     if (qaTemplates) {
         qaTemplates.addEventListener('click', () => {
-            switchToView('templates');
+            window.location.hash = 'templates';
         });
     }
 
     const qaConfig = document.getElementById('qa-sys-config');
     if (qaConfig) {
         qaConfig.addEventListener('click', () => {
-            switchToView('settings');
+            window.location.hash = 'settings';
         });
     }
 
@@ -3107,19 +3151,15 @@ function setupEventHandlers() {
 
     // === EMPLOYEE REGISTRATION FORM HANDLERS ===
     document.getElementById('btn-add-employee').addEventListener('click', () => {
-        showRegistrationForm('add');
+        window.location.hash = 'emp-registration';
     });
 
     document.getElementById('btn-back-to-list').addEventListener('click', () => {
-        document.getElementById('view-emp-registration').classList.add('hidden');
-        document.getElementById('view-employees').classList.remove('hidden');
-        updateNavActive('employees');
+        window.location.hash = 'employees';
     });
 
     document.getElementById('btn-reg-cancel').addEventListener('click', () => {
-        document.getElementById('view-emp-registration').classList.add('hidden');
-        document.getElementById('view-employees').classList.remove('hidden');
-        updateNavActive('employees');
+        window.location.hash = 'employees';
         resetRegistrationForm();
     });
 
@@ -3152,9 +3192,7 @@ function setupEventHandlers() {
                 if (!response.ok) throw new Error('Rejection failed');
                 alert('Registration rejected and deleted.');
                 
-                document.getElementById('view-emp-registration').classList.add('hidden');
-                document.getElementById('view-employees').classList.remove('hidden');
-                updateNavActive('employees');
+                window.location.hash = 'employees';
                 resetRegistrationForm();
                 fetchData();
             } catch (err) {
@@ -3459,7 +3497,7 @@ function handleGlobalSearchInput() {
                 dropdown.classList.add('hidden');
                 document.getElementById('global-search').value = '';
                 // Jump routing trigger to Employee Details registration edit
-                showRegistrationForm('edit', empId);
+                window.location.hash = `emp-registration?mode=edit&id=${empId}`;
             });
         });
     }
@@ -4078,15 +4116,9 @@ async function saveEmployeeFromRegistration(e) {
         if (currentRegistrationMode === 'add') {
             document.getElementById('id-select-employee').value = empData.id;
             loadIdCardDetails(empData.id);
-            
-            // Switch to ID cards view
-            document.getElementById('view-emp-registration').classList.add('hidden');
-            document.getElementById('view-id-cards').classList.remove('hidden');
-            updateNavActive('id-cards');
+            window.location.hash = 'id-cards';
         } else {
-            document.getElementById('view-emp-registration').classList.add('hidden');
-            document.getElementById('view-employees').classList.remove('hidden');
-            updateNavActive('employees');
+            window.location.hash = 'employees';
         }
     } catch (err) {
         alert('Error: ' + err.message);
@@ -6618,6 +6650,64 @@ function setupCropperControls() {
     }
 }
 
+// Accessibility (a11y) Modal Manager (Focus Trap & Escape key closer)
+function setupModalA11y() {
+    // Listen for Escape key to close any active modals
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
+            if (activeModal) {
+                activeModal.classList.add('hidden');
+                // Execute cleanup or trigger close buttons if needed
+                if (activeModal.id === 'cropper-modal') {
+                    if (activeCropper) {
+                        activeCropper.destroy();
+                        activeCropper = null;
+                    }
+                    if (cropperTriggerInputId) {
+                        const inputEl = document.getElementById(cropperTriggerInputId);
+                        if (inputEl) inputEl.value = '';
+                    }
+                }
+            }
+        }
+    });
+
+    // Handle tab key to trap focus inside open modals
+    window.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+
+        const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
+        if (!activeModal) return;
+
+        const focusableSelectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex="0"]';
+        const focusableElements = Array.from(activeModal.querySelectorAll(focusableSelectors));
+        
+        if (focusableElements.length === 0) {
+            e.preventDefault();
+            return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const activeElement = document.activeElement;
+
+        if (e.shiftKey) {
+            // Shift + Tab: if on first element, wrap to last
+            if (activeElement === firstElement || !activeModal.contains(activeElement)) {
+                lastElement.focus();
+                e.preventDefault();
+            }
+        } else {
+            // Tab: if on last element, wrap to first
+            if (activeElement === lastElement || !activeModal.contains(activeElement)) {
+                firstElement.focus();
+                e.preventDefault();
+            }
+        }
+    });
+}
+
 // Color Picker Helpers: Hex to HSL and Slider Updates
 function hexToHsl(hex) {
     if (!hex) return { h: 0, s: 100, l: 50 };
@@ -7153,7 +7243,7 @@ function renderInboxRejectedList() {
             // Temporarily set its status to pending when re-reviewing so approval buttons display
             const emp = VSA_STATE.employees.find(e => e.id === empId);
             if (emp) emp.status = 'Pending';
-            showRegistrationForm('edit', empId);
+            window.location.hash = `emp-registration?mode=edit&id=${empId}`;
         });
     });
     

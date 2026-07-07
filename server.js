@@ -8,6 +8,7 @@ const os = require('os');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const sharp = require('sharp');
 const crypto = require('crypto');
 
@@ -55,9 +56,19 @@ let pool = null;
 const dbUrl = checkEnv('DATABASE_URL', { fallback: '' });
 let usePostgres = dbUrl ? true : false;
 
-if (NODE_ENV === 'production' && !dbUrl) {
-  console.error('❌ FATAL ERROR: DATABASE_URL is missing in production! System will not start with insecure local JSON files.');
-  process.exit(1);
+if (NODE_ENV === 'production') {
+  if (!dbUrl) {
+    console.error('❌ FATAL ERROR: DATABASE_URL is missing in production! System will not start with insecure local JSON files.');
+    process.exit(1);
+  }
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET === 'valley-security-secret-session-key-fallback-long-32-chars') {
+    console.error('❌ FATAL SECURITY ERROR: JWT_SECRET is missing, too short, or using default fallback in production mode!');
+    process.exit(1);
+  }
+  if (!process.env.KILL_SWITCH_KEY || process.env.KILL_SWITCH_KEY === 'VSA-SALIM-MASTER-2024') {
+    console.error('❌ FATAL SECURITY ERROR: KILL_SWITCH_KEY is missing or using default fallback in production mode!');
+    process.exit(1);
+  }
 }
 
 if (usePostgres) {
@@ -241,6 +252,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
+
+// SECURITY: HTTP response payload compression
+app.use(compression());
 
 // SECURITY: 10mb limit prevents DoS via huge payloads (photos go through dedicated endpoints)
 app.use(express.json({ limit: '10mb' }));
@@ -1489,7 +1503,7 @@ app.post('/api/login', authLimiter, async (req, res) => {
       res.cookie('auth_token', token, {
         httpOnly: true,
         secure: NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         maxAge: 60 * 60 * 1000 // 1 hour – matches default JWT_EXPIRES_IN
       });
 
@@ -1596,7 +1610,7 @@ app.post('/api/auth/google-login', authLimiter, async (req, res) => {
     res.cookie('auth_token', sessionToken, {
       httpOnly: true,
       secure: NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 1000 // 1 hour – matches default JWT_EXPIRES_IN
     });
 
@@ -2263,11 +2277,32 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
 });
 
 // Asynchronous Git Sync utility function (saves backup and pushes to GitHub & Render)
+let isGitSyncing = false;
+let pendingGitSync = false;
+
 async function syncDatabaseToGit() {
+  if (isGitSyncing) {
+    console.log('🔄 Git Sync: Already in progress. Queueing the sync request.');
+    pendingGitSync = true;
+    return;
+  }
+
+  isGitSyncing = true;
   console.log('🔄 Triggering automated Git Sync to GitHub and Render...');
+
+  const cleanUpSync = () => {
+    isGitSyncing = false;
+    if (pendingGitSync) {
+      pendingGitSync = false;
+      console.log('🔄 Git Sync: Executing queued sync request after 5s cooldown.');
+      setTimeout(syncDatabaseToGit, 5000);
+    }
+  };
+
   try {
     if (!usePostgres || !pool) {
       console.log('⚠️ Git Sync: Using local flat database, skipping Git backup push.');
+      cleanUpSync();
       return;
     }
 
@@ -2337,16 +2372,19 @@ async function syncDatabaseToGit() {
       })
       .then(() => {
         console.log('🎉 Automated Git Sync completed successfully! Configuration is fully backed up and live on Render.');
+        cleanUpSync();
       })
       .catch(gitErr => {
         console.error('⚠️ Git Sync Push Failure (may be in read-only environment):', gitErr.message);
         // Log error to server_errors table so administrator is aware
         pool.query('INSERT INTO server_errors (message, stack) VALUES ($1, $2)', ['Git Sync Failure: ' + gitErr.message, gitErr.stack || ''])
-          .catch(dbErr => console.error('Failed to log Git Sync error to DB:', dbErr));
+          .catch(dbErr => console.error('Failed to log Git Sync error to DB:', dbErr))
+          .finally(() => cleanUpSync());
       });
 
   } catch (err) {
     console.error('❌ Failed to construct database backup snapshot:', err);
+    cleanUpSync();
   }
 }
 
