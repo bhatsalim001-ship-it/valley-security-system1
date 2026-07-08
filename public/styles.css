@@ -1018,8 +1018,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .modal-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
+    display: none !important;
 }
 
 .modal-container {
