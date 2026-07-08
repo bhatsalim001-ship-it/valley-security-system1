@@ -1459,19 +1459,30 @@ app.post('/api/login', authLimiter, async (req, res) => {
   try {
     let userRecord = null;
     let authSuccess = false;
+    let shouldRunFallback = false;
 
     if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT * FROM users WHERE email = $1', [emailTrim]);
-      if (dbRes.rows.length > 0) {
-        const dbUser = dbRes.rows[0];
-        const passMatch = await bcrypt.compare(password, dbUser.password);
-        if (passMatch) {
-          authSuccess = true;
-          const uData = typeof dbUser.data === 'string' ? JSON.parse(dbUser.data) : dbUser.data;
-          userRecord = { email: dbUser.email, name: uData?.name || 'Admin', role: uData?.role || 'admin' };
+      try {
+        const dbRes = await pool.query('SELECT * FROM users WHERE email = $1', [emailTrim]);
+        if (dbRes.rows.length > 0) {
+          const dbUser = dbRes.rows[0];
+          const passMatch = await bcrypt.compare(password, dbUser.password);
+          if (passMatch) {
+            authSuccess = true;
+            const uData = typeof dbUser.data === 'string' ? JSON.parse(dbUser.data) : dbUser.data;
+            userRecord = { email: dbUser.email, name: uData?.name || 'Admin', role: uData?.role || 'admin' };
+          }
         }
+      } catch (err) {
+        console.warn('⚠️ Login failed during cloud DB query. Triggering local fallback.', err.message);
+        usePostgres = false;
+        shouldRunFallback = true;
       }
     } else {
+      shouldRunFallback = true;
+    }
+
+    if (shouldRunFallback) {
       // Local DB Fallback (ONLY used if PostgreSQL is offline/disabled)
       const localDb = readLocalDb();
       const localUser = localDb.users.find(u => u.email === emailTrim);
@@ -1647,10 +1658,17 @@ async function verifyImageAccess(req, res, empId) {
   const queryToken = req.query.token;
   if (queryToken) {
     let empData = null;
-    if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
-      if (dbRes.rows.length > 0) empData = dbRes.rows[0].data;
-    } else {
+    try {
+      if (usePostgres && pool) {
+        const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
+        if (dbRes.rows.length > 0) empData = dbRes.rows[0].data;
+      } else {
+        const db = readLocalDb();
+        empData = db.employees.find(e => e.id === empId);
+      }
+    } catch (err) {
+      console.warn('⚠️ verifyImageAccess failed during cloud DB query. Falling back to local JSON.', err.message);
+      usePostgres = false;
       const db = readLocalDb();
       empData = db.employees.find(e => e.id === empId);
     }
@@ -1671,10 +1689,17 @@ app.get('/api/employees/:id/photo', async (req, res) => {
     }
 
     let base64Str = null;
-    if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT photo FROM employee_photos WHERE employee_id = $1', [empId]);
-      if (dbRes.rows.length > 0) base64Str = dbRes.rows[0].photo;
-    } else {
+    try {
+      if (usePostgres && pool) {
+        const dbRes = await pool.query('SELECT photo FROM employee_photos WHERE employee_id = $1', [empId]);
+        if (dbRes.rows.length > 0) base64Str = dbRes.rows[0].photo;
+      } else {
+        const photosDb = readPhotosDb();
+        if (photosDb[empId]) base64Str = photosDb[empId].photo;
+      }
+    } catch (err) {
+      console.warn('⚠️ Serving photo failed during cloud DB query. Falling back to local JSON.', err.message);
+      usePostgres = false;
       const photosDb = readPhotosDb();
       if (photosDb[empId]) base64Str = photosDb[empId].photo;
     }
@@ -1710,10 +1735,17 @@ app.get('/api/employees/:id/signature', async (req, res) => {
     }
 
     let base64Str = null;
-    if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT signature FROM employee_photos WHERE employee_id = $1', [empId]);
-      if (dbRes.rows.length > 0) base64Str = dbRes.rows[0].signature;
-    } else {
+    try {
+      if (usePostgres && pool) {
+        const dbRes = await pool.query('SELECT signature FROM employee_photos WHERE employee_id = $1', [empId]);
+        if (dbRes.rows.length > 0) base64Str = dbRes.rows[0].signature;
+      } else {
+        const photosDb = readPhotosDb();
+        if (photosDb[empId]) base64Str = photosDb[empId].signature;
+      }
+    } catch (err) {
+      console.warn('⚠️ Serving signature failed during cloud DB query. Falling back to local JSON.', err.message);
+      usePostgres = false;
       const photosDb = readPhotosDb();
       if (photosDb[empId]) base64Str = photosDb[empId].signature;
     }
@@ -1747,13 +1779,20 @@ app.get('/api/employees/:id', async (req, res) => {
 
   try {
     let empData = null;
-
-    if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
-      if (dbRes.rows.length > 0) {
-        empData = dbRes.rows[0].data;
+    try {
+      if (usePostgres && pool) {
+        const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
+        if (dbRes.rows.length > 0) {
+          empData = dbRes.rows[0].data;
+        }
+      } else {
+        const db = readLocalDb();
+        const emp = db.employees.find(e => e.id === empId);
+        if (emp) empData = emp;
       }
-    } else {
+    } catch (err) {
+      console.warn('⚠️ /api/employees/:id failed during cloud DB query. Falling back to local JSON.', err.message);
+      usePostgres = false;
       const db = readLocalDb();
       const emp = db.employees.find(e => e.id === empId);
       if (emp) empData = emp;
@@ -1827,12 +1866,19 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/employees', authenticateToken, async (req, res) => {
   try {
     let emps = [];
-    if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT data FROM employees ORDER BY id ASC');
-      emps = dbRes.rows.map(r => r.data);
-    } else {
+    try {
+      if (usePostgres && pool) {
+        const dbRes = await pool.query('SELECT data FROM employees ORDER BY id ASC');
+        emps = dbRes.rows.map(r => r.data);
+      } else {
+        const db = readLocalDb();
+        emps = db.employees || [];
+      }
+    } catch (err) {
+      console.warn('⚠️ /api/employees failed during cloud DB query. Falling back to local JSON.', err.message);
+      usePostgres = false;
       const db = readLocalDb();
-      emps = db.employees;
+      emps = db.employees || [];
     }
 
     // Append security tokens to image URLs for frontend fetching
@@ -2511,53 +2557,64 @@ app.delete('/api/templates/:id', authenticateToken, async (req, res) => {
 // 13. System Database Dump GET (Protected)
 app.get('/api/db', authenticateToken, async (req, res) => {
   try {
+    let dbPayload = null;
+    let shouldRunFallback = false;
+
     if (usePostgres && pool) {
-      const empsRes = await pool.query('SELECT data FROM employees');
-      const photosRes = await pool.query('SELECT employee_id, photo, signature FROM employee_photos');
-      const clientsRes = await pool.query('SELECT data FROM clients');
-      const templatesRes = await pool.query('SELECT data FROM templates');
-      // SECURITY: Do NOT fetch password column — hashes must never leave the server
-      const usersRes = await pool.query('SELECT email, data FROM users');
-      const depts = await pool.query('SELECT "value" FROM settings WHERE key = \'departments\'');
-      const desigs = await pool.query('SELECT "value" FROM settings WHERE key = \'designations\'');
-      const manpower = await pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'');
+      try {
+        const empsRes = await pool.query('SELECT data FROM employees');
+        const photosRes = await pool.query('SELECT employee_id, photo, signature FROM employee_photos');
+        const clientsRes = await pool.query('SELECT data FROM clients');
+        const templatesRes = await pool.query('SELECT data FROM templates');
+        // SECURITY: Do NOT fetch password column — hashes must never leave the server
+        const usersRes = await pool.query('SELECT email, data FROM users');
+        const depts = await pool.query('SELECT "value" FROM settings WHERE key = \'departments\'');
+        const desigs = await pool.query('SELECT "value" FROM settings WHERE key = \'designations\'');
+        const manpower = await pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'');
 
-      // Create a map for fast lookup of photos/signatures
-      const photosMap = {};
-      photosRes.rows.forEach(r => {
-        photosMap[r.employee_id] = r;
-      });
+        // Create a map for fast lookup of photos/signatures
+        const photosMap = {};
+        photosRes.rows.forEach(r => {
+          photosMap[r.employee_id] = r;
+        });
 
-      const dbPayload = {
-        employees: empsRes.rows.map(r => {
-          const emp = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-          const photoRec = photosMap[emp.id];
-          if (photoRec) {
-            if (!emp.documents) emp.documents = {};
-            if (photoRec.photo) emp.documents.photo = photoRec.photo;
-            if (photoRec.signature) emp.documents.signature = photoRec.signature;
-          }
-          return emp;
-        }),
-        clients: clientsRes.rows.map(r => r.data),
-        assetsCatalog: [],
-        departments: depts.rows.length > 0 ? depts.rows[0].value : [],
-        designations: desigs.rows.length > 0 ? desigs.rows[0].value : [],
-        manpowerTypes: manpower.rows.length > 0 ? manpower.rows[0].value : [],
-        templates: templatesRes.rows.map(r => r.data),
-        // SECURITY: password field intentionally excluded from backup export
-        users: usersRes.rows.map(r => {
-          const uData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-          return { email: r.email, name: uData?.name, role: uData?.role, createdAt: uData?.createdAt };
-        })
-      };
-      
-      // Merge assets catalog from settings if present
-      const catalogRes = await pool.query('SELECT "value" FROM settings WHERE key = \'assetsCatalog\'');
-      dbPayload.assetsCatalog = catalogRes.rows.length > 0 ? catalogRes.rows[0].value : [];
-      
-      return res.json(dbPayload);
+        dbPayload = {
+          employees: empsRes.rows.map(r => {
+            const emp = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+            const photoRec = photosMap[emp.id];
+            if (photoRec) {
+              if (!emp.documents) emp.documents = {};
+              if (photoRec.photo) emp.documents.photo = photoRec.photo;
+              if (photoRec.signature) emp.documents.signature = photoRec.signature;
+            }
+            return emp;
+          }),
+          clients: clientsRes.rows.map(r => r.data),
+          assetsCatalog: [],
+          departments: depts.rows.length > 0 ? depts.rows[0].value : [],
+          designations: desigs.rows.length > 0 ? desigs.rows[0].value : [],
+          manpowerTypes: manpower.rows.length > 0 ? manpower.rows[0].value : [],
+          templates: templatesRes.rows.map(r => r.data),
+          // SECURITY: password field intentionally excluded from backup export
+          users: usersRes.rows.map(r => {
+            const uData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+            return { email: r.email, name: uData?.name, role: uData?.role, createdAt: uData?.createdAt };
+          })
+        };
+
+        // Merge assets catalog from settings if present
+        const catalogRes = await pool.query('SELECT "value" FROM settings WHERE key = \'assetsCatalog\'');
+        dbPayload.assetsCatalog = catalogRes.rows.length > 0 ? catalogRes.rows[0].value : [];
+      } catch (err) {
+        console.warn('⚠️ /api/db failed during cloud DB query. Triggering local fallback.', err.message);
+        usePostgres = false;
+        shouldRunFallback = true;
+      }
     } else {
+      shouldRunFallback = true;
+    }
+
+    if (shouldRunFallback) {
       const localDb = readLocalDb();
       const photosDb = readPhotosDb();
       localDb.employees = localDb.employees.map(emp => {
@@ -2571,6 +2628,8 @@ app.get('/api/db', authenticateToken, async (req, res) => {
       });
       return res.json(localDb);
     }
+
+    return res.json(dbPayload);
   } catch (e) {
     return res.status(500).json({ error: 'Failed to export database backup.' });
   }
@@ -2751,12 +2810,31 @@ process.on('unhandledRejection', async (reason, promise) => {
   }
 });
 
+// Background Reconnect Service to wake up and restore Postgres connection if it was suspended
+let reconnectInterval = null;
+function startDatabaseReconnectService() {
+  if (reconnectInterval) return;
+  reconnectInterval = setInterval(async () => {
+    if (!usePostgres && dbUrl && pool) {
+      console.log('🔄 [Reconnect Service] Checking PostgreSQL connection status...');
+      try {
+        await pool.query('SELECT 1');
+        console.log('✅ [Reconnect Service] PostgreSQL is back online! Re-enabling cloud database.');
+        usePostgres = true;
+      } catch (err) {
+        console.log(`❌ [Reconnect Service] PostgreSQL is still offline: ${err.message}`);
+      }
+    }
+  }, 120000); // Check every 2 minutes
+}
+
 // Start Server
 app.listen(PORT, async () => {
   await initDatabase();
   await runImageMigration();
   await ensureAllEmployeesHaveTokens();
   await loadSiteEnabledFromDb();
+  startDatabaseReconnectService();
   console.log('================================================================');
   console.log(' VALLEY SECURITY AGENCY - EMPLOYEE MANAGEMENT & ID SYSTEM SERVER');
   console.log('================================================================');
