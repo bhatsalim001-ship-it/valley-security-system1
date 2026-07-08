@@ -2162,7 +2162,16 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     // Helper to sanitize multiple spaces, trim, and title-case strings safely
     const cleanTextVal = (val, isTitle = true) => {
         if (!val) return '-';
-        let text = isTitle ? toTitleCase(val) : val;
+        let normalizedVal = val.trim();
+        const upperVal = normalizedVal.toUpperCase();
+        if (upperVal === 'MTS') {
+            normalizedVal = 'MULTI TASKING STAFF';
+        } else if (upperVal === 'DEO') {
+            normalizedVal = 'DATA ENTRY OPERATOR';
+        } else if (upperVal === 'SCD') {
+            normalizedVal = 'STAFF CAR DRIVER';
+        }
+        let text = isTitle ? toTitleCase(normalizedVal) : normalizedVal;
         return text.replace(/\s+/g, ' ').trim();
     };
 
