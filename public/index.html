@@ -2293,6 +2293,62 @@
         </div>
     </div>
 
+    <!-- ID CARD RENEWAL MODAL -->
+    <div id="modal-card-renewal" class="modal-overlay hidden" style="z-index: 10600;">
+        <div class="modal-container" style="max-width: 500px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px); box-sizing: border-box;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="refresh-cw"></i> ID Card Renewal & Extension</h3>
+                <button type="button" class="modal-close" id="btn-close-card-renewal" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="color: #fff; padding: 0;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; margin-bottom: 20px; font-size: 13px; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                        <div id="renewal-guard-photo" style="width: 48px; height: 60px; border-radius: 6px; background-size: cover; background-position: center; border: 1px solid var(--border-color);"></div>
+                        <div>
+                            <div id="renewal-guard-name" style="font-size: 16px; font-weight: 800; color: #fff;"></div>
+                            <div id="renewal-guard-id" style="font-size: 12px; color: var(--text-muted); font-weight: 500;"></div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; margin-top: 10px;">
+                        <div>
+                            <div style="color: var(--text-muted); font-size: 11px;">Current Expiry:</div>
+                            <div id="renewal-current-expiry" style="font-weight: 600;"></div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted); font-size: 11px;">Department:</div>
+                            <div id="renewal-guard-dept" style="font-weight: 600;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="form-card-renewal-details" style="display: flex; flex-direction: column; gap: 15px;">
+                    <input type="hidden" id="renewal-emp-id">
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="renewal-term" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Extension Period *</label>
+                        <select id="renewal-term" class="form-control" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px;" required>
+                            <option value="1">1 Year Extension</option>
+                            <option value="2">2 Years Extension</option>
+                            <option value="3" selected>3 Years Extension</option>
+                            <option value="5">5 Years Extension</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="renewal-fee" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Renewal Fee (INR) *</label>
+                        <input type="number" id="renewal-fee" class="form-control" value="50" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px;" required>
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="renewal-notes" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Payment Reference / Method</label>
+                        <input type="text" id="renewal-notes" class="form-control" placeholder="e.g. Cash, GPay UPI reference, Receipt #..." style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" id="btn-cancel-card-renewal" style="flex: 1; padding: 12px; font-weight: 600; cursor:pointer;">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-card-renewal" style="flex: 1.2; padding: 12px; font-weight: 600; cursor:pointer;">Confirm & Renew (₹50)</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bulk Printable Container -->
     <div id="printable-id-bulk" class="hidden"></div>
 

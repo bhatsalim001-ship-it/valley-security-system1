@@ -987,7 +987,12 @@ function renderDashboardAlerts() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const empId = this.getAttribute('data-id');
-            window.location.hash = `emp-registration?mode=edit&id=${empId}`;
+            const label = this.textContent.trim();
+            if (label === 'Renew ID') {
+                openCardRenewalModal(empId);
+            } else {
+                window.location.hash = `emp-registration?mode=edit&id=${empId}`;
+            }
         });
     });
 }
@@ -1126,6 +1131,9 @@ function renderEmployeeDirectory() {
             docsText = `${adh} | ${pv}`;
         }
 
+        const isExpired = getCardExpirationDate(emp) < new Date();
+        const renewBtnHtml = isExpired ? `<button class="btn btn-xs btn-outline btn-renew-card-img" data-id="${escapeHtml(emp.id)}" style="color: var(--theme-gold); border-color: rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.05); font-weight: 700;">Renew ID</button>` : '';
+
         const isChecked = VSA_STATE.selectedEmployeeIds.includes(emp.id) ? 'checked' : '';
         const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
         const showPhoto = photoSrc ? `<img src="${photoSrc}" alt="${emp.name}">` : `<i data-lucide="user"></i>`;
@@ -1156,13 +1164,14 @@ function renderEmployeeDirectory() {
                         </select>
                     </div>
                     <div class="directory-card-actions">
+                        ${renewBtnHtml}
                         <button class="btn btn-xs btn-outline btn-generate-card-img" data-id="${escapeHtml(emp.id)}" style="color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15)">ID Card</button>
                         <button class="btn btn-xs btn-outline btn-edit-emp" data-id="${escapeHtml(emp.id)}">Edit</button>
                         <button class="btn btn-xs btn-outline btn-delete-emp" data-id="${escapeHtml(emp.id)}" style="color: var(--status-suspended); border-color: rgba(255, 46, 147, 0.15)">Delete</button>
                     </div>
                 </div>
             `;
-            cardGrid.appendChild(card);
+            card.appendChild(card);
         } else {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -1190,6 +1199,7 @@ function renderEmployeeDirectory() {
                 </td>
                 <td>
                     <div class="d-flex gap-2">
+                        ${renewBtnHtml}
                         <button class="btn btn-xs btn-outline btn-generate-card-img" data-id="${escapeHtml(emp.id)}" style="color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15)">ID Card</button>
                         <button class="btn btn-xs btn-outline btn-edit-emp" data-id="${escapeHtml(emp.id)}">Edit</button>
                         <button class="btn btn-xs btn-outline btn-delete-emp" data-id="${escapeHtml(emp.id)}" style="color: var(--status-suspended); border-color: rgba(255, 46, 147, 0.15)">Delete</button>
@@ -1226,6 +1236,13 @@ function renderEmployeeDirectory() {
         });
     });
 
+    document.querySelectorAll('.btn-renew-card-img').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Stop card click selection toggle
+            const empId = btn.getAttribute('data-id');
+            openCardRenewalModal(empId);
+        });
+    });
     document.querySelectorAll('.btn-edit-emp').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation(); // Stop card click selection toggle
@@ -1872,6 +1889,45 @@ function openEmployeeModal(empId = null) {
     }
     
     modal.classList.remove('hidden');
+}
+
+// Open Card Renewal & Extension Modal
+function openCardRenewalModal(empId) {
+    const emp = VSA_STATE.employees.find(e => e.id === empId);
+    if (!emp) {
+        alert('Guard not found in database.');
+        return;
+    }
+
+    document.getElementById('renewal-emp-id').value = empId;
+    document.getElementById('renewal-guard-name').textContent = toTitleCase(emp.name);
+    document.getElementById('renewal-guard-id').textContent = `ID: ${emp.id}`;
+    document.getElementById('renewal-guard-dept').textContent = emp.department || 'Not Assigned';
+    
+    const expDate = getCardExpirationDate(emp);
+    document.getElementById('renewal-current-expiry').textContent = expDate.toLocaleDateString();
+
+    const photoContainer = document.getElementById('renewal-guard-photo');
+    if (photoContainer) {
+        const photoUrl = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
+        if (photoUrl) {
+            photoContainer.style.backgroundImage = `url('${photoUrl}')`;
+        } else {
+            photoContainer.style.backgroundImage = 'none';
+        }
+    }
+
+    // Reset form fields
+    document.getElementById('renewal-term').value = '3';
+    document.getElementById('renewal-fee').value = '50';
+    document.getElementById('renewal-notes').value = '';
+    document.getElementById('btn-submit-card-renewal').textContent = 'Confirm & Renew (₹50)';
+
+    const modal = document.getElementById('modal-card-renewal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
 }
 
 // Convert files to base64 utility helper
@@ -3328,6 +3384,68 @@ function setupEventHandlers() {
         document.getElementById('employee-modal').classList.add('hidden');
     });
     document.getElementById('employee-form').addEventListener('submit', saveEmployee);
+
+    // ID Card Renewal Modal Handlers
+    const modalRenewal = document.getElementById('modal-card-renewal');
+    const btnCloseRenewal = document.getElementById('btn-close-card-renewal');
+    const btnCancelRenewal = document.getElementById('btn-cancel-card-renewal');
+    const inputRenewalFee = document.getElementById('renewal-fee');
+    const btnSubmitRenewal = document.getElementById('btn-submit-card-renewal');
+
+    const closeRenewalModal = () => {
+        if (modalRenewal) modalRenewal.classList.add('hidden');
+    };
+
+    if (btnCloseRenewal) btnCloseRenewal.addEventListener('click', closeRenewalModal);
+    if (btnCancelRenewal) btnCancelRenewal.addEventListener('click', closeRenewalModal);
+
+    if (inputRenewalFee && btnSubmitRenewal) {
+        inputRenewalFee.addEventListener('input', function() {
+            const fee = parseInt(this.value) || 0;
+            btnSubmitRenewal.textContent = `Confirm & Renew (₹${fee})`;
+        });
+    }
+
+    if (btnSubmitRenewal) {
+        btnSubmitRenewal.addEventListener('click', async () => {
+            const empId = document.getElementById('renewal-emp-id').value;
+            const termSelect = document.getElementById('renewal-term');
+            const validityYears = parseInt(termSelect.value) || 3;
+            const renewalFee = parseFloat(inputRenewalFee.value) || 0;
+            const paymentMethod = document.getElementById('renewal-notes').value.trim();
+
+            if (!empId) return;
+
+            btnSubmitRenewal.disabled = true;
+            btnSubmitRenewal.textContent = '⏳ Processing...';
+
+            try {
+                const response = await fetch(`/api/employees/${empId}/renew-card`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ validityYears, renewalFee, paymentMethod })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    closeRenewalModal();
+                    
+                    // Trigger global fetchData to refresh stats, directories, alerts
+                    await fetchData();
+                } else {
+                    alert(result.error || 'Failed to renew ID card.');
+                    btnSubmitRenewal.disabled = false;
+                    btnSubmitRenewal.textContent = `Confirm & Renew (₹${renewalFee})`;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error occurred while renewing card.');
+                btnSubmitRenewal.disabled = false;
+                btnSubmitRenewal.textContent = `Confirm & Renew (₹${renewalFee})`;
+            }
+        });
+    }
 
     // Image Upload Handlers (old modal)
     document.getElementById('form-photo-upload').addEventListener('change', function() {

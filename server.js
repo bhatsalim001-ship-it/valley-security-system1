@@ -1019,6 +1019,19 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS card_renewals (
+        id SERIAL PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        employee_name TEXT NOT NULL,
+        department TEXT,
+        renewal_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        validity_years INT NOT NULL,
+        fee NUMERIC NOT NULL,
+        notes TEXT
+      )
+    `);
+
 
     console.log('✅ PostgreSQL Database Tables Verified/Initialized');
 
@@ -2725,6 +2738,118 @@ app.post('/api/rename-department', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Rename department error:', error);
     return res.status(500).json({ error: 'Failed to rename department: ' + error.message });
+  }
+});
+
+// POST /api/employees/:id/renew-card - Renew and extend card validity
+app.post('/api/employees/:id/renew-card', authenticateToken, async (req, res) => {
+  const empId = req.params.id;
+  const { validityYears, renewalFee, paymentMethod } = req.body;
+
+  if (!validityYears || !renewalFee) {
+    return res.status(400).json({ error: 'validityYears and renewalFee are required.' });
+  }
+
+  try {
+    const today = new Date().toISOString().substring(0, 10); // YYYY-MM-DD
+    let employeeData = null;
+    let employeeName = '';
+    let department = '';
+
+    // 1. Update employee in PostgreSQL / db.json
+    if (usePostgres && pool) {
+      const empRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
+      if (empRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Employee not found.' });
+      }
+      
+      const emp = typeof empRes.rows[0].data === 'string' ? JSON.parse(empRes.rows[0].data) : empRes.rows[0].data;
+      emp.cardIssueDate = today;
+      emp.cardValidity = parseInt(validityYears);
+      
+      employeeName = emp.name;
+      department = emp.department;
+      employeeData = emp;
+      
+      await pool.query('UPDATE employees SET data = $1 WHERE id = $2', [JSON.stringify(emp), empId]);
+
+      // Record transaction log in PostgreSQL
+      await pool.query(
+        'INSERT INTO card_renewals (employee_id, employee_name, department, validity_years, fee, notes) VALUES ($1, $2, $3, $4, $5, $6)',
+        [empId, employeeName, department, parseInt(validityYears), parseFloat(renewalFee), paymentMethod || '']
+      );
+    } else {
+      const db = readLocalDb();
+      const idx = db.employees.findIndex(e => e.id === empId);
+      if (idx === -1) {
+        return res.status(404).json({ error: 'Employee not found.' });
+      }
+      
+      const emp = db.employees[idx];
+      emp.cardIssueDate = today;
+      emp.cardValidity = parseInt(validityYears);
+      
+      employeeName = emp.name;
+      department = emp.department;
+      employeeData = emp;
+      
+      // Record transaction log in local db.json
+      if (!db.cardRenewals) db.cardRenewals = [];
+      const renewalRecord = {
+        id: db.cardRenewals.length + 1,
+        employee_id: empId,
+        employee_name: employeeName,
+        department: department,
+        renewal_date: new Date().toISOString(),
+        validity_years: parseInt(validityYears),
+        fee: parseFloat(renewalFee),
+        notes: paymentMethod || ''
+      };
+      db.cardRenewals.push(renewalRecord);
+      
+      writeLocalDb(db);
+    }
+
+    // Trigger background Git Sync to save changes and back up db
+    syncDatabaseToGit();
+
+    return res.json({ 
+      success: true, 
+      message: `Card for ${employeeName} renewed successfully for ${validityYears} years.`,
+      employee: employeeData
+    });
+  } catch (error) {
+    console.error('Card renewal error:', error);
+    return res.status(500).json({ error: 'Failed to renew card: ' + error.message });
+  }
+});
+
+// GET /api/card-renewals - Fetch card renewal transactions history
+app.get('/api/card-renewals', authenticateToken, async (req, res) => {
+  try {
+    if (usePostgres && pool) {
+      const renewalsRes = await pool.query('SELECT * FROM card_renewals ORDER BY renewal_date DESC');
+      const renewals = renewalsRes.rows.map(row => ({
+        id: row.id,
+        employee_id: row.employee_id,
+        employee_name: row.employee_name,
+        department: row.department,
+        renewal_date: row.renewal_date,
+        validity_years: row.validity_years,
+        fee: parseFloat(row.fee),
+        notes: row.notes
+      }));
+      return res.json(renewals);
+    } else {
+      const db = readLocalDb();
+      const renewals = db.cardRenewals || [];
+      // Sort descending by date
+      const sorted = [...renewals].sort((a, b) => new Date(b.renewal_date) - new Date(a.renewal_date));
+      return res.json(sorted);
+    }
+  } catch (error) {
+    console.error('Fetch card renewals error:', error);
+    return res.status(500).json({ error: 'Failed to fetch renewals history: ' + error.message });
   }
 });
 
