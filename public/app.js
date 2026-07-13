@@ -90,6 +90,25 @@ function toTitleCase(str) {
     return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// Helper to calculate actual card expiration date based on cardIssueDate/joiningDate and validity
+function getCardExpirationDate(emp) {
+    let issueDateObj;
+    if (emp.cardIssueDate) {
+        issueDateObj = new Date(emp.cardIssueDate);
+    } else if (emp.joiningDate) {
+        issueDateObj = new Date(emp.joiningDate);
+    } else {
+        issueDateObj = new Date();
+    }
+    if (isNaN(issueDateObj.getTime())) {
+        issueDateObj = new Date();
+    }
+    const validityYears = parseInt(emp.cardValidity) || 3;
+    const expDate = new Date(issueDateObj);
+    expDate.setFullYear(issueDateObj.getFullYear() + validityYears);
+    return expDate;
+}
+
 // XSS Prevention: escape HTML special characters before injecting into innerHTML
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -753,10 +772,8 @@ function renderDashboard() {
     alertThreshold.setDate(now.getDate() + 30);
     
     VSA_STATE.employees.forEach(emp => {
-        // Mocking validation logic for dates
         if (emp.status === 'Active') {
-            const expDate = new Date(emp.joiningDate);
-            expDate.setFullYear(expDate.getFullYear() + 3); // 3 Years ID validity
+            const expDate = getCardExpirationDate(emp);
             if (expDate <= alertThreshold) {
                 expiredOrExpiring++;
             }
@@ -883,8 +900,7 @@ function renderDashboardAlerts() {
 
     VSA_STATE.employees.forEach(emp => {
         // 1. Expirations check
-        const expDate = new Date(emp.joiningDate);
-        expDate.setFullYear(expDate.getFullYear() + 3);
+        const expDate = getCardExpirationDate(emp);
         if (expDate < now) {
             alerts.push({
                 type: 'critical',
@@ -1074,8 +1090,7 @@ function renderEmployeeDirectory() {
             const now = new Date();
             const alertThreshold = new Date();
             alertThreshold.setDate(now.getDate() + 30);
-            const expDate = new Date(emp.joiningDate);
-            expDate.setFullYear(expDate.getFullYear() + 3);
+            const expDate = getCardExpirationDate(emp);
             matchesStatus = expDate <= alertThreshold;
         } else if (statusVal) {
             matchesStatus = emp.status === statusVal;
