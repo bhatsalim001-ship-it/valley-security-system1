@@ -260,6 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set current user in state
     VSA_STATE.currentUser = JSON.parse(currentUser);
     updateUserHeader();
+
+    // Set max DOB date constraint to today's date
+    const dobInput = document.getElementById('form-dob');
+    if (dobInput) {
+        dobInput.max = new Date().toISOString().split('T')[0];
+    }
     
     VSA_STATE.selectedEmployeeIds = [];
     initLuxuryInteractions();

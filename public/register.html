@@ -1458,6 +1458,12 @@
         }
         
         fetchClassifications();
+
+        // Set max DOB date constraint to today's date
+        const dobField = document.getElementById('guard-dob');
+        if (dobField) {
+            dobField.max = new Date().toISOString().split('T')[0];
+        }
     </script>
 </body>
 </html>
