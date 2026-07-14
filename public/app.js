@@ -151,18 +151,25 @@ let isApprovalAction = false;
 let directoryViewMode = 'card'; // 'card' or 'list'
 
 // Background activity check to detect if the server has been killed
+let serverStatusFailedAttempts = 0;
 function startServerStatusHeartbeat() {
     setInterval(async () => {
         try {
             const response = await fetch('/api/lan-ip');
-            if (!response.ok) {
-                window.location.reload();
+            if (response.ok) {
+                serverStatusFailedAttempts = 0; // reset on success
+            } else {
+                serverStatusFailedAttempts++;
             }
         } catch (err) {
-            // Server offline (connection reset / fail to fetch), force reload to display the connection reset error page
+            serverStatusFailedAttempts++;
+        }
+
+        if (serverStatusFailedAttempts >= 3) {
+            // Server offline consecutively for 45s, force reload
             window.location.reload();
         }
-    }, 5000); // Check every 5 seconds
+    }, 15000); // Check every 15 seconds
 }
 
 // System Auto-Updates Checking Logic

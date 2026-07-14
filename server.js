@@ -74,8 +74,12 @@ if (NODE_ENV === 'production') {
 if (usePostgres) {
   try {
     const { Pool } = require('pg');
+    let finalDbUrl = dbUrl;
+    if (finalDbUrl && finalDbUrl.includes('sslmode=require') && !finalDbUrl.includes('uselibpqcompat=')) {
+      finalDbUrl += '&uselibpqcompat=true';
+    }
     pool = new Pool({
-      connectionString: dbUrl,
+      connectionString: finalDbUrl,
       ssl: { rejectUnauthorized: false }
     });
     console.log('✅ PostgreSQL Connection Initialized');
