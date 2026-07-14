@@ -2534,7 +2534,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (template.logo === 'preset-vsa-logo') {
             const vsaLogo = getVsaDefaultLogo();
             if (vsaLogo && vsaLogo.startsWith('data:image/')) {
-                logoHtml = `<img src="${vsaLogo}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+                logoHtml = `<img src="${vsaLogo}" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
             } else {
                 logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
             }
@@ -2545,7 +2545,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         } else if (template.logo === 'preset-eagle') {
             logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" style="display:block; max-width:100%; max-height:100%;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
         } else {
-            logoHtml = `<img src="${template.logo}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            logoHtml = `<img src="${template.logo}" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
         }
     } else {
         logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
@@ -2557,7 +2557,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (template.signature === 'preset-vsa-sig') {
             const vsaSig = getVsaDefaultSig();
             if (vsaSig && vsaSig.startsWith('data:image/')) {
-                sigHtml = `<img src="${vsaSig}" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
+                sigHtml = `<img src="${vsaSig}" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
             } else {
                 sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
             }
@@ -2567,7 +2567,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
             sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M15,20 Q40,5 65,25 T115,15" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
         } else {
             let sigSrc = getProcessedSignature(template.signature);
-            sigHtml = `<img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">`;
+            sigHtml = `<img src="${sigSrc}" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">`;
         }
     } else {
         sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
@@ -2624,7 +2624,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     // Resolve Photo HTML
     let photoHtml = '';
     if (emp.documents && emp.documents.photo) {
-        photoHtml = `<img src="${emp.documents.photo}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        photoHtml = `<img src="${emp.documents.photo}" crossorigin="anonymous" style="width: 100%; height: 100%; object-fit: cover;">`;
     } else {
         const initial = emp.name ? emp.name[0].toUpperCase() : '?';
         photoHtml = `
