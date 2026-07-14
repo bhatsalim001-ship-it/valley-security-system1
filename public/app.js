@@ -1844,16 +1844,21 @@ async function triggerIdBulkDownload() {
                     const canvas = await html2canvas(cardElement, {
                         scale: 4,
                         useCORS: true,
-                        allowTaint: true,
+                        allowTaint: false,
                         backgroundColor: '#ffffff',
                         logging: false,
                         letterRendering: true
                     });
                     
-                    const base64Data = canvas.toDataURL('image/png').split(',')[1];
-                    const filename = `VSA_ID_${emp.id}_${emp.name.replace(/\s+/g, '_')}_${sideName}.png`;
-                    zip.file(filename, base64Data, {base64: true});
-                    renderCount++;
+                    const dataUrl = canvas.toDataURL('image/png');
+                    if (dataUrl && dataUrl.startsWith('data:image/png;base64,')) {
+                        const base64Data = dataUrl.split(',')[1];
+                        const filename = `VSA_ID_${emp.id}_${emp.name.replace(/\s+/g, '_')}_${sideName}.png`;
+                        zip.file(filename, base64Data, {base64: true});
+                        renderCount++;
+                    } else {
+                        console.error(`Invalid PNG data URL generated for visual card: ${emp.id}`);
+                    }
                 } catch (err) {
                     console.error(`Failed to generate ${sideName} visual card for ${emp.id}`, err);
                 }
@@ -1865,16 +1870,21 @@ async function triggerIdBulkDownload() {
                     const canvas = await html2canvas(cardElement, {
                         scale: 4,
                         useCORS: true,
-                        allowTaint: true,
+                        allowTaint: false,
                         backgroundColor: '#ffffff',
                         logging: false,
                         letterRendering: true
                     });
                     
-                    const base64Data = canvas.toDataURL('image/png').split(',')[1];
-                    const filename = `VSA_ID_${emp.id}_${emp.name.replace(/\s+/g, '_')}.png`;
-                    zip.file(filename, base64Data, {base64: true});
-                    renderCount++;
+                    const dataUrl = canvas.toDataURL('image/png');
+                    if (dataUrl && dataUrl.startsWith('data:image/png;base64,')) {
+                        const base64Data = dataUrl.split(',')[1];
+                        const filename = `VSA_ID_${emp.id}_${emp.name.replace(/\s+/g, '_')}.png`;
+                        zip.file(filename, base64Data, {base64: true});
+                        renderCount++;
+                    } else {
+                        console.error(`Invalid PNG data URL generated for card: ${emp.id}`);
+                    }
                 } catch (err) {
                     console.error(`Failed to generate image for ${emp.id}`, err);
                 }
@@ -2518,52 +2528,50 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     const showBarcode = fields.barcode !== false;
     const showValidity = fields.validity !== false;
 
-    // Resolve Logo
-    let logoSrc = '';
+    // Resolve Logo HTML
+    let logoHtml = '';
     if (template.logo) {
         if (template.logo === 'preset-vsa-logo') {
             const vsaLogo = getVsaDefaultLogo();
             if (vsaLogo && vsaLogo.startsWith('data:image/')) {
-                logoSrc = vsaLogo;
+                logoHtml = `<img src="${vsaLogo}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
             } else {
-                logoSrc = getPresetShield(template.accentColor || '#dfba5f');
+                logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
             }
         } else if (template.logo === 'preset-shield') {
-            logoSrc = getPresetShield(template.accentColor || '#dfba5f');
+            logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
         } else if (template.logo === 'preset-star') {
-            logoSrc = getPresetStar(template.accentColor || '#dfba5f');
+            logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" style="display:block; max-width:100%; max-height:100%;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
         } else if (template.logo === 'preset-eagle') {
-            logoSrc = getPresetEagle(template.accentColor || '#dfba5f');
+            logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" style="display:block; max-width:100%; max-height:100%;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
         } else {
-            logoSrc = template.logo;
+            logoHtml = `<img src="${template.logo}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
         }
     } else {
-        logoSrc = getPresetShield(template.accentColor || '#dfba5f');
+        logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
     }
 
-    // Resolve Signature (permanent scan)
-    let sigSrc = '';
+    // Resolve Signature (permanent scan) HTML
+    let sigHtml = '';
     if (template.signature) {
         if (template.signature === 'preset-vsa-sig') {
             const vsaSig = getVsaDefaultSig();
             if (vsaSig && vsaSig.startsWith('data:image/')) {
-                sigSrc = vsaSig;
+                sigHtml = `<img src="${vsaSig}" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
             } else {
-                sigSrc = getPresetSig1('#000000');
+                sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
             }
         } else if (template.signature === 'preset-sig1') {
-            sigSrc = getPresetSig1('#000000');
+            sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
         } else if (template.signature === 'preset-sig2') {
-            sigSrc = getPresetSig2('#000000');
+            sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M15,20 Q40,5 65,25 T115,15" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
         } else {
-            sigSrc = template.signature;
+            let sigSrc = getProcessedSignature(template.signature);
+            sigHtml = `<img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">`;
         }
     } else {
-        sigSrc = getPresetSig1('#000000');
+        sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
     }
-    
-    // Apply dynamic client-side signature background cleaning & ink-toning
-    sigSrc = getProcessedSignature(sigSrc);
 
     // Resolve Background styling
     let bgStyle = '';
@@ -2613,13 +2621,16 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     const headerTextColor = isLightHeader ? '#111111' : '#ffffff';
     const headerSubtextColor = isLightHeader ? '#555555' : 'rgba(255, 255, 255, 0.8)';
 
-    // Photo Src
-    let photoSrc = '';
+    // Resolve Photo HTML
+    let photoHtml = '';
     if (emp.documents && emp.documents.photo) {
-        photoSrc = emp.documents.photo;
+        photoHtml = `<img src="${emp.documents.photo}" style="width: 100%; height: 100%; object-fit: cover;">`;
     } else {
         const initial = emp.name ? emp.name[0].toUpperCase() : '?';
-        photoSrc = getFallbackAvatarData(initial);
+        photoHtml = `
+        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, ${template.accentColor || '#c8102e'} 0%, #0f1218 100%); display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+            <span style="font-family: 'Outfit', sans-serif; font-weight: bold; font-size: ${photoWidth * 0.35}px; color: #ffffff;">${initial}</span>
+        </div>`;
     }
 
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -2733,7 +2744,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                 <!-- Header -->
                 <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-bottom: 2px solid ${template.accentColor || '#dfba5f'}; color: ${headerTextColor}; height: ${headerHeight}px; display: flex; align-items: center; gap: 12px; padding: 0 12px; margin: -15px -15px 8px -15px; border-radius: 10px 10px 0 0; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                     <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        ${logoHtml}
                     </div>
                     <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
                         <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
@@ -2749,14 +2760,14 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                         <!-- Photo -->
                         ${showPhoto ? `
                         <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
-                            <img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">
+                            ${photoHtml}
                         </div>
                         ` : ''}
                         
                         <!-- Signature (always visible) -->
                         <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">
+                                ${sigHtml}
                             </div>
                             <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
                         </div>
@@ -2818,7 +2829,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                 <!-- Header -->
                 <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-bottom: 2px solid ${template.accentColor || '#dfba5f'}; color: ${headerTextColor}; height: ${headerHeight}px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 10px; margin: -15px -15px 10px -15px; border-radius: 10px 10px 0 0; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                     <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        <img src="${logoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        ${logoHtml}
                     </div>
                     <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
                         <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
@@ -2834,7 +2845,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                         <!-- Photo -->
                         ${showPhoto ? `
                         <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
-                            <img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">
+                            ${photoHtml}
                         </div>
                         ` : ''}
                         
@@ -2848,7 +2859,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                         <!-- Signature (always visible) -->
                         <div style="width: ${Math.max(85, photoWidth)}px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <img src="${sigSrc}" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">
+                                ${sigHtml}
                             </div>
                             <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
                         </div>
@@ -4513,7 +4524,7 @@ async function downloadIdCardImage() {
             html2canvas(cardElement, {
                 scale: 4,
                 useCORS: true,
-                allowTaint: true,
+                allowTaint: false,
                 backgroundColor: '#ffffff',
                 logging: false,
                 letterRendering: true
@@ -4536,7 +4547,7 @@ async function downloadIdCardImage() {
         html2canvas(cardElement, {
             scale: 4, // 4x scale for print-quality 300+ DPI sharpness
             useCORS: true,
-            allowTaint: true,
+            allowTaint: false,
             backgroundColor: '#ffffff',
             logging: false,
             letterRendering: true
@@ -4598,7 +4609,7 @@ async function downloadIndividualCardImage(empId) {
                 const canvas = await html2canvas(cardElement, {
                     scale: 4,
                     useCORS: true,
-                    allowTaint: true,
+                    allowTaint: false,
                     backgroundColor: '#ffffff',
                     logging: false,
                     letterRendering: true
@@ -4625,7 +4636,7 @@ async function downloadIndividualCardImage(empId) {
         html2canvas(cardElement, {
             scale: 4, // 300+ DPI sharp quality
             useCORS: true,
-            allowTaint: true,
+            allowTaint: false,
             backgroundColor: '#ffffff',
             logging: false,
             letterRendering: true
@@ -5411,16 +5422,21 @@ async function triggerBulkDownload() {
                 const canvas = await html2canvas(cardElement, {
                     scale: 4,
                     useCORS: true,
-                    allowTaint: true,
+                    allowTaint: false,
                     backgroundColor: '#ffffff',
                     logging: false,
                     letterRendering: true
                 });
                 
-                const base64Data = canvas.toDataURL('image/png').split(',')[1];
-                const filename = `VSA_ID_${emp.id}_${emp.name.replace(/\s+/g, '_')}.png`;
-                zip.file(filename, base64Data, {base64: true});
-                renderCount++;
+                const dataUrl = canvas.toDataURL('image/png');
+                if (dataUrl && dataUrl.startsWith('data:image/png;base64,')) {
+                    const base64Data = dataUrl.split(',')[1];
+                    const filename = `VSA_ID_${emp.id}_${emp.name.replace(/\s+/g, '_')}.png`;
+                    zip.file(filename, base64Data, {base64: true});
+                    renderCount++;
+                } else {
+                    console.error(`Invalid PNG data URL generated for employee ${emp.id}`);
+                }
             } catch (err) {
                 console.error(`Failed to generate image for ${emp.id}`, err);
             }
