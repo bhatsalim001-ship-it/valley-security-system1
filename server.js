@@ -1742,10 +1742,58 @@ async function sendAdminWhatsAppAlert(type, empId, empName, dept, message) {
   }
 }
 
+const TELEGRAM_USER = 'Valleysecurity01';
+
+async function sendAdminTelegramAlert(type, empId, empName, dept, message) {
+  try {
+    let textMessage = '';
+    if (type === 'RECORD_MERGED') {
+      textMessage = `🚨 *VSA ALERT: Employee Form MERGED into Database!*\n\n` +
+                    `👤 *Name:* ${empName}\n` +
+                    `🆔 *ID:* ${empId}\n` +
+                    `🏢 *Dept:* ${dept || 'Islamic University of Science and Technology'}\n` +
+                    `ℹ️ *Status:* Form & photo merged into existing ID card.\n\n` +
+                    `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
+    } else if (type === 'PHOTO_UPLOADED') {
+      textMessage = `📷 *VSA ALERT: Photo Uploaded!*\n\n` +
+                    `👤 *Name:* ${empName}\n` +
+                    `🆔 *ID:* ${empId}\n` +
+                    `🏢 *Dept:* ${dept || 'IUST'}\n` +
+                    `ℹ️ *Status:* Photo uploaded via link & card activated!\n\n` +
+                    `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
+    } else {
+      textMessage = `✨ *VSA ALERT: New Employee Registered!*\n\n` +
+                    `👤 *Name:* ${empName}\n` +
+                    `🆔 *ID:* ${empId}\n` +
+                    `🏢 *Dept:* ${dept || 'General'}\n` +
+                    `ℹ️ *Status:* ${message}\n\n` +
+                    `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
+    }
+
+    console.log(`📱 TELEGRAM ALERT TRIGGERED FOR @${TELEGRAM_USER}:\n${textMessage}`);
+
+    const encodedText = encodeURIComponent(textMessage);
+    const gatewayUrl = `https://api.callmebot.com/text.php?user=@${TELEGRAM_USER}&text=${encodedText}`;
+
+    const https = require('https');
+    https.get(gatewayUrl, (res) => {
+      console.log(`📱 Telegram notification sent to @${TELEGRAM_USER} (Status: ${res.statusCode})`);
+    }).on('error', (err) => {
+      console.error('Telegram gateway request failed:', err.message);
+    });
+
+  } catch (err) {
+    console.error('Failed to send Telegram alert:', err.message);
+  }
+}
+
 // Helper to record real-time notifications
 async function recordNotification(type, empId, empName, dept, message) {
   try {
     console.log(`🔔 REAL-TIME ALERT [${type}]: ${empName} (${empId}) - ${message}`);
+
+    // Trigger Telegram push alert to @Valleysecurity01
+    sendAdminTelegramAlert(type, empId, empName, dept, message);
 
     // Trigger WhatsApp push alert to +917889311608
     sendAdminWhatsAppAlert(type, empId, empName, dept, message);
