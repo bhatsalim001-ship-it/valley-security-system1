@@ -1695,10 +1695,61 @@ app.post('/api/upload-photo-by-token', apiLimiter, async (req, res) => {
   }
 });
 
+const ADMIN_PHONE = '917889311608';
+
+// Helper to send instant WhatsApp alert to admin phone (+917889311608)
+async function sendAdminWhatsAppAlert(type, empId, empName, dept, message) {
+  try {
+    let textMessage = '';
+    if (type === 'RECORD_MERGED') {
+      textMessage = `🚨 *VSA ALERT: Employee Form MERGED!*\n\n` +
+                    `👤 *Name:* ${empName}\n` +
+                    `🆔 *ID:* ${empId}\n` +
+                    `🏢 *Dept:* ${dept || 'IUST'}\n` +
+                    `ℹ️ *Status:* Details & photo merged into existing database record.\n\n` +
+                    `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
+    } else if (type === 'PHOTO_UPLOADED') {
+      textMessage = `📷 *VSA ALERT: Photo Uploaded!*\n\n` +
+                    `👤 *Name:* ${empName}\n` +
+                    `🆔 *ID:* ${empId}\n` +
+                    `🏢 *Dept:* ${dept || 'IUST'}\n` +
+                    `ℹ️ *Status:* Photo uploaded via link & card activated!\n\n` +
+                    `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
+    } else {
+      textMessage = `✨ *VSA ALERT: New Employee Registered!*\n\n` +
+                    `👤 *Name:* ${empName}\n` +
+                    `🆔 *ID:* ${empId}\n` +
+                    `🏢 *Dept:* ${dept || 'General'}\n` +
+                    `ℹ️ *Status:* ${message}\n\n` +
+                    `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
+    }
+
+    console.log(`📱 WHATSAPP ALERT TRIGGERED FOR +917889311608:\n${textMessage}`);
+
+    const apiKey = process.env.CALLMEBOT_API_KEY || '123456';
+    const encodedText = encodeURIComponent(textMessage);
+    const gatewayUrl = `https://api.callmebot.com/whatsapp.php?phone=${ADMIN_PHONE}&text=${encodedText}&apikey=${apiKey}`;
+
+    const https = require('https');
+    https.get(gatewayUrl, (res) => {
+      console.log(`📱 WhatsApp notification sent to ${ADMIN_PHONE} (Status: ${res.statusCode})`);
+    }).on('error', (err) => {
+      console.error('WhatsApp gateway request failed:', err.message);
+    });
+
+  } catch (err) {
+    console.error('Failed to send WhatsApp alert:', err.message);
+  }
+}
+
 // Helper to record real-time notifications
 async function recordNotification(type, empId, empName, dept, message) {
   try {
     console.log(`🔔 REAL-TIME ALERT [${type}]: ${empName} (${empId}) - ${message}`);
+
+    // Trigger WhatsApp push alert to +917889311608
+    sendAdminWhatsAppAlert(type, empId, empName, dept, message);
+
     if (usePostgres && pool) {
       await pool.query(
         `INSERT INTO activity_notifications (type, employee_id, employee_name, department, message)
