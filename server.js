@@ -1372,55 +1372,28 @@ app.get('/api/public/classifications', async (req, res) => {
 });
 
 app.post('/api/public/register', registerLimiter, async (req, res) => {
-  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, designation, gender, currentAddress, photoBase64 } = req.body;
+  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, designation, gender, currentAddress, photoBase64 } = req.body || {};
   
-  if (!name || !mobile || !photoBase64 || !designation || !department) {
-    return res.status(400).json({ error: 'Name, Mobile, Photo, Designation, and Department are required.' });
+  if (!name || !mobile) {
+    return res.status(400).json({ error: 'Name and Mobile number are required.' });
   }
 
-  // --- Strict field validation ---
-  const VALID_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  const VALID_GENDERS = ['Male', 'Female', 'Other'];
-
-  if (bloodGroup && !VALID_BLOOD_GROUPS.includes(bloodGroup)) {
-    return res.status(400).json({ error: `Invalid blood group. Must be one of: ${VALID_BLOOD_GROUPS.join(', ')}.` });
+  const cleanMobile = String(mobile).replace(/\D/g, '');
+  if (cleanMobile.length < 5) {
+    return res.status(400).json({ error: 'Please enter a valid mobile number.' });
   }
 
-  if (gender && !VALID_GENDERS.includes(gender)) {
-    return res.status(400).json({ error: `Invalid gender. Must be one of: ${VALID_GENDERS.join(', ')}.` });
-  }
-
-  if (dob) {
-    const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dobRegex.test(dob)) {
-      return res.status(400).json({ error: 'Date of birth must be in YYYY-MM-DD format.' });
-    }
-    const dobDate = new Date(dob);
-    const now = new Date();
-    const minAge = new Date();
-    minAge.setFullYear(now.getFullYear() - 18);
-    const maxAge = new Date();
-    maxAge.setFullYear(now.getFullYear() - 70);
-    if (isNaN(dobDate.getTime()) || dobDate > minAge || dobDate < maxAge) {
-      return res.status(400).json({ error: 'Date of birth is invalid. Guard must be between 18 and 70 years old.' });
-    }
-  }
-
-  const mobileStr = String(mobile).replace(/\D/g, '');
-  if (mobileStr.length < 10 || mobileStr.length > 13) {
-    return res.status(400).json({ error: 'Please enter a valid mobile number (10–13 digits).' });
-  }
-
-  if (name && (name.length < 2 || name.length > 100)) {
-    return res.status(400).json({ error: 'Name must be between 2 and 100 characters.' });
-  }
+  const validDept = department || 'Islamic University of Science and Technology';
+  const validDesig = designation || 'Security Guard';
+  const validGender = gender || 'Male';
+  const validBlood = bloodGroup || 'O+';
 
   try {
     const db = readLocalDb();
 
     // Input sanitization against Stored XSS
     const sanitizeHtml = (str) => {
-      if (typeof str !== 'string') return str;
+      if (typeof str !== 'string') return str || '';
       return str.replace(/<[^>]*>/g, '').trim();
     };
 
@@ -1428,20 +1401,16 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     const sanitizedGuardian = sanitizeHtml(guardianName);
     const sanitizedAddress = sanitizeHtml(currentAddress);
 
-    // Compress photo
+    // Compress photo with default fallback
     let compressedPhoto = null;
     if (photoBase64 && photoBase64.startsWith('data:image/')) {
       compressedPhoto = await compressImageBase64(photoBase64, 300, null);
     } else {
-      return res.status(400).json({ error: 'Invalid photo format.' });
+      compressedPhoto = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     }
 
-    // Check for existing employee by mobile number OR (Name + Department)
-    const cleanMobile = String(mobile).replace(/\D/g, '');
-    if (cleanMobile.length < 10) {
-      return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number.' });
-    }
-    const lastTen = cleanMobile.slice(-10);
+    // Check for existing employee by mobile number OR Name match
+    const lastTen = cleanMobile.length >= 10 ? cleanMobile.slice(-10) : cleanMobile;
 
     let existingEmpId = null;
     let existingEmpData = null;
@@ -1450,10 +1419,10 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       const dupRes = await pool.query(
         `SELECT id, data FROM employees 
          WHERE (right(regexp_replace(data->>'mobile', '[^0-9]', '', 'g'), 10) = $1 
-                OR (LOWER(TRIM(data->>'name')) = LOWER(TRIM($2)) AND LOWER(TRIM(data->>'department')) = LOWER(TRIM($3))))
+                OR LOWER(TRIM(data->>'name')) = LOWER(TRIM($2)))
          AND (data->>'status') <> 'Rejected'
          LIMIT 1`,
-        [lastTen, sanitizedName, department]
+        [lastTen, sanitizedName]
       );
       if (dupRes.rows.length > 0) {
         existingEmpId = dupRes.rows[0].id;
@@ -1463,10 +1432,9 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       const dupLocal = db.employees.find(
         e => {
           const m = String(e.mobile || '').replace(/\D/g, '');
-          const mobMatch = m.length >= 10 && m.slice(-10) === lastTen;
-          const nameDeptMatch = (e.name || '').toLowerCase().trim() === (sanitizedName || '').toLowerCase().trim() &&
-                                (e.department || '').toLowerCase().trim() === (department || '').toLowerCase().trim();
-          return (mobMatch || nameDeptMatch) && e.status !== 'Rejected';
+          const mobMatch = m.length >= 5 && m.slice(-10) === lastTen;
+          const nameMatch = (e.name || '').toLowerCase().trim() === (sanitizedName || '').toLowerCase().trim();
+          return (mobMatch || nameMatch) && e.status !== 'Rejected';
         }
       );
       if (dupLocal) {
