@@ -1406,35 +1406,113 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
   try {
     const db = readLocalDb();
 
-    // Check for duplicate registrations by mobile number (last 10 digits)
+    // Input sanitization against Stored XSS
+    const sanitizeHtml = (str) => {
+      if (typeof str !== 'string') return str;
+      return str.replace(/<[^>]*>/g, '').trim();
+    };
+
+    const sanitizedName = sanitizeHtml(name);
+    const sanitizedGuardian = sanitizeHtml(guardianName);
+    const sanitizedAddress = sanitizeHtml(currentAddress);
+
+    // Compress photo
+    let compressedPhoto = null;
+    if (photoBase64 && photoBase64.startsWith('data:image/')) {
+      compressedPhoto = await compressImageBase64(photoBase64, 300, null);
+    } else {
+      return res.status(400).json({ error: 'Invalid photo format.' });
+    }
+
+    // Check for existing employee by mobile number OR (Name + Department)
     const cleanMobile = String(mobile).replace(/\D/g, '');
     if (cleanMobile.length < 10) {
       return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number.' });
     }
     const lastTen = cleanMobile.slice(-10);
 
+    let existingEmpId = null;
+    let existingEmpData = null;
+
     if (usePostgres && pool) {
       const dupRes = await pool.query(
-        "SELECT id FROM employees WHERE right(regexp_replace(data->>'mobile', '[^0-9]', '', 'g'), 10) = $1 AND (data->>'status') <> 'Rejected'",
-        [lastTen]
+        `SELECT id, data FROM employees 
+         WHERE (right(regexp_replace(data->>'mobile', '[^0-9]', '', 'g'), 10) = $1 
+                OR (LOWER(TRIM(data->>'name')) = LOWER(TRIM($2)) AND LOWER(TRIM(data->>'department')) = LOWER(TRIM($3))))
+         AND (data->>'status') <> 'Rejected'
+         LIMIT 1`,
+        [lastTen, sanitizedName, department]
       );
       if (dupRes.rows.length > 0) {
-        return res.status(400).json({ error: 'An employee with this mobile number has already registered or is pending approval.' });
+        existingEmpId = dupRes.rows[0].id;
+        existingEmpData = typeof dupRes.rows[0].data === 'string' ? JSON.parse(dupRes.rows[0].data) : dupRes.rows[0].data;
       }
     } else {
-      const dupLocal = db.employees.some(
+      const dupLocal = db.employees.find(
         e => {
-          const m = String(e.mobile).replace(/\D/g, '');
-          return m.length >= 10 && m.slice(-10) === lastTen && e.status !== 'Rejected';
+          const m = String(e.mobile || '').replace(/\D/g, '');
+          const mobMatch = m.length >= 10 && m.slice(-10) === lastTen;
+          const nameDeptMatch = (e.name || '').toLowerCase().trim() === (sanitizedName || '').toLowerCase().trim() &&
+                                (e.department || '').toLowerCase().trim() === (department || '').toLowerCase().trim();
+          return (mobMatch || nameDeptMatch) && e.status !== 'Rejected';
         }
       );
       if (dupLocal) {
-        return res.status(400).json({ error: 'An employee with this mobile number has already registered or is pending approval.' });
+        existingEmpId = dupLocal.id;
+        existingEmpData = dupLocal;
       }
     }
 
-    
-    // Auto calculate ID (VSA-XXXX)
+    // --- CASE A: EXISTING EMPLOYEE FOUND -> MERGE DATA & UPDATE PHOTO ---
+    if (existingEmpId && existingEmpData) {
+      existingEmpData.name = sanitizedName || existingEmpData.name;
+      existingEmpData.mobile = mobile || existingEmpData.mobile;
+      if (sanitizedGuardian) {
+        existingEmpData.fatherName = sanitizedGuardian;
+        existingEmpData.guardianName = sanitizedGuardian;
+      }
+      if (relationType) existingEmpData.relationType = relationType;
+      if (dob) existingEmpData.dob = dob;
+      if (bloodGroup) existingEmpData.bloodGroup = bloodGroup;
+      if (gender) existingEmpData.gender = gender;
+      if (sanitizedAddress) {
+        existingEmpData.currentAddress = sanitizedAddress;
+        existingEmpData.permanentAddress = sanitizedAddress;
+      }
+      existingEmpData.photoStatus = 'Available';
+      existingEmpData.documents = existingEmpData.documents || {};
+      existingEmpData.documents.photo = `/api/employees/${existingEmpId}/photo`;
+      existingEmpData.updatedAt = new Date().toISOString();
+
+      if (usePostgres && pool) {
+        await pool.query(
+          `INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)
+           ON CONFLICT (employee_id) DO UPDATE SET photo = EXCLUDED.photo, updated_at = NOW()`,
+          [existingEmpId, compressedPhoto, ""]
+        );
+        await pool.query('UPDATE employees SET data = $1 WHERE id = $2', [JSON.stringify(existingEmpData), existingEmpId]);
+      } else {
+        const photosDb = readPhotosDb();
+        photosDb[existingEmpId] = { photo: compressedPhoto, signature: "" };
+        writePhotosDb(photosDb);
+
+        const idx = db.employees.findIndex(e => e.id === existingEmpId);
+        if (idx !== -1) {
+          db.employees[idx] = existingEmpData;
+          writeLocalDb(db);
+        }
+      }
+
+      console.log(`✅ Registration merged into existing employee record: ${existingEmpId} (${existingEmpData.name})`);
+      return res.json({
+        success: true,
+        merged: true,
+        employeeId: existingEmpId,
+        message: `Your details and photo have been updated for ${existingEmpData.name} (${existingEmpId}).`
+      });
+    }
+
+    // --- CASE B: NEW EMPLOYEE -> CREATE NEW RECORD ---
     let nextNum = 1001;
     let allIds = [];
 
@@ -1451,24 +1529,6 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     
     const empId = `VSA-${nextNum}`;
     const secureToken = crypto.randomBytes(16).toString('hex');
-
-    // Server-Side Compression of Profile Photo
-    let compressedPhoto = null;
-    if (photoBase64.startsWith('data:image/')) {
-      compressedPhoto = await compressImageBase64(photoBase64, 300, null);
-    } else {
-      return res.status(400).json({ error: 'Invalid photo format.' });
-    }
-
-    // Input sanitization against Stored XSS
-    const sanitizeHtml = (str) => {
-      if (typeof str !== 'string') return str;
-      return str.replace(/<[^>]*>/g, '').trim();
-    };
-
-    const sanitizedName = sanitizeHtml(name);
-    const sanitizedGuardian = sanitizeHtml(guardianName);
-    const sanitizedAddress = sanitizeHtml(currentAddress);
 
     const empData = {
       id: empId,
@@ -1491,6 +1551,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       emergencyContactName: sanitizedGuardian,
       emergencyContactRelation: relationType,
       emergencyContactMobile: mobile,
+      photoStatus: 'Available',
       documents: {
         aadhaar: "Pending Verification",
         policeVerification: "Pending Verification",
