@@ -1744,8 +1744,8 @@ async function sendAdminWhatsAppAlert(type, empId, empName, dept, message) {
   }
 }
 
-const TELEGRAM_BOT_TOKEN = '8867756258:AAEuyDsMHS8a_i_6h8QWic_uXxzxozDkFk0';
-const TELEGRAM_CHAT_ID = '8041601335';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8867756258:AAEuyDsMHS8a_i_6h8QWic_uXxzxozDkFk0';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8041601335';
 
 async function sendAdminTelegramAlert(type, empId, empName, dept, message) {
   try {
@@ -1778,13 +1778,9 @@ async function sendAdminTelegramAlert(type, empId, empName, dept, message) {
     const encodedText = encodeURIComponent(textMessage);
     const gatewayUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodedText}&parse_mode=Markdown`;
 
-    const https = require('https');
-    https.get(gatewayUrl, (res) => {
-      console.log(`📱 Official Telegram Bot notification sent (Status: ${res.statusCode})`);
-    }).on('error', (err) => {
-      console.error('Official Telegram Bot request failed:', err.message);
-    });
-
+    const response = await fetch(gatewayUrl);
+    const result = await response.json();
+    console.log(`📱 Telegram Bot API Response:`, result);
   } catch (err) {
     console.error('Failed to send Telegram alert:', err.message);
   }
