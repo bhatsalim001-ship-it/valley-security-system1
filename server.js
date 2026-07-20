@@ -1618,6 +1618,67 @@ app.post('/api/upload-photo-by-token', apiLimiter, async (req, res) => {
   }
 });
 
+// PUBLIC API VCF DOWNLOAD
+app.get('/api/download/iust-vcf', async (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="IUST_Contacts.vcf"');
+
+    let emps = [];
+    if (usePostgres && pool) {
+      const dbRes = await pool.query("SELECT data FROM employees WHERE data->>'department' = 'Islamic University of Science and Technology' ORDER BY (data->>'id') ASC");
+      emps = dbRes.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+    } else {
+      const db = readLocalDb();
+      emps = (db.employees || []).filter(e => e.department === 'Islamic University of Science and Technology');
+    }
+
+    let vcfContent = '';
+    emps.forEach(e => {
+      const mobile = e.mobile ? String(e.mobile).replace(/\D/g, '') : '';
+      const formattedPhone = mobile.length === 10 ? `+91${mobile}` : (mobile ? `+${mobile}` : '');
+      if (formattedPhone) {
+        vcfContent += `BEGIN:VCARD\nVERSION:3.0\nN:;IUST Guard ${e.name};;;\nFN:IUST Guard ${e.name}\nTEL;TYPE=CELL:${formattedPhone}\nNOTE:Employee ID: ${e.id} | Dept: IUST\nEND:VCARD\n\n`;
+      }
+    });
+
+    return res.send(vcfContent);
+  } catch (err) {
+    console.error('API VCF error:', err);
+    return res.status(500).send('Error generating VCF file');
+  }
+});
+
+// PUBLIC API CSV DOWNLOAD
+app.get('/api/download/iust-csv', async (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="IUST_Employees.csv"');
+
+    let emps = [];
+    if (usePostgres && pool) {
+      const dbRes = await pool.query("SELECT data FROM employees WHERE data->>'department' = 'Islamic University of Science and Technology' ORDER BY (data->>'id') ASC");
+      emps = dbRes.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+    } else {
+      const db = readLocalDb();
+      emps = (db.employees || []).filter(e => e.department === 'Islamic University of Science and Technology');
+    }
+
+    let csvContent = 'ID,Name,Father Name,Mobile,Gender,Address,Photo Upload Link\n';
+    emps.forEach(e => {
+      const mobile = e.mobile ? String(e.mobile).replace(/\D/g, '') : '';
+      const formattedPhone = mobile.length === 10 ? `+91${mobile}` : (mobile ? `+${mobile}` : '');
+      const uploadLink = `https://valleysecurityserviceagency.in/upload-photo.html?id=${e.id}`;
+      csvContent += `"${e.id}","${e.name}","${e.fatherName || ''}","${formattedPhone}","${e.gender || ''}","${e.currentAddress || ''}","${uploadLink}"\n`;
+    });
+
+    return res.send(csvContent);
+  } catch (err) {
+    console.error('API CSV error:', err);
+    return res.status(500).send('Error generating CSV file');
+  }
+});
+
 app.post('/api/login', authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
 
