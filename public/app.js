@@ -1172,7 +1172,7 @@ function renderRecentEmployeesTable() {
         const row = document.createElement('tr');
         const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
         const avatarHtml = photoSrc ? 
-            `<img src="${photoSrc}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--glass-border);">` : 
+            `<img src="${photoSrc}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--glass-border);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : 
             `<div style="width: 24px; height: 24px; border-radius: 50%; background: var(--input-bg); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--text-muted); border: 1px solid var(--glass-border);">${emp.name ? emp.name[0].toUpperCase() : '?'}</div>`;
 
         row.innerHTML = `
@@ -1338,7 +1338,7 @@ function renderEmployeeDirectory() {
                 <td>
                     <div class="d-flex align-items-center gap-2">
                         <div class="directory-list-avatar" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--glass-border); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--input-bg);">
-                            ${photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-muted);"></i>`}
+                            ${photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-muted);"></i>`}
                         </div>
                         <span>${escapeHtml(toTitleCase(emp.name))}</span>
                     </div>
@@ -1685,7 +1685,7 @@ function populateIdEmployeeChecklist() {
             const isChecked = VSA_STATE.idSelectedEmployeeIds.includes(emp.id) ? 'checked' : '';
             const isActive = emp.id === activePreviewId ? 'active-preview' : '';
             const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
-            const avatarHtml = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
+            const avatarHtml = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
 
             listHtml += `
                 <div class="id-checklist-item ${isActive}" data-id="${emp.id}">
@@ -4729,7 +4729,7 @@ function populateRecEmployeeChecklist() {
         filtered.forEach(emp => {
             const isActive = emp.id === activePreviewId ? 'active-preview' : '';
             const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
-            const avatarHtml = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
+            const avatarHtml = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
 
             listHtml += `
                 <div class="id-checklist-item ${isActive}" data-id="${emp.id}">
@@ -7539,7 +7539,7 @@ function renderInboxPendingList() {
             }
         }
         const avatarHtml = avatarSrc ? 
-            `<img src="${avatarSrc}" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="photo">` : 
+            `<img src="${avatarSrc}" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : 
             `<div style="width: 44px; height: 55px; background: rgba(255,255,255,0.05); border-radius: 6px; display:flex; align-items:center; justify-content:center; color: var(--text-secondary);"><i data-lucide="user" style="width:18px;"></i></div>`;
             
         row.innerHTML = `
