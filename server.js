@@ -777,7 +777,11 @@ function protectHtmlPages(req, res, next) {
     return next();
   }
 
-  const publicPages = ['/login.html', '/register.html', '/verification.html', '/styles.css', '/NEW_MASTER_STYLES.css', '/developer.jpg', '/favicon.png'];
+  const publicPages = [
+    '/login.html', '/register.html', '/upload-photo.html', '/verification.html',
+    '/IUST_Contacts.vcf', '/IUST_Employees.csv',
+    '/styles.css', '/NEW_MASTER_STYLES.css', '/developer.jpg', '/favicon.png'
+  ];
   const isGoogleVerification = req.path.match(/^\/google[a-f0-9]+\.html$/);
   
   if (publicPages.some(page => req.path.endsWith(page)) || isGoogleVerification) {
@@ -797,6 +801,20 @@ function protectHtmlPages(req, res, next) {
     return res.redirect('/');
   }
 }
+
+app.get('/IUST_Contacts.vcf', (req, res) => {
+  const file = path.join(__dirname, 'public', 'IUST_Contacts.vcf');
+  res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="IUST_Contacts.vcf"');
+  res.sendFile(file);
+});
+
+app.get('/IUST_Employees.csv', (req, res) => {
+  const file = path.join(__dirname, 'public', 'IUST_Employees.csv');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="IUST_Employees.csv"');
+  res.sendFile(file);
+});
 
 app.get('/login', (req, res) => {
   res.redirect('/');
