@@ -1587,6 +1587,8 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       writeLocalDb(db);
     }
 
+    await recordNotification('NEW_REGISTRATION', empId, sanitizedName, department, `New employee profile created for ${sanitizedName} (${empId}).`);
+
     return res.json({ success: true, employeeId: empId });
   } catch (err) {
     console.error("Self-registration error:", err);
