@@ -91,7 +91,7 @@
         <aside class="sidebar">
             <div class="brand" style="display: flex; align-items: center; gap: 12px; margin-bottom: 45px; padding-left: 10px;">
                 <div class="brand-logo" style="width: 48px; height: 48px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
-                    <img class="w-full h-full object-cover opacity-80" style="width: 100%; height: 100%; object-fit: cover;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnsxaKFejolA0cNde1I5NWkwwb5TIcoUUlUUTmeJCiQl5Bf1A8eWn1i_V-AmUv9yxc6sSc0EX6ETKwlzwxEv5eMiF3ZfssO1ysCzX43E_Fh1g3ihlQv9hkCUD0wnEwcLIlSnaUo_LU0bDq-w1eepv1VO2gIwEOnimQJ7MFNhPdfreatHQTXqVCLgTz5uxTB7Qs-zSYN3slhb51DqHS2WTppBr_olqmf7CRLa-MjPNOuXw4Ywvml6cHhPOjJfilsaZJV2G-Ckt-hi4"/>
+                    <img class="w-full h-full object-cover opacity-80" style="width: 100%; height: 100%; object-fit: cover;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnsxaKFejolA0cNde1I5NWkwwb5TIcoUUlUUTmeJCiQl5Bf1A8eWn1i_V-AmUv9yxc6sSc0EX6ETKwlzwxEv5eMiF3ZfssO1ysCzX43E_Fh1g3ihlQv9hkCUD0wnEwcLIlSnaUo_LU0bDq-w1eepv1VO2gIwEOnimQJ7MFNhPdfreatHQTXqVCLgTz5uxTB7Qs-zSYN3slhb51DqHS2WTppBr_olqmf7CRLa-MjPNOuXw4Ywvml6cHhPOjJfilsaZJV2G-Ckt-hi4" alt="Valley Security Badge Logo"/>
                 </div>
                 <div class="brand-text" style="display: flex; flex-direction: column;">
                     <span class="agency-title" id="sidebar-name-short" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 1.5px; color: var(--theme-gold);">VALLEY</span>
@@ -190,7 +190,7 @@
                             <span class="admin-role" style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Super Admin</span>
                         </div>
                         <div class="avatar-glow" style="width: 40px; height: 40px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;">
-                            <img class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxyVH3RzXPHvg3Qxc8JCkNIPpRYBqTA9gZBCJWOR71e-9gEVrdGv2bhJ0mlKuR-w3s1ky_GT_QgyDUvS8L9SLgqEAaexRXAEfvD7B5LG78_lck4x8VgR8NAn4jyfOgQ69ODNmDDsarMwvfzrHK8L6DTqk1_mUTiVz6HluKntcJIV-ZavbCsAjdUB39NuT6g5hQdtqy3IuSKUG7wVUwFdzZrUzv7l-eHr3RqH0_uLS52WVbbhocFhR1gx7LYyo7Dg3TszlZ77sV1hk"/>
+                            <img class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxyVH3RzXPHvg3Qxc8JCkNIPpRYBqTA9gZBCJWOR71e-9gEVrdGv2bhJ0mlKuR-w3s1ky_GT_QgyDUvS8L9SLgqEAaexRXAEfvD7B5LG78_lck4x8VgR8NAn4jyfOgQ69ODNmDDsarMwvfzrHK8L6DTqk1_mUTiVz6HluKntcJIV-ZavbCsAjdUB39NuT6g5hQdtqy3IuSKUG7wVUwFdzZrUzv7l-eHr3RqH0_uLS52WVbbhocFhR1gx7LYyo7Dg3TszlZ77sV1hk" alt="Admin Avatar"/>
                         </div>
                     </div>
                 </div>
@@ -1801,7 +1801,7 @@
     </div>
 
     <!-- EMPLOYEE MODAL (ADD / EDIT FORM) -->
-    <div id="employee-modal" class="modal-overlay hidden">
+    <div id="employee-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="employee-modal-title">
         <div class="modal-container">
             <div class="modal-header">
                 <h2 id="employee-modal-title">Register New Security Personnel</h2>
@@ -2090,7 +2090,7 @@
 
 
     <!-- Developer Profile Modal -->
-    <div id="developer-modal" class="modal-backdrop hidden">
+    <div id="developer-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Developer Profile">
         <div class="modal-content developer-modal-content">
             <button class="modal-close-btn" id="btn-close-developer-modal">&times;</button>
             <div class="developer-profile-wrapper">
@@ -2120,7 +2120,7 @@
     </div>
 
     <!-- ✂️ Image Cropper Modal -->
-    <div id="cropper-modal" class="modal-overlay hidden" style="z-index: 11000;">
+    <div id="cropper-modal" class="modal-overlay hidden" style="z-index: 11000;" role="dialog" aria-modal="true" aria-label="Crop & Resize Photo">
         <div class="modal-container" style="max-width: 680px; padding: 25px; box-sizing: border-box;">
             <div class="modal-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: var(--text-primary); font-size: 20px; font-weight: 700; font-family: 'Outfit', sans-serif;">Crop & Resize Photo</h2>
@@ -2155,10 +2155,10 @@
     </div>
 
     <!-- INBOX MODAL -->
-    <div id="inbox-modal" class="modal-overlay hidden" style="z-index: 10500;">
+    <div id="inbox-modal" class="modal-overlay hidden" style="z-index: 10500;" role="dialog" aria-modal="true" aria-labelledby="inbox-modal-heading">
         <div class="modal-container" style="max-width: 900px; width: 95%;">
             <div class="modal-header">
-                <h2 style="display: flex; align-items: center; gap: 10px;"><i data-lucide="mail"></i> Onboarding Submissions Inbox</h2>
+                <h2 id="inbox-modal-heading" style="display: flex; align-items: center; gap: 10px;"><i data-lucide="mail"></i> Onboarding Submissions Inbox</h2>
                 <button class="modal-close" id="btn-close-inbox-modal">&times;</button>
             </div>
             <div class="modal-body" style="padding: 20px;">
@@ -2242,7 +2242,7 @@
     </div>
 
     <!-- ONBOARDING PREVIEW MODAL -->
-    <div id="onboarding-preview-modal" class="modal-overlay hidden" style="z-index: 10600;">
+    <div id="onboarding-preview-modal" class="modal-overlay hidden" style="z-index: 10600;" role="dialog" aria-modal="true" aria-label="Onboarding Profile Details">
         <div class="modal-container" style="max-width: 500px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px);">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
                 <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="user-check"></i> Onboarding Profile Details</h3>
@@ -2296,7 +2296,7 @@
     </div>
 
     <!-- DEPARTMENT NAME AUDIT MODAL -->
-    <div id="modal-depts-audit" class="modal-overlay hidden" style="z-index: 10600;">
+    <div id="modal-depts-audit" class="modal-overlay hidden" style="z-index: 10600;" role="dialog" aria-modal="true" aria-label="Department Name Audit">
         <div class="modal-container" style="max-width: 600px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px); box-sizing: border-box;">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
                 <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="shield-alert"></i> Department Name Audit</h3>
@@ -2315,7 +2315,7 @@
     </div>
 
     <!-- ID CARD RENEWAL MODAL -->
-    <div id="modal-card-renewal" class="modal-overlay hidden" style="z-index: 10600;">
+    <div id="modal-card-renewal" class="modal-overlay hidden" style="z-index: 10600;" role="dialog" aria-modal="true" aria-label="ID Card Renewal & Extension">
         <div class="modal-container" style="max-width: 500px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px); box-sizing: border-box;">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
                 <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="refresh-cw"></i> ID Card Renewal & Extension</h3>

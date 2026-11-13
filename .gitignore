@@ -12,4 +12,9 @@ build/
 *~
 # Local database file - never commit, Render uses PostgreSQL
 db.json
+db.json.backup
 photos.json
+employee_images/
+public/IUST_Contacts.vcf
+public/IUST_Employees.csv
+scratch/

@@ -24,11 +24,20 @@
 
     <!-- ⚙️ FIRM CONFIG — load FIRST -->
     <script src="firm-config.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
+    <script>
+        window.initGoogleSignIn = function() {
+            if (typeof window._initGoogleSignInImpl === 'function') {
+                window._initGoogleSignInImpl();
+            } else {
+                window._gsiReady = true;
+            }
+        };
+    </script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="window.initGoogleSignIn()"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.321.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -502,6 +511,10 @@
             } catch (err) {
                 console.error("Failed to initialize Google Sign-In:", err);
             }
+        }
+        window._initGoogleSignInImpl = initGoogleSignIn;
+        if (window._gsiReady) {
+            initGoogleSignIn();
         }
     </script>
 </body>

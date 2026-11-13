@@ -44,7 +44,28 @@ function checkEnv(name, { minLength = 0, fallback = '' } = {}) {
   return v;
 }
 
-const JWT_SECRET = checkEnv('JWT_SECRET', { minLength: 32, fallback: 'valley-security-secret-session-key-fallback-long-32-chars' });
+const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+
+function timingSafeTokenMatch(expected, provided) {
+  if (typeof expected !== 'string' || typeof provided !== 'string') return false;
+  if (!expected || !provided) return false;
+  const bufExp = Buffer.from(expected);
+  const bufProv = Buffer.from(provided);
+  if (bufExp.length !== bufProv.length) return false;
+  return crypto.timingSafeEqual(bufExp, bufProv);
+}
+
+function escapeCsvCell(val) {
+  if (val === null || val === undefined) return '""';
+  let str = String(val);
+  if (/^[=+@\-\t\r]/.test(str)) {
+    str = "'" + str;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+const devEphemeralSecret = crypto.randomBytes(32).toString('hex');
+const JWT_SECRET = checkEnv('JWT_SECRET', { minLength: 32, fallback: devEphemeralSecret });
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const BCRYPT_COST = parseInt(process.env.BCRYPT_COST || '12', 10);
 const PORT = process.env.PORT || 3000;
@@ -61,7 +82,7 @@ if (NODE_ENV === 'production') {
     console.error('❌ FATAL ERROR: DATABASE_URL is missing in production! System will not start with insecure local JSON files.');
     process.exit(1);
   }
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET === 'valley-security-secret-session-key-fallback-long-32-chars') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET === devEphemeralSecret) {
     console.error('❌ FATAL SECURITY ERROR: JWT_SECRET is missing, too short, or using default fallback in production mode!');
     process.exit(1);
   }
@@ -80,7 +101,10 @@ if (usePostgres) {
     }
     pool = new Pool({
       connectionString: finalDbUrl,
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: process.env.PG_ALLOW_INSECURE_SSL === 'true' ? false : (NODE_ENV === 'production') }
+    });
+    pool.on('error', (err) => {
+      console.error('Unexpected idle client error in PostgreSQL pool:', err.message);
     });
     console.log('✅ PostgreSQL Connection Initialized');
   } catch (e) {
@@ -95,12 +119,6 @@ function readLocalDb() {
     if (fs.existsSync(DB_PATH)) {
       const data = fs.readFileSync(DB_PATH, 'utf8');
       return JSON.parse(data);
-    } else {
-      const backupPath = path.join(__dirname, 'db.json.backup');
-      if (fs.existsSync(backupPath)) {
-        const data = fs.readFileSync(backupPath, 'utf8');
-        return JSON.parse(data);
-      }
     }
   } catch (e) {
     console.error('Error reading local JSON database:', e);
@@ -136,40 +154,70 @@ function writePhotosDb(data) {
   }
 }
 
-// Image Compression Helper via Sharp
+// Image Compression & Validation Helper via Sharp
 async function compressImageBase64(base64Str, width, height, fit = 'cover') {
-  if (!base64Str || !base64Str.startsWith('data:image/')) {
-    return base64Str;
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith('data:image/')) {
+    const err = new Error('Invalid or missing image payload.');
+    err.statusCode = 400;
+    throw err;
   }
+
+  const matches = base64Str.match(/^data:([A-Za-z0-9\/\-+.]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    const err = new Error('Invalid base64 image data URI.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const mimeType = matches[1].toLowerCase();
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
+    const err = new Error('Unsupported image format. Allowed formats: JPEG, PNG, WEBP.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  let buffer;
   try {
-    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    if (!matches || matches.length !== 3) return base64Str;
-
-    const mimeType = matches[1];
-    const buffer = Buffer.from(matches[2], 'base64');
-
-    // Compress to JPEG for photo or PNG for transparent sig
-    let outputBuffer;
-    let outputMime = 'image/jpeg';
-
-    if (mimeType.includes('png') && fit === 'contain') {
-      outputBuffer = await sharp(buffer)
-        .resize(width, height, { fit })
-        .png({ quality: 80 })
-        .toBuffer();
-      outputMime = 'image/png';
-    } else {
-      outputBuffer = await sharp(buffer)
-        .resize(width, height, { fit })
-        .jpeg({ quality: 80 })
-        .toBuffer();
-    }
-
-    return `data:${outputMime};base64,${outputBuffer.toString('base64')}`;
+    buffer = Buffer.from(matches[2], 'base64');
   } catch (e) {
-    console.error('Image compression failed, using original file:', e.message);
-    return base64Str;
+    const err = new Error('Malformed base64 image buffer.');
+    err.statusCode = 400;
+    throw err;
   }
+
+  let metadata;
+  try {
+    metadata = await sharp(buffer).metadata();
+  } catch (e) {
+    const err = new Error('Uploaded file is not a valid raster image.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (!metadata || !['jpeg', 'png', 'webp'].includes(metadata.format)) {
+    const err = new Error('Unsupported image encoding.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Compress to JPEG for photo or PNG for transparent sig
+  let outputBuffer;
+  let outputMime = 'image/jpeg';
+
+  if (mimeType.includes('png') && fit === 'contain') {
+    outputBuffer = await sharp(buffer)
+      .resize(width, height, { fit })
+      .png({ quality: 80 })
+      .toBuffer();
+    outputMime = 'image/png';
+  } else {
+    outputBuffer = await sharp(buffer)
+      .resize(width, height, { fit })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+  }
+
+  return `data:${outputMime};base64,${outputBuffer.toString('base64')}`;
 }
 
 const app = express();
@@ -208,7 +256,8 @@ app.use(helmet({
       "form-action": ["'self'"],
       "frame-ancestors": ["'none'"],
       "object-src": ["'none'"],
-      "base-uri": ["'self'"]
+      "base-uri": ["'self'"],
+      "upgrade-insecure-requests": NODE_ENV === 'production' ? [] : null
     }
   },
   crossOriginEmbedderPolicy: false,
@@ -233,11 +282,12 @@ app.use(cors({
       const originUrl = new URL(origin);
       const hostname = originUrl.hostname;
       
-      // Always allow the site's own hostnames and subdomains (same-origin & production domains)
+      // Always allow the site's own hostnames (same-origin & verified production domains)
+      const renderHost = process.env.RENDER_EXTERNAL_HOSTNAME || 'valley-security-system.onrender.com';
       if (
         hostname === 'valleysecurityserviceagency.in' ||
         hostname === 'www.valleysecurityserviceagency.in' ||
-        hostname.endsWith('.onrender.com') ||
+        hostname === renderHost ||
         hostname === 'localhost' ||
         hostname === '127.0.0.1'
       ) {
@@ -327,7 +377,8 @@ app.use('/api/', apiLimiter);
 // --------------------------------------------------------------------------
 // KILL SWITCH — Site Enable/Disable State
 // --------------------------------------------------------------------------
-const KILL_SWITCH_KEY = checkEnv('KILL_SWITCH_KEY', { fallback: 'VSA-SALIM-MASTER-2024' });
+const devEphemeralKillKey = crypto.randomBytes(32).toString('hex');
+const KILL_SWITCH_KEY = checkEnv('KILL_SWITCH_KEY', { fallback: devEphemeralKillKey });
 let _siteEnabled = true; // in-memory flag (loaded from DB on startup)
 
 async function loadSiteEnabledFromDb() {
@@ -678,7 +729,7 @@ app.get('/kill-switch', async (req, res) => {
 });
 
 // Process login to kill-switch portal
-app.post('/kill-switch/login', async (req, res) => {
+app.post('/kill-switch/login', authLimiter, async (req, res) => {
   const { key } = req.body;
   if (!key) {
     return res.redirect('/kill-switch?error=invalid');
@@ -770,8 +821,8 @@ function authenticateToken(req, res, next) {
   }
 }
 
-// Direct dynamic download routes for IUST contact files
-app.get('/IUST_Contacts.vcf', async (req, res) => {
+// Direct dynamic download routes for IUST contact files (Protected Admin Only)
+app.get('/IUST_Contacts.vcf', authenticateToken, async (req, res) => {
   try {
     res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="IUST_Contacts.vcf"');
@@ -789,8 +840,10 @@ app.get('/IUST_Contacts.vcf', async (req, res) => {
     emps.forEach(e => {
       const mobile = e.mobile ? String(e.mobile).replace(/\D/g, '') : '';
       const formattedPhone = mobile.length === 10 ? `+91${mobile}` : (mobile ? `+${mobile}` : '');
+      const safeName = String(e.name || '').replace(/[\r\n;]/g, ' ').trim();
+      const safeId = String(e.id || '').replace(/[\r\n;]/g, ' ').trim();
       if (formattedPhone) {
-        vcfContent += `BEGIN:VCARD\nVERSION:3.0\nN:;IUST Guard ${e.name};;;\nFN:IUST Guard ${e.name}\nTEL;TYPE=CELL:${formattedPhone}\nNOTE:Employee ID: ${e.id} | Dept: IUST\nEND:VCARD\n\n`;
+        vcfContent += `BEGIN:VCARD\nVERSION:3.0\nN:;IUST Guard ${safeName};;;\nFN:IUST Guard ${safeName}\nTEL;TYPE=CELL:${formattedPhone}\nNOTE:Employee ID: ${safeId} | Dept: IUST\nEND:VCARD\n\n`;
       }
     });
 
@@ -801,7 +854,7 @@ app.get('/IUST_Contacts.vcf', async (req, res) => {
   }
 });
 
-app.get('/IUST_Employees.csv', async (req, res) => {
+app.get('/IUST_Employees.csv', authenticateToken, async (req, res) => {
   try {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="IUST_Employees.csv"');
@@ -819,8 +872,16 @@ app.get('/IUST_Employees.csv', async (req, res) => {
     emps.forEach(e => {
       const mobile = e.mobile ? String(e.mobile).replace(/\D/g, '') : '';
       const formattedPhone = mobile.length === 10 ? `+91${mobile}` : (mobile ? `+${mobile}` : '');
-      const uploadLink = `https://valleysecurityserviceagency.in/upload-photo.html?id=${e.id}`;
-      csvContent += `"${e.id}","${e.name}","${e.fatherName || ''}","${formattedPhone}","${e.gender || ''}","${e.currentAddress || ''}","${uploadLink}"\n`;
+      const uploadLink = `https://valleysecurityserviceagency.in/upload-photo.html?id=${encodeURIComponent(e.id || '')}`;
+      csvContent += [
+        escapeCsvCell(e.id),
+        escapeCsvCell(e.name),
+        escapeCsvCell(e.fatherName),
+        escapeCsvCell(formattedPhone),
+        escapeCsvCell(e.gender),
+        escapeCsvCell(e.currentAddress),
+        escapeCsvCell(uploadLink)
+      ].join(',') + '\n';
     });
 
     return res.send(csvContent);
@@ -830,23 +891,38 @@ app.get('/IUST_Employees.csv', async (req, res) => {
   }
 });
 
-// Redirect middleware for static HTML pages
+// Redirect middleware for static HTML pages and asset protection
 function protectHtmlPages(req, res, next) {
-  // Bypass protection for API routes and public download files / portal pages
   const reqPathLower = (req.path || '').toLowerCase();
+
+  // Block unauthenticated direct static file downloads of sensitive data
+  if (reqPathLower.endsWith('.vcf') || reqPathLower.endsWith('.csv') || reqPathLower.endsWith('.backup') || reqPathLower.endsWith('.json')) {
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized file access.' });
+    }
+    try {
+      jwt.verify(token, JWT_SECRET);
+      return next();
+    } catch (e) {
+      return res.status(401).json({ error: 'Unauthorized file access.' });
+    }
+  }
+
+  // Bypass protection for API routes and public static asset directories
   if (
     req.path.startsWith('/api') ||
-    reqPathLower.endsWith('/upload-photo.html') ||
-    reqPathLower.endsWith('.vcf') ||
-    reqPathLower.endsWith('.csv')
+    reqPathLower.startsWith('/fonts/') ||
+    reqPathLower.startsWith('/img/') ||
+    reqPathLower.startsWith('/lib/')
   ) {
     return next();
   }
 
   const publicPages = [
     '/login.html', '/register.html', '/upload-photo.html', '/verification.html',
-    '/iust_contacts.vcf', '/iust_employees.csv',
-    '/styles.css', '/new_master_styles.css', '/developer.jpg', '/favicon.png'
+    '/firm-config.js', '/styles.css', '/developer.jpg', '/favicon.png',
+    '/robots.txt', '/sitemap.xml'
   ];
   const isGoogleVerification = req.path.match(/^\/google[a-f0-9]+\.html$/);
   
@@ -903,12 +979,19 @@ app.get('/index.html', protectHtmlPages, (req, res) => {
 // Serve public login and other static assets with absolute no-cache headers
 app.use(protectHtmlPages);
 app.use(express.static(path.join(__dirname, 'public'), {
-  etag: false,
-  maxAge: 0,
-  setHeaders: function (res, path) {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+  etag: true,
+  lastModified: true,
+  setHeaders: function (res, filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.html') {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    } else if (filePath.includes(path.sep + 'fonts' + path.sep) || filePath.includes(path.sep + 'lib' + path.sep)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    } else if (['.png', '.jpg', '.jpeg', '.webp', '.svg', '.ico'].includes(ext)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
   }
 }));
 
@@ -1119,35 +1202,16 @@ async function initDatabase() {
       )
     `);
 
-    console.log('✅ PostgreSQL Database Tables Verified/Initialized');
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_activity_notifications_created ON activity_notifications (created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_activity_notifications_is_read ON activity_notifications (is_read);
+      CREATE INDEX IF NOT EXISTS idx_card_renewals_emp_id ON card_renewals (employee_id);
+      CREATE INDEX IF NOT EXISTS idx_employee_photos_updated ON employee_photos (updated_at);
+      CREATE INDEX IF NOT EXISTS idx_employees_status ON employees (((data->>'status')));
+      CREATE INDEX IF NOT EXISTS idx_employees_dept ON employees (((data->>'department')));
+    `);
 
-    // 🔑 Secure Password Synchronization (Always from the git-tracked db.json.backup)
-    const backupPath = path.join(__dirname, 'db.json.backup');
-    if (fs.existsSync(backupPath)) {
-      try {
-        const backupDb = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
-        const backupAdmin = backupDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
-        if (backupAdmin) {
-          // Sync to PostgreSQL
-          const hash = await bcrypt.hash(backupAdmin.password, BCRYPT_COST);
-          const updateRes = await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'vllscrtservice@gmail.com']);
-          console.log(`✅ PostgreSQL admin user password synchronized from backup (${updateRes.rowCount} rows updated)`);
-
-          // Sync to local db.json if it exists (stale cleanup on persistent volume)
-          if (fs.existsSync(DB_PATH)) {
-            const localDb = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-            const localAdmin = localDb.users.find(u => u.email === 'vllscrtservice@gmail.com');
-            if (localAdmin && localAdmin.password !== backupAdmin.password) {
-              localAdmin.password = backupAdmin.password;
-              fs.writeFileSync(DB_PATH, JSON.stringify(localDb, null, 2), 'utf8');
-              console.log('✅ Local db.json admin password updated to match backup');
-            }
-          }
-        }
-      } catch (err) {
-        console.error('❌ Failed to synchronize passwords on startup:', err.message);
-      }
-    }
+    console.log('✅ PostgreSQL Database Tables & Indexes Verified/Initialized');
 
     // Check if initial seeding has already been performed in the past
     const seedCheck = await pool.query('SELECT "value" FROM settings WHERE key = \'initial_seeding_done\'');
@@ -1331,7 +1395,22 @@ function isLockedOut(email) {
   return false;
 }
 
+function sweepLoginAttempts() {
+  const now = Date.now();
+  for (const [email, rec] of loginAttempts.entries()) {
+    if (rec.lockedUntil && rec.lockedUntil <= now) {
+      loginAttempts.delete(email);
+    }
+  }
+  if (loginAttempts.size > 1000) {
+    loginAttempts.clear();
+  }
+}
+
 function recordFailedAttempt(email) {
+  if (loginAttempts.size > 500) {
+    sweepLoginAttempts();
+  }
   const rec = loginAttempts.get(email) || { count: 0, lockedUntil: 0 };
   rec.count += 1;
   if (rec.count >= MAX_FAILED_ATTEMPTS) {
@@ -1373,6 +1452,7 @@ app.get('/api/public/classifications', async (req, res) => {
 
 app.post('/api/public/register', registerLimiter, async (req, res) => {
   const { name, mobile, guardianName, relationType, dob, bloodGroup, department, designation, gender, currentAddress, photoBase64 } = req.body || {};
+  const rawPhoto = photoBase64 || (req.body && req.body.photo);
   
   if (!name || !mobile) {
     return res.status(400).json({ error: 'Name and Mobile number are required.' });
@@ -1389,7 +1469,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
   const validBlood = bloodGroup || 'O+';
 
   try {
-    const db = readLocalDb();
+    const db = (usePostgres && pool) ? null : readLocalDb();
 
     // Input sanitization against Stored XSS
     const sanitizeHtml = (str) => {
@@ -1403,13 +1483,13 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
 
     // Compress photo with default fallback
     let compressedPhoto = null;
-    if (photoBase64 && photoBase64.startsWith('data:image/')) {
-      compressedPhoto = await compressImageBase64(photoBase64, 300, null);
+    if (rawPhoto) {
+      compressedPhoto = await compressImageBase64(rawPhoto, 300, null);
     } else {
       compressedPhoto = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     }
 
-    // Check for existing employee by mobile number OR Name match
+    // Check for existing employee strictly by normalized mobile number (last 10 digits)
     const lastTen = cleanMobile.length >= 10 ? cleanMobile.slice(-10) : cleanMobile;
 
     let existingEmpId = null;
@@ -1418,23 +1498,21 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     if (usePostgres && pool) {
       const dupRes = await pool.query(
         `SELECT id, data FROM employees 
-         WHERE (right(regexp_replace(data->>'mobile', '[^0-9]', '', 'g'), 10) = $1 
-                OR LOWER(TRIM(data->>'name')) = LOWER(TRIM($2)))
+         WHERE right(regexp_replace(data->>'mobile', '[^0-9]', '', 'g'), 10) = $1
          AND (data->>'status') <> 'Rejected'
          LIMIT 1`,
-        [lastTen, sanitizedName]
+        [lastTen]
       );
       if (dupRes.rows.length > 0) {
         existingEmpId = dupRes.rows[0].id;
         existingEmpData = typeof dupRes.rows[0].data === 'string' ? JSON.parse(dupRes.rows[0].data) : dupRes.rows[0].data;
       }
-    } else {
+    } else if (db && Array.isArray(db.employees)) {
       const dupLocal = db.employees.find(
         e => {
           const m = String(e.mobile || '').replace(/\D/g, '');
           const mobMatch = m.length >= 5 && m.slice(-10) === lastTen;
-          const nameMatch = (e.name || '').toLowerCase().trim() === (sanitizedName || '').toLowerCase().trim();
-          return (mobMatch || nameMatch) && e.status !== 'Rejected';
+          return mobMatch && e.status !== 'Rejected';
         }
       );
       if (dupLocal) {
@@ -1453,8 +1531,10 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       }
       if (relationType) existingEmpData.relationType = relationType;
       if (dob) existingEmpData.dob = dob;
-      if (bloodGroup) existingEmpData.bloodGroup = bloodGroup;
-      if (gender) existingEmpData.gender = gender;
+      if (validBlood) existingEmpData.bloodGroup = validBlood;
+      if (validGender) existingEmpData.gender = validGender;
+      if (validDept) existingEmpData.department = validDept;
+      if (validDesig) existingEmpData.designation = validDesig;
       if (sanitizedAddress) {
         existingEmpData.currentAddress = sanitizedAddress;
         existingEmpData.permanentAddress = sanitizedAddress;
@@ -1466,14 +1546,15 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
 
       if (usePostgres && pool) {
         await pool.query(
-          `INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)
+          `INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, '')
            ON CONFLICT (employee_id) DO UPDATE SET photo = EXCLUDED.photo, updated_at = NOW()`,
-          [existingEmpId, compressedPhoto, ""]
+          [existingEmpId, compressedPhoto]
         );
         await pool.query('UPDATE employees SET data = $1 WHERE id = $2', [JSON.stringify(existingEmpData), existingEmpId]);
       } else {
         const photosDb = readPhotosDb();
-        photosDb[existingEmpId] = { photo: compressedPhoto, signature: "" };
+        const existingSig = (photosDb[existingEmpId] && photosDb[existingEmpId].signature) || (existingEmpData.documents && existingEmpData.documents.signature) || "";
+        photosDb[existingEmpId] = { photo: compressedPhoto, signature: existingSig };
         writePhotosDb(photosDb);
 
         const idx = db.employees.findIndex(e => e.id === existingEmpId);
@@ -1501,7 +1582,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     if (usePostgres && pool) {
       const dbRes = await pool.query('SELECT id FROM employees');
       allIds = dbRes.rows.map(r => parseInt(r.id.replace('VSA-', ''))).filter(n => !isNaN(n));
-    } else {
+    } else if (db && Array.isArray(db.employees)) {
       allIds = db.employees.map(e => parseInt(e.id.replace('VSA-', ''))).filter(n => !isNaN(n));
     }
 
@@ -1520,13 +1601,13 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       guardianName: sanitizedGuardian,
       relationType,
       dob,
-      bloodGroup,
-      department,
-      designation,
-      gender,
+      bloodGroup: validBlood,
+      department: validDept,
+      designation: validDesig,
+      gender: validGender,
       currentAddress: sanitizedAddress,
       permanentAddress: sanitizedAddress,
-      status: 'Active',
+      status: 'Pending',
       joiningDate: new Date().toISOString().substring(0, 10),
       cardValidity: 3,
       secureToken,
@@ -1555,12 +1636,12 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       writeLocalDb(db);
     }
 
-    await recordNotification('NEW_REGISTRATION', empId, sanitizedName, department, `New employee profile created for ${sanitizedName} (${empId}).`);
+    await recordNotification('NEW_REGISTRATION', empId, sanitizedName, validDept, `New employee profile created for ${sanitizedName} (${empId}).`);
 
     return res.json({ success: true, employeeId: empId });
   } catch (err) {
     console.error("Self-registration error:", err);
-    return res.status(500).json({ error: 'Internal server error during registration.' });
+    return res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : 'Internal server error during registration.' });
   }
 });
 
@@ -1583,7 +1664,7 @@ app.get('/api/get-employee-by-token', apiLimiter, async (req, res) => {
       emp = db.employees.find(e => e.id === id);
     }
 
-    if (!emp || (emp.secureToken && emp.secureToken !== token)) {
+    if (!emp || !timingSafeTokenMatch(emp.secureToken, token)) {
       return res.status(404).json({ error: 'Employee not found or invalid token.' });
     }
 
@@ -1629,7 +1710,7 @@ app.post('/api/upload-photo-by-token', apiLimiter, async (req, res) => {
       return res.status(404).json({ error: 'Employee not found.' });
     }
 
-    if (emp.secureToken && emp.secureToken !== token) {
+    if (!timingSafeTokenMatch(emp.secureToken, token)) {
       return res.status(403).json({ error: 'Invalid security token for this employee.' });
     }
 
@@ -1645,7 +1726,8 @@ app.post('/api/upload-photo-by-token', apiLimiter, async (req, res) => {
       await pool.query('UPDATE employees SET data = $1 WHERE id = $2', [JSON.stringify(emp), employeeId]);
     } else {
       const photosDb = readPhotosDb();
-      photosDb[employeeId] = { photo: compressedPhoto, signature: "" };
+      const existingSig = (photosDb[employeeId] && photosDb[employeeId].signature) || (emp.documents && emp.documents.signature) || "";
+      photosDb[employeeId] = { photo: compressedPhoto, signature: existingSig };
       writePhotosDb(photosDb);
 
       const db = readLocalDb();
@@ -1661,15 +1743,20 @@ app.post('/api/upload-photo-by-token', apiLimiter, async (req, res) => {
     return res.json({ success: true, message: 'Photo uploaded and saved successfully!', employeeName: emp.name });
   } catch (err) {
     console.error("Token photo upload error:", err);
-    return res.status(500).json({ error: 'Internal server error during photo upload.' });
+    return res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : 'Internal server error during photo upload.' });
   }
 });
 
-const ADMIN_PHONE = '917889311608';
+const ADMIN_PHONE = process.env.ADMIN_WHATSAPP_PHONE || '';
 
-// Helper to send instant WhatsApp alert to admin phone (+917889311608)
+// Helper to send instant WhatsApp alert to configured admin phone
 async function sendAdminWhatsAppAlert(type, empId, empName, dept, message) {
   try {
+    const apiKey = process.env.CALLMEBOT_API_KEY || '';
+    if (!ADMIN_PHONE || !apiKey) {
+      return;
+    }
+
     let textMessage = '';
     if (type === 'RECORD_MERGED') {
       textMessage = `🚨 *VSA ALERT: Employee Form MERGED!*\n\n` +
@@ -1694,16 +1781,17 @@ async function sendAdminWhatsAppAlert(type, empId, empName, dept, message) {
                     `🌐 *Live Site:* https://valleysecurityserviceagency.in`;
     }
 
-    console.log(`📱 WHATSAPP ALERT TRIGGERED FOR +917889311608:\n${textMessage}`);
-
-    const apiKey = process.env.CALLMEBOT_API_KEY || '123456';
     const encodedText = encodeURIComponent(textMessage);
-    const gatewayUrl = `https://api.callmebot.com/whatsapp.php?phone=${ADMIN_PHONE}&text=${encodedText}&apikey=${apiKey}`;
+    const gatewayUrl = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(ADMIN_PHONE)}&text=${encodedText}&apikey=${encodeURIComponent(apiKey)}`;
 
     const https = require('https');
-    https.get(gatewayUrl, (res) => {
-      console.log(`📱 WhatsApp notification sent to ${ADMIN_PHONE} (Status: ${res.statusCode})`);
-    }).on('error', (err) => {
+    const req = https.get(gatewayUrl, (res) => {
+      console.log(`📱 WhatsApp notification sent (Status: ${res.statusCode})`);
+    });
+    req.setTimeout(5000, () => {
+      req.destroy();
+    });
+    req.on('error', (err) => {
       console.error('WhatsApp gateway request failed:', err.message);
     });
 
@@ -1712,11 +1800,15 @@ async function sendAdminWhatsAppAlert(type, empId, empName, dept, message) {
   }
 }
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8867756258:AAEuyDsMHS8a_i_6h8QWic_uXxzxozDkFk0';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8041601335';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 
 async function sendAdminTelegramAlert(type, empId, empName, dept, message) {
   try {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+      return;
+    }
+
     let textMessage = '';
     if (type === 'RECORD_MERGED') {
       textMessage = `🚨 VSA ALERT: Employee Form MERGED into Database!\n\n` +
@@ -1741,14 +1833,12 @@ async function sendAdminTelegramAlert(type, empId, empName, dept, message) {
                     `🌐 Live Site: https://valleysecurityserviceagency.in`;
     }
 
-    console.log(`📱 OFFICIAL TELEGRAM BOT ALERT TRIGGERED FOR CHAT ID ${TELEGRAM_CHAT_ID}:\n${textMessage}`);
-
     const encodedText = encodeURIComponent(textMessage);
-    const gatewayUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodedText}`;
+    const gatewayUrl = `https://api.telegram.org/bot${encodeURIComponent(TELEGRAM_BOT_TOKEN)}/sendMessage?chat_id=${encodeURIComponent(TELEGRAM_CHAT_ID)}&text=${encodedText}`;
 
-    const response = await fetch(gatewayUrl);
+    const response = await fetch(gatewayUrl, { signal: AbortSignal.timeout(5000) });
     const result = await response.json();
-    console.log(`📱 Telegram Bot API Response:`, result);
+    console.log(`📱 Telegram Bot API status:`, result.ok === true);
   } catch (err) {
     console.error('Failed to send Telegram alert:', err.message);
   }
@@ -1759,11 +1849,13 @@ async function recordNotification(type, empId, empName, dept, message) {
   try {
     console.log(`🔔 REAL-TIME ALERT [${type}]: ${empName} (${empId}) - ${message}`);
 
-    // Trigger Telegram push alert to @Valleysecurity01 (AWAITED FOR GUARANTEED DELIVERY)
-    await sendAdminTelegramAlert(type, empId, empName, dept, message);
-
-    // Trigger WhatsApp push alert to +917889311608
-    await sendAdminWhatsAppAlert(type, empId, empName, dept, message);
+    // Fire outbound push alerts in background (non-blocking for HTTP response)
+    sendAdminTelegramAlert(type, empId, empName, dept, message).catch(err => {
+      console.warn('Background Telegram push failed:', err.message);
+    });
+    sendAdminWhatsAppAlert(type, empId, empName, dept, message).catch(err => {
+      console.warn('Background WhatsApp push failed:', err.message);
+    });
 
     if (usePostgres && pool) {
       await pool.query(
@@ -1793,7 +1885,7 @@ async function recordNotification(type, empId, empName, dept, message) {
 }
 
 // GET /api/notifications - Get unread & recent notifications for admin dashboard
-app.get('/api/notifications', apiLimiter, async (req, res) => {
+app.get('/api/notifications', authenticateToken, apiLimiter, async (req, res) => {
   try {
     let notifications = [];
     if (usePostgres && pool) {
@@ -1812,7 +1904,7 @@ app.get('/api/notifications', apiLimiter, async (req, res) => {
 });
 
 // POST /api/notifications/mark-read - Mark all as read
-app.post('/api/notifications/mark-read', apiLimiter, async (req, res) => {
+app.post('/api/notifications/mark-read', authenticateToken, apiLimiter, async (req, res) => {
   try {
     if (usePostgres && pool) {
       await pool.query('UPDATE activity_notifications SET is_read = TRUE WHERE is_read = FALSE');
@@ -1827,8 +1919,8 @@ app.post('/api/notifications/mark-read', apiLimiter, async (req, res) => {
   }
 });
 
-// PUBLIC API VCF DOWNLOAD
-app.get('/api/public/iust-vcf', async (req, res) => {
+// PROTECTED API VCF DOWNLOAD (Admin Only)
+app.get('/api/public/iust-vcf', authenticateToken, async (req, res) => {
   try {
     res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="IUST_Contacts.vcf"');
@@ -1846,8 +1938,10 @@ app.get('/api/public/iust-vcf', async (req, res) => {
     emps.forEach(e => {
       const mobile = e.mobile ? String(e.mobile).replace(/\D/g, '') : '';
       const formattedPhone = mobile.length === 10 ? `+91${mobile}` : (mobile ? `+${mobile}` : '');
+      const safeName = String(e.name || '').replace(/[\r\n;]/g, ' ').trim();
+      const safeId = String(e.id || '').replace(/[\r\n;]/g, ' ').trim();
       if (formattedPhone) {
-        vcfContent += `BEGIN:VCARD\nVERSION:3.0\nN:;IUST Guard ${e.name};;;\nFN:IUST Guard ${e.name}\nTEL;TYPE=CELL:${formattedPhone}\nNOTE:Employee ID: ${e.id} | Dept: IUST\nEND:VCARD\n\n`;
+        vcfContent += `BEGIN:VCARD\nVERSION:3.0\nN:;IUST Guard ${safeName};;;\nFN:IUST Guard ${safeName}\nTEL;TYPE=CELL:${formattedPhone}\nNOTE:Employee ID: ${safeId} | Dept: IUST\nEND:VCARD\n\n`;
       }
     });
 
@@ -1858,8 +1952,8 @@ app.get('/api/public/iust-vcf', async (req, res) => {
   }
 });
 
-// PUBLIC API CSV DOWNLOAD
-app.get('/api/public/iust-csv', async (req, res) => {
+// PROTECTED API CSV DOWNLOAD (Admin Only)
+app.get('/api/public/iust-csv', authenticateToken, async (req, res) => {
   try {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="IUST_Employees.csv"');
@@ -1877,8 +1971,16 @@ app.get('/api/public/iust-csv', async (req, res) => {
     emps.forEach(e => {
       const mobile = e.mobile ? String(e.mobile).replace(/\D/g, '') : '';
       const formattedPhone = mobile.length === 10 ? `+91${mobile}` : (mobile ? `+${mobile}` : '');
-      const uploadLink = `https://valleysecurityserviceagency.in/upload-photo.html?id=${e.id}`;
-      csvContent += `"${e.id}","${e.name}","${e.fatherName || ''}","${formattedPhone}","${e.gender || ''}","${e.currentAddress || ''}","${uploadLink}"\n`;
+      const uploadLink = `https://valleysecurityserviceagency.in/upload-photo.html?id=${encodeURIComponent(e.id || '')}`;
+      csvContent += [
+        escapeCsvCell(e.id),
+        escapeCsvCell(e.name),
+        escapeCsvCell(e.fatherName),
+        escapeCsvCell(formattedPhone),
+        escapeCsvCell(e.gender),
+        escapeCsvCell(e.currentAddress),
+        escapeCsvCell(uploadLink)
+      ].join(',') + '\n';
     });
 
     return res.send(csvContent);
@@ -1931,7 +2033,6 @@ app.post('/api/login', authLimiter, async (req, res) => {
         }
       } catch (err) {
         console.warn('⚠️ Login failed during cloud DB query. Triggering local fallback.', err.message);
-        usePostgres = false;
         shouldRunFallback = true;
       }
     } else {
@@ -2001,7 +2102,7 @@ function verifyGoogleToken(token) {
   const https = require('https');
   return new Promise((resolve, reject) => {
     const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`;
-    https.get(url, (res) => {
+    const req = https.get(url, (res) => {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
@@ -2018,7 +2119,11 @@ function verifyGoogleToken(token) {
           reject(e);
         }
       });
-    }).on('error', (err) => {
+    });
+    req.setTimeout(5000, () => {
+      req.destroy(new Error('Google token verification timeout (5s)'));
+    });
+    req.on('error', (err) => {
       reject(err);
     });
   });
@@ -2112,7 +2217,7 @@ async function verifyImageAccess(req, res, empId) {
   if (isAdmin(req)) return true;
 
   const queryToken = req.query.token;
-  if (queryToken) {
+  if (typeof queryToken === 'string' && queryToken.length > 0) {
     let empData = null;
     try {
       if (usePostgres && pool) {
@@ -2124,11 +2229,10 @@ async function verifyImageAccess(req, res, empId) {
       }
     } catch (err) {
       console.warn('⚠️ verifyImageAccess failed during cloud DB query. Falling back to local JSON.', err.message);
-      usePostgres = false;
       const db = readLocalDb();
       empData = db.employees.find(e => e.id === empId);
     }
-    if (empData && empData.secureToken === queryToken) {
+    if (empData && timingSafeTokenMatch(empData.secureToken, queryToken)) {
       return true;
     }
   }
@@ -2155,7 +2259,6 @@ app.get('/api/employees/:id/photo', async (req, res) => {
       }
     } catch (err) {
       console.warn('⚠️ Serving photo failed during cloud DB query. Falling back to local JSON.', err.message);
-      usePostgres = false;
       const photosDb = readPhotosDb();
       if (photosDb[empId]) base64Str = photosDb[empId].photo;
     }
@@ -2170,6 +2273,8 @@ app.get('/api/employees/:id/photo', async (req, res) => {
 
     if (!base64Str || !base64Str.startsWith('data:image/')) {
       res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Cache-Control', 'public, max-age=86400');
       return res.send(defaultAvatarSvg);
     }
@@ -2179,10 +2284,18 @@ app.get('/api/employees/:id/photo', async (req, res) => {
       return res.status(500).json({ error: 'Invalid photo format.' });
     }
 
-    const mimeType = matches[1];
+    const mimeType = matches[1].toLowerCase();
+    if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      return res.send(defaultAvatarSvg);
+    }
+
     const buffer = Buffer.from(matches[2], 'base64');
 
     res.setHeader('Content-Type', mimeType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     return res.send(buffer);
   } catch (e) {
@@ -2200,6 +2313,8 @@ app.get('/api/employees/default-avatar.svg', (req, res) => {
     </svg>`
   );
   res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   return res.send(defaultAvatarSvg);
 });
@@ -2224,7 +2339,6 @@ app.get('/api/employees/:id/signature', async (req, res) => {
       }
     } catch (err) {
       console.warn('⚠️ Serving signature failed during cloud DB query. Falling back to local JSON.', err.message);
-      usePostgres = false;
       const photosDb = readPhotosDb();
       if (photosDb[empId]) base64Str = photosDb[empId].signature;
     }
@@ -2238,10 +2352,15 @@ app.get('/api/employees/:id/signature', async (req, res) => {
       return res.status(500).json({ error: 'Invalid signature format.' });
     }
 
-    const mimeType = matches[1];
+    const mimeType = matches[1].toLowerCase();
+    if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
+      return res.status(400).json({ error: 'Unsupported signature format.' });
+    }
+
     const buffer = Buffer.from(matches[2], 'base64');
 
     res.setHeader('Content-Type', mimeType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     return res.send(buffer);
   } catch (e) {
@@ -2271,7 +2390,6 @@ app.get('/api/employees/:id', async (req, res) => {
       }
     } catch (err) {
       console.warn('⚠️ /api/employees/:id failed during cloud DB query. Falling back to local JSON.', err.message);
-      usePostgres = false;
       const db = readLocalDb();
       const emp = db.employees.find(e => e.id === empId);
       if (emp) empData = emp;
@@ -2281,9 +2399,10 @@ app.get('/api/employees/:id', async (req, res) => {
       return res.status(404).json({ error: 'Employee not found.' });
     }
 
-    // Security Check: If requester is not an admin, they must provide the correct secureToken
-    if (!isAdmin(req)) {
-      if (!token || empData.secureToken !== token) {
+    const adminSession = isAdmin(req);
+    // Security Check: If requester is not an admin, they must provide the correct non-empty secureToken
+    if (!adminSession) {
+      if (!timingSafeTokenMatch(empData.secureToken, token)) {
         return res.status(401).json({ error: 'Unauthorized: Invalid verification token.' });
       }
     }
@@ -2297,6 +2416,26 @@ app.get('/api/employees/:id', async (req, res) => {
       if (responseData.documents.signature && responseData.documents.signature.startsWith('/api/')) {
         responseData.documents.signature = `${responseData.documents.signature}?token=${responseData.secureToken}`;
       }
+    }
+
+    // Privacy safeguard (F2-03): For unauthenticated QR verification requests, project only public card fields
+    if (!adminSession) {
+      return res.json({
+        id: responseData.id,
+        name: responseData.name,
+        fatherName: responseData.fatherName || '',
+        relationType: responseData.relationType || 'Father',
+        department: responseData.department || '',
+        designation: responseData.designation || '',
+        status: responseData.status || 'Active',
+        bloodGroup: responseData.bloodGroup || '',
+        joiningDate: responseData.joiningDate || '',
+        cardIssueDate: responseData.cardIssueDate || '',
+        cardValidity: responseData.cardValidity || 3,
+        documents: {
+          photo: responseData.documents?.photo || ''
+        }
+      });
     }
 
     return res.json(responseData);
@@ -2355,7 +2494,6 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
       }
     } catch (err) {
       console.warn('⚠️ /api/employees failed during cloud DB query. Falling back to local JSON.', err.message);
-      usePostgres = false;
       const db = readLocalDb();
       emps = db.employees || [];
     }
@@ -2462,7 +2600,7 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
     return res.status(201).json(responseData);
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: 'Failed to register guard profile.' });
+    return res.status(e.statusCode || 500).json({ error: e.statusCode ? e.message : 'Failed to register guard profile.' });
   }
 });
 
@@ -2791,7 +2929,7 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
     return res.json(responseData);
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: 'Failed to update employee details.' });
+    return res.status(e.statusCode || 500).json({ error: e.statusCode ? e.message : 'Failed to update employee details.' });
   }
 });
 
@@ -2824,121 +2962,22 @@ let isGitSyncing = false;
 let pendingGitSync = false;
 
 async function syncDatabaseToGit() {
-  if (isGitSyncing) {
-    console.log('🔄 Git Sync: Already in progress. Queueing the sync request.');
-    pendingGitSync = true;
-    return;
-  }
-
-  isGitSyncing = true;
-  console.log('🔄 Triggering automated Git Sync to GitHub and Render...');
-
-  const cleanUpSync = () => {
-    isGitSyncing = false;
-    if (pendingGitSync) {
-      pendingGitSync = false;
-      console.log('🔄 Git Sync: Executing queued sync request after 5s cooldown.');
-      setTimeout(syncDatabaseToGit, 5000);
-    }
-  };
-
-  try {
-    if (!usePostgres || !pool) {
-      console.log('⚠️ Git Sync: Using local flat database, skipping Git backup push.');
-      cleanUpSync();
-      return;
-    }
-
-    // 1. Fetch full configuration snapshot (excluding passwords and sensitive server stats)
-    const empsRes = await pool.query('SELECT data FROM employees');
-    const photosRes = await pool.query('SELECT employee_id, photo, signature FROM employee_photos');
-    const clientsRes = await pool.query('SELECT data FROM clients');
-    const templatesRes = await pool.query('SELECT data FROM templates');
-    const depts = await pool.query('SELECT "value" FROM settings WHERE key = \'departments\'');
-    const desigs = await pool.query('SELECT "value" FROM settings WHERE key = \'designations\'');
-    const manpower = await pool.query('SELECT "value" FROM settings WHERE key = \'manpowerTypes\'');
-    const catalogRes = await pool.query('SELECT "value" FROM settings WHERE key = \'assetsCatalog\'');
-
-    const photosMap = {};
-    photosRes.rows.forEach(r => {
-      photosMap[r.employee_id] = r;
-    });
-
-    const backupPayload = {
-      employees: empsRes.rows.map(r => {
-        const emp = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-        const photoRec = photosMap[emp.id];
-        if (photoRec) {
-          if (!emp.documents) emp.documents = {};
-          if (photoRec.photo) emp.documents.photo = photoRec.photo;
-          if (photoRec.signature) emp.documents.signature = photoRec.signature;
-        }
-        return emp;
-      }),
-      clients: clientsRes.rows.map(r => r.data),
-      assetsCatalog: catalogRes.rows.length > 0 ? catalogRes.rows[0].value : [],
-      departments: depts.rows.length > 0 ? depts.rows[0].value : [],
-      designations: desigs.rows.length > 0 ? desigs.rows[0].value : [],
-      manpowerTypes: manpower.rows.length > 0 ? manpower.rows[0].value : [],
-      templates: templatesRes.rows.map(r => r.data),
-      // SECURITY: Passwords are NEVER written to the git backup file
-      users: []
-    };
-
-    const backupPath = path.join(__dirname, 'db.json.backup');
-    fs.writeFileSync(backupPath, JSON.stringify(backupPayload, null, 2), 'utf8');
-    console.log('✅ db.json.backup file updated locally.');
-
-    // 2. Perform Git commit & push in the background (asynchronously via exec)
-    const { exec } = require('child_process');
-    const executeCmd = (cmd) => new Promise((resolve, reject) => {
-      exec(cmd, { cwd: __dirname }, (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(`${cmd} failed: ${error.message} (stderr: ${stderr})`));
-        } else {
-          resolve(stdout);
-        }
-      });
-    });
-
-    // Add and commit local backup changes first, then pull with rebase, then push to GitHub and Render
-    executeCmd('git add db.json.backup')
-      .then(() => executeCmd('git commit -m "Auto-backup templates and configuration [skip ci]"').catch(() => 'No changes to commit'))
-      .then(() => executeCmd('git pull --rebase origin main'))
-      .then(() => {
-        console.log('🚀 Pushing to GitHub (origin)...');
-        return executeCmd('git push origin main');
-      })
-      .then(() => {
-        console.log('🚀 Pushing to Render (render)...');
-        return executeCmd('git push render main');
-      })
-      .then(() => {
-        console.log('🎉 Automated Git Sync completed successfully! Configuration is fully backed up and live on Render.');
-        cleanUpSync();
-      })
-      .catch(gitErr => {
-        console.error('⚠️ Git Sync Push Failure (may be in read-only environment):', gitErr.message);
-        // Log error to server_errors table so administrator is aware
-        pool.query('INSERT INTO server_errors (message, stack) VALUES ($1, $2)', ['Git Sync Failure: ' + gitErr.message, gitErr.stack || ''])
-          .catch(dbErr => console.error('Failed to log Git Sync error to DB:', dbErr))
-          .finally(() => cleanUpSync());
-      });
-
-  } catch (err) {
-    console.error('❌ Failed to construct database backup snapshot:', err);
-    cleanUpSync();
-  }
+  // Security remediation (F1-01 / F1-05): Automated PII dump to db.json.backup and
+  // shell-based git commits/pushes are permanently disabled. Use encrypted DB backups.
+  return;
 }
 
 // 7.5. AI Dashboard Insights Endpoint (Protected)
 app.get('/api/ai/dashboard-insights', authenticateToken, async (req, res) => {
-  const apiKey = process.env.GEMINI_API_KEY || GEMINI_API_KEY;
-  if (!apiKey || apiKey.trim() === '') {
-    return res.status(400).json({ error: 'Gemini API Key is not configured on the server.' });
-  }
-
   try {
+    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+    if (!apiKey) {
+      return res.status(503).json({
+        success: false,
+        error: 'AI Insights service unconfigured or unavailable (GEMINI_API_KEY is missing).'
+      });
+    }
+
     // 1. Fetch all employees
     let employees = [];
     if (usePostgres && pool) {
@@ -2985,7 +3024,7 @@ app.get('/api/ai/dashboard-insights', authenticateToken, async (req, res) => {
       }
     });
 
-    // 3. Prompt Gemini
+    // 3. Prompt Gemini with 3000ms timeout
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
@@ -3019,7 +3058,11 @@ Format the output strictly as a JSON object matching this schema:
   ]
 }`;
 
-    const result = await model.generateContent(prompt);
+    const generatePromise = model.generateContent(prompt);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('AI request timed out after 3000ms')), 3000)
+    );
+    const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
     
     let jsonText = responseText;
@@ -3033,7 +3076,7 @@ Format the output strictly as a JSON object matching this schema:
 
   } catch (err) {
     console.error('AI Dashboard Insights Error:', err.message);
-    return res.status(500).json({ error: 'Failed to generate operational insights.' });
+    return res.status(503).json({ success: false, error: 'AI Insights service unavailable: ' + err.message });
   }
 });
 
@@ -3164,9 +3207,12 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Query is required.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || GEMINI_API_KEY;
-  if (!apiKey || apiKey.trim() === '') {
-    return res.status(400).json({ error: 'Gemini API Key is not configured on the server.' });
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey) {
+    return res.status(503).json({
+      success: false,
+      error: 'AI service unconfigured or unavailable (GEMINI_API_KEY is missing).'
+    });
   }
 
   try {
@@ -3194,7 +3240,11 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
       "officialName": "The official name of the place"
     }`;
 
-    const result = await model.generateContent(prompt);
+    const generatePromise = model.generateContent(prompt);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('AI request timed out after 3000ms')), 3000)
+    );
+    const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
     
     let jsonText = responseText;
@@ -3206,7 +3256,7 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
     const data = JSON.parse(jsonText);
     return res.json({ success: true, officialName: data.officialName });
   } catch (error) {
-    console.error('Resolve official name error:', error);
+    console.error('Resolve official name error:', error.message);
     // Safe fallback: capitalize and return
     const fallback = query.toUpperCase().trim();
     return res.json({ success: true, officialName: fallback, warning: 'Failed to connect to AI. Used uppercase fallback.' });
@@ -3215,9 +3265,12 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
 
 // Batch audit current departments list using Gemini
 app.get('/api/audit-departments', authenticateToken, async (req, res) => {
-  const apiKey = process.env.GEMINI_API_KEY || GEMINI_API_KEY;
-  if (!apiKey || apiKey.trim() === '') {
-    return res.status(400).json({ error: 'Gemini API Key is not configured on the server.' });
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey) {
+    return res.status(503).json({
+      success: false,
+      error: 'AI service unconfigured or unavailable (GEMINI_API_KEY is missing).'
+    });
   }
 
   try {
@@ -3255,7 +3308,11 @@ app.get('/api/audit-departments', authenticateToken, async (req, res) => {
       "Current Name 2": "Official Name 2"
     }`;
 
-    const result = await model.generateContent(prompt);
+    const generatePromise = model.generateContent(prompt);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('AI request timed out after 3000ms')), 3000)
+    );
+    const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
     
     let jsonText = responseText;
@@ -3267,8 +3324,8 @@ app.get('/api/audit-departments', authenticateToken, async (req, res) => {
     const auditMap = JSON.parse(jsonText);
     return res.json({ success: true, audit: auditMap });
   } catch (error) {
-    console.error('Audit departments error:', error);
-    return res.status(500).json({ error: 'Failed to run department audit: ' + error.message });
+    console.error('Audit departments error:', error.message);
+    return res.status(503).json({ success: false, error: 'Failed to run department audit: ' + error.message });
   }
 });
 
@@ -3292,21 +3349,17 @@ app.post('/api/rename-department', authenticateToken, async (req, res) => {
         }
       }
       
-      // Update employees in PostgreSQL
-      const empRes = await pool.query("SELECT id, data FROM employees");
-      for (const row of empRes.rows) {
-        const empData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-        if (empData && empData.department === oldName) {
-          empData.department = newName;
-          await pool.query("UPDATE employees SET data = $1 WHERE id = $2", [JSON.stringify(empData), row.id]);
-        }
-      }
+      // Update employees in PostgreSQL in a single atomic batch query
+      await pool.query(`
+        UPDATE employees
+        SET data = jsonb_set(data, '{department}', to_jsonb($1::text))
+        WHERE data->>'department' = $2
+      `, [newName, oldName]);
     }
 
     // 2. Update local db.json cache
-    const dbPath = 'C:/Users/salim/.gemini/antigravity/scratch/valley-security-system/db.json';
-    if (fs.existsSync(dbPath)) {
-      const localDb = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    if (fs.existsSync(DB_PATH)) {
+      const localDb = readLocalDb();
       if (localDb.departments && Array.isArray(localDb.departments)) {
         localDb.departments = localDb.departments.map(d => d === oldName ? newName : d);
         localDb.departments = [...new Set(localDb.departments)];
@@ -3496,7 +3549,6 @@ app.get('/api/db', authenticateToken, async (req, res) => {
         dbPayload.assetsCatalog = catalogRes.rows.length > 0 ? catalogRes.rows[0].value : [];
       } catch (err) {
         console.warn('⚠️ /api/db failed during cloud DB query. Triggering local fallback.', err.message);
-        usePostgres = false;
         shouldRunFallback = true;
       }
     } else {
@@ -3671,7 +3723,7 @@ app.use(async (err, req, res, next) => {
       console.error('Failed to log route error to database:', dbErr);
     }
   }
-  res.status(500).send('Internal Server Error: ' + err.message);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Capture and log process uncaught exceptions to PostgreSQL, then exit safely

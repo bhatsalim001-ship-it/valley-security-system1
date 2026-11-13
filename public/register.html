@@ -1350,11 +1350,6 @@
         async function handleRegistrationSubmit(event) {
             event.preventDefault();
 
-            // Auto-generate clean SVG avatar if user hasn't uploaded a photo yet
-            if (!base64PhotoData) {
-                base64PhotoData = 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#12141c"/><circle cx="150" cy="110" r="50" fill="#cfa15c"/><path d="M75 250 c0-50 40-70 75-70 s75 20 75 70" fill="#cfa15c"/></svg>');
-            }
-
             const btnSubmit = document.getElementById('btn-submit-form');
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 18px; height: 18px; display:inline-block; vertical-align:middle;"></i> Submitting...';
@@ -1371,7 +1366,7 @@
                 designation: document.getElementById('guard-designation').value,
                 gender: document.getElementById('guard-gender').value,
                 currentAddress: document.getElementById('guard-address').value.trim(),
-                photoBase64: base64PhotoData
+                photoBase64: base64PhotoData || null
             };
 
             try {

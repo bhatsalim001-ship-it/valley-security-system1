@@ -41,10 +41,11 @@
                 <i data-lucide="${iconName}" style="width: 18px; height: 18px;"></i>
             </div>
             <div class="toast-content">
-                <div class="toast-message">${message}</div>
+                <div class="toast-message"></div>
             </div>
             <button type="button" class="toast-close">&times;</button>
         `;
+        toast.querySelector('.toast-message').textContent = String(message ?? '');
         
         container.appendChild(toast);
         
@@ -154,22 +155,22 @@ let directoryViewMode = 'card'; // 'card' or 'list'
 let serverStatusFailedAttempts = 0;
 function startServerStatusHeartbeat() {
     setInterval(async () => {
+        if (document.hidden) return; // Skip in background tabs to conserve rate limit
         try {
             const response = await fetch('/api/lan-ip');
-            if (response.ok) {
-                serverStatusFailedAttempts = 0; // reset on success
-            } else {
+            if (response.ok || response.status === 429) {
+                serverStatusFailedAttempts = 0; // reset on success or rate-limit
+            } else if (response.status >= 500) {
                 serverStatusFailedAttempts++;
             }
         } catch (err) {
             serverStatusFailedAttempts++;
         }
 
-        if (serverStatusFailedAttempts >= 3) {
-            // Server offline consecutively for 45s, force reload
-            window.location.reload();
+        if (serverStatusFailedAttempts >= 5) {
+            console.warn('⚠️ Server unreachable after multiple consecutive health checks.');
         }
-    }, 15000); // Check every 15 seconds
+    }, 60000); // Check every 60 seconds (calmed from 15s)
 }
 
 // System Auto-Updates Checking Logic
@@ -294,9 +295,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start background status heartbeat
     startServerStatusHeartbeat();
     
-    // Start system update checking (run immediately on load, then every 30 seconds)
+    // Start system update checking (run immediately on load, then every 2 minutes)
     checkForUpdates();
-    setInterval(checkForUpdates, 30000);
+    setInterval(() => {
+        if (!document.hidden) checkForUpdates();
+    }, 120000);
     
     // Bind afterprint event to clean print classes
     window.addEventListener('afterprint', () => {
@@ -681,18 +684,51 @@ function updateHeaderTitles(view) {
     }
 }
 
-// Fetch All Database details
+// Fetch All Database details (Optimized: parallel lightweight endpoints with /api/db fallback)
 async function fetchData() {
     try {
-        const response = await fetch('/api/db');
-        if (!response.ok) throw new Error('API Sync failure');
-        const db = await response.json();
+        let emps = [];
+        let classifications = {};
+
+        try {
+            const [empRes, classRes] = await Promise.all([
+                fetch('/api/employees'),
+                fetch('/api/classifications')
+            ]);
+            if (empRes.ok) {
+                emps = await empRes.json();
+                if (classRes.ok) {
+                    classifications = await classRes.json();
+                }
+            } else {
+                // Graceful fallback to /api/db if /api/employees fails
+                const dbRes = await fetch('/api/db');
+                if (!dbRes.ok) throw new Error('API Sync failure');
+                const db = await dbRes.json();
+                emps = db.employees || [];
+                classifications = {
+                    departments: db.departments || [],
+                    designations: db.designations || [],
+                    manpowerTypes: db.manpowerTypes || []
+                };
+            }
+        } catch (fetchErr) {
+            const dbRes = await fetch('/api/db');
+            if (!dbRes.ok) throw new Error('API Sync failure');
+            const db = await dbRes.json();
+            emps = db.employees || [];
+            classifications = {
+                departments: db.departments || [],
+                designations: db.designations || [],
+                manpowerTypes: db.manpowerTypes || []
+            };
+        }
         
-        VSA_STATE.employees = db.employees || [];
+        VSA_STATE.employees = emps || [];
         VSA_STATE.clients = [];
-        VSA_STATE.departments = db.departments || [];
-        VSA_STATE.designations = db.designations || [];
-        VSA_STATE.manpowerTypes = db.manpowerTypes || [];
+        VSA_STATE.departments = classifications.departments || [];
+        VSA_STATE.designations = classifications.designations || [];
+        VSA_STATE.manpowerTypes = classifications.manpowerTypes || [];
         
 
 
@@ -847,11 +883,8 @@ async function fetchAiDashboardInsights() {
     }
 
     try {
-        const token = localStorage.getItem('vsa_token') || getCookie('vsa_token');
         const response = await fetch('/api/ai/dashboard-insights', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            credentials: 'same-origin'
         });
 
         if (!response.ok) {
@@ -1172,7 +1205,7 @@ function renderRecentEmployeesTable() {
         const row = document.createElement('tr');
         const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
         const avatarHtml = photoSrc ? 
-            `<img src="${photoSrc}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--glass-border);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : 
+            `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Photo" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--glass-border);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : 
             `<div style="width: 24px; height: 24px; border-radius: 50%; background: var(--input-bg); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--text-muted); border: 1px solid var(--glass-border);">${emp.name ? emp.name[0].toUpperCase() : '?'}</div>`;
 
         row.innerHTML = `
@@ -1294,7 +1327,7 @@ function renderEmployeeDirectory() {
 
         const isChecked = VSA_STATE.selectedEmployeeIds.includes(emp.id) ? 'checked' : '';
         const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
-        const showPhoto = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 24px; height: 24px; color: var(--theme-gold);"></i>`;
+        const showPhoto = photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 24px; height: 24px; color: var(--theme-gold);"></i>`;
         
         if (directoryViewMode === 'card') {
             const card = document.createElement('div');
@@ -1338,7 +1371,7 @@ function renderEmployeeDirectory() {
                 <td>
                     <div class="d-flex align-items-center gap-2">
                         <div class="directory-list-avatar" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--glass-border); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--input-bg);">
-                            ${photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-muted);"></i>`}
+                            ${photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Avatar" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-muted);"></i>`}
                         </div>
                         <span>${escapeHtml(toTitleCase(emp.name))}</span>
                     </div>
@@ -1685,7 +1718,7 @@ function populateIdEmployeeChecklist() {
             const isChecked = VSA_STATE.idSelectedEmployeeIds.includes(emp.id) ? 'checked' : '';
             const isActive = emp.id === activePreviewId ? 'active-preview' : '';
             const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
-            const avatarHtml = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
+            const avatarHtml = photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Avatar" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
 
             listHtml += `
                 <div class="id-checklist-item ${isActive}" data-id="${emp.id}">
@@ -1996,12 +2029,12 @@ function openEmployeeModal(empId = null) {
         document.getElementById('form-police-check').value = emp.documents?.policeVerification || 'Pending';
 
         if (emp.documents?.photo) {
-            document.getElementById('form-photo-preview-box').innerHTML = `<img src="${emp.documents.photo}">`;
+            document.getElementById('form-photo-preview-box').innerHTML = `<img src="${emp.documents.photo}" alt="Employee Photo Preview">`;
         } else {
             document.getElementById('form-photo-preview-box').innerHTML = `<span class="preview-placeholder">No image selected (Required for ID card)</span>`;
         }
         if (emp.documents?.signature) {
-            document.getElementById('form-sig-preview-box').innerHTML = `<img src="${emp.documents.signature}">`;
+            document.getElementById('form-sig-preview-box').innerHTML = `<img src="${emp.documents.signature}" alt="Signature Preview">`;
         } else {
             document.getElementById('form-sig-preview-box').innerHTML = `<span class="preview-placeholder">No signature selected (Required for ID card)</span>`;
         }
@@ -2122,7 +2155,7 @@ function handleImageCompression(fileInput, previewBoxId, callback) {
     const reader = new FileReader();
     reader.onload = function(e) {
         const base64 = e.target.result;
-        document.getElementById(previewBoxId).innerHTML = `<img src="${base64}">`;
+        document.getElementById(previewBoxId).innerHTML = `<img src="${base64}" alt="Document Preview">`;
         callback(base64);
     };
     reader.readAsDataURL(file);
@@ -2547,7 +2580,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (template.logo === 'preset-vsa-logo') {
             const vsaLogo = getVsaDefaultLogo();
             if (vsaLogo && vsaLogo.startsWith('data:image/')) {
-                logoHtml = `<img src="${vsaLogo}" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+                logoHtml = `<img src="${vsaLogo}" alt="Company Logo" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
             } else {
                 logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
             }
@@ -2558,7 +2591,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         } else if (template.logo === 'preset-eagle') {
             logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" style="display:block; max-width:100%; max-height:100%;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`;
         } else {
-            logoHtml = `<img src="${template.logo}" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            logoHtml = `<img src="${template.logo}" alt="Company Logo" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
         }
     } else {
         logoHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="${template.accentColor || '#dfba5f'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block; max-width:100%; max-height:100%;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
@@ -2570,7 +2603,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (template.signature === 'preset-vsa-sig') {
             const vsaSig = getVsaDefaultSig();
             if (vsaSig && vsaSig.startsWith('data:image/')) {
-                sigHtml = `<img src="${vsaSig}" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
+                sigHtml = `<img src="${vsaSig}" alt="Authorized Signature" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
             } else {
                 sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
             }
@@ -2580,7 +2613,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
             sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M15,20 Q40,5 65,25 T115,15" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
         } else {
             let sigSrc = getProcessedSignature(template.signature);
-            sigHtml = `<img src="${sigSrc}" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">`;
+            sigHtml = `<img src="${sigSrc}" alt="Authorized Signature" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; filter: blur(0.22px) contrast(1.4) brightness(1.02) drop-shadow(0 0 0.18px rgba(10, 25, 47, 0.45)); opacity: 0.93;">`;
         }
     } else {
         sigHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40" style="display:block; max-height:100%; max-width:100%;"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
@@ -2641,7 +2674,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (photoUrl.startsWith('/api/employees/') && emp.secureToken) {
             photoUrl += (photoUrl.includes('?') ? '&' : '?') + `token=${emp.secureToken}`;
         }
-        photoHtml = `<img src="${photoUrl}" crossorigin="anonymous" style="width: 100%; height: 100%; object-fit: cover;">`;
+        photoHtml = `<img src="${photoUrl}" alt="Employee Photo" crossorigin="anonymous" style="width: 100%; height: 100%; object-fit: cover;">`;
     } else {
         const initial = emp.name ? emp.name[0].toUpperCase() : '?';
         photoHtml = `
@@ -3861,14 +3894,22 @@ function handleGlobalSearchInput() {
 }
 
 // Backup database handlers
-function exportFullDatabase() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(VSA_STATE));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `VSA_Database_Backup_${new Date().toISOString().substring(0, 10)}.json`);
-    document.body.appendChild(dlAnchorElem);
-    dlAnchorElem.click();
-    document.body.removeChild(dlAnchorElem);
+async function exportFullDatabase() {
+    try {
+        const response = await fetch('/api/db');
+        const dbData = response.ok ? await response.json() : VSA_STATE;
+        const blob = new Blob([JSON.stringify(dbData, null, 2)], { type: 'application/json' });
+        const blobUrl = URL.createObjectURL(blob);
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", blobUrl);
+        dlAnchorElem.setAttribute("download", `VSA_Database_Backup_${new Date().toISOString().substring(0, 10)}.json`);
+        document.body.appendChild(dlAnchorElem);
+        dlAnchorElem.click();
+        document.body.removeChild(dlAnchorElem);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+    } catch (err) {
+        console.error("Backup export failed:", err);
+    }
 }
 
 function importFullDatabase(e) {
@@ -4024,12 +4065,12 @@ function populateRegistrationForm(emp) {
 
     // Load images if available
     if (emp.documents?.photo) {
-        document.getElementById('reg-photo-preview').innerHTML = `<img src="${emp.documents.photo}" style="max-height: 100px;">`;
+        document.getElementById('reg-photo-preview').innerHTML = `<img src="${emp.documents.photo}" alt="Registration Photo Preview" style="max-height: 100px;">`;
     } else {
         document.getElementById('reg-photo-preview').innerHTML = '<span class="preview-placeholder">Click to upload photo</span>';
     }
     if (emp.documents?.signature) {
-        document.getElementById('reg-signature-preview').innerHTML = `<img src="${getProcessedSignature(emp.documents.signature)}" style="max-height: 100px;">`;
+        document.getElementById('reg-signature-preview').innerHTML = `<img src="${getProcessedSignature(emp.documents.signature)}" alt="Registration Signature Preview" style="max-height: 100px;">`;
     } else {
         document.getElementById('reg-signature-preview').innerHTML = '<span class="preview-placeholder">Click to upload signature</span>';
     }
@@ -4729,7 +4770,7 @@ function populateRecEmployeeChecklist() {
         filtered.forEach(emp => {
             const isActive = emp.id === activePreviewId ? 'active-preview' : '';
             const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
-            const avatarHtml = photoSrc ? `<img src="${photoSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
+            const avatarHtml = photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Avatar" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 12px; height: 12px; color: var(--text-muted);"></i>`;
 
             listHtml += `
                 <div class="id-checklist-item ${isActive}" data-id="${emp.id}">
@@ -5889,13 +5930,13 @@ function renderTemplatesList() {
         const row = document.createElement('tr');
         const isDefault = t.id === 'tpl-default';
         row.innerHTML = `
-            <td><strong>${t.name}</strong> ${isDefault ? '<span class="badge badge-active" style="padding: 2px 6px; font-size: 9px; margin-left: 5px;">Default</span>' : ''}</td>
+            <td><strong>${escapeHtml(t.name)}</strong> ${isDefault ? '<span class="badge badge-active" style="padding: 2px 6px; font-size: 9px; margin-left: 5px;">Default</span>' : ''}</td>
             <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #ffffff;">${t.layout === 'vertical' ? 'Vertical' : 'Horizontal'}</span></td>
-            <td><span style="font-size: 11px; opacity: 0.85;">${t.headerText || '-'}</span></td>
+            <td><span style="font-size: 11px; opacity: 0.85;">${escapeHtml(t.headerText || '-')}</span></td>
             <td>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-xs btn-outline btn-edit-template" data-id="${t.id}">Edit</button>
-                    ${!isDefault ? `<button class="btn btn-xs btn-outline btn-delete-template" data-id="${t.id}" style="color: var(--status-suspended); border-color: rgba(255, 46, 147, 0.15)">Delete</button>` : ''}
+                    <button class="btn btn-xs btn-outline btn-edit-template" data-id="${escapeHtml(t.id)}">Edit</button>
+                    ${!isDefault ? `<button class="btn btn-xs btn-outline btn-delete-template" data-id="${escapeHtml(t.id)}" style="color: var(--status-suspended); border-color: rgba(255, 46, 147, 0.15)">Delete</button>` : ''}
                 </div>
             </td>
         `;
@@ -6726,9 +6767,9 @@ function setupTemplatesManager() {
             try {
                 const response = await fetch('/api/templates/generate-ai', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('vsa_token')
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         prompt: prompt,
@@ -7146,7 +7187,7 @@ function setupCropperControls() {
                             inputEl.dataset.imageData = processedBase64;
                         }
                         if (previewBox) {
-                            previewBox.innerHTML = `<img src="${processedBase64}" style="max-height: 100px;">`;
+                            previewBox.innerHTML = `<img src="${processedBase64}" alt="Processed Photo" style="max-height: 100px;">`;
                         }
                         // Instantly update live card previews if visible
                         const selectedId = document.getElementById('id-select-employee')?.value;
@@ -7160,7 +7201,7 @@ function setupCropperControls() {
                             inputEl.dataset.imageData = base64Str;
                         }
                         if (previewBox) {
-                            previewBox.innerHTML = `<img src="${base64Str}" style="max-height: 100px;">`;
+                            previewBox.innerHTML = `<img src="${base64Str}" alt="Processed Photo" style="max-height: 100px;">`;
                         }
                     });
                 } else {
@@ -7169,7 +7210,7 @@ function setupCropperControls() {
                         inputEl.dataset.imageData = base64Str;
                     }
                     if (previewBox) {
-                        previewBox.innerHTML = `<img src="${base64Str}" style="max-height: 100px;">`;
+                        previewBox.innerHTML = `<img src="${base64Str}" alt="Processed Photo" style="max-height: 100px;">`;
                     }
                 }
             }
@@ -7181,7 +7222,17 @@ function setupCropperControls() {
 }
 
 // Accessibility (a11y) Modal Manager (Focus Trap & Escape key closer)
+let lastFocusedElementBeforeModal = null;
+
 function setupModalA11y() {
+    // Track active element or clicked element before opening modals
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest('button, [role="button"], a, input, select');
+        if (target && !target.closest('.modal-overlay:not(.hidden), .modal-backdrop:not(.hidden)')) {
+            lastFocusedElementBeforeModal = target;
+        }
+    }, true);
+
     // Listen for Escape key to close any active modals
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -7198,6 +7249,9 @@ function setupModalA11y() {
                         const inputEl = document.getElementById(cropperTriggerInputId);
                         if (inputEl) inputEl.value = '';
                     }
+                }
+                if (lastFocusedElementBeforeModal && typeof lastFocusedElementBeforeModal.focus === 'function') {
+                    lastFocusedElementBeforeModal.focus();
                 }
             }
         }
@@ -7377,6 +7431,7 @@ function setupInboxModalHandlers() {
     
     if (btnOpenInbox && inboxModal) {
         btnOpenInbox.addEventListener('click', () => {
+            lastFocusedElementBeforeModal = btnOpenInbox;
             renderInbox();
             inboxModal.classList.remove('hidden');
         });
@@ -7385,6 +7440,9 @@ function setupInboxModalHandlers() {
     if (btnCloseInbox && inboxModal) {
         btnCloseInbox.addEventListener('click', () => {
             inboxModal.classList.add('hidden');
+            if (lastFocusedElementBeforeModal && typeof lastFocusedElementBeforeModal.focus === 'function') {
+                lastFocusedElementBeforeModal.focus();
+            }
         });
     }
     
@@ -7526,34 +7584,32 @@ function renderInboxPendingList() {
         const row = document.createElement('tr');
         row.style.borderBottom = '1px solid var(--border-color)';
         
-        // Fix: handle base64 data URIs correctly (same fix as onboarding preview)
+        // Fix: handle base64 data URIs safely and reject dangerous SVG/script URLs
         let avatarSrc = '';
         if (emp.documents?.photo) {
-            const rawPhoto = emp.documents.photo;
-            if (rawPhoto.startsWith('data:image/')) {
+            const rawPhoto = String(emp.documents.photo);
+            if (/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(rawPhoto)) {
                 avatarSrc = rawPhoto;
-            } else if (rawPhoto.startsWith('http') || rawPhoto.startsWith('/')) {
-                avatarSrc = rawPhoto.includes('token=') ? rawPhoto : `${rawPhoto}?token=${emp.secureToken || ''}`;
-            } else {
-                avatarSrc = rawPhoto;
+            } else if (/^\/api\/employees\/[^"'\s]+\/(photo|signature)/.test(rawPhoto)) {
+                avatarSrc = rawPhoto.includes('token=') ? rawPhoto : `${rawPhoto}?token=${encodeURIComponent(emp.secureToken || '')}`;
             }
         }
         const avatarHtml = avatarSrc ? 
-            `<img src="${avatarSrc}" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : 
+            `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(emp.name || 'Candidate')} Photo" style="width: 44px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : 
             `<div style="width: 44px; height: 55px; background: rgba(255,255,255,0.05); border-radius: 6px; display:flex; align-items:center; justify-content:center; color: var(--text-secondary);"><i data-lucide="user" style="width:18px;"></i></div>`;
             
         row.innerHTML = `
             <td style="padding: 10px; vertical-align: middle;">${avatarHtml}</td>
-            <td style="padding: 10px; vertical-align: middle; font-weight:600; color: #fff;">${toTitleCase(emp.name)}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.mobile || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.dob || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.designation || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.department || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle; font-weight:600; color: #fff;">${escapeHtml(toTitleCase(emp.name))}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.mobile || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.dob || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.designation || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.department || '-')}</td>
             <td style="padding: 10px; vertical-align: middle; text-align: right;">
                 <div style="display: inline-flex; gap: 6px;">
-                    <button class="btn btn-xs btn-outline btn-inbox-view" data-id="${emp.id}" style="border-color: rgba(255,255,255,0.15); color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer; background: rgba(255,255,255,0.03);"><i data-lucide="eye" style="width:12px;"></i> View</button>
-                    <button class="btn btn-xs btn-success btn-inbox-approve" data-id="${emp.id}" style="background: #10b981; border-color: #10b981; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="check" style="width:12px;"></i> Approve</button>
-                    <button class="btn btn-xs btn-danger btn-inbox-reject" data-id="${emp.id}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="x" style="width:12px;"></i> Reject</button>
+                    <button class="btn btn-xs btn-outline btn-inbox-view" data-id="${escapeHtml(emp.id)}" style="border-color: rgba(255,255,255,0.15); color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer; background: rgba(255,255,255,0.03);"><i data-lucide="eye" style="width:12px;"></i> View</button>
+                    <button class="btn btn-xs btn-success btn-inbox-approve" data-id="${escapeHtml(emp.id)}" style="background: #10b981; border-color: #10b981; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="check" style="width:12px;"></i> Approve</button>
+                    <button class="btn btn-xs btn-danger btn-inbox-reject" data-id="${escapeHtml(emp.id)}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="x" style="width:12px;"></i> Reject</button>
                 </div>
             </td>
         `;
@@ -7780,17 +7836,17 @@ function renderInboxRejectedList() {
         row.style.borderBottom = '1px solid var(--border-color)';
         
         row.innerHTML = `
-            <td style="padding: 10px; vertical-align: middle; font-weight:600; color: #fff;">${toTitleCase(emp.name)}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.mobile || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.dob || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.designation || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.department || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle;">${emp.rejectionDate || '-'}</td>
-            <td style="padding: 10px; vertical-align: middle; color: #f87171; font-style: italic;">${emp.rejectionReason || '-'}</td>
+            <td style="padding: 10px; vertical-align: middle; font-weight:600; color: #fff;">${escapeHtml(toTitleCase(emp.name))}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.mobile || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.dob || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.designation || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.department || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle;">${escapeHtml(emp.rejectionDate || '-')}</td>
+            <td style="padding: 10px; vertical-align: middle; color: #f87171; font-style: italic;">${escapeHtml(emp.rejectionReason || '-')}</td>
             <td style="padding: 10px; vertical-align: middle; text-align: right;">
                 <div style="display: inline-flex; gap: 8px;">
-                    <button class="btn btn-xs btn-outline btn-inbox-reopen" data-id="${emp.id}" style="display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer; color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15);"><i data-lucide="edit" style="width:12px;"></i> Re-review</button>
-                    <button class="btn btn-xs btn-danger btn-inbox-delete-log" data-id="${emp.id}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="trash-2" style="width:12px;"></i> Clear</button>
+                    <button class="btn btn-xs btn-outline btn-inbox-reopen" data-id="${escapeHtml(emp.id)}" style="display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer; color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15);"><i data-lucide="edit" style="width:12px;"></i> Re-review</button>
+                    <button class="btn btn-xs btn-danger btn-inbox-delete-log" data-id="${escapeHtml(emp.id)}" style="background: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items:center; gap:4px; padding: 4px 8px; font-size:11px; cursor:pointer;"><i data-lucide="trash-2" style="width:12px;"></i> Clear</button>
                 </div>
             </td>
         `;
@@ -8068,9 +8124,9 @@ function setupOcrScanner() {
                 try {
                     const response = await fetch('/api/employees/scan-form', {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + localStorage.getItem('vsa_token')
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ image: base64Image })
                     });
@@ -8256,7 +8312,7 @@ function setupOcrScanner() {
                     photoInput.dataset.imageData = data.photo;
                 }
                 if (photoPreview) {
-                    photoPreview.innerHTML = `<img src="${data.photo}" style="max-height: 100px; border-radius: 8px;">`;
+                    photoPreview.innerHTML = `<img src="${data.photo}" alt="Live Preview Photo" style="max-height: 100px; border-radius: 8px;">`;
                 }
             }
         }
@@ -8278,8 +8334,8 @@ function setupOcrScanner() {
             seenNotificationIds.add(n.id);
             if (!firstPoll && !n.is_read) {
               alert(`📷 Live Update: ${n.employee_name} (${n.employee_id}) has submitted their form & photo!`);
-              if (typeof window.loadEmployeesData === 'function') {
-                window.loadEmployeesData();
+              if (typeof fetchData === 'function') {
+                fetchData();
               }
             }
           }
@@ -8289,7 +8345,9 @@ function setupOcrScanner() {
     } catch (e) {}
   }
 
-  setInterval(checkNotifications, 10000);
+  setInterval(() => {
+    if (!document.hidden) checkNotifications();
+  }, 30000);
   checkNotifications();
 })();
 

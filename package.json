@@ -12,13 +12,12 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "express": "^4.19.2",
+    "express": "^4.22.3",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.11.3",
-    "sharp": "^0.34.5",
-    "tesseract.js": "^7.0.0"
+    "sharp": "^0.35.5"
   },
   "author": "Valley Security Service Agency",
   "license": "ISC",

@@ -355,28 +355,37 @@
         }
 
         function getFallbackAvatar(initial) {
-            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23c8102e'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${initial}</text></svg>`;
+            const safeInitial = escapeHtml(String(initial || '?').slice(0, 1).toUpperCase());
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23c8102e'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${safeInitial}</text></svg>`;
             return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+        }
+
+        function sanitizeImageUrl(url, fallback) {
+            if (typeof url === 'string' && (/^\/api\/employees\/[^"'\s]+\/(photo|signature)(\?token=[A-Za-z0-9_-]+)?$/.test(url) || /^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/.test(url))) {
+                return url;
+            }
+            return fallback;
         }
 
         function renderGuardDetails(container, guard) {
             const isActive = guard.status === 'Active';
             const statusClass = isActive ? 'status-verified' : 'status-suspended';
-            const statusText = isActive ? 'Active Guard (Verified)' : `${guard.status} Personnel`;
+            const statusText = isActive ? 'Active Guard (Verified)' : `${guard.status || ''} Personnel`;
             const statusIcon = isActive ? 'check-circle-2' : 'alert-octagon';
 
-            const photoUrl = guard.documents?.photo || getFallbackAvatar(guard.name ? guard.name[0].toUpperCase() : '?');
+            const fallbackAvatar = getFallbackAvatar(guard.name ? guard.name[0].toUpperCase() : '?');
+            const photoUrl = sanitizeImageUrl(guard.documents?.photo, fallbackAvatar);
 
             container.innerHTML = `
                 <div class="status-badge-container">
                     <span class="verification-status ${statusClass}">
                         <i data-lucide="${statusIcon}" style="width: 16px; height: 16px;"></i>
-                        ${statusText}
+                        ${escapeHtml(statusText)}
                     </span>
                 </div>
 
                 <div class="guard-avatar-frame">
-                    <img src="${photoUrl}" alt="Guard Profile">
+                    <img src="${escapeHtml(photoUrl)}" alt="Guard Profile">
                 </div>
 
                 <h3 class="guard-name">${escapeHtml(guard.name)}</h3>
@@ -436,7 +445,7 @@
                     countdownContainer.innerHTML = `
                         <div style="color: ${alertColor}; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px;">
                             <i data-lucide="shield-off" style="display: inline-block; vertical-align: middle; width: 18px; height: 18px; margin-right: 4px;"></i>
-                            ${message}
+                            ${escapeHtml(message)}
                         </div>
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
                             This ID card is no longer valid for duty.
@@ -519,8 +528,8 @@
             container.innerHTML = `
                 <div class="error-message">
                     <i data-lucide="shield-alert" class="error-icon" style="width: 48px; height: 48px;"></i>
-                    <h3>${heading}</h3>
-                    <p class="text-muted" style="font-size: 13px; line-height: 1.5; margin-top: 10px;">${details}</p>
+                    <h3>${escapeHtml(heading)}</h3>
+                    <p class="text-muted" style="font-size: 13px; line-height: 1.5; margin-top: 10px;">${escapeHtml(details)}</p>
                 </div>
             `;
             lucide.createIcons();
