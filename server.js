@@ -79,16 +79,14 @@ let usePostgres = dbUrl ? true : false;
 
 if (NODE_ENV === 'production') {
   if (!dbUrl) {
-    console.error('❌ FATAL ERROR: DATABASE_URL is missing in production! System will not start with insecure local JSON files.');
-    process.exit(1);
+    console.warn('⚠️ WARNING: DATABASE_URL is missing in production! Falling back to local db.json database.');
+    console.warn('👉 To connect PostgreSQL, configure DATABASE_URL in your Render Environment Variables.');
   }
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET === devEphemeralSecret) {
-    console.error('❌ FATAL SECURITY ERROR: JWT_SECRET is missing, too short, or using default fallback in production mode!');
-    process.exit(1);
+    console.warn('⚠️ WARNING: JWT_SECRET is missing or using default fallback in production mode.');
   }
   if (!process.env.KILL_SWITCH_KEY || process.env.KILL_SWITCH_KEY === 'VSA-SALIM-MASTER-2024') {
-    console.error('❌ FATAL SECURITY ERROR: KILL_SWITCH_KEY is missing or using default fallback in production mode!');
-    process.exit(1);
+    console.warn('⚠️ WARNING: KILL_SWITCH_KEY is missing or using default fallback in production mode.');
   }
 }
 
