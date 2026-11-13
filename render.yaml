@@ -11,3 +11,11 @@ services:
         value: production
       - key: PORT
         value: 3000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: KILL_SWITCH_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
