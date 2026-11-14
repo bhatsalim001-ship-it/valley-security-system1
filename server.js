@@ -21,7 +21,7 @@ if (fs.existsSync(envPath)) {
     if (parts.length >= 2) {
       const key = parts[0].trim();
       const value = parts.slice(1).join('=').trim().replace(/^['"]|['"]$/g, '');
-      if (key && !key.startsWith('#')) {
+      if (key && !key.startsWith('#') && process.env[key] === undefined) {
         process.env[key] = value;
       }
     }
@@ -121,7 +121,7 @@ function readLocalDb() {
   } catch (e) {
     console.error('Error reading local JSON database:', e);
   }
-  return { employees: [], clients: [], assetsCatalog: [], departments: [], designations: [], manpowerTypes: [], templates: [], users: [] };
+  return { employees: [], clients: [], assetsCatalog: [], departments: [], designations: [], manpowerTypes: [], templates: [], users: [], deployment_projects: [] };
 }
 
 function writeLocalDb(data) {
@@ -150,6 +150,111 @@ function writePhotosDb(data) {
   } catch (e) {
     console.error('Error writing local photos JSON database:', e);
   }
+}
+
+// Slug generator for clean project URLs
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Deployment Project lookup helper (PostgreSQL or local DB fallback)
+async function getDeploymentProject(identifier) {
+  if (!identifier || typeof identifier !== 'string') return null;
+  const cleanId = identifier.trim();
+  const slugTarget = slugify(cleanId);
+
+  if (usePostgres && pool) {
+    try {
+      const res = await pool.query(
+        'SELECT * FROM deployment_projects WHERE id = $1 OR slug = $2 OR LOWER(slug) = LOWER($3) LIMIT 1',
+        [cleanId, cleanId, slugTarget]
+      );
+      if (res.rows.length > 0) {
+        const row = res.rows[0];
+        const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+        return {
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          data: data || {},
+          created_at: row.created_at,
+          updated_at: row.updated_at
+        };
+      }
+    } catch (err) {
+      console.warn('⚠️ getDeploymentProject postgres query failed:', err.message);
+    }
+  }
+
+  // Fallback to local DB
+  const db = readLocalDb();
+  const projects = Array.isArray(db.deployment_projects) ? db.deployment_projects : [];
+  const found = projects.find(p => p.id === cleanId || p.slug === cleanId || p.slug === slugTarget);
+  if (found) {
+    return {
+      id: found.id,
+      name: found.name,
+      slug: found.slug,
+      data: found.data || found,
+      created_at: found.created_at || found.createdAt,
+      updated_at: found.updated_at || found.updatedAt
+    };
+  }
+  return null;
+}
+
+// Live stats calculator for a deployment project
+async function getProjectWithStats(project) {
+  const stats = {
+    totalRegistered: 0,
+    approvedCount: 0,
+    pendingCount: 0,
+    rejectedCount: 0,
+    targetGuards: Number(project.data?.targetGuards) || 0,
+    progressPercent: 0
+  };
+
+  if (usePostgres && pool) {
+    try {
+      const res = await pool.query(`
+        SELECT 
+          COUNT(id) AS total_registered,
+          COUNT(id) FILTER (WHERE (data->>'status') IN ('Active', 'Approved')) AS approved_count,
+          COUNT(id) FILTER (WHERE (data->>'status') = 'Pending') AS pending_count,
+          COUNT(id) FILTER (WHERE (data->>'status') = 'Rejected') AS rejected_count
+        FROM employees
+        WHERE (data->>'deployment_project_id') = $1
+      `, [project.id]);
+
+      if (res.rows.length > 0) {
+        const row = res.rows[0];
+        stats.totalRegistered = parseInt(row.total_registered, 10) || 0;
+        stats.approvedCount = parseInt(row.approved_count, 10) || 0;
+        stats.pendingCount = parseInt(row.pending_count, 10) || 0;
+        stats.rejectedCount = parseInt(row.rejected_count, 10) || 0;
+      }
+    } catch (err) {
+      console.warn('⚠️ getProjectWithStats postgres query failed:', err.message);
+    }
+  } else {
+    const db = readLocalDb();
+    const emps = Array.isArray(db.employees) ? db.employees : [];
+    const projectEmps = emps.filter(e => (e.deployment_project_id === project.id) || (e.data && e.data.deployment_project_id === project.id));
+    stats.totalRegistered = projectEmps.length;
+    stats.approvedCount = projectEmps.filter(e => (e.status === 'Active' || e.status === 'Approved')).length;
+    stats.pendingCount = projectEmps.filter(e => (e.status === 'Pending')).length;
+    stats.rejectedCount = projectEmps.filter(e => (e.status === 'Rejected')).length;
+  }
+
+  if (stats.targetGuards > 0) {
+    stats.progressPercent = Math.min(100, Math.round((stats.totalRegistered / stats.targetGuards) * 100));
+  }
+  return stats;
 }
 
 // Image Compression & Validation Helper via Sharp
@@ -804,7 +909,7 @@ app.use(killSwitchMiddleware);
 // AUTHENTICATION MIDDLEWARE
 // --------------------------------------------------------------------------
 function authenticateToken(req, res, next) {
-  const token = req.cookies.auth_token;
+  const token = req.cookies?.auth_token || (req.headers?.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
   if (!token) {
     return res.status(401).json({ success: false, error: 'Unauthorized: Session expired or missing' });
   }
@@ -1149,6 +1254,17 @@ async function initDatabase() {
     `);
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS deployment_projects (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
@@ -1207,6 +1323,9 @@ async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_employee_photos_updated ON employee_photos (updated_at);
       CREATE INDEX IF NOT EXISTS idx_employees_status ON employees (((data->>'status')));
       CREATE INDEX IF NOT EXISTS idx_employees_dept ON employees (((data->>'department')));
+      CREATE INDEX IF NOT EXISTS idx_deployment_projects_slug ON deployment_projects (slug);
+      CREATE INDEX IF NOT EXISTS idx_deployment_projects_created ON deployment_projects (created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_employees_project_id ON employees (((data->>'deployment_project_id')));
     `);
 
     console.log('✅ PostgreSQL Database Tables & Indexes Verified/Initialized');
@@ -1449,7 +1568,7 @@ app.get('/api/public/classifications', async (req, res) => {
 });
 
 app.post('/api/public/register', registerLimiter, async (req, res) => {
-  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, designation, gender, currentAddress, photoBase64 } = req.body || {};
+  const { name, mobile, guardianName, relationType, dob, bloodGroup, department, designation, gender, currentAddress, photoBase64, deploymentProjectId, deploymentProjectSlug, projectSlug, projectId } = req.body || {};
   const rawPhoto = photoBase64 || (req.body && req.body.photo);
   
   if (!name || !mobile) {
@@ -1461,8 +1580,15 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Please enter a valid mobile number.' });
   }
 
-  const validDept = department || 'Islamic University of Science and Technology';
-  const validDesig = designation || 'Security Guard';
+  // Lookup tagged deployment project if provided
+  const targetProjectIdent = deploymentProjectId || deploymentProjectSlug || projectSlug || projectId;
+  let matchedProject = null;
+  if (targetProjectIdent) {
+    matchedProject = await getDeploymentProject(String(targetProjectIdent));
+  }
+
+  const validDept = department || (matchedProject && matchedProject.data?.department) || (matchedProject && matchedProject.name) || 'Islamic University of Science and Technology';
+  const validDesig = designation || (matchedProject && matchedProject.data?.designation) || 'Security Guard';
   const validGender = gender || 'Male';
   const validBlood = bloodGroup || 'O+';
 
@@ -1537,6 +1663,11 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
         existingEmpData.currentAddress = sanitizedAddress;
         existingEmpData.permanentAddress = sanitizedAddress;
       }
+      if (matchedProject) {
+        existingEmpData.deployment_project_id = matchedProject.id;
+        existingEmpData.deployment_project_name = matchedProject.name;
+        existingEmpData.deployment_project_slug = matchedProject.slug;
+      }
       existingEmpData.photoStatus = 'Available';
       existingEmpData.documents = existingEmpData.documents || {};
       existingEmpData.documents.photo = `/api/employees/${existingEmpId}/photo`;
@@ -1569,6 +1700,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
         success: true,
         merged: true,
         employeeId: existingEmpId,
+        projectName: matchedProject ? matchedProject.name : null,
         message: `Your details and photo have been updated for ${existingEmpData.name} (${existingEmpId}).`
       });
     }
@@ -1613,6 +1745,9 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       emergencyContactRelation: relationType,
       emergencyContactMobile: mobile,
       photoStatus: 'Available',
+      deployment_project_id: matchedProject ? matchedProject.id : null,
+      deployment_project_name: matchedProject ? matchedProject.name : null,
+      deployment_project_slug: matchedProject ? matchedProject.slug : null,
       documents: {
         aadhaar: "Pending Verification",
         policeVerification: "Pending Verification",
@@ -1634,9 +1769,16 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
       writeLocalDb(db);
     }
 
-    await recordNotification('NEW_REGISTRATION', empId, sanitizedName, validDept, `New employee profile created for ${sanitizedName} (${empId}).`);
+    const notifMsg = matchedProject 
+      ? `New deployment candidate ${sanitizedName} (${empId}) registered for project ${matchedProject.name}.`
+      : `New employee profile created for ${sanitizedName} (${empId}).`;
+    await recordNotification('NEW_REGISTRATION', empId, sanitizedName, validDept, notifMsg);
 
-    return res.json({ success: true, employeeId: empId });
+    return res.json({ 
+      success: true, 
+      employeeId: empId,
+      projectName: matchedProject ? matchedProject.name : null 
+    });
   } catch (err) {
     console.error("Self-registration error:", err);
     return res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : 'Internal server error during registration.' });
@@ -3688,6 +3830,451 @@ app.get('/api/system-version', (req, res) => {
 
 app.get('/api/lan-ip', (req, res) => {
   res.json({ lanIp: `${getLANIP()}:${PORT}` });
+});
+
+// ============================================================================
+// DEPLOYMENT PROJECTS & TENDER ONBOARDING APIS
+// ============================================================================
+
+// Public: Get project info by slug for registration page
+app.get('/api/public/project-info/:slug', apiLimiter, async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const project = await getDeploymentProject(slug);
+    if (!project || project.data?.status === 'Archived') {
+      return res.status(404).json({ error: 'Deployment project not found or inactive.' });
+    }
+
+    return res.json({
+      id: project.id,
+      name: project.name,
+      slug: project.slug,
+      clientName: project.data?.clientName || '',
+      location: project.data?.location || '',
+      department: project.data?.department || project.name,
+      designation: project.data?.designation || 'Security Guard',
+      instructions: project.data?.instructions || '',
+      targetGuards: Number(project.data?.targetGuards) || 0
+    });
+  } catch (err) {
+    console.error('Error fetching public project info:', err);
+    return res.status(500).json({ error: 'Error loading project info.' });
+  }
+});
+
+// Protected: List all deployment projects with live stats
+app.get('/api/deployment-projects', authenticateToken, async (req, res) => {
+  try {
+    let projects = [];
+
+    if (usePostgres && pool) {
+      try {
+        const pRes = await pool.query(`
+          SELECT 
+            p.id, 
+            p.name, 
+            p.slug, 
+            p.data, 
+            p.created_at, 
+            p.updated_at,
+            COUNT(e.id) AS total_registered,
+            COUNT(e.id) FILTER (WHERE (e.data->>'status') IN ('Active', 'Approved')) AS approved_count,
+            COUNT(e.id) FILTER (WHERE (e.data->>'status') = 'Pending') AS pending_count,
+            COUNT(e.id) FILTER (WHERE (e.data->>'status') = 'Rejected') AS rejected_count
+          FROM deployment_projects p
+          LEFT JOIN employees e ON (e.data->>'deployment_project_id') = p.id
+          GROUP BY p.id, p.name, p.slug, p.data, p.created_at, p.updated_at
+          ORDER BY p.created_at DESC
+        `);
+
+        projects = pRes.rows.map(row => {
+          const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+          const targetGuards = Number(data.targetGuards) || 0;
+          const totalRegistered = parseInt(row.total_registered, 10) || 0;
+          const approvedCount = parseInt(row.approved_count, 10) || 0;
+          const pendingCount = parseInt(row.pending_count, 10) || 0;
+          const rejectedCount = parseInt(row.rejected_count, 10) || 0;
+          const progressPercent = targetGuards > 0 ? Math.min(100, Math.round((totalRegistered / targetGuards) * 100)) : 0;
+
+          return {
+            id: row.id,
+            name: row.name,
+            slug: row.slug,
+            clientName: data.clientName || '',
+            location: data.location || '',
+            department: data.department || row.name,
+            designation: data.designation || 'Security Guard',
+            targetGuards,
+            deadline: data.deadline || '',
+            status: data.status || 'Active',
+            notes: data.notes || '',
+            instructions: data.instructions || '',
+            stats: {
+              totalRegistered,
+              approvedCount,
+              pendingCount,
+              rejectedCount,
+              targetGuards,
+              progressPercent
+            },
+            inviteUrl: `/register.html?project=${encodeURIComponent(row.slug)}`,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+          };
+        });
+      } catch (err) {
+        console.warn('⚠️ /api/deployment-projects postgres query failed, falling back:', err.message);
+      }
+    }
+
+    if (projects.length === 0 && (!usePostgres || !pool)) {
+      const db = readLocalDb();
+      const localProjects = Array.isArray(db.deployment_projects) ? db.deployment_projects : [];
+      const emps = Array.isArray(db.employees) ? db.employees : [];
+
+      projects = localProjects.map(p => {
+        const pData = p.data || p;
+        const targetGuards = Number(pData.targetGuards) || 0;
+        const projectEmps = emps.filter(e => e.deployment_project_id === p.id || (e.data && e.data.deployment_project_id === p.id));
+        const totalRegistered = projectEmps.length;
+        const approvedCount = projectEmps.filter(e => e.status === 'Active' || e.status === 'Approved').length;
+        const pendingCount = projectEmps.filter(e => e.status === 'Pending').length;
+        const rejectedCount = projectEmps.filter(e => e.status === 'Rejected').length;
+        const progressPercent = targetGuards > 0 ? Math.min(100, Math.round((totalRegistered / targetGuards) * 100)) : 0;
+
+        return {
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          clientName: pData.clientName || '',
+          location: pData.location || '',
+          department: pData.department || p.name,
+          designation: pData.designation || 'Security Guard',
+          targetGuards,
+          deadline: pData.deadline || '',
+          status: pData.status || 'Active',
+          notes: pData.notes || '',
+          instructions: pData.instructions || '',
+          stats: {
+            totalRegistered,
+            approvedCount,
+            pendingCount,
+            rejectedCount,
+            targetGuards,
+            progressPercent
+          },
+          inviteUrl: `/register.html?project=${encodeURIComponent(p.slug)}`,
+          createdAt: p.created_at || p.createdAt,
+          updatedAt: p.updated_at || p.updatedAt
+        };
+      });
+    }
+
+    return res.json(projects);
+  } catch (err) {
+    console.error('Error fetching deployment projects:', err);
+    return res.status(500).json({ error: 'Failed to fetch deployment projects.' });
+  }
+});
+
+// Protected: Create new deployment project
+app.post('/api/deployment-projects', authenticateToken, async (req, res) => {
+  try {
+    const { name, clientName, location, targetGuards, department, designation, deadline, notes, instructions } = req.body || {};
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Project name is required.' });
+    }
+
+    const cleanName = name.trim();
+    let baseSlug = slugify(cleanName) || 'deployment';
+    let slug = baseSlug;
+
+    const id = `proj_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+    const projectData = {
+      clientName: (clientName || '').trim(),
+      location: (location || '').trim(),
+      department: (department || cleanName).trim(),
+      designation: (designation || 'Security Guard').trim(),
+      targetGuards: Math.max(0, parseInt(targetGuards, 10) || 0),
+      deadline: (deadline || '').trim(),
+      status: 'Active',
+      notes: (notes || '').trim(),
+      instructions: (instructions || '').trim()
+    };
+
+    if (usePostgres && pool) {
+      // Ensure unique slug
+      let attempt = 1;
+      while (true) {
+        const slugCheck = await pool.query('SELECT id FROM deployment_projects WHERE slug = $1', [slug]);
+        if (slugCheck.rows.length === 0) break;
+        attempt++;
+        slug = `${baseSlug}-${attempt}`;
+      }
+
+      await pool.query(
+        'INSERT INTO deployment_projects (id, name, slug, data, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
+        [id, cleanName, slug, JSON.stringify(projectData)]
+      );
+    } else {
+      const db = readLocalDb();
+      db.deployment_projects = db.deployment_projects || [];
+      let attempt = 1;
+      while (db.deployment_projects.some(p => p.slug === slug)) {
+        attempt++;
+        slug = `${baseSlug}-${attempt}`;
+      }
+      db.deployment_projects.push({
+        id,
+        name: cleanName,
+        slug,
+        data: projectData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      writeLocalDb(db);
+    }
+
+    return res.status(201).json({
+      success: true,
+      project: {
+        id,
+        name: cleanName,
+        slug,
+        ...projectData,
+        inviteUrl: `/register.html?project=${encodeURIComponent(slug)}`
+      }
+    });
+  } catch (err) {
+    console.error('Error creating deployment project:', err);
+    return res.status(500).json({ error: 'Failed to create deployment project.' });
+  }
+});
+
+// Protected: Get single deployment project with linked employees
+app.get('/api/deployment-projects/:id', authenticateToken, async (req, res) => {
+  try {
+    const project = await getDeploymentProject(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Deployment project not found.' });
+    }
+
+    const stats = await getProjectWithStats(project);
+
+    // Fetch linked employees
+    let employees = [];
+    if (usePostgres && pool) {
+      const empRes = await pool.query(
+        `SELECT id, data FROM employees 
+         WHERE (data->>'deployment_project_id') = $1
+         ORDER BY (data->>'status') = 'Pending' DESC, id DESC`,
+        [project.id]
+      );
+      employees = empRes.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+    } else {
+      const db = readLocalDb();
+      employees = (db.employees || []).filter(e => e.deployment_project_id === project.id || (e.data && e.data.deployment_project_id === project.id));
+    }
+
+    // Process image URLs with secure tokens
+    const processedEmployees = employees.map(emp => {
+      const copy = { ...emp };
+      if (copy.documents?.photo?.startsWith('/api/')) {
+        copy.documents.photo = `${copy.documents.photo}?token=${copy.secureToken || ''}`;
+      }
+      return copy;
+    });
+
+    return res.json({
+      project: {
+        id: project.id,
+        name: project.name,
+        slug: project.slug,
+        ...project.data,
+        createdAt: project.created_at,
+        updatedAt: project.updated_at,
+        inviteUrl: `/register.html?project=${encodeURIComponent(project.slug)}`
+      },
+      stats,
+      employees: processedEmployees
+    });
+  } catch (err) {
+    console.error('Error fetching deployment project details:', err);
+    return res.status(500).json({ error: 'Failed to fetch deployment project details.' });
+  }
+});
+
+// Protected: Update deployment project
+app.put('/api/deployment-projects/:id', authenticateToken, async (req, res) => {
+  try {
+    const project = await getDeploymentProject(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Deployment project not found.' });
+    }
+
+    const { name, clientName, location, targetGuards, department, designation, deadline, status, notes, instructions } = req.body || {};
+    const updatedName = name && typeof name === 'string' && name.trim() ? name.trim() : project.name;
+    const updatedData = {
+      ...project.data,
+      clientName: clientName !== undefined ? String(clientName).trim() : project.data.clientName,
+      location: location !== undefined ? String(location).trim() : project.data.location,
+      department: department !== undefined ? String(department).trim() : project.data.department,
+      designation: designation !== undefined ? String(designation).trim() : project.data.designation,
+      targetGuards: targetGuards !== undefined ? Math.max(0, parseInt(targetGuards, 10) || 0) : project.data.targetGuards,
+      deadline: deadline !== undefined ? String(deadline).trim() : project.data.deadline,
+      status: ['Active', 'Completed', 'Archived'].includes(status) ? status : project.data.status || 'Active',
+      notes: notes !== undefined ? String(notes).trim() : project.data.notes,
+      instructions: instructions !== undefined ? String(instructions).trim() : project.data.instructions
+    };
+
+    if (usePostgres && pool) {
+      await pool.query(
+        'UPDATE deployment_projects SET name = $1, data = $2, updated_at = NOW() WHERE id = $3',
+        [updatedName, JSON.stringify(updatedData), project.id]
+      );
+    } else {
+      const db = readLocalDb();
+      const idx = (db.deployment_projects || []).findIndex(p => p.id === project.id);
+      if (idx !== -1) {
+        db.deployment_projects[idx].name = updatedName;
+        db.deployment_projects[idx].data = updatedData;
+        db.deployment_projects[idx].updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+    }
+
+    return res.json({
+      success: true,
+      project: {
+        id: project.id,
+        name: updatedName,
+        slug: project.slug,
+        ...updatedData
+      }
+    });
+  } catch (err) {
+    console.error('Error updating deployment project:', err);
+    return res.status(500).json({ error: 'Failed to update deployment project.' });
+  }
+});
+
+// Protected: Delete or Archive deployment project
+app.delete('/api/deployment-projects/:id', authenticateToken, async (req, res) => {
+  try {
+    const project = await getDeploymentProject(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Deployment project not found.' });
+    }
+
+    // Check if any employees are linked
+    let linkedCount = 0;
+    if (usePostgres && pool) {
+      const chk = await pool.query("SELECT COUNT(id) FROM employees WHERE (data->>'deployment_project_id') = $1", [project.id]);
+      linkedCount = parseInt(chk.rows[0].count, 10) || 0;
+    } else {
+      const db = readLocalDb();
+      linkedCount = (db.employees || []).filter(e => e.deployment_project_id === project.id || (e.data && e.data.deployment_project_id === project.id)).length;
+    }
+
+    if (linkedCount > 0) {
+      // Archive to preserve employee association
+      const updatedData = { ...project.data, status: 'Archived' };
+      if (usePostgres && pool) {
+        await pool.query('UPDATE deployment_projects SET data = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(updatedData), project.id]);
+      } else {
+        const db = readLocalDb();
+        const idx = (db.deployment_projects || []).findIndex(p => p.id === project.id);
+        if (idx !== -1) {
+          db.deployment_projects[idx].data = updatedData;
+          writeLocalDb(db);
+        }
+      }
+      return res.json({ success: true, archived: true, message: `Project has ${linkedCount} registered employee(s). It has been archived instead of deleted.` });
+    }
+
+    // If 0 employees, hard delete
+    if (usePostgres && pool) {
+      await pool.query('DELETE FROM deployment_projects WHERE id = $1', [project.id]);
+    } else {
+      const db = readLocalDb();
+      db.deployment_projects = (db.deployment_projects || []).filter(p => p.id !== project.id);
+      writeLocalDb(db);
+    }
+
+    return res.json({ success: true, deleted: true, message: 'Deployment project deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting deployment project:', err);
+    return res.status(500).json({ error: 'Failed to delete deployment project.' });
+  }
+});
+
+// Protected: Bulk approve pending employees tagged for a deployment project
+app.post('/api/deployment-projects/:id/bulk-approve', authenticateToken, async (req, res) => {
+  try {
+    const project = await getDeploymentProject(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Deployment project not found.' });
+    }
+
+    const { employeeIds } = req.body || {};
+    const specificIds = Array.isArray(employeeIds) && employeeIds.length > 0 ? employeeIds : null;
+
+    let approvedCount = 0;
+    const approvedIds = [];
+
+    if (usePostgres && pool) {
+      let query = `
+        SELECT id, data FROM employees 
+        WHERE (data->>'deployment_project_id') = $1 
+          AND (data->>'status') = 'Pending'
+      `;
+      const params = [project.id];
+      if (specificIds) {
+        query += ` AND id = ANY($2::text[])`;
+        params.push(specificIds);
+      }
+
+      const pendingRes = await pool.query(query, params);
+      for (const row of pendingRes.rows) {
+        const empData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+        empData.status = 'Active';
+        empData.approvedAt = new Date().toISOString();
+        empData.updatedAt = new Date().toISOString();
+
+        await pool.query('UPDATE employees SET data = $1 WHERE id = $2', [JSON.stringify(empData), row.id]);
+        approvedCount++;
+        approvedIds.push(row.id);
+
+        await recordNotification('EMPLOYEE_APPROVED', row.id, empData.name, empData.department, `Deployment guard ${empData.name} (${row.id}) approved for project ${project.name}.`);
+      }
+    } else {
+      const db = readLocalDb();
+      const emps = db.employees || [];
+      emps.forEach(emp => {
+        const isProjectMatch = emp.deployment_project_id === project.id || (emp.data && emp.data.deployment_project_id === project.id);
+        if (isProjectMatch && emp.status === 'Pending') {
+          if (!specificIds || specificIds.includes(emp.id)) {
+            emp.status = 'Active';
+            emp.approvedAt = new Date().toISOString();
+            emp.updatedAt = new Date().toISOString();
+            approvedCount++;
+            approvedIds.push(emp.id);
+          }
+        }
+      });
+      writeLocalDb(db);
+    }
+
+    return res.json({
+      success: true,
+      count: approvedCount,
+      approvedIds,
+      message: `Successfully approved ${approvedCount} guard${approvedCount === 1 ? '' : 's'} for ${project.name}.`
+    });
+  } catch (err) {
+    console.error('Error in bulk approval:', err);
+    return res.status(500).json({ error: 'Failed to bulk-approve employees.' });
+  }
 });
 
 // Automatically generate secureToken for any existing employee rows in local/PostgreSQL databases
