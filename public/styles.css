@@ -8131,3 +8131,78 @@ html, body {
         padding: 16px !important;
     }
 }
+
+/* ==========================================================================
+   11. DD/MM/YYYY Custom Date Input & Calendar Picker Controller
+   ========================================================================== */
+.dmy-date-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.dmy-date-wrapper input.dmy-date-input {
+    width: 100% !important;
+    padding-right: 44px !important; /* Space for embedded calendar trigger */
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+}
+
+.dmy-calendar-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #94a3b8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+    padding: 0;
+    z-index: 2;
+}
+
+.dmy-calendar-btn:hover {
+    color: var(--theme-gold, #f2ca50);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dmy-calendar-btn:focus-visible {
+    outline: 2px solid var(--theme-gold, #f2ca50);
+    outline-offset: 1px;
+}
+
+.dmy-calendar-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    pointer-events: none;
+}
+
+.dmy-native-hidden {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    z-index: -1;
+}
+
+.format-hint {
+    letter-spacing: 0.02em;
+}

@@ -275,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEtherealShadowAnimation();
     initSpaRouter();
     fetchData();
+    setupDmyDateInputs();
     setupEventHandlers();
     setupClassificationsManager();
     setupTemplatesManager();
@@ -3333,9 +3334,225 @@ function exportReportToCSV() {
 }
 
 /* ==========================================================================
+   6B. DD/MM/YYYY CUSTOM DATE INPUT & PICKER SYNCHRONIZATION CONTROLLER
+   ========================================================================== */
+function setupDmyDateInputs() {
+    const dmyInputs = document.querySelectorAll('.dmy-date-input, input[data-date-format="dmy"]');
+    dmyInputs.forEach(input => initDmyDateInput(input));
+}
+
+function initDmyDateInput(input) {
+    if (!input || input.dataset.dmyInitialized === 'true') return;
+    input.dataset.dmyInitialized = 'true';
+
+    const wrapper = input.closest('.dmy-date-wrapper');
+    const calendarBtn = wrapper ? wrapper.querySelector('.dmy-calendar-btn') : null;
+    let hiddenPicker = wrapper ? wrapper.querySelector('.dmy-native-hidden') : null;
+
+    if (!hiddenPicker) {
+        hiddenPicker = document.createElement('input');
+        hiddenPicker.type = 'date';
+        hiddenPicker.className = 'dmy-native-hidden';
+        hiddenPicker.tabIndex = -1;
+        hiddenPicker.setAttribute('aria-hidden', 'true');
+        if (wrapper) wrapper.appendChild(hiddenPicker);
+        else input.parentNode.insertBefore(hiddenPicker, input.nextSibling);
+    }
+
+    const nativeDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+
+    // Helper: format user-typed digits into DD/MM/YYYY
+    function formatRawToDmy(raw, isDelete) {
+        const clean = (raw || '').replace(/[^\d/]/g, '');
+        let digits = clean.replace(/\D/g, '').slice(0, 8);
+        if (isDelete && raw && raw.endsWith('/')) {
+            digits = digits.slice(0, -1);
+        }
+        if (!digits) return '';
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 4) return digits.slice(0, 2) + '/' + digits.slice(2);
+        return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+    }
+
+    // Helper: Expand 2-digit year on blur (e.g., 20/08/95 -> 20/08/1995)
+    function normalizeDmyString(str) {
+        if (!str) return '';
+        const match = str.trim().match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$/);
+        if (!match) return str;
+        const d = match[1].padStart(2, '0');
+        const m = match[2].padStart(2, '0');
+        let y = match[3];
+        if (y.length === 2) {
+            const num = parseInt(y, 10);
+            y = num > 30 ? `19${y}` : `20${y}`;
+        }
+        return `${d}/${m}/${y}`;
+    }
+
+    // Helper: Convert DD/MM/YYYY to ISO YYYY-MM-DD
+    function dmyToIsoStr(dmyStr) {
+        if (!dmyStr) return '';
+        const normalized = normalizeDmyString(dmyStr);
+        const match = normalized.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!match) return '';
+        const d = match[1].padStart(2, '0');
+        const m = match[2].padStart(2, '0');
+        const y = match[3];
+        const day = parseInt(d, 10);
+        const month = parseInt(m, 10);
+        const year = parseInt(y, 10);
+        if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2100) {
+            return '';
+        }
+        return `${y}-${m}-${d}`;
+    }
+
+    // Helper: Convert ISO YYYY-MM-DD to DD/MM/YYYY
+    function isoToDmyStr(isoStr) {
+        if (!isoStr) return '';
+        const match = String(isoStr).trim().match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+        if (!match) return '';
+        const [, y, m, d] = match;
+        return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+
+    // Intercept .value property so JS callers receive ISO YYYY-MM-DD while user sees DD/MM/YYYY
+    Object.defineProperty(input, 'value', {
+        get: function() {
+            const currentDisplay = nativeDesc.get.call(this).trim();
+            if (!currentDisplay) return '';
+            
+            // If already ISO format YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(currentDisplay)) {
+                return currentDisplay;
+            }
+            // Parse DD/MM/YYYY or DD-MM-YYYY to ISO
+            const iso = dmyToIsoStr(currentDisplay);
+            if (iso) return iso;
+
+            // Fallback: return raw display value
+            return currentDisplay;
+        },
+        set: function(val) {
+            if (val === null || val === undefined) val = '';
+            val = String(val).trim();
+
+            if (!val) {
+                nativeDesc.set.call(this, '');
+                if (hiddenPicker) hiddenPicker.value = '';
+                return;
+            }
+
+            // If passed YYYY-MM-DD (ISO)
+            if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(val)) {
+                const dmy = isoToDmyStr(val);
+                nativeDesc.set.call(this, dmy);
+                const iso = dmyToIsoStr(dmy);
+                if (hiddenPicker && iso) hiddenPicker.value = iso;
+                return;
+            }
+
+            // If passed DD/MM/YYYY or DD/MM/YY
+            const normalized = normalizeDmyString(val);
+            const iso = dmyToIsoStr(normalized);
+            if (iso) {
+                const dmy = isoToDmyStr(iso);
+                nativeDesc.set.call(this, dmy);
+                if (hiddenPicker) hiddenPicker.value = iso;
+                return;
+            }
+
+            // Fallback
+            nativeDesc.set.call(this, val);
+        },
+        configurable: true,
+        enumerable: true
+    });
+
+    // Masking on typing ('input' event)
+    input.addEventListener('input', function(e) {
+        const isDelete = e.inputType === 'deleteContentBackward';
+        const raw = nativeDesc.get.call(this);
+        const formatted = formatRawToDmy(raw, isDelete);
+        nativeDesc.set.call(this, formatted);
+
+        if (formatted.length === 10) {
+            const iso = dmyToIsoStr(formatted);
+            if (iso) {
+                this.setCustomValidity('');
+                if (hiddenPicker) hiddenPicker.value = iso;
+                this.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                this.setCustomValidity('Please enter a valid date in DD/MM/YYYY format');
+            }
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Expand 2-digit year and reformat on blur
+    input.addEventListener('blur', function() {
+        const raw = nativeDesc.get.call(this);
+        if (!raw) {
+            this.setCustomValidity('');
+            return;
+        }
+        const normalized = normalizeDmyString(raw);
+        if (normalized !== raw) {
+            nativeDesc.set.call(this, normalized);
+        }
+        const iso = dmyToIsoStr(normalized);
+        if (iso) {
+            this.setCustomValidity('');
+            if (hiddenPicker) hiddenPicker.value = iso;
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (normalized.length >= 8) {
+            this.setCustomValidity('Please enter a valid date in DD/MM/YYYY format');
+        }
+    });
+
+    // Calendar button trigger
+    if (calendarBtn) {
+        calendarBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (hiddenPicker) {
+                const currentIso = input.value;
+                if (currentIso && /^\d{4}-\d{2}-\d{2}$/.test(currentIso)) {
+                    hiddenPicker.value = currentIso;
+                }
+                if (typeof hiddenPicker.showPicker === 'function') {
+                    try {
+                        hiddenPicker.showPicker();
+                    } catch (err) {
+                        hiddenPicker.focus();
+                        hiddenPicker.click();
+                    }
+                } else {
+                    hiddenPicker.focus();
+                    hiddenPicker.click();
+                }
+            }
+        });
+    }
+
+    // Sync from hidden native picker when date is chosen via calendar popup
+    if (hiddenPicker) {
+        hiddenPicker.addEventListener('change', function() {
+            if (this.value) {
+                input.value = this.value;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+}
+
+/* ==========================================================================
    7. EVENT HANDLERS & BACKUPS
    ========================================================================== */
 function setupEventHandlers() {
+    setupDmyDateInputs();
     // Setup live Title Case auto-capitalization on input fields
     setupLiveTitleCaseInput('reg-name');
     setupLiveTitleCaseInput('reg-father');
@@ -3521,22 +3738,49 @@ function setupEventHandlers() {
         handleImageUpload(e, 'reg-signature-preview');
     });
 
-    // Auto-calculate age listener when reg-dob changes
-    document.getElementById('reg-dob').addEventListener('change', function() {
-        const dobVal = this.value;
-        if (dobVal) {
-            const dobDate = new Date(dobVal);
-            const today = new Date();
-            let age = today.getFullYear() - dobDate.getFullYear();
-            const m = today.getMonth() - dobDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
-                age--;
+    // Auto-calculate age listener when reg-dob changes or complete date is typed
+    const regDobEl = document.getElementById('reg-dob');
+    if (regDobEl) {
+        const calculateAgeFromDob = function() {
+            const dobVal = regDobEl.value;
+            if (dobVal) {
+                let dobDate;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(dobVal)) {
+                    const [y, m, d] = dobVal.split('-').map(Number);
+                    dobDate = new Date(y, m - 1, d);
+                } else if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(dobVal)) {
+                    const parts = dobVal.split('/').map(Number);
+                    let y = parts[2];
+                    if (y < 100) y += y > 30 ? 1900 : 2000;
+                    dobDate = new Date(y, parts[1] - 1, parts[0]);
+                } else {
+                    dobDate = new Date(dobVal);
+                }
+                if (!isNaN(dobDate.getTime())) {
+                    const today = new Date();
+                    let age = today.getFullYear() - dobDate.getFullYear();
+                    const m = today.getMonth() - dobDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+                        age--;
+                    }
+                    const ageEl = document.getElementById('reg-age');
+                    if (ageEl) ageEl.value = age > 0 ? age : '';
+                } else {
+                    const ageEl = document.getElementById('reg-age');
+                    if (ageEl) ageEl.value = '';
+                }
+            } else {
+                const ageEl = document.getElementById('reg-age');
+                if (ageEl) ageEl.value = '';
             }
-            document.getElementById('reg-age').value = age > 0 ? age : '';
-        } else {
-            document.getElementById('reg-age').value = '';
-        }
-    });
+        };
+        regDobEl.addEventListener('change', calculateAgeFromDob);
+        regDobEl.addEventListener('input', function() {
+            if (this.value && (this.value.length === 10 || /^\d{4}-\d{2}-\d{2}$/.test(this.value))) {
+                calculateAgeFromDob();
+            }
+        });
+    }
 
     // Relation dropdown change handler
     const relationTypeSelect = document.getElementById('reg-relation-type');
@@ -4007,6 +4251,17 @@ function resetRegistrationForm() {
     // Clear dynamic file uploads data attributes
     delete document.getElementById('reg-photo').dataset.imageData;
     delete document.getElementById('reg-signature').dataset.imageData;
+
+    // Clear DMY date inputs, pickers, and age
+    ['reg-dob', 'reg-joining-date', 'reg-card-issue-date'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = '';
+            el.setCustomValidity('');
+        }
+    });
+    const ageInput = document.getElementById('reg-age');
+    if (ageInput) ageInput.value = '';
 }
 
 function populateRegistrationForm(emp) {

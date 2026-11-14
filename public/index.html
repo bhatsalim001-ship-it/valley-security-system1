@@ -599,8 +599,14 @@
                                     <!-- Row 2: DOB, Gender, Blood Group, Mobile -->
                                     <div class="form-row col-4">
                                         <div class="form-group">
-                                            <label for="reg-dob">Date of Birth *</label>
-                                            <input type="date" id="reg-dob" required>
+                                            <label for="reg-dob">Date of Birth * <span class="format-hint" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">(DD/MM/YYYY)</span></label>
+                                            <div class="dmy-date-wrapper">
+                                                <input type="text" id="reg-dob" class="form-control dmy-date-input" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" inputmode="numeric" required>
+                                                <button type="button" class="dmy-calendar-btn" title="Choose date" aria-label="Open calendar for Date of Birth">
+                                                    <svg class="dmy-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                                </button>
+                                                <input type="date" class="dmy-native-hidden" tabindex="-1" aria-hidden="true">
+                                            </div>
                                         </div>
                                         <div class="form-group">
                                             <label for="reg-gender">Gender *</label>
@@ -650,8 +656,14 @@
                                     <!-- Row 3B: Joining Date, Card Validity -->
                                     <div class="form-row col-2">
                                         <div class="form-group">
-                                            <label for="reg-joining-date">Joining Date *</label>
-                                            <input type="date" id="reg-joining-date" required>
+                                            <label for="reg-joining-date">Joining Date * <span class="format-hint" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">(DD/MM/YYYY)</span></label>
+                                            <div class="dmy-date-wrapper">
+                                                <input type="text" id="reg-joining-date" class="form-control dmy-date-input" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" inputmode="numeric" required>
+                                                <button type="button" class="dmy-calendar-btn" title="Choose date" aria-label="Open calendar for Joining Date">
+                                                    <svg class="dmy-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                                </button>
+                                                <input type="date" class="dmy-native-hidden" tabindex="-1" aria-hidden="true">
+                                            </div>
                                         </div>
                                         <div class="form-group">
                                             <label for="reg-card-validity">Card Validity *</label>
@@ -667,8 +679,14 @@
                                     <!-- Row 3C: Card Issue Date -->
                                     <div class="form-row col-1">
                                         <div class="form-group">
-                                            <label for="reg-card-issue-date">Card Issue Date <span style="font-weight: 400; color: var(--text-muted);">(Optional — when was/will the card be issued?)</span></label>
-                                            <input type="date" id="reg-card-issue-date" placeholder="Leave blank to use print date">
+                                            <label for="reg-card-issue-date">Card Issue Date <span style="font-weight: 400; color: var(--text-muted);">(Optional — DD/MM/YYYY, leave blank to use print date)</span></label>
+                                            <div class="dmy-date-wrapper">
+                                                <input type="text" id="reg-card-issue-date" class="form-control dmy-date-input" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" inputmode="numeric">
+                                                <button type="button" class="dmy-calendar-btn" title="Choose date" aria-label="Open calendar for Card Issue Date">
+                                                    <svg class="dmy-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                                </button>
+                                                <input type="date" class="dmy-native-hidden" tabindex="-1" aria-hidden="true">
+                                            </div>
                                         </div>
                                     </div>
 
@@ -878,8 +896,14 @@
 
                                 <div class="form-row col-1" style="margin-bottom: 12px;">
                                     <div class="form-group" style="margin: 0;">
-                                        <label for="id-card-issue-date">Card Issue Date <span class="text-muted" style="font-weight: 400;">(start of validity — leave as today for new cards)</span></label>
-                                        <input type="date" id="id-card-issue-date" class="form-control">
+                                        <label for="id-card-issue-date">Card Issue Date <span class="text-muted" style="font-weight: 400;">(start of validity — DD/MM/YYYY, leave as today for new cards)</span></label>
+                                        <div class="dmy-date-wrapper">
+                                            <input type="text" id="id-card-issue-date" class="form-control dmy-date-input" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" inputmode="numeric">
+                                            <button type="button" class="dmy-calendar-btn" title="Choose date" aria-label="Open calendar for Card Issue Date">
+                                                <svg class="dmy-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                            </button>
+                                            <input type="date" class="dmy-native-hidden" tabindex="-1" aria-hidden="true">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1927,8 +1951,14 @@
                             <input type="text" id="form-father" required>
                         </div>
                         <div class="form-group">
-                            <label for="form-dob">Date of Birth *</label>
-                            <input type="date" id="form-dob" required>
+                            <label for="form-dob">Date of Birth * <span class="format-hint" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">(DD/MM/YYYY)</span></label>
+                            <div class="dmy-date-wrapper">
+                                <input type="text" id="form-dob" class="form-control dmy-date-input" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" inputmode="numeric" required>
+                                <button type="button" class="dmy-calendar-btn" title="Choose date" aria-label="Open calendar for Date of Birth">
+                                    <svg class="dmy-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                </button>
+                                <input type="date" class="dmy-native-hidden" tabindex="-1" aria-hidden="true">
+                            </div>
                         </div>
                     </div>
 
@@ -2026,8 +2056,14 @@
 
                     <div class="form-row col-3">
                         <div class="form-group">
-                            <label for="form-joining-date">Joining Date *</label>
-                            <input type="date" id="form-joining-date" required>
+                            <label for="form-joining-date">Joining Date * <span class="format-hint" style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">(DD/MM/YYYY)</span></label>
+                            <div class="dmy-date-wrapper">
+                                <input type="text" id="form-joining-date" class="form-control dmy-date-input" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off" inputmode="numeric" required>
+                                <button type="button" class="dmy-calendar-btn" title="Choose date" aria-label="Open calendar for Joining Date">
+                                    <svg class="dmy-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                </button>
+                                <input type="date" class="dmy-native-hidden" tabindex="-1" aria-hidden="true">
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="form-status">Employment Status *</label>
