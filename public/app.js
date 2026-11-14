@@ -1023,8 +1023,8 @@ function renderDistributionChart() {
         const x = 160 + pct * maxBarContainerWidth;
         const guideValue = Math.round(pct * maxCount);
         svgHtml += `
-            <line x1="${x}" y1="10" x2="${x}" y2="${entries.length * 40 + 10}" stroke="rgba(255,255,255,0.03)" stroke-width="1" stroke-dasharray="3 3"/>
-            <text x="${x}" y="${entries.length * 40 + 25}" fill="var(--text-muted)" font-size="9" font-family="inherit" font-weight="600" text-anchor="middle">${guideValue}</text>
+            <line x1="${x}" y1="10" x2="${x}" y2="${entries.length * 40 + 10}" stroke="var(--vs-border-subtle)" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="${x}" y="${entries.length * 40 + 25}" fill="var(--vs-text-muted)" font-size="9" font-family="var(--vs-font-mono)" font-weight="600" text-anchor="middle">${guideValue}</text>
         `;
     }
 
@@ -1039,26 +1039,26 @@ function renderDistributionChart() {
             <g class="chart-bar-group" data-dept="${dept}">
                 <title>${fullDeptName} (${count} guards)</title>
                 <!-- Department Label -->
-                <text x="10" y="${y + 11}" fill="var(--text-primary)" font-size="11.5px" font-family="inherit" font-weight="600">${displayDeptName}</text>
+                <text x="10" y="${y + 11}" fill="var(--vs-text-primary)" font-size="12px" font-family="inherit" font-weight="500">${displayDeptName}</text>
                 
                 <!-- Background Pill Track -->
-                <rect x="160" y="${y}" width="${maxBarContainerWidth}" height="14" rx="7" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+                <rect x="160" y="${y}" width="${maxBarContainerWidth}" height="14" rx="7" fill="var(--vs-surface-3)" stroke="var(--vs-border-subtle)" stroke-width="0.5"/>
                 
                 <!-- Filled Gradient Pill -->
                 <rect x="160" y="${y}" width="${barWidth}" height="14" rx="7" fill="url(#barGoldGradient)"/>
                 
                 <!-- Guard Count Label -->
-                <text x="580" y="${y + 11}" fill="var(--theme-gold)" font-size="11px" font-family="inherit" font-weight="700" text-anchor="end">${count}</text>
+                <text x="580" y="${y + 11}" fill="var(--vs-accent-emerald)" font-size="11px" font-family="var(--vs-font-mono)" font-weight="700" text-anchor="end">${count}</text>
             </g>
         `;
     });
 
-    // Gradients def - luxurious gold to brass
+    // Gradients def - precision emerald gradient
     svgHtml += `
         <defs>
             <linearGradient id="barGoldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#b8860b"/>
-                <stop offset="100%" stop-color="var(--theme-gold)"/>
+                <stop offset="0%" stop-color="#059669"/>
+                <stop offset="100%" stop-color="#10b981"/>
             </linearGradient>
         </defs>
     </svg>`;
@@ -1144,9 +1144,9 @@ function renderDashboardAlerts() {
     }
 
     alerts.slice(0, 5).forEach(alert => {
-        const borderStyle = alert.type === 'critical' ? 'style="border-left-color: var(--status-suspended);"' : 
-                           alert.type === 'warning' ? 'style="border-left-color: var(--status-pending);"' : 
-                           'style="border-left-color: var(--theme-gold);"';
+        const borderStyle = alert.type === 'critical' ? 'style="border-left-color: var(--vs-status-suspended);"' : 
+                           alert.type === 'warning' ? 'style="border-left-color: var(--vs-status-pending);"' : 
+                           'style="border-left-color: var(--vs-accent-emerald);"';
 
         const alertItem = document.createElement('div');
         alertItem.className = 'alert-item';
@@ -1165,7 +1165,7 @@ function renderDashboardAlerts() {
                 <span class="alert-info-desc">${alert.desc}</span>
             </div>
             ${alert.empId ? `
-            <button class="btn btn-xs btn-primary alert-action-btn" data-id="${alert.empId}" style="font-size: 10px; padding: 4px 10px; margin-left: 12px; white-space: nowrap;">
+            <button class="alert-action-btn" data-id="${alert.empId}">
                 ${alert.actionLabel}
             </button>
             ` : ''}
@@ -1222,9 +1222,9 @@ function renderRecentEmployeesTable() {
             <td>
                 <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
                     <span class="badge ${emp.status === 'Active' ? 'badge-active' : (emp.status === 'Pending' ? 'badge-pending' : 'badge-suspended')}">${emp.status}</span>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn btn-xs btn-outline btn-recent-edit" data-id="${emp.id}" title="Edit details" style="padding: 2px 6px; font-size: 10px; min-width: 24px;"><i data-lucide="edit-3" style="width: 10px; height: 10px;"></i></button>
-                        <button class="btn btn-xs btn-outline btn-recent-card" data-id="${emp.id}" title="Download ID" style="color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15); padding: 2px 6px; font-size: 10px; min-width: 24px;"><i data-lucide="credit-card" style="width: 10px; height: 10px;"></i></button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn-recent-edit" data-id="${emp.id}" title="Edit details"><i data-lucide="edit-3" style="width: 13px; height: 13px;"></i></button>
+                        <button class="btn-recent-card" data-id="${emp.id}" title="Download ID"><i data-lucide="credit-card" style="width: 13px; height: 13px;"></i></button>
                     </div>
                 </div>
             </td>
@@ -1323,11 +1323,11 @@ function renderEmployeeDirectory() {
         }
 
         const isExpired = getCardExpirationDate(emp) < new Date();
-        const renewBtnHtml = isExpired ? `<button class="btn btn-xs btn-outline btn-renew-card-img" data-id="${escapeHtml(emp.id)}" style="color: var(--theme-gold); border-color: rgba(212, 175, 55, 0.4); background: rgba(212, 175, 55, 0.05); font-weight: 700;">Renew ID</button>` : '';
+        const renewBtnHtml = isExpired ? `<button class="btn btn-xs btn-outline btn-renew-card-img" data-id="${escapeHtml(emp.id)}">Renew ID</button>` : '';
 
         const isChecked = VSA_STATE.selectedEmployeeIds.includes(emp.id) ? 'checked' : '';
         const photoSrc = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
-        const showPhoto = photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 24px; height: 24px; color: var(--theme-gold);"></i>`;
+        const showPhoto = photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Photo" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user"></i>`;
         
         if (directoryViewMode === 'card') {
             const card = document.createElement('div');
@@ -1335,7 +1335,7 @@ function renderEmployeeDirectory() {
             
             card.innerHTML = `
                 <div class="directory-card-select">
-                    <input type="checkbox" class="directory-select-item" data-id="${escapeHtml(emp.id)}" ${isChecked} style="cursor: pointer;">
+                    <input type="checkbox" class="directory-select-item" data-id="${escapeHtml(emp.id)}" ${isChecked}>
                 </div>
                 <div class="directory-card-photo">
                     ${showPhoto}
@@ -1345,9 +1345,9 @@ function renderEmployeeDirectory() {
                     <div class="directory-card-empid">${escapeHtml(emp.id)}</div>
                     <div class="directory-card-subtext" title="${escapeHtml(toTitleCase(emp.designation))}">${escapeHtml(toTitleCase(emp.designation))}</div>
                     <div class="directory-card-client" title="${escapeHtml(toTitleCase(emp.department || '-'))}">${escapeHtml(toTitleCase(emp.department || '-'))}</div>
-                    <div class="directory-card-chips" style="align-items: center; gap: 6px;">
+                    <div class="directory-card-chips">
                         <span class="directory-card-chip">${escapeHtml(emp.manpowerType || 'Security')}</span>
-                        <select class="directory-status-select" data-id="${escapeHtml(emp.id)}" data-status="${escapeHtml(emp.status)}" style="font-size: 10px; padding: 2px 6px;">
+                        <select class="directory-status-select" data-id="${escapeHtml(emp.id)}" data-status="${escapeHtml(emp.status)}">
                             <option value="Active" ${emp.status === 'Active' ? 'selected' : ''}>Active</option>
                             <option value="Suspended" ${emp.status === 'Suspended' ? 'selected' : ''}>Suspended</option>
                             <option value="Fired" ${emp.status === 'Fired' ? 'selected' : ''}>Fired</option>
@@ -1356,9 +1356,9 @@ function renderEmployeeDirectory() {
                     </div>
                     <div class="directory-card-actions">
                         ${renewBtnHtml}
-                        <button class="btn btn-xs btn-outline btn-generate-card-img" data-id="${escapeHtml(emp.id)}" style="color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15)">ID Card</button>
+                        <button class="btn btn-xs btn-outline btn-generate-card-img" data-id="${escapeHtml(emp.id)}">ID Card</button>
                         <button class="btn btn-xs btn-outline btn-edit-emp" data-id="${escapeHtml(emp.id)}">Edit</button>
-                        <button class="btn btn-xs btn-outline btn-delete-emp" data-id="${escapeHtml(emp.id)}" style="color: var(--status-suspended); border-color: rgba(255, 46, 147, 0.15)">Delete</button>
+                        <button class="btn btn-xs btn-outline btn-delete-emp" data-id="${escapeHtml(emp.id)}">Delete</button>
                     </div>
                 </div>
             `;
@@ -1366,20 +1366,20 @@ function renderEmployeeDirectory() {
         } else {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><input type="checkbox" class="directory-select-item" data-id="${escapeHtml(emp.id)}" ${isChecked} style="cursor: pointer;"></td>
+                <td><input type="checkbox" class="directory-select-item" data-id="${escapeHtml(emp.id)}" ${isChecked}></td>
                 <td><strong>${escapeHtml(emp.id)}</strong></td>
                 <td>
                     <div class="d-flex align-items-center gap-2">
-                        <div class="directory-list-avatar" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--glass-border); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--input-bg);">
-                            ${photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Avatar" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user" style="width: 14px; height: 14px; color: var(--text-muted);"></i>`}
+                        <div class="directory-list-avatar">
+                            ${photoSrc ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Employee')} Avatar" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">` : `<i data-lucide="user"></i>`}
                         </div>
-                        <span>${escapeHtml(toTitleCase(emp.name))}</span>
+                        <span class="directory-list-name">${escapeHtml(toTitleCase(emp.name))}</span>
                     </div>
                 </td>
                 <td>${escapeHtml(toTitleCase(emp.designation))}</td>
                 <td>${escapeHtml(toTitleCase(emp.department || '-'))}</td>
                 <td>${escapeHtml(emp.mobile)}</td>
-                <td><span class="text-muted" style="font-size: 11px;">${escapeHtml(docsText)}</span></td>
+                <td><span class="directory-list-docs">${escapeHtml(docsText)}</span></td>
                 <td>
                     <select class="directory-status-select" data-id="${escapeHtml(emp.id)}" data-status="${escapeHtml(emp.status)}">
                         <option value="Active" ${emp.status === 'Active' ? 'selected' : ''}>Active</option>
@@ -1391,9 +1391,9 @@ function renderEmployeeDirectory() {
                 <td>
                     <div class="d-flex gap-2">
                         ${renewBtnHtml}
-                        <button class="btn btn-xs btn-outline btn-generate-card-img" data-id="${escapeHtml(emp.id)}" style="color: var(--theme-accent); border-color: rgba(212, 175, 55, 0.15)">ID Card</button>
+                        <button class="btn btn-xs btn-outline btn-generate-card-img" data-id="${escapeHtml(emp.id)}">ID Card</button>
                         <button class="btn btn-xs btn-outline btn-edit-emp" data-id="${escapeHtml(emp.id)}">Edit</button>
-                        <button class="btn btn-xs btn-outline btn-delete-emp" data-id="${escapeHtml(emp.id)}" style="color: var(--status-suspended); border-color: rgba(255, 46, 147, 0.15)">Delete</button>
+                        <button class="btn btn-xs btn-outline btn-delete-emp" data-id="${escapeHtml(emp.id)}">Delete</button>
                     </div>
                 </td>
             `;
@@ -5922,7 +5922,7 @@ function renderTemplatesList() {
     }
 
     if (!VSA_STATE.templates || VSA_STATE.templates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center placeholder-message">No templates registered yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center placeholder-message">No templates registered yet.</td></tr>';
         return;
     }
 

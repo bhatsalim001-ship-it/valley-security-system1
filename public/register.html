@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Self-Registration - VSA</title>
+    <title>Employee Self-Registration - Valley Security Service Agency</title>
     <meta name="description" content="Official Employee Onboarding and Self-Registration Portal of Valley Security Service Agency.">
     <link rel="icon" type="image/png" href="/favicon.png">
     
@@ -20,33 +20,42 @@
     <!-- Config & Styles -->
     <script src="firm-config.js"></script>
     <style>
+        :root {
+            --bg-canvas: #080c14;
+            --bg-card: rgba(15, 23, 42, 0.85);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: #6366f1;
+            --text-main: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --brand-primary: #6366f1;
+            --brand-primary-hover: #4f46e5;
+            --theme-gold: #f59e0b;
+            --theme-green: #10b981;
+            --theme-red: #ef4444;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --bg-dark: #050507;
-            --card-bg: rgba(10, 11, 14, 0.85);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-            --text-muted: #a0a0ab;
-            --theme-red: #c8102e;
-            --theme-gold: #cfa15c;
-            --theme-green: #10b981;
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
-
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-canvas);
+            background-image: 
+                radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99, 102, 241, 0.12), transparent 70%),
+                radial-gradient(ellipse 60% 50% at 50% 110%, rgba(245, 158, 11, 0.06), transparent 70%);
+            background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 32px 16px;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Ambient Glow background orbs */
@@ -73,7 +82,7 @@
             left: -10%;
             width: 50vw;
             height: 50vw;
-            background: var(--theme-red);
+            background: var(--brand-primary);
         }
 
         .orb-2 {
@@ -86,12 +95,15 @@
 
         .form-container {
             width: 100%;
-            max-width: 680px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            max-width: 720px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
             border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.08);
+            padding: 36px 32px;
+            box-shadow: 
+                0 25px 60px -15px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(25px) saturate(180%);
             -webkit-backdrop-filter: blur(25px) saturate(180%);
             position: relative;
@@ -100,7 +112,7 @@
 
         .form-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
 
         .logo-section {
@@ -108,66 +120,72 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
         }
 
         .logo-icon {
             width: 44px;
             height: 44px;
-            background: var(--theme-red);
-            border-radius: 10px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
-            font-weight: 700;
-            font-size: 18px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
         }
 
         .agency-name {
             font-family: 'Outfit', sans-serif;
             font-size: 22px;
-            font-weight: 700;
-            color: var(--theme-red);
+            font-weight: 800;
+            color: #ffffff;
             letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         .form-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 26px;
-            font-weight: 600;
-            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
         }
 
         .form-subtitle {
             color: var(--text-muted);
             font-size: 14px;
+            line-height: 1.5;
         }
 
         /* Disclaimer Card styling */
         .disclaimer-card {
-            background: rgba(207, 161, 92, 0.08);
-            border: 1px solid rgba(207, 161, 92, 0.2);
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.22);
             border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 25px;
+            padding: 18px 20px;
+            margin-bottom: 28px;
             display: flex;
-            gap: 15px;
+            gap: 14px;
+            align-items: flex-start;
         }
 
         .disclaimer-icon {
             color: var(--theme-gold);
             flex-shrink: 0;
-            display: flex;
-            align-items: flex-start;
-            padding-top: 2px;
+            margin-top: 2px;
         }
 
         .disclaimer-content h4 {
             font-family: 'Outfit', sans-serif;
             color: var(--theme-gold);
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
             margin-bottom: 8px;
         }
 
@@ -178,11 +196,15 @@
 
         .disclaimer-content li {
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             margin-bottom: 6px;
             line-height: 1.5;
             position: relative;
             padding-left: 14px;
+        }
+
+        .disclaimer-content li:last-child {
+            margin-bottom: 0;
         }
 
         .disclaimer-content li::before {
@@ -190,6 +212,7 @@
             position: absolute;
             left: 0;
             color: var(--theme-gold);
+            font-weight: bold;
         }
 
         /* Grid inputs */
@@ -197,10 +220,10 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            margin-bottom: 25px;
+            margin-bottom: 28px;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
             .form-grid {
                 grid-template-columns: 1fr;
             }
@@ -210,6 +233,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            text-align: left;
         }
 
         .form-group.full-width {
@@ -217,10 +241,10 @@
         }
 
         label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: 0.6px;
             text-transform: uppercase;
         }
 
@@ -230,54 +254,83 @@
         select,
         textarea {
             width: 100%;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
+            background: rgba(3, 7, 18, 0.6);
+            border: 1px solid var(--border-subtle);
             border-radius: 12px;
             padding: 12px 16px;
             color: var(--text-main);
             font-family: inherit;
             font-size: 14px;
             outline: none;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            min-height: 46px;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        select option {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        input:hover,
+        select:hover,
+        textarea:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(3, 7, 18, 0.75);
         }
 
         input:focus,
         select:focus,
         textarea:focus {
-            border-color: var(--theme-gold);
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 0 3px rgba(207, 161, 92, 0.15);
+            border-color: var(--border-focus);
+            background: rgba(3, 7, 18, 0.9);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
         }
 
         /* Photo Upload & Capture container */
         .photo-section {
-            border: 1px dashed var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
+            border: 1px dashed var(--border-subtle);
+            border-radius: 18px;
+            padding: 24px;
             text-align: center;
-            background: rgba(255, 255, 255, 0.01);
+            background: rgba(3, 7, 18, 0.4);
             position: relative;
-            transition: border-color 0.3s ease;
-            margin-bottom: 25px;
+            transition: border-color 0.3s ease, background 0.3s ease;
+            margin-bottom: 28px;
         }
 
         .photo-section.dragover {
-            border-color: var(--theme-gold);
-            background: rgba(207, 161, 92, 0.02);
+            border-color: var(--brand-primary);
+            background: rgba(99, 102, 241, 0.05);
         }
 
         .photo-preview-container {
-            width: 120px;
-            height: 150px;
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
-            margin: 0 auto 15px auto;
+            width: 130px;
+            height: 160px;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            margin: 0 auto 16px auto;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.4);
             position: relative;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
 
         .photo-preview-container img {
@@ -302,23 +355,25 @@
         }
 
         .btn-photo-action {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
             color: var(--text-main);
-            padding: 10px 18px;
+            padding: 11px 20px;
             font-size: 13px;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            min-height: 44px;
         }
 
         .btn-photo-action:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
 
         /* Camera Modal Overlay */
@@ -328,7 +383,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -347,7 +404,7 @@
         .camera-container {
             width: 100%;
             max-width: 480px;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -358,17 +415,18 @@
             position: relative;
             width: 100%;
             aspect-ratio: 3/4;
-            border-radius: 16px;
+            border-radius: 18px;
             overflow: hidden;
             background: #000;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         }
 
         .camera-view-wrapper video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror camera */
+            transform: scaleX(-1);
         }
 
         .camera-overlay-frame {
@@ -377,16 +435,16 @@
             left: 10%;
             width: 80%;
             height: 80%;
-            border: 2px dashed rgba(207, 161, 92, 0.6);
-            border-radius: 50% / 40%; /* Face oval guide */
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Dim outer area */
+            border: 2px dashed rgba(245, 158, 11, 0.7);
+            border-radius: 50% / 40%;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
             pointer-events: none;
         }
 
         .camera-controls {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 14px;
         }
 
         .btn-camera {
@@ -394,28 +452,30 @@
             border-radius: 12px;
             padding: 12px 24px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            min-height: 46px;
         }
 
         .btn-camera-snap {
-            background: var(--theme-gold);
+            background: linear-gradient(135deg, var(--theme-gold), #d97706);
             color: #000000;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
         }
 
         .btn-camera-snap:hover {
-            background: #e5b36a;
-            box-shadow: 0 4px 15px rgba(207, 161, 92, 0.4);
+            filter: brightness(1.1);
+            transform: translateY(-1px);
         }
 
         .btn-camera-cancel {
             background: rgba(255, 255, 255, 0.1);
             color: #ffffff;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-subtle);
         }
 
         .btn-camera-cancel:hover {
@@ -425,94 +485,60 @@
         /* Buttons & Footer */
         .btn-submit {
             width: 100%;
-            background: var(--theme-gold);
-            color: #000000;
-            border: none;
-            border-radius: 12px;
-            padding: 14px 20px;
-            font-family: inherit;
+            min-height: 50px;
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 14px 24px;
+            font-family: 'Outfit', sans-serif;
             font-size: 15px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            box-shadow: 0 6px 20px -3px rgba(99, 102, 241, 0.35);
         }
 
         .btn-submit:hover {
-            background: #e5b36a;
-            box-shadow: 0 5px 20px rgba(207, 161, 92, 0.35);
+            filter: brightness(1.08);
             transform: translateY(-1px);
+            box-shadow: 0 10px 25px -2px rgba(99, 102, 241, 0.45);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
         }
 
         .btn-submit:disabled {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-muted);
+            opacity: 0.6;
             cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
+            transform: none !important;
         }
 
-        /* Success & Status screen views */
-        .view-state {
-            display: none;
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .view-state.active {
-            display: block;
-        }
-
-        .state-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px auto;
-        }
-
-        .state-icon.success {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--theme-green);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .state-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .state-description {
-            color: var(--text-muted);
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
-
-        /* Cropper Modal Overlay */
+        /* Cropper Modal */
         .cropper-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            padding: 20px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.25s ease;
         }
 
         .cropper-overlay.active {
@@ -521,50 +547,63 @@
         }
 
         .cropper-container {
-            width: 95%;
-            max-width: 600px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
+            width: 100%;
+            max-width: 520px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
         .cropper-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 12px;
         }
 
         .cropper-header h3 {
+            font-family: 'Outfit', sans-serif;
             font-size: 18px;
             font-weight: 700;
-            color: #fff;
-            margin: 0;
+            color: #ffffff;
         }
 
         .btn-cropper-close {
-            background: none;
+            background: transparent;
             border: none;
-            font-size: 24px;
             color: var(--text-muted);
-            cursor: pointer;
+            font-size: 24px;
             line-height: 1;
+            cursor: pointer;
+            padding: 4px;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        .btn-cropper-close:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .cropper-body-wrapper {
+            width: 100%;
+            height: 320px;
             background: #000;
             border-radius: 12px;
             overflow: hidden;
-            height: 380px;
-            border: 1px dashed var(--border-color);
-            position: relative;
-            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .cropper-target-img {
@@ -575,66 +614,116 @@
 
         .cropper-controls-row {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             flex-wrap: wrap;
         }
 
         .btn-crop-tool {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color);
-            color: #fff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-family: inherit;
-            font-size: 13px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 12px;
             font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
             transition: all 0.2s ease;
         }
 
         .btn-crop-tool:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .cropper-footer {
             display: flex;
             gap: 12px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 15px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 16px;
         }
 
         .btn-crop-action {
             flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-weight: 700;
             cursor: pointer;
             font-family: inherit;
             font-size: 14px;
             transition: all 0.2s ease;
             border: none;
+            min-height: 44px;
         }
 
         .btn-crop-cancel {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color);
-            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: #ffffff;
+        }
+
+        .btn-crop-cancel:hover {
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .btn-crop-save {
-            background: var(--theme-gold, #cfa15c);
-            border: 1px solid var(--theme-gold, #cfa15c);
-            color: #fff;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
         }
 
-        /* 🔔 Premium Toast Notification System Styles */
+        .btn-crop-save:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Success State Panel */
+        .view-state {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .view-state.active {
+            display: block;
+        }
+
+        .state-icon.success {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--theme-green);
+        }
+
+        .state-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .state-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Toast Container */
         #toast-container {
             position: fixed;
             top: 24px;
@@ -649,22 +738,22 @@
         }
 
         .toast-notification {
-            background: rgba(10, 11, 14, 0.95);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-left: 4px solid var(--toast-color, #cfa15c);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--toast-color, var(--brand-primary));
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px 16px;
             color: #fff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: flex-start;
             gap: 12px;
             pointer-events: auto;
             transform: translateX(120%);
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .toast-notification.active {
@@ -681,7 +770,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--toast-color, #cfa15c);
+            color: var(--toast-color, var(--brand-primary));
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -694,15 +783,14 @@
             font-size: 13px;
             line-height: 1.4;
             font-weight: 500;
-            font-family: inherit;
         }
 
         .toast-close {
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.4);
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             line-height: 1;
             padding: 0;
             margin-left: 6px;
@@ -714,47 +802,20 @@
             color: #fff;
         }
 
-        @media (max-width: 480px) {
-            #toast-container {
-                right: 5%;
-                left: 5%;
-                width: 90%;
-                top: 16px;
-            }
-            .toast-notification {
-                transform: translateY(-50px);
-            }
-            .toast-notification.active {
-                transform: translateY(0);
-            }
-            .toast-notification.remove {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ============================================================
-           MOBILE-FIRST RESPONSIVE FIXES
-           ============================================================ */
-
-        /* Prevent iOS auto-zoom on input focus — inputs must be ≥ 16px */
         @media (max-width: 600px) {
-            input[type="text"],
-            input[type="tel"],
-            input[type="date"],
-            select,
-            textarea {
-                font-size: 16px;
-            }
-
             body {
-                padding: 12px;
+                padding: 16px 10px;
                 align-items: flex-start;
             }
 
             .form-container {
-                padding: 20px 16px;
-                border-radius: 18px;
+                padding: 24px 18px;
+                border-radius: 20px;
                 margin-top: 8px;
                 margin-bottom: 24px;
             }
@@ -763,72 +824,14 @@
                 font-size: 20px;
             }
 
-            .form-subtitle {
-                font-size: 13px;
-            }
-
-            .agency-name {
-                font-size: 18px;
-            }
-
-            /* Full-width photo action buttons on mobile */
             .photo-actions {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
             }
 
             .btn-photo-action {
                 width: 100%;
                 justify-content: center;
-                padding: 14px 18px;  /* 44px+ touch target */
-                font-size: 14px;
-            }
-
-            /* Disclaimer card: stack icon above text */
-            .disclaimer-card {
-                flex-direction: column;
-                gap: 10px;
-                padding: 16px;
-            }
-
-            /* Submit button — bigger touch target */
-            .btn-submit {
-                padding: 16px 20px;
-                font-size: 16px;
-            }
-
-            /* Cropper modal — full screen on mobile */
-            .cropper-container {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 16px 16px 0 0;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-
-            .cropper-body-wrapper {
-                height: 260px;
-            }
-
-            /* Camera overlay — bigger controls */
-            .btn-camera {
-                padding: 14px 20px;
-                font-size: 15px;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .form-container {
-                padding: 16px 12px;
-            }
-
-            .form-title {
-                font-size: 18px;
             }
         }
     </style>
@@ -840,14 +843,14 @@
     </div>
 
     <!-- MAIN FORM VIEW -->
-    <div class="form-container" id="view-form-panel">
+    <main class="form-container" id="view-form-panel" role="main">
         <div class="form-header">
             <div class="logo-section">
                 <div class="logo-icon" id="logo-block">V</div>
                 <div class="agency-name" id="logo-text">VALLEY SECURITY</div>
             </div>
-            <h2 class="form-title">Employee Self-Registration</h2>
-            <p class="form-subtitle">Fill out your onboarding details to generate your official ID card</p>
+            <h1 class="form-title">Employee Self-Registration</h1>
+            <p class="form-subtitle">Fill out your onboarding details to generate your official security ID card</p>
         </div>
 
         <!-- 📢 Warning / Disclaimer Banner -->
@@ -858,9 +861,9 @@
             <div class="disclaimer-content">
                 <h4>Important Instructions</h4>
                 <ul>
-                    <li><strong>Enter exact Aadhaar Details:</strong> Write your name, father's name, and date of birth exactly as printed on your Aadhaar Card to avoid mistakes.</li>
-                    <li><strong>Correct Mobile Number:</strong> Provide an active mobile number that you can be reached on.</li>
-                    <li><strong>Portrait Photo:</strong> Choose or snap a clear, straight-facing portrait picture. A clean background is highly recommended.</li>
+                    <li><strong>Enter exact Aadhaar Details:</strong> Write your name, father's name, and date of birth exactly as printed on your Aadhaar Card.</li>
+                    <li><strong>Active Contact Number:</strong> Provide an active mobile number that can be reached on duty.</li>
+                    <li><strong>Clear Portrait Photo:</strong> Choose or capture a straight-facing portrait with good lighting against a plain background.</li>
                 </ul>
             </div>
         </div>
@@ -871,8 +874,8 @@
             <div class="photo-section" id="photo-drop-zone">
                 <div class="photo-preview-container">
                     <div class="photo-preview-placeholder" id="preview-placeholder">
-                        <i data-lucide="user" style="width: 40px; height: 40px;"></i>
-                        <span style="font-size: 12px;">No Photo Chosen</span>
+                        <i data-lucide="user" style="width: 44px; height: 44px; stroke-width: 1.5;"></i>
+                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">No Photo Chosen</span>
                     </div>
                     <img id="photo-preview-img" style="display: none;" alt="Preview">
                 </div>
@@ -893,25 +896,25 @@
             <div class="form-grid">
                 <!-- Name -->
                 <div class="form-group">
-                    <label for="guard-name">Full Name (As per Aadhaar)</label>
-                    <input type="text" id="guard-name" required placeholder="Enter your full name">
+                    <label for="guard-name">Full Name (As per Aadhaar) *</label>
+                    <input type="text" id="guard-name" required placeholder="Enter full name" autocomplete="name">
                 </div>
 
                 <!-- Phone -->
                 <div class="form-group">
-                    <label for="guard-mobile">Mobile Number</label>
-                    <input type="tel" id="guard-mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="10-digit number">
+                    <label for="guard-mobile">Mobile Number *</label>
+                    <input type="tel" id="guard-mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number" autocomplete="tel">
                 </div>
 
                 <!-- Father/Spouse name -->
                 <div class="form-group">
-                    <label for="guard-guardian">Father's / Husband's Name</label>
-                    <input type="text" id="guard-guardian" required placeholder="Name of parent/spouse">
+                    <label for="guard-guardian">Father's / Husband's Name *</label>
+                    <input type="text" id="guard-guardian" required placeholder="Parent or spouse full name">
                 </div>
 
                 <!-- Relation -->
                 <div class="form-group">
-                    <label for="guard-relation">Relation Type</label>
+                    <label for="guard-relation">Relation Type *</label>
                     <select id="guard-relation" required>
                         <option value="Father">Father</option>
                         <option value="Husband">Husband</option>
@@ -922,13 +925,13 @@
 
                 <!-- DOB -->
                 <div class="form-group">
-                    <label for="guard-dob">Date of Birth (As per Aadhaar)</label>
-                    <input type="date" id="guard-dob" required>
+                    <label for="guard-dob">Date of Birth (As per Aadhaar) *</label>
+                    <input type="date" id="guard-dob" required autocomplete="bday">
                 </div>
 
                 <!-- Blood Group -->
                 <div class="form-group">
-                    <label for="guard-blood">Blood Group</label>
+                    <label for="guard-blood">Blood Group *</label>
                     <select id="guard-blood" required>
                         <option value="">Select Blood Group</option>
                         <option value="A+">A+</option>
@@ -945,7 +948,7 @@
 
                 <!-- Designation -->
                 <div class="form-group">
-                    <label for="guard-designation">Designation</label>
+                    <label for="guard-designation">Designation *</label>
                     <select id="guard-designation" required>
                         <option value="Security Guard">Security Guard</option>
                         <option value="Supervisor">Supervisor</option>
@@ -956,7 +959,7 @@
 
                 <!-- Deputed Location / Department -->
                 <div class="form-group">
-                    <label for="guard-department">Deputed Location / Department</label>
+                    <label for="guard-department">Deputed Location / Department *</label>
                     <select id="guard-department" required>
                         <option value="ACCOUNTANT GENERAL'S OFFICE">Accountant General's Office</option>
                         <option value="NIFT">NIFT Srinagar</option>
@@ -968,7 +971,7 @@
 
                 <!-- Gender -->
                 <div class="form-group">
-                    <label for="guard-gender">Gender</label>
+                    <label for="guard-gender">Gender *</label>
                     <select id="guard-gender" required>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -977,22 +980,22 @@
 
                 <!-- Current Address -->
                 <div class="form-group full-width">
-                    <label for="guard-address">Present Address (Village, Tehsil, District)</label>
-                    <textarea id="guard-address" rows="2" required placeholder="Enter your current address details"></textarea>
+                    <label for="guard-address">Present Address (Village, Tehsil, District) *</label>
+                    <textarea id="guard-address" rows="2" required placeholder="Enter complete present residential address" autocomplete="street-address"></textarea>
                 </div>
             </div>
 
             <button type="submit" class="btn-submit" id="btn-submit-form">
-                <i data-lucide="check" style="width: 18px; height: 18px;"></i>
-                Submit Onboarding Form
+                <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                Submit Onboarding Profile
             </button>
         </form>
-    </div>
+    </main>
 
     <!-- CAMERA SCREEN VIEW -->
     <div class="camera-overlay" id="camera-modal">
         <div class="camera-container">
-            <h3 style="font-family: 'Outfit'; font-size: 20px;">Position your face in the oval frame</h3>
+            <h3 style="font-family: 'Outfit'; font-size: 20px; font-weight: 700;">Position face in oval frame</h3>
             <div class="camera-view-wrapper">
                 <video id="camera-stream-video" autoplay playsinline muted></video>
                 <div class="camera-overlay-frame"></div>
@@ -1000,7 +1003,7 @@
             <div class="camera-controls">
                 <button type="button" class="btn-camera btn-camera-cancel" onclick="closeLiveCamera()">Cancel</button>
                 <button type="button" class="btn-camera btn-camera-snap" onclick="snapSelfie()">
-                    <i data-lucide="aperture" style="width: 18px; height: 18px;"></i>
+                    <i data-lucide="camera" style="width: 18px; height: 18px;"></i>
                     Capture Photo
                 </button>
             </div>
@@ -1010,24 +1013,24 @@
     <!-- SUCCESS STATE PANEL -->
     <div class="form-container view-state" id="view-success-panel">
         <div class="state-icon success">
-            <i data-lucide="check-circle" style="width: 32px; height: 32px;"></i>
+            <i data-lucide="check-circle-2" style="width: 36px; height: 36px;"></i>
         </div>
         <h2 class="state-title">Registration Submitted!</h2>
         <p class="state-description" id="success-description-text">
             Your details and photo have been received. Your profile has been sent to the office admin queue for verification.<br><br>
             Once approved, your official ID card will be activated and generated automatically. You do not need to submit the form again.
         </p>
-        <button type="button" class="btn-submit" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border-color);" onclick="resetRegistrationForm()">
+        <button type="button" class="btn-submit" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border-subtle); max-width: 320px; margin: 0 auto;" onclick="resetRegistrationForm()">
             Submit Another Profile
         </button>
     </div>
 
     <!-- ✂️ Image Cropper Modal -->
-    <div id="cropper-modal" class="cropper-overlay">
+    <div id="cropper-modal" class="cropper-overlay" role="dialog" aria-modal="true" aria-labelledby="cropper-modal-title">
         <div class="cropper-container">
             <div class="cropper-header">
-                <h3>Crop & Resize Photo</h3>
-                <button type="button" class="btn-cropper-close" id="btn-close-cropper">&times;</button>
+                <h3 id="cropper-modal-title">Crop & Adjust Portrait</h3>
+                <button type="button" class="btn-cropper-close" id="btn-close-cropper" aria-label="Close Cropper">&times;</button>
             </div>
             
             <div class="cropper-body-wrapper">
@@ -1036,14 +1039,14 @@
 
             <!-- Controls Row -->
             <div class="cropper-controls-row">
-                <button type="button" class="btn-crop-tool" id="btn-crop-zoom-in" title="Zoom In"><i data-lucide="zoom-in" style="width: 18px; height: 18px;"></i></button>
-                <button type="button" class="btn-crop-tool" id="btn-crop-zoom-out" title="Zoom Out"><i data-lucide="zoom-out" style="width: 18px; height: 18px;"></i></button>
-                <button type="button" class="btn-crop-tool" id="btn-crop-rotate-left" title="Rotate Left"><i data-lucide="rotate-ccw" style="width: 18px; height: 18px;"></i></button>
-                <button type="button" class="btn-crop-tool" id="btn-crop-rotate-right" title="Rotate Right"><i data-lucide="rotate-cw" style="width: 18px; height: 18px;"></i></button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-zoom-in" title="Zoom In"><i data-lucide="zoom-in" style="width: 16px; height: 16px;"></i> Zoom +</button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-zoom-out" title="Zoom Out"><i data-lucide="zoom-out" style="width: 16px; height: 16px;"></i> Zoom -</button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-rotate-left" title="Rotate Left"><i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i> -90°</button>
+                <button type="button" class="btn-crop-tool" id="btn-crop-rotate-right" title="Rotate Right"><i data-lucide="rotate-cw" style="width: 16px; height: 16px;"></i> +90°</button>
                 
                 <button type="button" class="btn-crop-tool" id="btn-crop-aspect-toggle" title="Toggle Crop Ratio">
-                    <i data-lucide="unlock" style="width: 18px; height: 18px;"></i>
-                    <span id="crop-aspect-text">Free Crop</span>
+                    <i data-lucide="lock" style="width: 16px; height: 16px;"></i>
+                    <span id="crop-aspect-text">Card Ratio</span>
                 </button>
             </div>
 
@@ -1079,16 +1082,16 @@
                 const toast = document.createElement('div');
                 toast.className = 'toast-notification';
                 
-                let color = '#cfa15c'; // gold
+                let color = '#6366f1'; // brand indigo
                 let iconName = 'info';
                 
                 const msgLower = message.toLowerCase();
                 if (msgLower.includes('success') || msgLower.includes('save') || msgLower.includes('add') || msgLower.includes('sync') || msgLower.includes('approved') || msgLower.includes('submit')) {
                     color = '#10b981'; // green
-                    iconName = 'check-circle';
+                    iconName = 'check-circle-2';
                 } else if (msgLower.includes('fail') || msgLower.includes('error') || msgLower.includes('incorrect') || msgLower.includes('invalid') || msgLower.includes('missing') || msgLower.includes('not found') || msgLower.includes('already')) {
                     color = '#ef4444'; // red
-                    iconName = 'alert-circle';
+                    iconName = 'alert-triangle';
                 }
                 
                 toast.style.setProperty('--toast-color', color);
@@ -1100,7 +1103,7 @@
                     <div class="toast-content">
                         <div class="toast-message">${message}</div>
                     </div>
-                    <button type="button" class="toast-close">&times;</button>
+                    <button type="button" class="toast-close" aria-label="Close notification">&times;</button>
                 `;
                 
                 container.appendChild(toast);
@@ -1128,11 +1131,12 @@
             document.getElementById('logo-block').textContent = VSA_CONFIG.logoLetter || "V";
             if (VSA_CONFIG.themeColor) {
                 document.getElementById('logo-block').style.background = VSA_CONFIG.themeColor;
-                document.getElementById('logo-text').style.color = VSA_CONFIG.themeColor;
             }
         }
         
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
 
         let base64PhotoData = null;
         let activeStream = null;
@@ -1268,7 +1272,6 @@
             });
         }
 
-        // Call setup on script load
         setupCropperControls();
 
         // Open live camera capture modal
@@ -1304,20 +1307,14 @@
             const video = document.getElementById('camera-stream-video');
             const canvas = document.createElement('canvas');
             
-            // Set canvas size to match aspect ratio
             canvas.width = 480;
             canvas.height = 640;
             
             const ctx = canvas.getContext('2d');
-            
-            // Mirror flip photo to match preview
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
-            
-            // Draw video frame on canvas
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Get base64 JPEG from canvas screenshot
             const selfieBase64 = canvas.toDataURL('image/jpeg', 0.9);
             closeLiveCamera();
             startCropper(selfieBase64);
@@ -1352,7 +1349,7 @@
 
             const btnSubmit = document.getElementById('btn-submit-form');
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 18px; height: 18px; display:inline-block; vertical-align:middle;"></i> Submitting...';
+            btnSubmit.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 18px; height: 18px; display:inline-block; vertical-align:middle;"></i> Submitting Profile...';
             lucide.createIcons();
 
             const payload = {
@@ -1379,20 +1376,19 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    // Show success state panel
                     document.getElementById('view-form-panel').style.display = 'none';
                     document.getElementById('view-success-panel').classList.add('active');
                 } else {
                     alert(`Submission failed: ${result.error || 'Server error'}`);
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = '<i data-lucide="check" style="width: 18px; height: 18px;"></i> Submit Onboarding Form';
+                    btnSubmit.innerHTML = '<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> Submit Onboarding Profile';
                     lucide.createIcons();
                 }
             } catch (err) {
                 console.error("Submission failed:", err);
                 alert("Failed to submit form. Please check your network connection and try again.");
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = '<i data-lucide="check" style="width: 18px; height: 18px;"></i> Submit Onboarding Form';
+                btnSubmit.innerHTML = '<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> Submit Onboarding Profile';
                 lucide.createIcons();
             }
         }
@@ -1409,7 +1405,7 @@
             
             const btnSubmit = document.getElementById('btn-submit-form');
             btnSubmit.disabled = false;
-            btnSubmit.innerHTML = '<i data-lucide="check" style="width: 18px; height: 18px;"></i> Submit Onboarding Form';
+            btnSubmit.innerHTML = '<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> Submit Onboarding Profile';
             lucide.createIcons();
         }
 

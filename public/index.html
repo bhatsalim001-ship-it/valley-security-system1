@@ -85,17 +85,20 @@
     <link rel="stylesheet" href="styles.css?v=11.0">
 </head>
 <body>
+    <!-- Accessibility Skip Link (WCAG 2.1 AA 2.4.1) -->
+    <a href="#view-viewport" class="skip-to-content">Skip to main content</a>
+
     <!-- Main App Container -->
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
-            <div class="brand" style="display: flex; align-items: center; gap: 12px; margin-bottom: 45px; padding-left: 10px;">
-                <div class="brand-logo" style="width: 48px; height: 48px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
-                    <img class="w-full h-full object-cover opacity-80" style="width: 100%; height: 100%; object-fit: cover;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnsxaKFejolA0cNde1I5NWkwwb5TIcoUUlUUTmeJCiQl5Bf1A8eWn1i_V-AmUv9yxc6sSc0EX6ETKwlzwxEv5eMiF3ZfssO1ysCzX43E_Fh1g3ihlQv9hkCUD0wnEwcLIlSnaUo_LU0bDq-w1eepv1VO2gIwEOnimQJ7MFNhPdfreatHQTXqVCLgTz5uxTB7Qs-zSYN3slhb51DqHS2WTppBr_olqmf7CRLa-MjPNOuXw4Ywvml6cHhPOjJfilsaZJV2G-Ckt-hi4" alt="Valley Security Badge Logo"/>
+            <div class="brand">
+                <div class="brand-logo">
+                    <img class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnsxaKFejolA0cNde1I5NWkwwb5TIcoUUlUUTmeJCiQl5Bf1A8eWn1i_V-AmUv9yxc6sSc0EX6ETKwlzwxEv5eMiF3ZfssO1ysCzX43E_Fh1g3ihlQv9hkCUD0wnEwcLIlSnaUo_LU0bDq-w1eepv1VO2gIwEOnimQJ7MFNhPdfreatHQTXqVCLgTz5uxTB7Qs-zSYN3slhb51DqHS2WTppBr_olqmf7CRLa-MjPNOuXw4Ywvml6cHhPOjJfilsaZJV2G-Ckt-hi4" alt="Valley Security Badge Logo"/>
                 </div>
-                <div class="brand-text" style="display: flex; flex-direction: column;">
-                    <span class="agency-title" id="sidebar-name-short" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 1.5px; color: var(--theme-gold);">VALLEY</span>
-                    <span class="agency-subtitle" id="sidebar-name-sub" style="font-size: 9px; letter-spacing: 1px; color: var(--text-secondary); font-weight: 600;">SECURITY AGENCY</span>
+                <div class="brand-text">
+                    <span class="agency-title" id="sidebar-name-short">VALLEY</span>
+                    <span class="agency-subtitle" id="sidebar-name-sub">SECURITY AGENCY</span>
                 </div>
             </div>
             
@@ -184,43 +187,43 @@
                         <i data-lucide="moon" class="theme-icon-dark"></i>
                         <i data-lucide="sun" class="theme-icon-light hidden"></i>
                     </button>
-                    <div class="admin-profile" style="display: flex; align-items: center; gap: 12px;">
-                        <div class="admin-details" style="text-align: right;">
-                            <span class="admin-name" style="font-weight: 600; display: block; font-size: 14px;">HR Manager</span>
-                            <span class="admin-role" style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Super Admin</span>
+                    <div class="admin-profile">
+                        <div class="admin-details">
+                            <span class="admin-name">HR Manager</span>
+                            <span class="admin-role">Super Admin</span>
                         </div>
-                        <div class="avatar-glow" style="width: 40px; height: 40px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;">
-                            <img class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxyVH3RzXPHvg3Qxc8JCkNIPpRYBqTA9gZBCJWOR71e-9gEVrdGv2bhJ0mlKuR-w3s1ky_GT_QgyDUvS8L9SLgqEAaexRXAEfvD7B5LG78_lck4x8VgR8NAn4jyfOgQ69ODNmDDsarMwvfzrHK8L6DTqk1_mUTiVz6HluKntcJIV-ZavbCsAjdUB39NuT6g5hQdtqy3IuSKUG7wVUwFdzZrUzv7l-eHr3RqH0_uLS52WVbbhocFhR1gx7LYyo7Dg3TszlZ77sV1hk" alt="Admin Avatar"/>
+                        <div class="avatar-glow">
+                            <img class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--vs-radius-xs);" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxyVH3RzXPHvg3Qxc8JCkNIPpRYBqTA9gZBCJWOR71e-9gEVrdGv2bhJ0mlKuR-w3s1ky_GT_QgyDUvS8L9SLgqEAaexRXAEfvD7B5LG78_lck4x8VgR8NAn4jyfOgQ69ODNmDDsarMwvfzrHK8L6DTqk1_mUTiVz6HluKntcJIV-ZavbCsAjdUB39NuT6g5hQdtqy3IuSKUG7wVUwFdzZrUzv7l-eHr3RqH0_uLS52WVbbhocFhR1gx7LYyo7Dg3TszlZ77sV1hk" alt="Admin Avatar"/>
                         </div>
                     </div>
                 </div>
             </header>
 
             <!-- Views Containers -->
-            <div class="view-viewport">
+            <div class="view-viewport" id="view-viewport">
 
                 <!-- 1. DASHBOARD VIEW -->
                 <section id="view-dashboard" class="app-view">
                     <!-- Pending Submissions Alert Banner -->
-                    <div id="pending-approval-alert" class="hidden" style="background: rgba(207, 161, 92, 0.08); border: 1px solid rgba(207, 161, 92, 0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-sizing: border-box;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i data-lucide="alert-circle" style="color: #cfa15c; flex-shrink: 0; width: 20px; height: 20px;"></i>
-                            <span id="pending-approval-alert-text" style="font-size: 13.5px; font-weight: 500; color: #e5b36a;">You have 0 pending employee registrations awaiting review.</span>
+                    <div id="pending-approval-alert" class="pending-alert-banner hidden">
+                        <div class="pending-alert-content">
+                            <i data-lucide="alert-circle" class="pending-alert-icon"></i>
+                            <span id="pending-approval-alert-text">You have 0 pending employee registrations awaiting review.</span>
                         </div>
-                        <button class="btn btn-xs btn-primary" onclick="showPendingApprovals()" style="padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; background: #cfa15c; border-color: #cfa15c; color: #000;">Review Submissions</button>
+                        <button class="btn btn-xs pending-alert-btn" onclick="showPendingApprovals()">Review Submissions</button>
                     </div>
 
                     <!-- AI Operations Advisor Panel -->
-                    <div class="dashboard-row" id="ai-advisor-row" style="margin-bottom: 24px;">
-                        <div class="dashboard-card col-12" style="margin-bottom: 0;">
-                            <div class="card-header" style="background: linear-gradient(90deg, rgba(212,175,55,0.06) 0%, rgba(0,0,0,0) 100%); border-bottom: 1px solid rgba(212,175,55,0.12); padding: 16px 24px;">
-                                <h3 style="display: flex; align-items: center; gap: 10px; color: var(--theme-gold); font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.2px;">
-                                    <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--theme-gold);"></i>
+                    <div class="dashboard-row" id="ai-advisor-row">
+                        <div class="dashboard-card col-12 ai-advisor-card">
+                            <div class="card-header ai-advisor-header">
+                                <h3 class="ai-advisor-title">
+                                    <i data-lucide="sparkles" class="ai-sparkles-icon"></i>
                                     AI Operations Advisor
                                 </h3>
-                                <span class="badge" id="ai-analysis-status" style="font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.2); color: var(--theme-gold);">Analyzing Staff Database...</span>
+                                <span class="badge badge-ai-status" id="ai-analysis-status">Analyzing Staff Database...</span>
                             </div>
-                            <div class="card-body" id="ai-insights-container" style="padding: 20px 24px; min-height: 90px; box-sizing: border-box;">
+                            <div class="card-body" id="ai-insights-container">
                                 <!-- AI Insights cards will be loaded here dynamically -->
                             </div>
                         </div>
@@ -228,48 +231,44 @@
 
                     <!-- Stats Grid -->
                     <div class="stats-grid">
-                        <div class="stat-card accented" style="position: relative; overflow: hidden;" id="stat-card-total">
-                            <div class="absolute-blur-circle" style="position: absolute; -right: 16px; -top: 16px; width: 96px; height: 96px; background: rgba(242, 202, 80, 0.08); border-radius: 50%; filter: blur(32px); pointer-events: none;"></div>
-                            <div class="stat-card-header" style="position: relative; z-index: 10;">
+                        <div class="stat-card" id="stat-card-total">
+                            <div class="stat-card-header">
                                 <span class="stat-card-label">Total Guards</span>
                                 <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-card-body" style="position: relative; z-index: 10;">
+                            <div class="stat-card-body">
                                 <span class="stat-card-value" id="stat-total-employees">0</span>
-                                <span class="stat-card-trend"><span class="badge-gold" style="padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: rgba(242, 202, 80, 0.12); border: 1px solid rgba(242, 202, 80, 0.22); color: var(--theme-gold);">Active Base</span></span>
+                                <span class="stat-card-trend"><span class="badge-trend badge-trend-neutral">Active Base</span></span>
                             </div>
                         </div>
-                        <div class="stat-card" style="position: relative; overflow: hidden;" id="stat-card-active">
-                            <div class="absolute-blur-circle" style="position: absolute; -right: 16px; -top: 16px; width: 96px; height: 96px; background: rgba(78, 222, 163, 0.08); border-radius: 50%; filter: blur(32px); pointer-events: none;"></div>
-                            <div class="stat-card-header" style="position: relative; z-index: 10;">
+                        <div class="stat-card" id="stat-card-active">
+                            <div class="stat-card-header">
                                 <span class="stat-card-label">Active Guards</span>
                                 <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-card-body" style="position: relative; z-index: 10;">
+                            <div class="stat-card-body">
                                 <span class="stat-card-value" id="stat-active-employees">0</span>
-                                <span class="stat-card-trend"><span style="padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: rgba(78, 222, 163, 0.12); border: 1px solid rgba(78, 222, 163, 0.22); color: var(--theme-green);">On Duty</span></span>
+                                <span class="stat-card-trend"><span class="badge-trend badge-trend-active">On Duty</span></span>
                             </div>
                         </div>
-                        <div class="stat-card" style="position: relative; overflow: hidden;" id="stat-card-expirations">
-                            <div class="absolute-blur-circle" style="position: absolute; -right: 16px; -top: 16px; width: 96px; height: 96px; background: rgba(239, 68, 68, 0.08); border-radius: 50%; filter: blur(32px); pointer-events: none;"></div>
-                            <div class="stat-card-header" style="position: relative; z-index: 10;">
+                        <div class="stat-card" id="stat-card-expirations">
+                            <div class="stat-card-header">
                                 <span class="stat-card-label">ID Expirations</span>
                                 <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-card-body" style="position: relative; z-index: 10;">
-                                <span class="stat-card-value" id="stat-expired-ids" style="color: var(--status-suspended);">0</span>
-                                <span class="stat-card-trend"><span style="padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.22); color: var(--status-suspended);">Action Req</span></span>
+                            <div class="stat-card-body">
+                                <span class="stat-card-value stat-value-danger" id="stat-expired-ids">0</span>
+                                <span class="stat-card-trend"><span class="badge-trend badge-trend-danger">Action Req</span></span>
                             </div>
                         </div>
-                        <div class="stat-card" style="position: relative; overflow: hidden;" id="stat-card-rate">
-                            <div class="absolute-blur-circle" style="position: absolute; -right: 16px; -top: 16px; width: 96px; height: 96px; background: rgba(78, 222, 163, 0.08); border-radius: 50%; filter: blur(32px); pointer-events: none;"></div>
-                            <div class="stat-card-header" style="position: relative; z-index: 10;">
+                        <div class="stat-card" id="stat-card-rate">
+                            <div class="stat-card-header">
                                 <span class="stat-card-label">Active Rate</span>
                                 <span class="stat-card-action"><i data-lucide="arrow-up-right"></i></span>
                             </div>
-                            <div class="stat-card-body" style="position: relative; z-index: 10;">
+                            <div class="stat-card-body">
                                 <span class="stat-card-value" id="stat-active-rate">0%</span>
-                                <span class="stat-card-trend"><span style="padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: rgba(78, 222, 163, 0.12); border: 1px solid rgba(78, 222, 163, 0.22); color: var(--theme-green);">Optimal</span></span>
+                                <span class="stat-card-trend"><span class="badge-trend badge-trend-active">Optimal</span></span>
                             </div>
                         </div>
                     </div>
@@ -280,7 +279,7 @@
                         <div class="dashboard-card col-6">
                             <div class="card-header">
                                 <h3>Department-wise Guard Distribution</h3>
-                                <span class="badge badge-gold">Real-time</span>
+                                <span class="badge badge-subtle">Real-time</span>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container" id="distribution-chart-container">
@@ -293,23 +292,23 @@
                             <div class="card-header">
                                 <h3>Guard Status</h3>
                             </div>
-                            <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
-                                <div class="progress-gauge-container" style="width: 100%; display: flex; justify-content: center;">
+                            <div class="card-body gauge-card-body">
+                                <div class="progress-gauge-container">
                                     <svg width="180" height="110" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
                                         <!-- Gray track -->
-                                        <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--glass-border)" stroke-width="16" stroke-linecap="round"/>
+                                        <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--vs-surface-3)" stroke-width="16" stroke-linecap="round"/>
                                         <!-- Active green track -->
-                                        <path id="gauge-active-path" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--theme-green)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="0"/>
+                                        <path id="gauge-active-path" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--vs-accent-emerald)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="0"/>
                                         <!-- Text inside -->
-                                        <text x="100" y="80" font-family="'Outfit', sans-serif" font-size="28" font-weight="700" fill="var(--text-primary)" text-anchor="middle" id="gauge-percentage-text">0%</text>
-                                        <text x="100" y="98" font-family="inherit" font-size="10" font-weight="600" fill="var(--text-secondary)" text-anchor="middle">Active Guards</text>
+                                        <text x="100" y="80" font-family="'Outfit', sans-serif" font-size="28" font-weight="700" fill="var(--vs-text-primary)" text-anchor="middle" id="gauge-percentage-text">0%</text>
+                                        <text x="100" y="98" font-family="inherit" font-size="10" font-weight="600" fill="var(--vs-text-muted)" text-anchor="middle">Active Guards</text>
                                     </svg>
                                 </div>
                                 <!-- Legend -->
-                                <div class="gauge-legend" style="display: flex; gap: 10px; font-size: 10px; font-weight: 600; width: 100%; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 12px; margin-top: 4px;">
-                                    <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-active); display: inline-block;"></span> Active</div>
-                                    <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block;"></span> Inactive</div>
-                                    <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--status-suspended); display: inline-block;"></span> Suspended</div>
+                                <div class="gauge-legend">
+                                    <div class="gauge-legend-item"><span class="gauge-dot gauge-dot-active"></span> Active</div>
+                                    <div class="gauge-legend-item"><span class="gauge-dot gauge-dot-inactive"></span> Inactive</div>
+                                    <div class="gauge-legend-item"><span class="gauge-dot gauge-dot-suspended"></span> Suspended</div>
                                 </div>
                             </div>
                         </div>
@@ -327,7 +326,7 @@
                     <!-- Recent Deployments & Quick Actions -->
                     <div class="dashboard-row">
                         <!-- Recent Deployments Table -->
-                        <div class="dashboard-card col-9" style="margin-bottom: 0;">
+                        <div class="dashboard-card col-9">
                             <div class="card-header">
                                 <h3>Recently Registered Personnel</h3>
                                 <button class="btn btn-outline nav-shortcut" data-target="employees">View All Personnel</button>
@@ -354,22 +353,22 @@
                         </div>
 
                         <!-- Quick Actions Panel -->
-                        <div class="dashboard-card col-3" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                        <div class="dashboard-card col-3 quick-actions-card">
                             <div class="card-header">
                                 <h3>Quick Actions</h3>
                             </div>
-                            <div class="card-body" style="display: flex; flex-direction: column; gap: 12px; justify-content: center; height: 100%;">
-                                <button class="btn btn-primary w-100 quick-action-btn" id="qa-register-new" style="justify-content: flex-start; gap: 10px; width: 100%;">
-                                    <i data-lucide="user-plus" style="width: 14px; height: 14px;"></i> Register New Guard
+                            <div class="card-body quick-actions-body">
+                                <button class="quick-action-btn qa-btn-primary" id="qa-register-new">
+                                    <i data-lucide="user-plus"></i> Register New Guard
                                 </button>
-                                <button class="btn btn-outline w-100 quick-action-btn" id="qa-export-csv" style="justify-content: flex-start; gap: 10px; width: 100%;">
-                                    <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export CSV Report
+                                <button class="quick-action-btn" id="qa-export-csv">
+                                    <i data-lucide="download"></i> Export CSV Report
                                 </button>
-                                <button class="btn btn-outline w-100 quick-action-btn" id="qa-manage-templates" style="justify-content: flex-start; gap: 10px; width: 100%;">
-                                    <i data-lucide="layout" style="width: 14px; height: 14px;"></i> Manage Templates
+                                <button class="quick-action-btn" id="qa-manage-templates">
+                                    <i data-lucide="layout"></i> Manage Templates
                                 </button>
-                                <button class="btn btn-outline w-100 quick-action-btn" id="qa-sys-config" style="justify-content: flex-start; gap: 10px; width: 100%;">
-                                    <i data-lucide="settings" style="width: 14px; height: 14px;"></i> System Config
+                                <button class="quick-action-btn" id="qa-sys-config">
+                                    <i data-lucide="settings"></i> System Config
                                 </button>
                             </div>
                         </div>
@@ -438,13 +437,14 @@
                     </div>
 
                     <!-- View Toolbar: View Toggles & Inline Bulk Actions -->
-                    <div class="view-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
-                        <div class="classification-tabs" style="margin-bottom: 0;">
+                    <!-- View Toolbar: View Toggles & Inline Bulk Actions -->
+                    <div class="view-toolbar">
+                        <div class="classification-tabs">
                             <button class="classification-tab-btn active" id="btn-view-card" type="button">
-                                <i data-lucide="layout-grid" style="display:inline-block; vertical-align:middle; width:16px; margin-right:4px;"></i> Card View
+                                <i data-lucide="layout-grid"></i> Card View
                             </button>
                             <button class="classification-tab-btn" id="btn-view-list" type="button">
-                                <i data-lucide="list" style="display:inline-block; vertical-align:middle; width:16px; margin-right:4px;"></i> List View
+                                <i data-lucide="list"></i> List View
                             </button>
                         </div>
                         
@@ -452,20 +452,20 @@
                         <div id="bulk-action-banner" class="bulk-action-inline hidden">
                             <div class="bulk-action-info">
                                 <span class="bulk-select-count" id="bulk-selected-count">0</span>
-                                <span style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Selected</span>
+                                <span class="bulk-select-label">Selected</span>
                             </div>
-                            <div style="width: 170px;">
-                                <select id="bulk-select-template" class="form-control" style="color: #ffffff; background: #0d0e12; height: 34px; padding: 4px 10px; border: 1px solid rgba(var(--theme-accent-rgb), 0.15); border-radius: 6px; font-size: 12px; cursor: pointer;">
+                            <div class="bulk-template-selector">
+                                <select id="bulk-select-template" class="form-control bulk-template-dropdown">
                                     <!-- Populated dynamically with templates -->
                                 </select>
                             </div>
-                            <button class="btn btn-success btn-xs" id="btn-bulk-print" style="height: 34px; padding: 6px 12px; font-weight: 600;">
-                                <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Bulk Print
+                            <button class="btn btn-xs btn-bulk-action btn-bulk-print" id="btn-bulk-print">
+                                <i data-lucide="printer"></i> Bulk Print
                             </button>
-                            <button class="btn btn-outline btn-xs" id="btn-bulk-download" style="height: 34px; padding: 6px 12px; border-color: rgba(255,255,255,0.08); font-weight: 600;">
-                                <i data-lucide="download" style="width: 14px; height: 14px;"></i> Bulk Photo Download
+                            <button class="btn btn-xs btn-bulk-action btn-bulk-download" id="btn-bulk-download">
+                                <i data-lucide="download"></i> Bulk Photo Download
                             </button>
-                            <button class="btn btn-xs" id="btn-bulk-clear" style="color: var(--text-secondary); border: none; background: transparent; cursor: pointer; padding: 0 4px; font-size: 11px; height: 34px;">
+                            <button class="btn btn-xs btn-bulk-clear" id="btn-bulk-clear">
                                 Clear Selection
                             </button>
                         </div>
@@ -519,52 +519,52 @@
                             <input type="hidden" id="reg-emp-id">
                             
                             <!-- AI OCR & Form Scanner Banners -->
-                            <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; width: 100%;">
+                            <div class="ocr-scanner-grid">
                                 <!-- Left Column: ID Card Scanner -->
-                                <div class="dashboard-card ocr-scanner-card" style="flex: 1; min-width: 300px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px dashed rgba(212, 175, 55, 0.25); border-radius: 12px; margin-bottom: 0; box-sizing: border-box;">
-                                    <div class="card-body" style="padding: 24px; text-align: center; position: relative;">
+                                <div class="dashboard-card ocr-scanner-card scanner-card-id">
+                                    <div class="card-body ocr-scanner-body">
                                         <!-- Scanning shimmer backdrop overlay -->
-                                        <div id="ocr-scanning-overlay" class="ocr-loading-overlay hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(13, 14, 18, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 12px;">
-                                            <div class="shimmer-scanner-bar" style="width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--theme-gold), transparent); position: absolute; top:0; animation: scanAnimation 2s infinite linear;"></div>
-                                            <i data-lucide="brain-circuit" class="animate-pulse" style="width: 40px; height: 40px; color: var(--theme-gold); margin-bottom: 12px;"></i>
-                                            <h4 style="font-weight: 700; color: #fff; margin-bottom: 4px;">Gemini AI Analyzing Document...</h4>
-                                            <p class="text-muted" style="font-size: 12px; margin: 0;">Extracting name, DOB, address, Aadhaar number and other details.</p>
+                                        <div id="ocr-scanning-overlay" class="ocr-loading-overlay hidden">
+                                            <div class="shimmer-scanner-bar"></div>
+                                            <i data-lucide="brain-circuit" class="animate-pulse scanner-ai-icon"></i>
+                                            <h4 class="scanner-ai-title">Gemini AI Analyzing Document...</h4>
+                                            <p class="text-muted scanner-ai-sub">Extracting name, DOB, address, Aadhaar number and other details.</p>
                                         </div>
 
-                                        <div id="ocr-dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 8px;">
-                                            <i data-lucide="scan-face" style="width: 36px; height: 36px; color: var(--theme-gold); opacity: 0.8;"></i>
-                                            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0;">AI Instant Enroll (Aadhaar/PAN)</h3>
-                                            <p class="text-muted" style="font-size: 11.5px; max-width: 480px; margin: 0 auto; line-height: 1.4;">
+                                        <div id="ocr-dropzone" class="ocr-dropzone-content">
+                                            <i data-lucide="scan-face" class="dropzone-icon"></i>
+                                            <h3 class="dropzone-title">AI Instant Enroll (Aadhaar/PAN)</h3>
+                                            <p class="text-muted dropzone-desc">
                                                 Drop a clean photo of the **Aadhaar/PAN Card** here. Gemini AI will auto-fill the form fields below.
                                             </p>
                                             <input type="file" id="ocr-file-input" accept="image/*" style="display: none;">
-                                            <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('ocr-file-input').click();" style="margin-top: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600;">
-                                                <i data-lucide="upload" style="width: 12px; height: 12px;"></i> Select ID Card Image
+                                            <button type="button" class="btn btn-outline btn-xs btn-dropzone-select" onclick="document.getElementById('ocr-file-input').click();">
+                                                <i data-lucide="upload"></i> Select ID Card Image
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Right Column: One-Shot Form Scanner -->
-                                <div class="dashboard-card ocr-scanner-card" style="flex: 1; min-width: 300px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px dashed rgba(16, 185, 129, 0.25); border-radius: 12px; margin-bottom: 0; box-sizing: border-box;">
-                                    <div class="card-body" style="padding: 24px; text-align: center; position: relative;">
+                                <div class="dashboard-card ocr-scanner-card scanner-card-form">
+                                    <div class="card-body ocr-scanner-body">
                                         <!-- Scanning shimmer backdrop overlay -->
-                                        <div id="form-scanning-overlay" class="ocr-loading-overlay hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(13, 14, 18, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 12px;">
-                                            <div class="shimmer-scanner-bar" style="width: 100%; height: 4px; background: linear-gradient(90deg, transparent, #10b981, transparent); position: absolute; top:0; animation: scanAnimation 2s infinite linear;"></div>
-                                            <i data-lucide="file-text" class="animate-pulse" style="width: 40px; height: 40px; color: #10b981; margin-bottom: 12px;"></i>
-                                            <h4 style="font-weight: 700; color: #fff; margin-bottom: 4px;">Gemini AI Scanning Registration Sheet...</h4>
-                                            <p class="text-muted" style="font-size: 12px; margin: 0;">Extracting all details, photo crop, and signature crop.</p>
+                                        <div id="form-scanning-overlay" class="ocr-loading-overlay hidden">
+                                            <div class="shimmer-scanner-bar shimmer-bar-form"></div>
+                                            <i data-lucide="file-text" class="animate-pulse scanner-ai-icon"></i>
+                                            <h4 class="scanner-ai-title">Gemini AI Scanning Registration Sheet...</h4>
+                                            <p class="text-muted scanner-ai-sub">Extracting all details, photo crop, and signature crop.</p>
                                         </div>
 
-                                        <div id="form-scan-dropzone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 8px;">
-                                            <i data-lucide="scroll" style="width: 36px; height: 36px; color: #10b981; opacity: 0.8;"></i>
-                                            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0;">One-Shot Form Scanner (A4 Sheet)</h3>
-                                            <p class="text-muted" style="font-size: 11.5px; max-width: 480px; margin: 0 auto; line-height: 1.4;">
+                                        <div id="form-scan-dropzone" class="ocr-dropzone-content">
+                                            <i data-lucide="scroll" class="dropzone-icon dropzone-icon-emerald"></i>
+                                            <h3 class="dropzone-title">One-Shot Form Scanner (A4 Sheet)</h3>
+                                            <p class="text-muted dropzone-desc">
                                                 Drop a photo of the completed **Handwritten Registration Form**. Gemini will auto-fill text, crop photo, and crop signature.
                                             </p>
                                             <input type="file" id="form-scan-file-input" accept="image/*" style="display: none;">
-                                            <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('form-scan-file-input').click();" style="margin-top: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
-                                                <i data-lucide="upload" style="width: 12px; height: 12px;"></i> Select Completed Form
+                                            <button type="button" class="btn btn-outline btn-xs btn-dropzone-select btn-dropzone-emerald" onclick="document.getElementById('form-scan-file-input').click();">
+                                                <i data-lucide="upload"></i> Select Completed Form
                                             </button>
                                         </div>
                                     </div>
@@ -699,6 +699,7 @@
                                             <small class="text-muted">Leave empty to use template's default authority signature</small>
                                         </div>
                                     </div>
+                                </div>
                             </div>
 
                             <div class="form-card">
@@ -795,14 +796,14 @@
 
                             <div class="form-actions">
                                 <button type="button" class="btn btn-outline" id="btn-reg-cancel">Cancel</button>
-                                <button type="button" class="btn btn-danger hidden" id="btn-reg-reject" style="background-color: #ef4444; border-color: #ef4444; color: #fff; display: flex; align-items: center; gap: 6px;">
-                                    <i data-lucide="x-circle" style="width:16px;"></i> Reject & Delete
+                                <button type="button" class="btn btn-danger btn-reg-danger hidden" id="btn-reg-reject">
+                                    <i data-lucide="x-circle"></i> Reject & Delete
                                 </button>
-                                <button type="submit" class="btn btn-success" id="btn-reg-save">
+                                <button type="submit" class="btn btn-primary btn-reg-submit" id="btn-reg-save">
                                     <i data-lucide="save"></i> Save & Generate ID Card
                                 </button>
-                                <button type="button" class="btn btn-success hidden" id="btn-reg-approve" style="background-color: #10b981; border-color: #10b981; color: #fff; display: flex; align-items: center; gap: 6px;">
-                                    <i data-lucide="check-circle" style="width:16px;"></i> Approve & Activate
+                                <button type="button" class="btn btn-success btn-reg-approve hidden" id="btn-reg-approve">
+                                    <i data-lucide="check-circle"></i> Approve & Activate
                                 </button>
                             </div>
                         </form>
@@ -822,32 +823,32 @@
                     </div>
 
                     <div class="dashboard-row">
-                        <!-- Left Panel: Employee Selection -->
+                        <!-- Left Panel: Employee Selection & Batch Generator -->
                         <div class="dashboard-card col-7">
                             <div class="card-header">
                                 <h3><i data-lucide="settings"></i> Card Settings & Batch Generator</h3>
                             </div>
                             <div class="card-body">
-                                <div class="form-row col-3" style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="id-search-employee" style="font-size: 11px;">Search Guard</label>
-                                        <input type="text" id="id-search-employee" class="form-control" placeholder="Name or ID..." style="height: 32px; padding: 4px 8px; font-size: 11px; margin-bottom: 0;">
+                                <div class="id-card-filter-bar">
+                                    <div class="form-group flex-1">
+                                        <label for="id-search-employee">Search Guard</label>
+                                        <input type="text" id="id-search-employee" class="form-control" placeholder="Name or ID...">
                                     </div>
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="id-filter-department" style="font-size: 11px;">Department</label>
-                                        <select id="id-filter-department" class="form-control" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                    <div class="form-group flex-1">
+                                        <label for="id-filter-department">Department</label>
+                                        <select id="id-filter-department" class="form-control">
                                             <option value="">All Departments</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="id-filter-designation" style="font-size: 11px;">Designation</label>
-                                        <select id="id-filter-designation" class="form-control" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                    <div class="form-group flex-1">
+                                        <label for="id-filter-designation">Designation</label>
+                                        <select id="id-filter-designation" class="form-control">
                                             <option value="">All Designations</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Select Guards for Printing / Batch Download</label>
+                                <label class="studio-label" style="display: block; margin-bottom: 8px;">Select Guards for Printing / Batch Download</label>
                                 <div class="id-employee-checklist" id="id-employees-list-box">
                                     <!-- Populated dynamically via JS -->
                                 </div>
@@ -857,16 +858,16 @@
                                     <option value="">Choose an employee...</option>
                                 </select>
 
-                                <div class="form-row col-2" style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="id-select-template" style="font-size: 11px;">Select Template</label>
-                                        <select id="id-select-template" class="form-control" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                <div class="id-card-options-row">
+                                    <div class="form-group flex-1">
+                                        <label for="id-select-template">Select Template</label>
+                                        <select id="id-select-template" class="form-control">
                                             <!-- Populated dynamically -->
                                         </select>
                                     </div>
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="id-validity-years" style="font-size: 11px;">Card Validity</label>
-                                        <select id="id-validity-years" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                    <div class="form-group flex-1">
+                                        <label for="id-validity-years">Card Validity</label>
+                                        <select id="id-validity-years" class="form-control">
                                             <option value="1">1 Year</option>
                                             <option value="2">2 Years</option>
                                             <option value="3" selected>3 Years</option>
@@ -874,40 +875,40 @@
                                         </select>
                                     </div>
                                 </div>
+
                                 <div class="form-row col-1" style="margin-bottom: 12px;">
                                     <div class="form-group" style="margin: 0;">
-                                        <label for="id-card-issue-date" style="font-size: 11px;">Card Issue Date <span style="color: var(--text-muted); font-weight: 400;">(start of validity — leave as today for new cards)</span></label>
-                                        <input type="date" id="id-card-issue-date" class="form-control" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                        <label for="id-card-issue-date">Card Issue Date <span class="text-muted" style="font-weight: 400;">(start of validity — leave as today for new cards)</span></label>
+                                        <input type="date" id="id-card-issue-date" class="form-control">
                                     </div>
                                 </div>
 
-                                <div class="form-actions" style="margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 16px;">
-                                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                                        <button class="btn btn-outline w-100" id="btn-id-bulk-download" style="padding: 8px 12px; font-size: 11px; height: 36px; border-color: rgba(212, 175, 55, 0.25); color: var(--theme-accent); font-weight: 600;">
-                                            <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download ZIP
-                                        </button>
-                                        <button class="btn btn-success w-100" id="btn-id-bulk-print" style="padding: 8px 12px; font-size: 11px; height: 36px; font-weight: 600;">
-                                            <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Bulk Print
-                                        </button>
-                                    </div>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="btn btn-outline w-100" id="btn-download-id-card" style="padding: 8px 12px; font-size: 11px; height: 36px; border-color: rgba(255, 255, 255, 0.08); font-weight: 600;">
-                                            <i data-lucide="image" style="width: 14px; height: 14px;"></i> Save Preview
-                                        </button>
-                                        <button class="btn btn-outline w-100" id="btn-print-id-card" style="padding: 8px 12px; font-size: 11px; height: 36px; border-color: rgba(255, 255, 255, 0.08); font-weight: 600;">
-                                            <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Print Preview
-                                        </button>
-                                    </div>
+                                <div class="id-card-actions-grid">
+                                    <button class="btn btn-outline" id="btn-id-bulk-download">
+                                        <i data-lucide="download"></i> Download ZIP
+                                    </button>
+                                    <button class="btn btn-success" id="btn-id-bulk-print">
+                                        <i data-lucide="printer"></i> Bulk Print
+                                    </button>
+                                    <button class="btn btn-outline" id="btn-download-id-card">
+                                        <i data-lucide="image"></i> Save Preview
+                                    </button>
+                                    <button class="btn btn-outline" id="btn-print-id-card">
+                                        <i data-lucide="printer"></i> Print Preview
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Panel: Single-Sided ID Card Preview -->
-                        <div class="dashboard-card col-5 id-card-preview-container" style="position: sticky; top: 20px; align-self: flex-start;">
-                            <div class="card-header">
-                                <h3><i data-lucide="credit-card"></i> ID Card Preview (Print Size)</h3>
+                        <!-- Right Panel: Single-Sided ID Card Preview Stage -->
+                        <div class="dashboard-card col-5 studio-canvas-card id-card-preview-container" style="position: sticky; top: 80px; align-self: flex-start;">
+                            <div class="card-header studio-canvas-header">
+                                <div class="studio-canvas-title">
+                                    <i data-lucide="credit-card"></i>
+                                    <h3>ID Card Preview (Print Size)</h3>
+                                </div>
                             </div>
-                            <div class="card-body p-0">
+                            <div class="card-body studio-canvas-stage">
                                 <div class="printable-id-card" id="printable-id-single">
                                 <div class="id-card-portrait">
                                     <!-- Header: Logo and Agency Details -->
@@ -984,424 +985,476 @@
 
                 <!-- 5C. ID CARD TEMPLATES MANAGER VIEW -->
                 <section id="view-templates" class="app-view hidden">
-                    <div class="dashboard-row" style="align-items: flex-start; gap: 20px;">
-                        <!-- Left Column: Settings Form + Saved Templates -->
-                        <div class="col-6" style="display: flex; flex-direction: column; gap: 20px;">
-                            <!-- Quick Template Selector Bar at the top -->
-                            <div class="dashboard-card" style="margin-bottom: 0; flex-shrink: 0;">
-                                <div class="card-body" style="padding: 15px;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
-                                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 250px;">
-                                            <label for="tpl-edit-select" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; margin-bottom: 0;">Select Template:</label>
-                                            <select id="tpl-edit-select" class="form-control" style="height: 36px; padding: 6px 12px; font-size: 13px; flex: 1; border: 1px solid var(--glass-border); border-radius: 6px;">
-                                                <!-- Populated dynamically -->
-                                            </select>
-                                        </div>
-                                        <div style="display: flex; gap: 8px;">
-                                            <button type="button" class="btn btn-danger" id="btn-tpl-delete-selected" style="height: 36px; font-size: 12px; font-weight: 600; display: none; background: rgba(255, 46, 147, 0.15); border-color: rgba(255, 46, 147, 0.25); color: #ff2e93; justify-content: center; align-items: center; gap: 6px; border-radius: 6px; padding: 0 16px; cursor: pointer;">
-                                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete Template
-                                            </button>
-                                            <button type="button" class="btn btn-primary" id="btn-tpl-new-top" style="height: 36px; font-size: 12px; font-weight: 600; justify-content: center; align-items: center; gap: 6px; border-radius: 6px; padding: 0 16px; cursor: pointer;">
-                                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Create New
-                                            </button>
-                                        </div>
+                    <div class="studio-layout-row">
+                        <!-- Left Column: Controls & Configuration -->
+                        <div class="studio-controls-column">
+                            <!-- Quick Template Selector Bar -->
+                            <div class="studio-selector-card">
+                                <div class="studio-selector-bar">
+                                    <div class="studio-selector-group">
+                                        <label for="tpl-edit-select" class="studio-label">Select Template:</label>
+                                        <select id="tpl-edit-select" class="form-control studio-selector-dropdown">
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="studio-selector-actions">
+                                        <button type="button" class="btn btn-danger btn-tpl-delete" id="btn-tpl-delete-selected">
+                                            <i data-lucide="trash-2"></i> Delete Template
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-tpl-create" id="btn-tpl-new-top">
+                                            <i data-lucide="plus"></i> Create New
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Template Settings Form Card -->
-                            <div class="dashboard-card" style="margin-bottom: 0;">
+                            <div class="dashboard-card studio-form-card">
                                 <div class="card-header">
                                     <h3><i data-lucide="sliders"></i> Template Settings Form</h3>
                                 </div>
                                 <div class="card-body">
                                     <!-- AI Template Assistant -->
-                                    <div class="ai-assistant-card" style="margin-bottom: 24px; padding: 20px; background: rgba(212, 175, 55, 0.05); border: 1px dashed rgba(212, 175, 55, 0.25); border-radius: 12px; position: relative; overflow: hidden; box-sizing: border-box;">
-                                        <h4 style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: var(--theme-gold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; margin-top: 0;">
-                                            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> ✨ AI Layout Designer
-                                        </h4>
-                                        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4; margin-top: 0;">
+                                    <div class="studio-ai-card">
+                                        <div class="studio-ai-header">
+                                            <h4 class="studio-ai-title">
+                                                <i data-lucide="sparkles"></i> AI Layout Designer
+                                            </h4>
+                                            <span class="badge badge-accent">Gemini Powered</span>
+                                        </div>
+                                        <p class="studio-ai-desc">
                                             Upload a reference image of any ID card design you like and describe the style. The Gemini AI will automatically parse and map it to your form sliders.
                                         </p>
                                         
-                                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                                            <!-- Reference Image Upload Slot -->
-                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div class="studio-ai-controls">
+                                            <div class="studio-ai-upload-row">
                                                 <input type="file" id="tpl-ai-reference-file" accept="image/*" style="display: none;">
-                                                <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('tpl-ai-reference-file').click();" style="font-size: 10px; height: 32px; padding: 0 12px; border-color: rgba(255,255,255,0.12); display: flex; align-items: center; gap: 6px; cursor: pointer; background: transparent;">
-                                                    <i data-lucide="image" style="width: 12px; height: 12px;"></i> Upload Design Photo
+                                                <button type="button" class="btn btn-outline btn-ai-upload" onclick="document.getElementById('tpl-ai-reference-file').click();">
+                                                    <i data-lucide="image"></i> Upload Design Photo
                                                 </button>
-                                                <span id="tpl-ai-reference-filename" style="font-size: 10px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 200px;">No reference photo added</span>
+                                                <span id="tpl-ai-reference-filename" class="studio-ai-filename">No reference photo added</span>
                                             </div>
 
-                                            <!-- Text Prompt Description -->
-                                            <div style="position: relative;">
-                                                <textarea id="tpl-ai-prompt" class="form-control" rows="2" placeholder="e.g. Make a modern premium dark vertical card with golden header bar, Outfit font, and large photo..." style="font-size: 11.5px; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); width: 100%; box-sizing: border-box; resize: vertical; margin-bottom: 0; min-height: 60px; color: #fff; font-family: inherit;"></textarea>
+                                            <div class="studio-ai-prompt-wrapper">
+                                                <textarea id="tpl-ai-prompt" class="form-control studio-ai-prompt" rows="2" placeholder="e.g. Make a modern premium dark vertical card with golden header bar, Outfit font, and large photo..."></textarea>
                                             </div>
 
-                                            <button type="button" class="btn btn-success" id="btn-tpl-generate-ai" style="height: 38px; width: 100%; font-size: 12px; font-weight: 600; background: linear-gradient(135deg, var(--theme-gold), #b38b35); border-color: var(--theme-gold); color: #000; display: flex; justify-content: center; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2); cursor: pointer; border-radius: 6px;">
-                                                <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Generate Design with AI
+                                            <button type="button" class="btn btn-success btn-ai-generate" id="btn-tpl-generate-ai">
+                                                <i data-lucide="sparkles"></i> Generate Design with AI
                                             </button>
                                         </div>
 
                                         <!-- Glassmorphic Loader overlay -->
-                                        <div id="tpl-ai-loader" class="hidden" style="position: absolute; inset: 0; background: rgba(3, 3, 4, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 100; backdrop-filter: blur(4px);">
-                                            <div class="loader-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(212, 175, 55, 0.15); border-top-color: var(--theme-gold); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                                            <span style="font-size: 11px; font-weight: 600; color: var(--theme-gold); letter-spacing: 0.5px;">AI Designing Layout...</span>
+                                        <div id="tpl-ai-loader" class="studio-ai-loader hidden">
+                                            <div class="loader-spinner"></div>
+                                            <span class="studio-ai-loader-text">AI Designing Layout...</span>
                                         </div>
                                     </div>
 
-                                <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
-                                    <input type="hidden" id="tpl-id">
-                                    
-                                    <div class="form-row col-2">
-                                        <div class="form-group">
-                                            <label for="tpl-name">Template Name *</label>
-                                            <input type="text" id="tpl-name" required placeholder="e.g. Standard Guard Card">
+                                    <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
+                                        <input type="hidden" id="tpl-id">
+                                        
+                                        <div class="form-row col-2">
+                                            <div class="form-group">
+                                                <label for="tpl-name">Template Name *</label>
+                                                <input type="text" id="tpl-name" class="form-control" required placeholder="e.g. Standard Guard Card">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="tpl-layout">Card Layout *</label>
+                                                <select id="tpl-layout" class="form-control">
+                                                    <option value="vertical" selected>Vertical (Standard Portrait)</option>
+                                                    <option value="horizontal">Horizontal (Landscape)</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="tpl-layout">Card Layout *</label>
-                                            <select id="tpl-layout">
-                                                <option value="vertical" selected>Vertical (Standard Portrait)</option>
-                                                <option value="horizontal">Horizontal (Landscape)</option>
-                                            </select>
-                                        </div>
-                                    </div>
 
-                                    <div class="form-row col-2">
-                                        <div class="form-group">
-                                            <label for="tpl-font">Card Font *</label>
-                                            <select id="tpl-font">
-                                                <option value="'Outfit', sans-serif" selected>Outfit (Modern)</option>
-                                                <option value="'Inter', sans-serif">Inter (Clean)</option>
-                                                <option value="'Poppins', sans-serif">Poppins (Elegant)</option>
-                                                <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>
-                                                <option value="'Oswald', sans-serif">Oswald (Condensed)</option>
-                                                <option value="'Playfair Display', serif">Playfair Display (Classic Serif)</option>
-                                                <option value="'Cinzel', serif">Cinzel (Luxury Serif)</option>
-                                                <option value="'Bebas Neue', sans-serif">Bebas Neue (Impact)</option>
-                                                <option value="'Quicksand', sans-serif">Quicksand (Soft Rounded)</option>
-                                                <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Premium Clean)</option>
-                                                <option value="'Cinzel Decorative', serif">Cinzel Decorative (Fancy Serif)</option>
-                                                <option value="'Lobster', cursive">Lobster (Elegant Script)</option>
-                                                <option value="'Pacifico', cursive">Pacifico (Fluid Script)</option>
-                                                <option value="'Righteous', sans-serif">Righteous (Modern/Retro)</option>
-                                                <option value="'Satisfy', cursive">Satisfy (Classic Brush)</option>
-                                                <option value="'Great Vibes', cursive">Great Vibes (Calligraphy)</option>
-                                            </select>
+                                        <div class="form-row col-2">
+                                            <div class="form-group">
+                                                <label for="tpl-font">Card Font *</label>
+                                                <select id="tpl-font" class="form-control">
+                                                    <option value="'Outfit', sans-serif" selected>Outfit (Modern)</option>
+                                                    <option value="'Inter', sans-serif">Inter (Clean)</option>
+                                                    <option value="'Poppins', sans-serif">Poppins (Elegant)</option>
+                                                    <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>
+                                                    <option value="'Oswald', sans-serif">Oswald (Condensed)</option>
+                                                    <option value="'Playfair Display', serif">Playfair Display (Classic Serif)</option>
+                                                    <option value="'Cinzel', serif">Cinzel (Luxury Serif)</option>
+                                                    <option value="'Bebas Neue', sans-serif">Bebas Neue (Impact)</option>
+                                                    <option value="'Quicksand', sans-serif">Quicksand (Soft Rounded)</option>
+                                                    <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Premium Clean)</option>
+                                                    <option value="'Cinzel Decorative', serif">Cinzel Decorative (Fancy Serif)</option>
+                                                    <option value="'Lobster', cursive">Lobster (Elegant Script)</option>
+                                                    <option value="'Pacifico', cursive">Pacifico (Fluid Script)</option>
+                                                    <option value="'Righteous', sans-serif">Righteous (Modern/Retro)</option>
+                                                    <option value="'Satisfy', cursive">Satisfy (Classic Brush)</option>
+                                                    <option value="'Great Vibes', cursive">Great Vibes (Calligraphy)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="tpl-bg-color">Card Background Color</label>
+                                                <input type="color" id="tpl-bg-color" value="#ffffff" class="studio-color-input">
+                                            </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="tpl-bg-color">Card Background Color</label>
-                                            <input type="color" id="tpl-bg-color" value="#ffffff" style="width: 100%; height: 38px; border: 1px solid var(--glass-border); padding: 0; background: transparent; cursor: pointer; border-radius: 6px;">
-                                        </div>
-                                    </div>
 
-                                    <div class="form-row col-2" style="align-items: flex-start;">
-                                        <div class="form-group" style="flex: 1;">
-                                            <label for="tpl-header-bg">Header Bar Color</label>
-                                            <input type="color" id="tpl-header-bg" value="#0e3e2b" style="width: 100%; height: 38px; border: 1px solid var(--glass-border); padding: 0; background: transparent; cursor: pointer; border-radius: 6px;">
-                                        </div>
-                                        <div class="form-group HSL-picker-card" style="flex: 1.5; display: flex; flex-direction: column; gap: 10px; padding: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 12px;">
-                                            <label style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--theme-gold); margin-bottom: 2px;">Accent Borders/Text Color</label>
-                                            
-                                            <!-- Hue Slider -->
-                                            <div class="hsl-slider-item">
-                                                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px;">
-                                                    <span style="color: var(--text-secondary); font-weight: 500;">Hue</span>
-                                                    <span id="lbl-hsl-hue" style="font-family: monospace; font-weight: 600; color: var(--text-primary);">351</span>
+                                        <div class="form-row col-2 studio-color-section">
+                                            <div class="form-group">
+                                                <label for="tpl-header-bg">Header Bar Color</label>
+                                                <input type="color" id="tpl-header-bg" value="#0e3e2b" class="studio-color-input">
+                                            </div>
+                                            <div class="form-group studio-hsl-card">
+                                                <label class="studio-hsl-heading">Accent Borders/Text Color</label>
+                                                
+                                                <!-- Hue Slider -->
+                                                <div class="hsl-slider-item">
+                                                    <div class="hsl-slider-header">
+                                                        <span class="hsl-slider-label">Hue</span>
+                                                        <span id="lbl-hsl-hue" class="hsl-slider-val">351</span>
+                                                    </div>
+                                                    <input type="range" id="val-hsl-hue" min="0" max="360" value="351" class="hsl-slider-input hsl-hue-track">
                                                 </div>
-                                                <input type="range" id="val-hsl-hue" min="0" max="360" value="351" class="hsl-slider-input" style="width: 100%; height: 6px; border-radius: 3px; outline: none; background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%); appearance: none; cursor: pointer;">
-                                            </div>
 
-                                            <!-- Saturation Slider -->
-                                            <div class="hsl-slider-item">
-                                                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px;">
-                                                    <span style="color: var(--text-secondary); font-weight: 500;">Saturation</span>
-                                                    <span id="lbl-hsl-sat" style="font-family: monospace; font-weight: 600; color: var(--text-primary);">85%</span>
+                                                <!-- Saturation Slider -->
+                                                <div class="hsl-slider-item">
+                                                    <div class="hsl-slider-header">
+                                                        <span class="hsl-slider-label">Saturation</span>
+                                                        <span id="lbl-hsl-sat" class="hsl-slider-val">85%</span>
+                                                    </div>
+                                                    <input type="range" id="val-hsl-sat" min="0" max="100" value="85" class="hsl-slider-input hsl-sat-track">
                                                 </div>
-                                                <input type="range" id="val-hsl-sat" min="0" max="100" value="85" class="hsl-slider-input" style="width: 100%; height: 6px; border-radius: 3px; outline: none; background: linear-gradient(to right, #808080, #c8102e); appearance: none; cursor: pointer;">
-                                            </div>
 
-                                            <!-- Lightness Slider -->
-                                            <div class="hsl-slider-item">
-                                                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px;">
-                                                    <span style="color: var(--text-secondary); font-weight: 500;">Lightness</span>
-                                                    <span id="lbl-hsl-light" style="font-family: monospace; font-weight: 600; color: var(--text-primary);">42%</span>
+                                                <!-- Lightness Slider -->
+                                                <div class="hsl-slider-item">
+                                                    <div class="hsl-slider-header">
+                                                        <span class="hsl-slider-label">Lightness</span>
+                                                        <span id="lbl-hsl-light" class="hsl-slider-val">42%</span>
+                                                    </div>
+                                                    <input type="range" id="val-hsl-light" min="0" max="100" value="42" class="hsl-slider-input hsl-light-track">
                                                 </div>
-                                                <input type="range" id="val-hsl-light" min="0" max="100" value="42" class="hsl-slider-input" style="width: 100%; height: 6px; border-radius: 3px; outline: none; background: linear-gradient(to right, #000000, #c8102e, #ffffff); appearance: none; cursor: pointer;">
+
+                                                <!-- Output Swatch -->
+                                                <div class="hsl-swatch-row">
+                                                    <div id="hsl-swatch" class="hsl-swatch-box"></div>
+                                                    <span class="hsl-code-text">Current color: <code id="lbl-hsl-current" class="hsl-code-badge">hsl(351, 85%, 42%)</code></span>
+                                                </div>
+
+                                                <!-- Bind to the hidden target input for form collection -->
+                                                <input type="hidden" id="tpl-accent-color" value="#c8102e">
                                             </div>
+                                        </div>
 
-                                            <!-- Output Swatch -->
-                                            <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--glass-border);">
-                                                <div id="hsl-swatch" style="width: 24px; height: 24px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: hsl(351, 85%, 42%); flex-shrink: 0;"></div>
-                                                <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">
-                                                    Current color: <code id="lbl-hsl-current" style="font-family: monospace; font-weight: 600; color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">hsl(351, 85%, 42%)</code>
-                                                </p>
+                                        <!-- Micro-Sliders for Layout & Typography -->
+                                        <div class="form-row col-3 studio-slider-row">
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-logo-size">Logo Size</label>
+                                                    <span class="studio-val-badge"><span id="lbl-logo-size">50</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-logo-size" min="30" max="100" value="50" class="studio-range-input">
                                             </div>
-
-                                            <!-- Bind to the hidden target input for form collection -->
-                                            <input type="hidden" id="tpl-accent-color" value="#c8102e">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row col-3" style="margin-top: 10px; margin-bottom: 10px;">
-                                        <div class="form-group">
-                                            <label for="tpl-logo-size">Logo Size (<span id="lbl-logo-size">50</span>px)</label>
-                                            <input type="range" id="tpl-logo-size" min="30" max="100" value="50" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-header-height">Header Ht (<span id="lbl-header-height">90</span>px)</label>
-                                            <input type="range" id="tpl-header-height" min="60" max="150" value="90" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-header-font-size">Title Font Size (<span id="lbl-header-font-size">14</span>px)</label>
-                                            <input type="range" id="tpl-header-font-size" min="10" max="24" value="14" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row col-4" style="margin-bottom: 15px;">
-                                        <div class="form-group">
-                                            <label for="tpl-photo-width">Photo Width (<span id="lbl-photo-width">85</span>px)</label>
-                                            <input type="range" id="tpl-photo-width" min="60" max="130" value="85" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-photo-height">Photo Height (<span id="lbl-photo-height">105</span>px)</label>
-                                            <input type="range" id="tpl-photo-height" min="70" max="165" value="105" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-qr-size">QR Size (<span id="lbl-qr-size">70</span>px)</label>
-                                            <input type="range" id="tpl-qr-size" min="50" max="150" value="70" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-details-font-size">Details Font (<span id="lbl-details-font-size">8</span>px)</label>
-                                            <input type="range" id="tpl-details-font-size" min="6" max="12" value="8" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row col-2" style="margin-bottom: 15px;">
-                                        <div class="form-group">
-                                            <label for="tpl-name-font-size">Name Font (<span id="lbl-name-font-size">13</span>px)</label>
-                                            <input type="range" id="tpl-name-font-size" min="8" max="22" value="13" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-designation-font-size">Desig. Font (<span id="lbl-designation-font-size">9</span>px)</label>
-                                            <input type="range" id="tpl-designation-font-size" min="6" max="18" value="9" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                    </div>
-
-                                    <!-- NEW: Label/Value Colors + Row Height + Spacing -->
-                                    <div class="form-row col-2">
-                                        <div class="form-group">
-                                            <label for="tpl-label-color">Label Color <small style="opacity:0.6">(NAME:, DEPT: etc)</small></label>
-                                            <input type="color" id="tpl-label-color" value="#555555" style="width:100%;height:36px;border-radius:6px;border:1px solid var(--glass-border);cursor:pointer;">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-value-color">Value Color <small style="opacity:0.6">(Salim, Guard etc)</small></label>
-                                            <input type="color" id="tpl-value-color" value="#111111" style="width:100%;height:36px;border-radius:6px;border:1px solid var(--glass-border);cursor:pointer;">
-                                        </div>
-                                    </div>
-                                    <div class="form-row col-3">
-                                        <div class="form-group">
-                                            <label for="tpl-row-padding">Row Height (<span id="lbl-row-padding">3</span>px)</label>
-                                            <input type="range" id="tpl-row-padding" min="1" max="10" value="3" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-label-width">Label Width (<span id="lbl-label-width">45</span>%)</label>
-                                            <input type="range" id="tpl-label-width" min="10" max="85" value="45" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-label-value-spacing">Label–Value Spacing (<span id="lbl-label-value-spacing">10</span>px)</label>
-                                            <input type="range" id="tpl-label-value-spacing" min="0" max="80" value="10" style="width: 100%; accent-color: var(--theme-gold);">
-                                        </div>
-                                    </div>
-                                    <div class="form-row col-2">
-                                        <div class="form-group">
-                                            <label for="tpl-header-text">Agency Title Text *</label>
-                                            <input type="text" id="tpl-header-text" required placeholder="VALLEY SECURITY AGENCY">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="tpl-subheader-text">Agency Location Text</label>
-                                            <input type="text" id="tpl-subheader-text" placeholder="SHAHIDGUNJ SRINAGAR KASHMIR">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row col-2" style="margin-top: 10px;">
-                                        <div class="form-group">
-                                            <label style="font-size: 11px;">Agency Logo Asset</label>
-                                            <div class="logo-presets-selector" style="display: flex; gap: 4px; margin-bottom: 6px;">
-                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset active" data-logo="preset-vsa-logo" style="font-size: 10px; padding: 2px 6px; height: auto;">VSA Logo</button>
-                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset" data-logo="preset-shield" style="font-size: 10px; padding: 2px 6px; height: auto;">Shield</button>
-                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset" data-logo="preset-star" style="font-size: 10px; padding: 2px 6px; height: auto;">Star</button>
-                                                <button type="button" class="btn btn-xs btn-outline btn-logo-preset" data-logo="preset-eagle" style="font-size: 10px; padding: 2px 6px; height: auto;">Eagle</button>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-header-height">Header Ht</label>
+                                                    <span class="studio-val-badge"><span id="lbl-header-height">90</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-header-height" min="60" max="150" value="90" class="studio-range-input">
                                             </div>
-                                            <input type="file" id="tpl-logo-upload" accept="image/*" style="display: none;">
-                                            <button type="button" class="btn btn-xs btn-outline btn-outline-dashed" onclick="document.getElementById('tpl-logo-upload').click();" style="font-size: 10px; padding: 2px 6px; height: auto; display: flex; align-items: center; gap: 4px;"><i data-lucide="upload" style="width: 10px; height: 10px;"></i> Custom Logo</button>
-                                            <span id="tpl-logo-filename" style="font-size: 9px; color: var(--text-muted); display: block; margin-top: 4px; word-break: break-all;"></span>
-                                        </div>
-                                        <div class="form-group">
-                                            <label style="font-size: 11px;">Signature Asset</label>
-                                            <div class="sig-presets-selector" style="display: flex; gap: 4px; margin-bottom: 6px;">
-                                                <button type="button" class="btn btn-xs btn-outline btn-sig-preset active" data-sig="preset-vsa-sig" style="font-size: 10px; padding: 2px 6px; height: auto;">VSA Sig</button>
-                                                <button type="button" class="btn btn-xs btn-outline btn-sig-preset" data-sig="preset-sig1" style="font-size: 10px; padding: 2px 6px; height: auto;">Sig 1</button>
-                                                <button type="button" class="btn btn-xs btn-outline btn-sig-preset" data-sig="preset-sig2" style="font-size: 10px; padding: 2px 6px; height: auto;">Sig 2</button>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-header-font-size">Title Font Size</label>
+                                                    <span class="studio-val-badge"><span id="lbl-header-font-size">14</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-header-font-size" min="10" max="24" value="14" class="studio-range-input">
                                             </div>
-                                            <input type="file" id="tpl-sig-upload" accept="image/*" style="display: none;">
-                                            <button type="button" class="btn btn-xs btn-outline btn-outline-dashed" onclick="document.getElementById('tpl-sig-upload').click();" style="font-size: 10px; padding: 2px 6px; height: auto; display: flex; align-items: center; gap: 4px;"><i data-lucide="upload" style="width: 10px; height: 10px;"></i> Custom Sig</button>
-                                            <span id="tpl-sig-filename" style="font-size: 9px; color: var(--text-muted); display: block; margin-top: 4px; word-break: break-all;"></span>
                                         </div>
-                                    </div>
 
-                                    <!-- Quick Assets Picker -->
-                                    <h4 class="props-section-subtitle" style="font-size: 11px; margin-top: 15px; margin-bottom: 8px;">Quick Background Grid Patterns</h4>
-                                    <div class="grid-presets-selector" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                                        <button type="button" class="btn btn-xs btn-outline btn-bg-preset active" data-bg="">Solid Color</button>
-                                        <button type="button" class="btn btn-xs btn-outline btn-bg-preset" data-bg="default-bg">Security Grid (Dark)</button>
-                                        <button type="button" class="btn btn-xs btn-outline btn-bg-preset" data-bg="vip-bg">VIP Grid (Gold)</button>
-                                    </div>
+                                        <div class="form-row col-4 studio-slider-row">
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-photo-width">Photo Width</label>
+                                                    <span class="studio-val-badge"><span id="lbl-photo-width">85</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-photo-width" min="60" max="130" value="85" class="studio-range-input">
+                                            </div>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-photo-height">Photo Height</label>
+                                                    <span class="studio-val-badge"><span id="lbl-photo-height">105</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-photo-height" min="70" max="165" value="105" class="studio-range-input">
+                                            </div>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-qr-size">QR Size</label>
+                                                    <span class="studio-val-badge"><span id="lbl-qr-size">70</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-qr-size" min="50" max="150" value="70" class="studio-range-input">
+                                            </div>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-details-font-size">Details Font</label>
+                                                    <span class="studio-val-badge"><span id="lbl-details-font-size">8</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-details-font-size" min="6" max="12" value="8" class="studio-range-input">
+                                            </div>
+                                        </div>
 
-                                    <!-- Content checkboxes -->
-                                    <h4 class="props-section-subtitle" style="font-size: 11px; margin-top: 15px; margin-bottom: 8px;">ID Card Elements to Display</h4>
-                                    <div class="field-toggles-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-photo" checked> Photo
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-name" checked> Name
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-designation" checked> Designation
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-department" checked> Department
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-empid" checked> Staff ID
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-father" checked> Father's Name
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-phone" checked> Mobile No
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-email" checked> Email
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-blood" checked> Blood Group
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-address" checked> Address
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-signature" checked> Signature
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-qrcode" checked> Verification QR
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-barcode" checked> Barcode
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-secondary);">
-                                            <input type="checkbox" id="field-tpl-validity" checked> Validity Date
-                                        </label>
-                                    </div>
+                                        <div class="form-row col-2 studio-slider-row">
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-name-font-size">Name Font</label>
+                                                    <span class="studio-val-badge"><span id="lbl-name-font-size">13</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-name-font-size" min="8" max="22" value="13" class="studio-range-input">
+                                            </div>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-designation-font-size">Desig. Font</label>
+                                                    <span class="studio-val-badge"><span id="lbl-designation-font-size">9</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-designation-font-size" min="6" max="18" value="9" class="studio-range-input">
+                                            </div>
+                                        </div>
 
-                                    <!-- Field Reordering Container -->
-                                    <h4 class="props-section-subtitle" style="font-size: 11px; margin-top: 15px; margin-bottom: 8px;">Field Render Order <small style="opacity: 0.6;">(Drag or use arrows to reorder)</small></h4>
-                                    <div id="tpl-details-fields-reorder-container" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);">
-                                        <!-- Populated dynamically in app.js -->
-                                    </div>
+                                        <div class="form-row col-2">
+                                            <div class="form-group">
+                                                <label for="tpl-label-color">Label Color <small class="text-muted">(NAME:, DEPT: etc)</small></label>
+                                                <input type="color" id="tpl-label-color" value="#555555" class="studio-color-input">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="tpl-value-color">Value Color <small class="text-muted">(Salim, Guard etc)</small></label>
+                                                <input type="color" id="tpl-value-color" value="#111111" class="studio-color-input">
+                                            </div>
+                                        </div>
 
-                                    <div class="form-actions" style="margin-top: 15px; display: flex; gap: 10px;">
-                                        <button type="button" class="btn btn-outline" id="btn-tpl-reset" style="flex:1;">Clear</button>
-                                        <button type="button" class="btn btn-success" id="btn-tpl-save" style="flex:2;"><i data-lucide="save"></i> Save Template Layout</button>
-                                    </div>
-                                </form>
-                                                 </div>
-                        </div>
+                                        <div class="form-row col-3 studio-slider-row">
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-row-padding">Row Height</label>
+                                                    <span class="studio-val-badge"><span id="lbl-row-padding">3</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-row-padding" min="1" max="10" value="3" class="studio-range-input">
+                                            </div>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-label-width">Label Width</label>
+                                                    <span class="studio-val-badge"><span id="lbl-label-width">45</span>%</span>
+                                                </div>
+                                                <input type="range" id="tpl-label-width" min="10" max="85" value="45" class="studio-range-input">
+                                            </div>
+                                            <div class="form-group studio-slider-group">
+                                                <div class="studio-slider-header">
+                                                    <label for="tpl-label-value-spacing">Label–Value Spacing</label>
+                                                    <span class="studio-val-badge"><span id="lbl-label-value-spacing">10</span>px</span>
+                                                </div>
+                                                <input type="range" id="tpl-label-value-spacing" min="0" max="80" value="10" class="studio-range-input">
+                                            </div>
+                                        </div>
 
-                        <!-- Saved Templates list Card -->
-                        <div class="dashboard-card" style="margin-bottom: 0;">
-                            <div class="card-header">
-                                <h3><i data-lucide="list"></i> Available Layout Designs</h3>
+                                        <div class="form-row col-2">
+                                            <div class="form-group">
+                                                <label for="tpl-header-text">Agency Title Text *</label>
+                                                <input type="text" id="tpl-header-text" class="form-control" required placeholder="VALLEY SECURITY AGENCY">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="tpl-subheader-text">Agency Location Text</label>
+                                                <input type="text" id="tpl-subheader-text" class="form-control" placeholder="SHAHIDGUNJ SRINAGAR KASHMIR">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row col-2 studio-assets-section">
+                                            <div class="form-group">
+                                                <label class="studio-label">Agency Logo Asset</label>
+                                                <div class="logo-presets-selector studio-preset-group">
+                                                    <button type="button" class="btn btn-preset btn-logo-preset active" data-logo="preset-vsa-logo">VSA Logo</button>
+                                                    <button type="button" class="btn btn-preset btn-logo-preset" data-logo="preset-shield">Shield</button>
+                                                    <button type="button" class="btn btn-preset btn-logo-preset" data-logo="preset-star">Star</button>
+                                                    <button type="button" class="btn btn-preset btn-logo-preset" data-logo="preset-eagle">Eagle</button>
+                                                </div>
+                                                <input type="file" id="tpl-logo-upload" accept="image/*" style="display: none;">
+                                                <button type="button" class="btn btn-outline btn-custom-upload" onclick="document.getElementById('tpl-logo-upload').click();">
+                                                    <i data-lucide="upload"></i> Custom Logo
+                                                </button>
+                                                <span id="tpl-logo-filename" class="studio-filename-chip"></span>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="studio-label">Signature Asset</label>
+                                                <div class="sig-presets-selector studio-preset-group">
+                                                    <button type="button" class="btn btn-preset btn-sig-preset active" data-sig="preset-vsa-sig">VSA Sig</button>
+                                                    <button type="button" class="btn btn-preset btn-sig-preset" data-sig="preset-sig1">Sig 1</button>
+                                                    <button type="button" class="btn btn-preset btn-sig-preset" data-sig="preset-sig2">Sig 2</button>
+                                                </div>
+                                                <input type="file" id="tpl-sig-upload" accept="image/*" style="display: none;">
+                                                <button type="button" class="btn btn-outline btn-custom-upload" onclick="document.getElementById('tpl-sig-upload').click();">
+                                                    <i data-lucide="upload"></i> Custom Sig
+                                                </button>
+                                                <span id="tpl-sig-filename" class="studio-filename-chip"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quick Assets Picker -->
+                                        <div class="studio-section-group">
+                                            <h4 class="studio-section-title">Quick Background Grid Patterns</h4>
+                                            <div class="grid-presets-selector studio-preset-group">
+                                                <button type="button" class="btn btn-preset btn-bg-preset active" data-bg="">Solid Color</button>
+                                                <button type="button" class="btn btn-preset btn-bg-preset" data-bg="default-bg">Security Grid (Dark)</button>
+                                                <button type="button" class="btn btn-preset btn-bg-preset" data-bg="vip-bg">VIP Grid (Gold)</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Content checkboxes -->
+                                        <div class="studio-section-group">
+                                            <h4 class="studio-section-title">ID Card Elements to Display</h4>
+                                            <div class="field-toggles-grid">
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-photo" checked> <span>Photo</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-name" checked> <span>Name</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-designation" checked> <span>Designation</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-department" checked> <span>Department</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-empid" checked> <span>Staff ID</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-father" checked> <span>Father's Name</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-phone" checked> <span>Mobile No</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-email" checked> <span>Email</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-blood" checked> <span>Blood Group</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-address" checked> <span>Address</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-signature" checked> <span>Signature</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-qrcode" checked> <span>Verification QR</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-barcode" checked> <span>Barcode</span>
+                                                </label>
+                                                <label class="studio-toggle-item">
+                                                    <input type="checkbox" id="field-tpl-validity" checked> <span>Validity Date</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Field Reordering Container -->
+                                        <div class="studio-section-group">
+                                            <h4 class="studio-section-title">Field Render Order <small class="text-muted">(Drag or use arrows to reorder)</small></h4>
+                                            <div id="tpl-details-fields-reorder-container" class="studio-reorder-container">
+                                                <!-- Populated dynamically in app.js -->
+                                            </div>
+                                        </div>
+
+                                        <div class="form-actions studio-form-actions">
+                                            <button type="button" class="btn btn-outline btn-tpl-reset" id="btn-tpl-reset">Clear</button>
+                                            <button type="button" class="btn btn-success btn-tpl-save" id="btn-tpl-save"><i data-lucide="save"></i> Save Template Layout</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Template Layout Name</th>
-                                                <th>Orientation</th>
-                                                <th>Title Text</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="templates-list-tbody">
-                                            <!-- Dynamically populated templates list -->
-                                        </tbody>
-                                    </table>
+
+                            <!-- Saved Templates list Card -->
+                            <div class="dashboard-card studio-templates-card">
+                                <div class="card-header">
+                                    <h3><i data-lucide="list"></i> Available Layout Designs</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Template Layout Name</th>
+                                                    <th>Orientation</th>
+                                                    <th>Title Text</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="templates-list-tbody">
+                                                <!-- Dynamically populated templates list -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- End of Left Column -->
+
+                        <!-- Right Column: Live Mock Preview Stage (Sticky) -->
+                        <div class="studio-preview-column">
+                            <div class="dashboard-card studio-canvas-card">
+                                <div class="card-header studio-canvas-header">
+                                    <div class="studio-canvas-title">
+                                        <i data-lucide="eye"></i>
+                                        <h3>Live ID Card Preview</h3>
+                                    </div>
+                                    <div class="studio-canvas-controls">
+                                        <label for="tpl-preview-emp-select" class="studio-preview-label">Preview Employee:</label>
+                                        <select id="tpl-preview-emp-select" class="form-control studio-preview-select"></select>
+                                    </div>
+                                </div>
+                                <div class="card-body studio-canvas-stage">
+                                    <div id="live-tpl-preview-container" class="studio-live-preview-container">
+                                        <!-- Rendered dynamically -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div> <!-- End of Left Column -->
-
-                    <!-- Right Column: Live Mock Preview (Stays fixed/pinned on the side) -->
-                    <div class="col-6" style="position: sticky; top: 20px; display: flex; flex-direction: column;">
-                        <div class="dashboard-card" style="margin-bottom: 0; display: flex; flex-direction: column; overflow: hidden;">
-                            <div class="card-header" style="flex-shrink: 0;">
-                                <h3><i data-lucide="eye"></i> Live ID Card Preview</h3>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">Preview Employee:</span>
-                                    <select id="tpl-preview-emp-select" class="form-control" style="width: 180px; font-size: 13px; height: 32px; padding: 4px 8px; border-radius: 4px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color);"></select>
-                                </div>
-                            </div>
-                            <div class="card-body" style="display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--input-bg); border-radius: 8px; overflow: hidden; padding: 20px;">
-                                <div id="live-tpl-preview-container" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
-                                    <!-- Rendered dynamically -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> <!-- End of Row -->
-            </section>
+                    </div> <!-- End of Studio Layout Row -->
+                </section>
 
                  <!-- 5B. EMPLOYEE RECORD (LETTERHEAD PRINTABLE FORM) -->
                 <section id="view-emp-record" class="app-view hidden">
                     <div class="section-header">
                         <div>
-                            <h1>Employee Record - Print on Letterhead</h1>
-                            <p class="text-muted">Select an employee to print their record form on company letterhead with photo.</p>
+                            <h1>Employee Record & Letterhead Studio</h1>
+                            <p class="text-muted">Select an employee profile to compile, inspect, and print physical employment records with official letterhead.</p>
                         </div>
                     </div>
 
-                    <div class="dashboard-row">
-                        <!-- Left Panel: Employee Selection -->
-                        <div class="dashboard-card col-4">
-                            <div class="card-header">
-                                <h3>Select Employee</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-row col-3" style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="rec-search-employee" style="font-size: 11px;">Search Guard</label>
-                                        <input type="text" id="rec-search-employee" class="form-control" placeholder="Name or ID..." style="height: 32px; padding: 4px 8px; font-size: 11px; margin-bottom: 0;">
+                    <div class="record-layout-row">
+                        <!-- Left Panel: Employee Selection & Filters -->
+                        <div class="record-controls-column">
+                            <div class="record-controls-card">
+                                <div class="card-header" style="padding: 0 0 14px 0; border-bottom: 1px solid var(--border-subtle); margin-bottom: 14px;">
+                                    <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="user-search" style="width: 16px; height: 16px; color: var(--brand-primary);"></i>
+                                        Select Employee
+                                    </h3>
+                                </div>
+
+                                <div class="record-filter-grid">
+                                    <div class="record-filter-item">
+                                        <label for="rec-search-employee" class="record-filter-label">Search Guard</label>
+                                        <input type="text" id="rec-search-employee" class="record-filter-input" placeholder="Name or ID...">
                                     </div>
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="rec-filter-department" style="font-size: 11px;">Department</label>
-                                        <select id="rec-filter-department" class="form-control" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                    <div class="record-filter-item">
+                                        <label for="rec-filter-department" class="record-filter-label">Department</label>
+                                        <select id="rec-filter-department" class="record-filter-select">
                                             <option value="">All Departments</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" style="flex: 1; margin: 0;">
-                                        <label for="rec-filter-designation" style="font-size: 11px;">Designation</label>
-                                        <select id="rec-filter-designation" class="form-control" style="height: 32px; padding: 4px 8px; font-size: 11px;">
+                                    <div class="record-filter-item">
+                                        <label for="rec-filter-designation" class="record-filter-label">Designation</label>
+                                        <select id="rec-filter-designation" class="record-filter-select">
                                             <option value="">All Designations</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Choose Guard Profile to View</label>
-                                <div class="id-employee-checklist" id="rec-employees-list-box" style="max-height: 250px;">
+                                <label class="record-checklist-label">Guard Profiles</label>
+                                <div class="id-employee-checklist record-checklist-box" id="rec-employees-list-box">
                                     <!-- Populated dynamically via JS -->
                                 </div>
 
@@ -1410,21 +1463,26 @@
                                     <option value="">Choose an employee...</option>
                                 </select>
 
-                                <button class="btn btn-success w-100 mt-2" id="btn-print-employee-record" style="height: 38px; font-weight: 600;">
+                                <button type="button" class="btn btn-print-record" id="btn-print-employee-record">
                                     <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Print Employee Record
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Right Panel: Printable Record Preview -->
-                        <div class="dashboard-card col-8">
-                            <div class="card-header">
-                                <h3>Employee Record Preview</h3>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="printable-letterhead" id="printable-letterhead">
-                                    <!-- Physical style form container -->
-                                    <div class="printed-registration-form">
+                        <!-- Right Panel: Printable Record Preview Stage -->
+                        <div class="record-preview-column">
+                            <div class="record-preview-card">
+                                <div class="record-preview-header">
+                                    <h3 class="record-preview-title">
+                                        <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--brand-primary);"></i>
+                                        Employee Record Preview
+                                    </h3>
+                                    <span class="badge badge-info" style="font-size: 11px;">A4 Official Format</span>
+                                </div>
+                                <div class="record-preview-stage">
+                                    <div class="printable-letterhead" id="printable-letterhead">
+                                        <!-- Physical style form container -->
+                                        <div class="printed-registration-form">
                                         <!-- Header Section -->
                                         <div class="reg-form-header">
                                             <div class="header-left">
@@ -1596,58 +1654,71 @@
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
                 <!-- 6. REPORTS VIEW -->
                 <section id="view-reports" class="app-view hidden">
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3>Generate Operational Reports</h3>
+                    <div class="section-header">
+                        <div>
+                            <h1>Operational Analytics & Reports</h1>
+                            <p class="text-muted">Generate comprehensive workforce rosters, deployment summaries, and Excel-compatible audit reports.</p>
                         </div>
-                        <div class="card-body">
-                            <form id="report-filter-form" class="luxury-form mb-4">
-                                <div class="form-row col-4">
-                                    <div class="form-group">
-                                        <label for="rep-type">Report Type</label>
-                                        <select id="rep-type" required>
+                    </div>
+
+                    <div class="reports-container">
+                        <!-- Filter & Compilation Card -->
+                        <div class="reports-filter-card">
+                            <form id="report-filter-form">
+                                <div class="reports-form-row">
+                                    <div class="reports-form-group">
+                                        <label for="rep-type" class="reports-label">Report Type</label>
+                                        <select id="rep-type" class="reports-select" required>
                                             <option value="master">All Personnel Master List</option>
                                             <option value="active">Active Personnel</option>
                                             <option value="inactive">Inactive / Suspended</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="rep-department">Filter by Department</label>
-                                        <select id="rep-department">
+                                    <div class="reports-form-group">
+                                        <label for="rep-department" class="reports-label">Filter by Department</label>
+                                        <select id="rep-department" class="reports-select">
                                             <option value="">All Departments</option>
                                         </select>
                                     </div>
-                                    <div class="form-group flex-end">
-                                        <button type="submit" class="btn btn-primary w-100">
-                                            <i data-lucide="play"></i> Compile Report
+                                    <div class="reports-form-group">
+                                        <button type="submit" class="reports-btn-compile">
+                                            <i data-lucide="play" style="width: 15px; height: 15px;"></i> Compile Report
                                         </button>
                                     </div>
-                                    <div class="form-group flex-end">
-                                        <button type="button" class="btn btn-outline w-100" id="btn-export-csv">
-                                            <i data-lucide="file-spreadsheet"></i> Export Excel CSV
+                                    <div class="reports-form-group">
+                                        <button type="button" class="reports-btn-export" id="btn-export-csv">
+                                            <i data-lucide="file-spreadsheet" style="width: 15px; height: 15px;"></i> Export Excel CSV
                                         </button>
                                     </div>
                                 </div>
                             </form>
+                        </div>
 
-                            <div class="report-result-section">
-                                <h4 id="report-title-compiled" class="mb-3">Compiled Report Preview</h4>
-                                <div class="table-responsive">
-                                    <table class="table" id="report-result-table">
-                                        <thead>
-                                            <tr id="report-headers">
-                                                <!-- Dynamic headers -->
-                                            </tr>
-                                        </thead>
-                                        <tbody id="report-tbody">
-                                            <!-- Dynamic list -->
-                                        </tbody>
-                                    </table>
-                                </div>
+                        <!-- Results Preview Card -->
+                        <div class="reports-preview-card">
+                            <div class="reports-card-header">
+                                <h3 class="reports-card-title" id="report-title-compiled">
+                                    <i data-lucide="table" style="width: 16px; height: 16px; color: var(--brand-primary);"></i>
+                                    Compiled Report Preview
+                                </h3>
+                                <span class="badge badge-gold" style="font-size: 11px;">Live Snapshot</span>
+                            </div>
+                            <div class="table-responsive reports-table-container">
+                                <table class="table" id="report-result-table">
+                                    <thead>
+                                        <tr id="report-headers">
+                                            <!-- Dynamic headers -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="report-tbody">
+                                        <!-- Dynamic list -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -1655,143 +1726,169 @@
 
                 <!-- 7. SETTINGS VIEW -->
                 <section id="view-settings" class="app-view hidden">
-                    <div class="dashboard-row">
-                        <!-- Backup controls -->
-                        <div class="dashboard-card col-6">
-                            <div class="card-header">
-                                <h3>Local Cloud Backups</h3>
+                    <div class="section-header">
+                        <div>
+                            <h1>System Settings & Manpower Classifications</h1>
+                            <p class="text-muted">Manage agency profile configurations, database cloud backups, and department taxonomies.</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-section-grid">
+                        <!-- Backup Controls -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <h3 class="settings-card-title">
+                                    <i data-lucide="database" style="width: 18px; height: 18px; color: var(--brand-primary);"></i>
+                                    Database Cloud Backups
+                                </h3>
+                                <span class="settings-badge">Snapshots</span>
                             </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-4" id="backup-desc">Export or import the full database file. Safe for sharing or migrations.</p>
-                                <div class="settings-actions">
-                                    <button class="btn btn-outline mb-3 w-100 justify-start" id="btn-backup-download">
-                                        <i data-lucide="download-cloud"></i> Export Backup JSON File
-                                    </button>
-                                    
-                                    <div class="backup-import-container">
-                                        <label for="file-backup-import" class="btn btn-primary w-100 cursor-pointer">
-                                            <i data-lucide="upload-cloud"></i> Import Backup File...
-                                        </label>
-                                        <input type="file" id="file-backup-import" accept=".json" class="hidden">
-                                    </div>
+                            <p class="text-muted mb-4" id="backup-desc">Export or import the full database file. Portable and safe for migrations, off-site archives, or offline backup.</p>
+                            <div class="backup-actions-container">
+                                <button type="button" class="btn-backup-export" id="btn-backup-download">
+                                    <i data-lucide="download-cloud" style="width: 17px; height: 17px; color: var(--brand-primary);"></i>
+                                    Export Full Backup JSON File
+                                </button>
+                                
+                                <div class="backup-import-container">
+                                    <label for="file-backup-import" class="backup-import-label">
+                                        <i data-lucide="upload-cloud" style="width: 17px; height: 17px;"></i>
+                                        Import Database Backup File...
+                                    </label>
+                                    <input type="file" id="file-backup-import" accept=".json" class="hidden">
                                 </div>
                             </div>
                         </div>
 
                         <!-- System Configuration -->
-                        <div class="dashboard-card col-6">
-                            <div class="card-header">
-                                <h3>Company Profile Information</h3>
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <h3 class="settings-card-title">
+                                    <i data-lucide="shield-check" style="width: 18px; height: 18px; color: var(--theme-gold);"></i>
+                                    Company Profile Information
+                                </h3>
+                                <span class="settings-badge" style="background: rgba(212, 175, 55, 0.12); color: var(--theme-gold); border-color: rgba(212, 175, 55, 0.25);">Verified</span>
                             </div>
-                            <div class="card-body">
-                                <form class="luxury-form" id="settings-company-form">
-                                    <div class="form-group">
-                                        <label>Agency Name</label>
-                                        <input type="text" id="settings-firm-name" value="Valley Security Service Agency" disabled>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Corporate Head Office Address</label>
-                                        <input type="text" id="settings-firm-address" value="SHAHEED GUNJ NATH COMPLEX SRINAGAR 190001" disabled>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Licence / PSARA Registration Number</label>
-                                        <input type="text" id="settings-firm-license" value="PSA | L | 99 | JK |2024 | DEC | 3| 62" disabled>
-                                    </div>
-                                    <div class="alert-info-box mt-3">
-                                        <i data-lucide="info" class="gold-text"></i>
-                                        <span>Company Profile details are embedded into printed employee badges.</span>
-                                    </div>
+                            <form id="settings-company-form" class="settings-company-group">
+                                <div class="settings-field">
+                                    <label class="settings-field-label">Agency Name</label>
+                                    <input type="text" id="settings-firm-name" class="settings-field-input" value="Valley Security Service Agency" disabled>
+                                </div>
+                                <div class="settings-field">
+                                    <label class="settings-field-label">Corporate Head Office Address</label>
+                                    <input type="text" id="settings-firm-address" class="settings-field-input" value="SHAHEED GUNJ NATH COMPLEX SRINAGAR 190001" disabled>
+                                </div>
+                                <div class="settings-field">
+                                    <label class="settings-field-label">Licence / PSARA Registration Number</label>
+                                    <input type="text" id="settings-firm-license" class="settings-field-input" value="PSA | L | 99 | JK |2024 | DEC | 3| 62" disabled>
+                                </div>
+                                <div class="settings-info-callout">
+                                    <i data-lucide="info" style="width: 16px; height: 16px; color: var(--brand-primary); flex-shrink: 0;"></i>
+                                    <span>Company Profile details are permanently embedded into generated employee badges and official letterheads.</span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Manpower Classifications Manager -->
+                    <div style="margin-top: 24px;">
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <h3 class="settings-card-title">
+                                    <i data-lucide="tags" style="width: 18px; height: 18px; color: var(--brand-primary);"></i>
+                                    Manpower Classifications Manager
+                                </h3>
+                                <span class="settings-badge">Taxonomy Engine</span>
+                            </div>
+                            <p class="text-muted mb-4">Add, view, or remove custom roles, departments, and employee types to match your agency's workforce specifications.</p>
+                            
+                            <div class="classification-tabs-nav">
+                                <button class="classification-tab-btn active" data-tab="depts" type="button">Departments</button>
+                                <button class="classification-tab-btn" data-tab="desigs" type="button">Designations</button>
+                                <button class="classification-tab-btn" data-tab="types" type="button">Manpower Types</button>
+                            </div>
+                            
+                            <!-- Departments Tab -->
+                            <div class="classification-pane active" id="pane-depts">
+                                <div class="classification-list" id="class-list-depts"></div>
+                                <form class="classification-add-form" id="form-add-dept">
+                                    <input type="text" id="input-add-dept" required placeholder="e.g. Healthcare Services, Valet Parking...">
+                                    <button type="button" class="btn btn-secondary" id="btn-resolve-dept">
+                                        <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Resolve Name
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">Add Department</button>
+                                </form>
+                                <button type="button" class="btn btn-secondary" id="btn-audit-depts">
+                                    <i data-lucide="scan-search" style="width: 14px; height: 14px;"></i> Audit & Clean Departments
+                                </button>
+                            </div>
+                            
+                            <!-- Designations Tab -->
+                            <div class="classification-pane" id="pane-desigs">
+                                <div class="classification-list" id="class-list-desigs"></div>
+                                <form class="classification-add-form" id="form-add-desig">
+                                    <input type="text" id="input-add-desig" required placeholder="e.g. Head Nurse, Bouncer, Valet Driver...">
+                                    <button type="submit" class="btn btn-primary">Add Designation</button>
+                                </form>
+                            </div>
+                            
+                            <!-- Manpower Types Tab -->
+                            <div class="classification-pane" id="pane-types">
+                                <div class="classification-list" id="class-list-types"></div>
+                                <form class="classification-add-form" id="form-add-type">
+                                    <input type="text" id="input-add-type" required placeholder="e.g. Healthcare Staff, Driver Force...">
+                                    <button type="submit" class="btn btn-primary">Add Manpower Type</button>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <div class="dashboard-row mt-4">
-                        <div class="dashboard-card col-12">
-                            <div class="card-header">
-                                <h3>Manpower Classifications Manager</h3>
-                                <span class="badge badge-gold">Configuration</span>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-4">Add, view, or remove custom roles, departments, and employee types to match your agency's manpower requirements.</p>
-                                
-                                <div class="classification-tabs">
-                                    <button class="classification-tab-btn active" data-tab="depts" type="button">Departments</button>
-                                    <button class="classification-tab-btn" data-tab="desigs" type="button">Designations</button>
-                                    <button class="classification-tab-btn" data-tab="types" type="button">Manpower Types</button>
-                                </div>
-                                
-                                <!-- Departments Tab -->
-                                <div class="classification-pane active" id="pane-depts">
-                                    <div class="classification-list" id="class-list-depts"></div>
-                                    <form class="classification-add-form" id="form-add-dept">
-                                        <input type="text" id="input-add-dept" required placeholder="e.g. Healthcare Services, Valet Parking...">
-                                        <button type="button" class="btn btn-secondary" id="btn-resolve-dept" style="background: rgba(212,175,55,0.15); border-color: var(--theme-gold); color: var(--theme-gold); display: flex; align-items: center; gap: 6px; white-space: nowrap;">✨ Resolve Name</button>
-                                        <button type="submit" class="btn btn-primary">Add Department</button>
-                                    </form>
-                                    <button type="button" class="btn btn-secondary" id="btn-audit-depts" style="background: rgba(212,175,55,0.08); border-color: rgba(212,175,55,0.3); color: var(--theme-gold); display: flex; align-items: center; gap: 6px; white-space: nowrap; margin-top: 15px; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer;">🔍 Audit & Clean Departments</button>
-                                </div>
-                                
-                                <!-- Designations Tab -->
-                                <div class="classification-pane" id="pane-desigs">
-                                    <div class="classification-list" id="class-list-desigs"></div>
-                                    <form class="classification-add-form" id="form-add-desig">
-                                        <input type="text" id="input-add-desig" required placeholder="e.g. Head Nurse, Bouncer, Valet Driver...">
-                                        <button type="submit" class="btn btn-primary">Add Designation</button>
-                                    </form>
-                                </div>
-                                
-                                <!-- Manpower Types Tab -->
-                                <div class="classification-pane" id="pane-types">
-                                    <div class="classification-list" id="class-list-types"></div>
-                                    <form class="classification-add-form" id="form-add-type">
-                                        <input type="text" id="input-add-type" required placeholder="e.g. Healthcare Staff, Driver Force...">
-                                        <button type="submit" class="btn btn-primary">Add Manpower Type</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="dashboard-row mt-4">
-                        <div class="dashboard-card col-6">
-                            <div class="card-header">
-                                <h3><i data-lucide="info"></i> System Information</h3>
+                    <!-- Telemetry & Creator Attribution -->
+                    <div class="settings-section-grid" style="margin-top: 24px;">
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <h3 class="settings-card-title">
+                                    <i data-lucide="cpu" style="width: 18px; height: 18px; color: var(--brand-primary);"></i>
+                                    System Telemetry & Environment
+                                </h3>
+                                <span class="badge badge-success" style="font-size: 11px;">Active</span>
                             </div>
-                            <div class="card-body">
-                                <div class="info-section">
-                                    <span class="info-label">Application Name</span>
-                                    <span class="info-value" id="sysinfo-firm-name">Valley Security Service Agency</span>
+                            <div class="sysinfo-grid">
+                                <div class="sysinfo-row">
+                                    <span class="sysinfo-label">Application Name</span>
+                                    <span class="sysinfo-value" id="sysinfo-firm-name">Valley Security Service Agency</span>
                                 </div>
-                                <div class="info-section">
-                                    <span class="info-label">Database Status</span>
-                                    <span class="info-value" id="sysinfo-db-status" style="font-weight: 600;">Checking...</span>
+                                <div class="sysinfo-row">
+                                    <span class="sysinfo-label">Database Status</span>
+                                    <span class="sysinfo-value" id="sysinfo-db-status" style="color: #10b981;">Checking...</span>
                                 </div>
-                                <div class="info-section">
-                                    <span class="info-label">Version</span>
-                                    <span class="info-value">1.0.0 Professional</span>
+                                <div class="sysinfo-row">
+                                    <span class="sysinfo-label">System Architecture</span>
+                                    <span class="sysinfo-value">1.0.0 Enterprise Omega</span>
                                 </div>
-                                <div class="info-section">
-                                    <span class="info-label">Developed By</span>
-                                    <span class="info-value" style="color: var(--theme-gold); font-weight: 600;">SALIM ILYAS BHAT</span>
+                                <div class="sysinfo-row">
+                                    <span class="sysinfo-label">Security Protocol</span>
+                                    <span class="sysinfo-value">F3-Certified (nosniff, PII-Safe)</span>
                                 </div>
-                                <div class="info-section">
-                                    <span class="info-label">Release Date</span>
-                                    <span class="info-value">June 2026</span>
+                                <div class="sysinfo-row">
+                                    <span class="sysinfo-label">Release Build</span>
+                                    <span class="sysinfo-value">November 2026 Omega</span>
                                 </div>
                             </div>
                         </div>
- 
-                        <div class="dashboard-card col-6">
-                            <div class="card-header">
-                                <h3>🏆 Creator Attribution</h3>
-                                <span class="badge badge-gold">Developer</span>
+
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <h3 class="settings-card-title">
+                                    <i data-lucide="award" style="width: 18px; height: 18px; color: var(--theme-gold);"></i>
+                                    Lead Architect Attribution
+                                </h3>
+                                <span class="badge badge-gold" style="font-size: 11px;">Developer</span>
                             </div>
-                            <div class="card-body" style="text-align: center;">
-                                <div style="padding: 16px; background: rgba(var(--theme-gold-rgb), 0.05); border-radius: 12px; border: 1px solid rgba(var(--theme-gold-rgb), 0.15);">
-                                    <h4 style="font-size: 16px; font-weight: 700; color: var(--theme-gold); margin: 0;">SALIM ILYAS BHAT</h4>
-                                    <p style="color: #86868b; margin: 8px 0 0 0; font-size: 12px;">Full-Stack Developer & Designer</p>
-                                    <p style="color: #6b7280; margin: 10px 0 0 0; font-size: 11px; line-height: 1.5;">This system was built from concept to production by SALIM ILYAS BHAT.</p>
-                                </div>
+                            <div class="creator-profile-card">
+                                <h4 class="creator-name">SALIM ILYAS BHAT</h4>
+                                <p class="creator-title">Full-Stack Lead Architect & Systems Engineer</p>
+                                <p class="creator-bio">Engineered and designed the Valley Security Service Agency (VSA) Workforce Management, Dynamic Security ID Badging, and Real-Time Verification Platform from initial concept to high-availability production deployment.</p>
                             </div>
                         </div>
                     </div>
@@ -2121,61 +2218,69 @@
 
     <!-- ✂️ Image Cropper Modal -->
     <div id="cropper-modal" class="modal-overlay hidden" style="z-index: 11000;" role="dialog" aria-modal="true" aria-label="Crop & Resize Photo">
-        <div class="modal-container" style="max-width: 680px; padding: 25px; box-sizing: border-box;">
-            <div class="modal-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: var(--text-primary); font-size: 20px; font-weight: 700; font-family: 'Outfit', sans-serif;">Crop & Resize Photo</h2>
-                <button type="button" class="modal-close" id="btn-close-cropper" style="font-size: 28px; background: none; border: none; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</button>
+        <div class="modal-container cropper-modal-container">
+            <div class="modal-header">
+                <h2><i data-lucide="crop" style="width: 18px; height: 18px; color: var(--brand-primary);"></i> Crop & Resize Photo</h2>
+                <button type="button" class="modal-close" id="btn-close-cropper" aria-label="Close Crop Modal">&times;</button>
             </div>
             
-            <div class="modal-body" style="padding: 0; display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px;">
-                <div style="background: #111; border-radius: 12px; overflow: hidden; height: 420px; border: 1px dashed var(--glass-border); position: relative; width: 100%;">
+            <div class="modal-body" style="padding: 20px;">
+                <div class="cropper-stage-frame">
                     <img id="cropper-target-image" src="" alt="Source Image" style="display: block;">
                 </div>
 
                 <!-- Controls Row -->
-                <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-outline" id="btn-crop-zoom-in" title="Zoom In" style="padding: 10px 15px; display: inline-flex; align-items: center; justify-content: center;"><i data-lucide="zoom-in" style="width: 18px; height: 18px;"></i></button>
-                    <button type="button" class="btn btn-outline" id="btn-crop-zoom-out" title="Zoom Out" style="padding: 10px 15px; display: inline-flex; align-items: center; justify-content: center;"><i data-lucide="zoom-out" style="width: 18px; height: 18px;"></i></button>
-                    <button type="button" class="btn btn-outline" id="btn-crop-rotate-left" title="Rotate Left" style="padding: 10px 15px; display: inline-flex; align-items: center; justify-content: center;"><i data-lucide="rotate-ccw" style="width: 18px; height: 18px;"></i></button>
-                    <button type="button" class="btn btn-outline" id="btn-crop-rotate-right" title="Rotate Right" style="padding: 10px 15px; display: inline-flex; align-items: center; justify-content: center;"><i data-lucide="rotate-cw" style="width: 18px; height: 18px;"></i></button>
+                <div class="cropper-controls-bar">
+                    <button type="button" class="btn btn-outline" id="btn-crop-zoom-in" title="Zoom In">
+                        <i data-lucide="zoom-in" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline" id="btn-crop-zoom-out" title="Zoom Out">
+                        <i data-lucide="zoom-out" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline" id="btn-crop-rotate-left" title="Rotate Left">
+                        <i data-lucide="rotate-ccw" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline" id="btn-crop-rotate-right" title="Rotate Right">
+                        <i data-lucide="rotate-cw" style="width: 18px; height: 18px;"></i>
+                    </button>
                     
                     <!-- Aspect Ratio Toggle Button -->
-                    <button type="button" class="btn btn-outline" id="btn-crop-aspect-toggle" title="Toggle Crop Ratio" style="padding: 10px 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button type="button" class="btn btn-outline" id="btn-crop-aspect-toggle" title="Toggle Crop Ratio">
                         <i data-lucide="unlock" style="width: 18px; height: 18px;"></i>
-                        <span id="crop-aspect-text" style="font-size: 12px; font-weight: 600;">Free Crop</span>
+                        <span id="crop-aspect-text">Free Crop</span>
                     </button>
                 </div>
             </div>
 
-            <div class="modal-footer" style="border-top: 1px solid var(--glass-border); padding-top: 15px;">
-                <button type="button" class="btn btn-outline" id="btn-cancel-cropper" style="min-width: 100px; padding: 10px 20px; font-weight: 600;">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btn-save-cropped" style="min-width: 120px; padding: 10px 20px; font-weight: 600; background: var(--theme-gold, #cfa15c); border-color: var(--theme-gold, #cfa15c); color: #ffffff;">Crop & Save</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="btn-cancel-cropper" style="min-width: 100px;">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-save-cropped" style="min-width: 130px;">Crop & Save</button>
             </div>
         </div>
     </div>
 
     <!-- INBOX MODAL -->
     <div id="inbox-modal" class="modal-overlay hidden" style="z-index: 10500;" role="dialog" aria-modal="true" aria-labelledby="inbox-modal-heading">
-        <div class="modal-container" style="max-width: 900px; width: 95%;">
+        <div class="modal-container inbox-modal-container">
             <div class="modal-header">
-                <h2 id="inbox-modal-heading" style="display: flex; align-items: center; gap: 10px;"><i data-lucide="mail"></i> Onboarding Submissions Inbox</h2>
-                <button class="modal-close" id="btn-close-inbox-modal">&times;</button>
+                <h2 id="inbox-modal-heading"><i data-lucide="inbox" style="width: 20px; height: 20px; color: var(--brand-primary);"></i> Onboarding Submissions Inbox</h2>
+                <button type="button" class="modal-close" id="btn-close-inbox-modal" aria-label="Close Inbox Modal">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 20px;">
+            <div class="modal-body" style="padding: 24px;">
                 <!-- Tabs: Pending Submissions & Rejected List -->
-                <div class="inbox-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; gap: 20px;">
-                    <button class="inbox-tab-btn active" id="tab-inbox-pending" style="background:none; border:none; border-bottom: 2px solid var(--theme-accent, #cfa15c); color: var(--text-color, #fff); padding: 10px 5px; font-weight:600; cursor:pointer; font-family: inherit;">
+                <div class="inbox-tabs-bar">
+                    <button type="button" class="inbox-tab-nav-btn active" id="tab-inbox-pending">
                         Pending Reviews
                     </button>
-                    <button class="inbox-tab-btn" id="tab-inbox-rejected" style="background:none; border:none; color: var(--text-secondary); padding: 10px 5px; font-weight:600; cursor:pointer; font-family: inherit;">
+                    <button type="button" class="inbox-tab-nav-btn" id="tab-inbox-rejected">
                         Rejected Submissions Log
                     </button>
                 </div>
 
                 <!-- Filters (visible for both tabs) -->
-                <div class="inbox-filters-bar" style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
-                    <label for="inbox-filter-location" style="font-size: 12px; font-weight:600; text-transform:uppercase; color: var(--text-secondary);">Filter Place / Department:</label>
-                    <select id="inbox-filter-location" class="form-control" style="max-width: 250px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 12px; font-size:13px; outline:none; height:auto;">
+                <div class="inbox-filter-row">
+                    <label for="inbox-filter-location">Filter Department / Place:</label>
+                    <select id="inbox-filter-location" class="form-control">
                         <option value="">All Places</option>
                         <option value="ACCOUNTANT GENERAL'S OFFICE">Accountant General's Office</option>
                         <option value="NIFT">NIFT Srinagar</option>
@@ -2188,24 +2293,24 @@
                 <!-- PENDING VIEW -->
                 <div id="inbox-pending-section">
                     <!-- Approve All bar -->
-                    <div id="inbox-approve-all-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 16px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.18); border-radius: 12px;">
-                        <span id="inbox-pending-count-label" style="font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 500;">Loading...</span>
-                        <button id="btn-approve-all" onclick="approveAllPending()" style="background: #10b981; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; padding: 8px 18px; display: flex; align-items: center; gap: 7px; cursor: pointer; transition: background 0.2s ease;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-                            <i data-lucide="check-check" style="width:15px; height:15px;"></i>
+                    <div id="inbox-approve-all-bar" class="inbox-approve-all-banner">
+                        <span id="inbox-pending-count-label" class="inbox-pending-counter">Loading...</span>
+                        <button type="button" id="btn-approve-all" class="btn-approve-all-action" onclick="approveAllPending()">
+                            <i data-lucide="check-check" style="width:16px; height:16px;"></i>
                             Approve All Visible
                         </button>
                     </div>
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
                         <table class="table" style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                                    <th style="padding: 10px;">Photo</th>
-                                    <th style="padding: 10px;">Guard Name</th>
-                                    <th style="padding: 10px;">Phone</th>
-                                    <th style="padding: 10px;">DOB</th>
-                                    <th style="padding: 10px;">Designation</th>
-                                    <th style="padding: 10px;">Department</th>
-                                    <th style="padding: 10px; text-align: right;">Actions</th>
+                                <tr style="border-bottom: 1px solid var(--border-default); text-align: left;">
+                                    <th style="padding: 12px 14px;">Photo</th>
+                                    <th style="padding: 12px 14px;">Guard Name</th>
+                                    <th style="padding: 12px 14px;">Phone</th>
+                                    <th style="padding: 12px 14px;">DOB</th>
+                                    <th style="padding: 12px 14px;">Designation</th>
+                                    <th style="padding: 12px 14px;">Department</th>
+                                    <th style="padding: 12px 14px; text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="inbox-pending-table-body">
@@ -2217,18 +2322,18 @@
 
                 <!-- REJECTED VIEW -->
                 <div id="inbox-rejected-section" class="hidden">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
                         <table class="table" style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                                    <th style="padding: 10px;">Guard Name</th>
-                                    <th style="padding: 10px;">Phone</th>
-                                    <th style="padding: 10px;">DOB</th>
-                                    <th style="padding: 10px;">Designation</th>
-                                    <th style="padding: 10px;">Department</th>
-                                    <th style="padding: 10px;">Rejection Date</th>
-                                    <th style="padding: 10px;">Rejection Reason</th>
-                                    <th style="padding: 10px; text-align: right;">Actions</th>
+                                <tr style="border-bottom: 1px solid var(--border-default); text-align: left;">
+                                    <th style="padding: 12px 14px;">Guard Name</th>
+                                    <th style="padding: 12px 14px;">Phone</th>
+                                    <th style="padding: 12px 14px;">DOB</th>
+                                    <th style="padding: 12px 14px;">Designation</th>
+                                    <th style="padding: 12px 14px;">Department</th>
+                                    <th style="padding: 12px 14px;">Rejection Date</th>
+                                    <th style="padding: 12px 14px;">Rejection Reason</th>
+                                    <th style="padding: 12px 14px; text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="inbox-rejected-table-body">
@@ -2243,129 +2348,134 @@
 
     <!-- ONBOARDING PREVIEW MODAL -->
     <div id="onboarding-preview-modal" class="modal-overlay hidden" style="z-index: 10600;" role="dialog" aria-modal="true" aria-label="Onboarding Profile Details">
-        <div class="modal-container" style="max-width: 500px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px);">
-            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
-                <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="user-check"></i> Onboarding Profile Details</h3>
-                <button type="button" class="modal-close" id="btn-close-onboarding-preview" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+        <div class="modal-container onboard-preview-container">
+            <div class="modal-header">
+                <h3><i data-lucide="user-check" style="width: 18px; height: 18px; color: var(--brand-primary);"></i> Onboarding Profile Details</h3>
+                <button type="button" class="modal-close" id="btn-close-onboarding-preview" aria-label="Close Onboarding Preview">&times;</button>
             </div>
-            <div class="modal-body" style="color: #fff; padding: 0;">
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px;">
-                    <img id="preview-onboard-photo" src="" style="width: 140px; height: 175px; object-fit: cover; border-radius: 12px; border: 2px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.4);" alt="Onboarding Photo">
+            <div class="modal-body" style="padding: 24px;">
+                <div class="onboard-avatar-card">
+                    <img id="preview-onboard-photo" src="" class="onboard-avatar-img" alt="Onboarding Photo">
                     <div style="text-align: center;">
-                        <h2 id="preview-onboard-name" style="font-size: 20px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px;"></h2>
-                        <span id="preview-onboard-designation" style="font-size: 13px; font-weight: 700; color: var(--theme-accent, #cfa15c); text-transform: uppercase; letter-spacing: 1px;"></span>
+                        <h2 id="preview-onboard-name" class="onboard-name"></h2>
+                        <span id="preview-onboard-designation" class="onboard-designation-badge"></span>
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; margin-bottom: 25px; font-size: 13px; box-sizing: border-box;">
-                    <div>
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Mobile Number</div>
-                        <div id="preview-onboard-mobile" style="font-weight: 600;"></div>
+                <div class="onboard-info-matrix">
+                    <div class="onboard-info-cell">
+                        <span class="onboard-cell-label">Mobile Number</span>
+                        <span id="preview-onboard-mobile" class="onboard-cell-value"></span>
                     </div>
-                    <div>
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Date of Birth</div>
-                        <div id="preview-onboard-dob" style="font-weight: 600;"></div>
+                    <div class="onboard-info-cell">
+                        <span class="onboard-cell-label">Date of Birth</span>
+                        <span id="preview-onboard-dob" class="onboard-cell-value"></span>
                     </div>
-                    <div>
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Gender</div>
-                        <div id="preview-onboard-gender" style="font-weight: 600;"></div>
+                    <div class="onboard-info-cell">
+                        <span class="onboard-cell-label">Gender</span>
+                        <span id="preview-onboard-gender" class="onboard-cell-value"></span>
                     </div>
-                    <div>
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Blood Group</div>
-                        <div id="preview-onboard-blood" style="font-weight: 600;"></div>
+                    <div class="onboard-info-cell">
+                        <span class="onboard-cell-label">Blood Group</span>
+                        <span id="preview-onboard-blood" class="onboard-cell-value"></span>
                     </div>
-                    <div style="grid-column: span 2;">
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Guardian Name & Relation</div>
-                        <div id="preview-onboard-guardian" style="font-weight: 600;"></div>
+                    <div class="onboard-info-cell full-width">
+                        <span class="onboard-cell-label">Guardian Name & Relation</span>
+                        <span id="preview-onboard-guardian" class="onboard-cell-value"></span>
                     </div>
-                    <div style="grid-column: span 2;">
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Assigned Place / Department</div>
-                        <div id="preview-onboard-department" style="font-weight: 600;"></div>
+                    <div class="onboard-info-cell full-width">
+                        <span class="onboard-cell-label">Assigned Place / Department</span>
+                        <span id="preview-onboard-department" class="onboard-cell-value"></span>
                     </div>
-                    <div style="grid-column: span 2;">
-                        <div style="color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Current Address</div>
-                        <div id="preview-onboard-address" style="font-weight: 600; line-height: 1.4; word-break: break-word;"></div>
+                    <div class="onboard-info-cell full-width">
+                        <span class="onboard-cell-label">Current Address</span>
+                        <span id="preview-onboard-address" class="onboard-cell-value"></span>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-                <button type="button" class="btn btn-outline" id="btn-preview-close" style="flex: 1; padding: 12px; font-weight: 600; cursor:pointer;">Cancel</button>
-                <button type="button" class="btn" id="btn-preview-reject" style="background: #ef4444; border-color: #ef4444; color: #fff; padding: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; cursor:pointer;"><i data-lucide="x" style="width: 16px;"></i> Reject</button>
-                <button type="button" class="btn" id="btn-preview-approve" style="background: #10b981; border-color: #10b981; color: #fff; padding: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; flex: 1.2; cursor:pointer;"><i data-lucide="check" style="width: 16px;"></i> Proceed to Edit</button>
+            <div class="modal-footer" style="gap: 12px;">
+                <button type="button" class="btn btn-outline" id="btn-preview-close" style="flex: 1; height: 44px;">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-preview-reject" style="height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i> Reject
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-preview-approve" style="height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1.2;">
+                    <i data-lucide="check" style="width: 16px; height: 16px;"></i> Proceed to Edit
+                </button>
             </div>
+        </div>
     </div>
 
     <!-- DEPARTMENT NAME AUDIT MODAL -->
     <div id="modal-depts-audit" class="modal-overlay hidden" style="z-index: 10600;" role="dialog" aria-modal="true" aria-label="Department Name Audit">
-        <div class="modal-container" style="max-width: 600px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px); box-sizing: border-box;">
-            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
-                <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="shield-alert"></i> Department Name Audit</h3>
-                <button type="button" class="modal-close" id="btn-close-depts-audit" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+        <div class="modal-container" style="max-width: 640px; width: 95%;">
+            <div class="modal-header">
+                <h3><i data-lucide="shield-alert" style="width: 18px; height: 18px; color: var(--theme-gold);"></i> Department Name Audit</h3>
+                <button type="button" class="modal-close" id="btn-close-depts-audit" aria-label="Close Department Audit">&times;</button>
             </div>
-            <div class="modal-body" style="color: #fff; padding: 0; max-height: 400px; overflow-y: auto; box-sizing: border-box;">
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px; line-height: 1.4;">We are verifying your active departments list against standard names using AI to find spelling mistakes and discrepancies.</p>
-                <div id="depts-audit-list" style="display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;">
+            <div class="modal-body" style="padding: 24px; max-height: 440px; overflow-y: auto;">
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 18px; line-height: 1.5;">We verify active department names against standard official nomenclature using Gemini AI to identify spelling discrepancies and standardize naming conventions.</p>
+                <div id="depts-audit-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Dynamically populated rows -->
                 </div>
             </div>
-            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 20px;">
-                <button type="button" class="btn btn-outline" id="btn-cancel-depts-audit" style="padding: 10px 20px; font-weight: 600; cursor:pointer;">Close</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="btn-cancel-depts-audit" style="height: 42px; padding: 0 24px;">Close</button>
             </div>
         </div>
     </div>
 
     <!-- ID CARD RENEWAL MODAL -->
     <div id="modal-card-renewal" class="modal-overlay hidden" style="z-index: 10600;" role="dialog" aria-modal="true" aria-label="ID Card Renewal & Extension">
-        <div class="modal-container" style="max-width: 500px; width: 95%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 25px; box-shadow: 0 24px 80px rgba(0,0,0,0.6); backdrop-filter: blur(20px); box-sizing: border-box;">
-            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
-                <h3 style="font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin:0;"><i data-lucide="refresh-cw"></i> ID Card Renewal & Extension</h3>
-                <button type="button" class="modal-close" id="btn-close-card-renewal" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+        <div class="modal-container renewal-modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="refresh-cw" style="width: 18px; height: 18px; color: var(--brand-primary);"></i> ID Card Renewal & Extension</h3>
+                <button type="button" class="modal-close" id="btn-close-card-renewal" aria-label="Close Card Renewal Modal">&times;</button>
             </div>
-            <div class="modal-body" style="color: #fff; padding: 0;">
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 15px; margin-bottom: 20px; font-size: 13px; box-sizing: border-box;">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                        <div id="renewal-guard-photo" style="width: 48px; height: 60px; border-radius: 6px; background-size: cover; background-position: center; border: 1px solid var(--border-color);"></div>
+            <div class="modal-body" style="padding: 24px;">
+                <div class="renewal-guard-banner">
+                    <div class="renewal-guard-profile">
+                        <div id="renewal-guard-photo" class="renewal-photo-thumb"></div>
                         <div>
-                            <div id="renewal-guard-name" style="font-size: 16px; font-weight: 800; color: #fff;"></div>
-                            <div id="renewal-guard-id" style="font-size: 12px; color: var(--text-muted); font-weight: 500;"></div>
+                            <div id="renewal-guard-name" class="renewal-name"></div>
+                            <div id="renewal-guard-id" class="renewal-id"></div>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; margin-top: 10px;">
-                        <div>
-                            <div style="color: var(--text-muted); font-size: 11px;">Current Expiry:</div>
-                            <div id="renewal-current-expiry" style="font-weight: 600;"></div>
+                    <div class="renewal-meta-grid">
+                        <div class="renewal-meta-item">
+                            <span class="renewal-meta-label">Current Expiry:</span>
+                            <span id="renewal-current-expiry" class="renewal-meta-value"></span>
                         </div>
-                        <div>
-                            <div style="color: var(--text-muted); font-size: 11px;">Department:</div>
-                            <div id="renewal-guard-dept" style="font-weight: 600;"></div>
+                        <div class="renewal-meta-item">
+                            <span class="renewal-meta-label">Department:</span>
+                            <span id="renewal-guard-dept" class="renewal-meta-value"></span>
                         </div>
                     </div>
                 </div>
 
-                <form id="form-card-renewal-details" style="display: flex; flex-direction: column; gap: 15px;">
+                <form id="form-card-renewal-details">
                     <input type="hidden" id="renewal-emp-id">
-                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                        <label for="renewal-term" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Extension Period *</label>
-                        <select id="renewal-term" class="form-control" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px;" required>
+                    <div class="renewal-form-group">
+                        <label for="renewal-term" class="renewal-form-label">Extension Period *</label>
+                        <select id="renewal-term" class="renewal-form-select" required>
                             <option value="1">1 Year Extension</option>
                             <option value="2">2 Years Extension</option>
                             <option value="3" selected>3 Years Extension</option>
                             <option value="5">5 Years Extension</option>
                         </select>
                     </div>
-                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                        <label for="renewal-fee" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Renewal Fee (INR) *</label>
-                        <input type="number" id="renewal-fee" class="form-control" value="50" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px;" required>
+                    <div class="renewal-form-group">
+                        <label for="renewal-fee" class="renewal-form-label">Renewal Fee (INR) *</label>
+                        <input type="number" id="renewal-fee" class="renewal-form-input" value="50" required>
                     </div>
-                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                        <label for="renewal-notes" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Payment Reference / Method</label>
-                        <input type="text" id="renewal-notes" class="form-control" placeholder="e.g. Cash, GPay UPI reference, Receipt #..." style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px;">
+                    <div class="renewal-form-group">
+                        <label for="renewal-notes" class="renewal-form-label">Payment Reference / Method</label>
+                        <input type="text" id="renewal-notes" class="renewal-form-input" placeholder="e.g. Cash, GPay UPI reference, Receipt #...">
                     </div>
                 </form>
             </div>
-            <div class="modal-footer" style="display: flex; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 20px;">
-                <button type="button" class="btn btn-outline" id="btn-cancel-card-renewal" style="flex: 1; padding: 12px; font-weight: 600; cursor:pointer;">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btn-submit-card-renewal" style="flex: 1.2; padding: 12px; font-weight: 600; cursor:pointer;">Confirm & Renew (₹50)</button>
+            <div class="modal-footer" style="gap: 12px;">
+                <button type="button" class="btn btn-outline" id="btn-cancel-card-renewal" style="flex: 1; height: 44px;">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-card-renewal" style="flex: 1.2; height: 44px;">Confirm & Renew (₹50)</button>
             </div>
         </div>
     </div>

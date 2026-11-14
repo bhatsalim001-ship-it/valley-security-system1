@@ -39,6 +39,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.321.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
     <style>
+        :root {
+            --bg-canvas: #080c14;
+            --bg-surface: rgba(15, 23, 42, 0.78);
+            --bg-surface-elevated: rgba(30, 41, 59, 0.6);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: #6366f1;
+            --brand-primary: #6366f1;
+            --brand-primary-hover: #4f46e5;
+            --brand-gold: #f59e0b;
+            --brand-red: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -46,287 +61,421 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #050507;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-canvas);
+            background-image: 
+                radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99, 102, 241, 0.15), transparent 70%),
+                radial-gradient(ellipse 60% 40% at 50% 110%, rgba(245, 158, 11, 0.08), transparent 70%);
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffffff;
-            overflow: hidden;
+            color: var(--text-primary);
+            padding: 24px 16px;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         .login-container {
             width: 100%;
-            max-width: 420px;
-            padding: 40px;
-            background: rgba(10, 11, 14, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            max-width: 440px;
+            padding: 40px 36px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 60px -15px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
             position: relative;
             z-index: 10;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: login-card-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+            animation: loginEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        @keyframes loginEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Private Portal Security Banner */
+        .security-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 28px;
+        }
+
+        .security-banner-icon {
+            color: var(--brand-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .security-banner-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .security-banner-title {
+            color: #fca5a5;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            line-height: 1.3;
+        }
+
+        .security-banner-desc {
+            color: #f87171;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.3;
+            margin-top: 2px;
+        }
+
+        /* Header & Brand Identity */
         .login-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
 
         .logo-section {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
 
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: #c8102e;
-            border-radius: 12px;
+        .logo-avatar-wrap {
+            position: relative;
+            width: 76px;
+            height: 76px;
+            border-radius: 20px;
+            padding: 3px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(245, 158, 11, 0.2));
+            box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .logo-avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 17px;
+            object-fit: cover;
+            background: #090d16;
+        }
+
+        .logo-letter-fallback {
+            width: 100%;
+            height: 100%;
+            border-radius: 17px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: #ffffff;
-            font-weight: 700;
-            font-size: 20px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
 
         .agency-name {
             font-family: 'Outfit', sans-serif;
-            font-size: 24px;
-            font-weight: 700;
-            color: #c8102e;
-            letter-spacing: 1px;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: #ffffff;
+            text-transform: uppercase;
+            line-height: 1.2;
         }
 
         .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
             font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-gold);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
         }
 
         .login-subtitle {
-            font-size: 14px;
-            color: #a0aec0;
+            font-size: 13px;
+            color: var(--text-secondary);
             font-weight: 400;
         }
 
+        /* Form Inputs */
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
+            text-align: left;
         }
 
         label {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             font-size: 11px;
-            font-weight: 600;
-            color: #c8102e;
+            font-weight: 700;
+            color: var(--text-secondary);
             margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.7px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
         }
 
         input {
             width: 100%;
-            padding: 12px 16px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #ffffff;
+            padding: 13px 16px 13px 44px;
+            background: rgba(3, 7, 18, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            color: var(--text-primary);
             font-size: 14px;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            min-height: 46px;
         }
 
         input::placeholder {
-            color: #718096;
+            color: #475569;
+        }
+
+        input:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(3, 7, 18, 0.75);
         }
 
         input:focus {
             outline: none;
-            background: rgba(0, 0, 0, 0.6);
-            border-color: #c8102e;
-            box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.15);
+            background: rgba(3, 7, 18, 0.9);
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
         }
 
+        input:focus + .input-icon,
+        .input-wrapper:focus-within .input-icon {
+            color: var(--brand-primary);
+        }
+
+        /* Login Button */
         .login-button {
             width: 100%;
-            padding: 12px;
-            background: #c8102e;
-            border: none;
-            border-radius: 24px;
+            min-height: 48px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
             color: #ffffff;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             font-family: 'Outfit', sans-serif;
             cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: 12px;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            margin-top: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            box-shadow: 0 6px 20px -3px rgba(99, 102, 241, 0.35);
         }
 
         .login-button:hover {
-            background: #b20e29;
             transform: translateY(-1px);
+            box-shadow: 0 10px 24px -2px rgba(99, 102, 241, 0.45);
+            filter: brightness(1.05);
         }
 
-        .demo-section {
-            margin-top: 36px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .demo-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .demo-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .demo-button {
-            padding: 10px 12px;
-            background: rgba(200, 16, 46, 0.08);
-            border: 1px solid rgba(200, 16, 46, 0.2);
-            border-radius: 6px;
-            color: #c8102e;
-            font-size: 12px;
-            font-weight: 600;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .demo-button:hover {
-            background: rgba(200, 16, 46, 0.15);
-            border-color: #c8102e;
-        }
-
-        .error-message {
-            display: none;
-            padding: 12px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 6px;
-            color: #ef4444;
-            font-size: 13px;
-            margin-bottom: 16px;
-            font-weight: 500;
-        }
-
-        .success-message {
-            display: none;
-            padding: 12px;
-            background: rgba(74, 222, 128, 0.1);
-            border: 1px solid rgba(74, 222, 128, 0.3);
-            border-radius: 6px;
-            color: #22c55e;
-            font-size: 13px;
-            margin-bottom: 16px;
-            font-weight: 500;
-        }
-
-        .loading-spinner {
-            display: none;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-top-color: #ffffff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .login-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
         }
 
         .button-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .error-message {
+            display: none;
+            padding: 12px 14px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            color: #fca5a5;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .success-message {
+            display: none;
+            padding: 12px 14px;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            color: #86efac;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        /* Divider & Google Sign-In */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 24px 0 16px 0;
+        }
+
+        .auth-divider hr {
+            flex-grow: 1;
+            border: 0;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .auth-divider span {
+            padding: 0 12px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* Security Notice & Footer */
+        .security-notice {
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--brand-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .login-footer {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .login-footer p {
+            margin: 0;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .login-footer strong {
+            color: #cbd5e1;
+            font-weight: 600;
         }
 
         @media (max-width: 480px) {
-            .login-container {
-                margin: 20px;
-                padding: 32px 24px;
+            body {
+                padding: 16px 12px;
             }
 
-            .login-title {
-                font-size: 24px;
+            .login-container {
+                padding: 30px 20px;
+                border-radius: 20px;
             }
 
             .agency-name {
-                font-size: 18px;
-            }
-
-            .demo-buttons {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Premium hover transitions */
-        *, *::before, *::after {
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-
-
-        @keyframes login-card-entrance {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
 
-
-    <div class="login-container">
-        <!-- Private Portal Security Warning to clear Google Phishing false positive -->
-        <div style="background-color: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 12px; margin-bottom: 24px; text-align: center;">
-            <p style="color: #ef4444; font-size: 11px; font-weight: 600; line-height: 1.5; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                ⚠️ Private Administrative System
-            </p>
-            <p style="color: #f87171; font-size: 10px; font-weight: 500; line-height: 1.4; margin: 4px 0 0 0;">
-                Access restricted to authorized employees of Valley Security Service Agency.
-            </p>
+    <main class="login-container" role="main">
+        <!-- Private Portal Security Warning -->
+        <div class="security-banner">
+            <div class="security-banner-icon">
+                <i data-lucide="shield-alert" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div class="security-banner-text">
+                <div class="security-banner-title">Private Administrative Portal</div>
+                <div class="security-banner-desc">Authorized personnel only. Access attempts are audited.</div>
+            </div>
         </div>
 
         <div class="login-header">
-            <div class="logo-section" style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px;">
-                <img src="/favicon.png" alt="Valley Security Logo" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #c8102e; box-shadow: 0 4px 15px rgba(200, 16, 46, 0.2);">
-                <div class="agency-name" id="login-firm-short" style="font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 700; color: #c8102e; letter-spacing: 1px;">VALLEY SECURITY</div>
+            <div class="logo-section">
+                <div class="logo-avatar-wrap">
+                    <img src="/favicon.png" alt="Valley Security Logo" class="logo-avatar-img" onerror="this.style.display='none'; document.getElementById('login-logo-letter').style.display='flex';">
+                    <div id="login-logo-letter" class="logo-letter-fallback">V</div>
+                </div>
+                <div class="agency-name" id="login-firm-short">VALLEY SECURITY</div>
             </div>
-            <h1 class="login-title" style="font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 4px; font-family: 'Outfit', sans-serif;">Admin Portal</h1>
-            <p class="login-subtitle" id="login-firm-full" style="font-size: 13px; color: #a0aec0;">Valley Security Service Agency</p>
+            <h1 class="login-title">Admin Sign In</h1>
+            <p class="login-subtitle" id="login-firm-full">Valley Security Service Agency</p>
         </div>
 
         <div id="error-msg" class="error-message"></div>
@@ -334,64 +483,84 @@
 
         <form id="login-form">
             <div class="form-group">
-                <label for="email">Email Address</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    placeholder="admin@yourfirm.com"
-                    required
-                >
+                <label for="email">Admin Email Address</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">
+                        <i data-lucide="mail" style="width: 17px; height: 17px;"></i>
+                    </span>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="admin@yourfirm.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    placeholder="••••••••"
-                    required
-                >
+                <div class="input-wrapper">
+                    <span class="input-icon">
+                        <i data-lucide="lock" style="width: 17px; height: 17px;"></i>
+                    </span>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="••••••••••••"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
             </div>
 
             <button type="submit" class="login-button">
                 <div class="button-content">
-                    <span>Sign In</span>
+                    <span>Authenticate</span>
+                    <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
                     <div class="loading-spinner" id="spinner"></div>
                 </div>
             </button>
         </form>
 
-        <div id="google-signin-container" style="display: none; margin-top: 16px; flex-direction: column; align-items: center; gap: 8px;">
-            <div style="display: flex; align-items: center; width: 100%; margin: 8px 0;">
-                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
-                <span style="padding: 0 10px; color: #8e9a94; font-size: 12px; font-weight: 500; text-transform: uppercase;">Or</span>
-                <hr style="flex-grow: 1; border: 0; border-top: 1px solid #e1e7e4;">
+        <div id="google-signin-container" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+            <div class="auth-divider">
+                <hr>
+                <span>Or Continue With</span>
+                <hr>
             </div>
-            <div id="google-signin-btn"></div>
+            <div id="google-signin-btn" style="min-height: 44px;"></div>
         </div>
 
-        <div class="demo-section" style="text-align: center; color: #9ca3af; font-size: 12px;">
-            <p>🔒 Secured Admin Access Only</p>
-            <p style="margin-top: 8px; font-size: 11px; color: #6b7280;" id="login-firm-footer-sub">Valley Security Service Agency</p>
+        <div class="security-notice">
+            <div class="security-badge">
+                <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+                Secured Infrastructure
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted);" id="login-firm-footer-sub">Valley Security Service Agency</p>
         </div>
 
         <footer class="login-footer">
-            <p style="margin: 0; font-size: 11px; color: #6b7280;">
-                Developed & Designed by <strong style="color: #c8102e;">SALIM ILYAS BHAT</strong>
+            <p>
+                Lead Architect: <strong>SALIM ILYAS BHAT</strong>
             </p>
-            <p style="margin: 4px 0 0 0; font-size: 10px; color: #4b5563;">
-                &copy; 2026 <span id="login-firm-copy">Valley Security Service Agency</span>
+            <p style="margin-top: 4px; font-size: 10px; color: #475569;">
+                &copy; 2026 <span id="login-firm-copy">Valley Security Service Agency</span>. All rights reserved.
             </p>
         </footer>
-    </div>
+    </main>
 
     <script>
         // Apply FIRM_CONFIG on login page
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
             if (typeof FIRM_CONFIG === 'undefined') return;
             const C = FIRM_CONFIG;
             const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-            document.getElementById('login-page-title').innerText = C.nameShort + ' - Login';
+            const pageTitle = document.getElementById('login-page-title');
+            if (pageTitle) pageTitle.innerText = C.nameShort + ' - Login';
             set('login-firm-short', C.nameShort);
             set('login-firm-full', C.name);
             set('login-firm-footer-sub', C.name);
@@ -399,7 +568,7 @@
             const logoLetter = document.getElementById('login-logo-letter');
             if (logoLetter) logoLetter.innerText = C.nameShort.charAt(0).toUpperCase();
             const emailInput = document.getElementById('email');
-            if (emailInput) emailInput.placeholder = C.adminEmail;
+            if (emailInput && C.adminEmail) emailInput.placeholder = C.adminEmail;
         });
 
         const loginForm = document.getElementById('login-form');
@@ -415,7 +584,7 @@
             successMsg.style.display = 'none';
             setTimeout(() => {
                 errorMsg.style.display = 'none';
-            }, 5000);
+            }, 6000);
         }
 
         function showSuccess(msg) {
@@ -447,16 +616,14 @@
                     sessionStorage.setItem('currentUser', JSON.stringify(data.user));
                     window.location.href = '/index.html';
                 } else {
-                    showError(data.error || 'Login failed. Please try again.');
+                    showError(data.error || 'Authentication failed. Please verify credentials.');
                     spinner.style.display = 'none';
                 }
             } catch (err) {
-                showError('Connection error. Please try again.');
+                showError('Connection error. Unable to reach security gateway.');
                 spinner.style.display = 'none';
             }
         });
-
-
 
         // Clear old user session when on the login page to prevent redirect loops
         window.addEventListener('load', () => {
@@ -481,7 +648,7 @@
                     sessionStorage.setItem('currentUser', JSON.stringify(data.user));
                     window.location.href = '/index.html';
                 } else {
-                    showError(data.error || 'Google login failed.');
+                    showError(data.error || 'Google authentication failed.');
                     spinner.style.display = 'none';
                 }
             } catch (err) {

@@ -2,69 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Upload ID Card Photo - Valley Security Service Agency</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.321.0/dist/umd/lucide.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif; }
+    :root {
+      --bg-canvas: #080c14;
+      --bg-surface: rgba(15, 23, 42, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --brand-primary: #6366f1;
+      --brand-primary-hover: #4f46e5;
+      --brand-gold: #f59e0b;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+    }
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+
     body {
-      background: #090d16;
-      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-canvas);
+      background-image: 
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99, 102, 241, 0.15), transparent 70%),
+        radial-gradient(ellipse 60% 40% at 50% 110%, rgba(245, 158, 11, 0.08), transparent 70%);
+      background-attachment: fixed;
+      color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px 16px;
+      padding: 24px 16px;
+      -webkit-font-smoothing: antialiased;
     }
+
     .container {
       width: 100%;
       max-width: 440px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       border-radius: 24px;
-      padding: 28px 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(16px);
+      padding: 36px 28px;
+      box-shadow: 
+        0 25px 60px -15px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       text-align: center;
+      animation: cardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .brand-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
+      gap: 6px;
+      padding: 5px 14px;
       border-radius: 50px;
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      color: #60a5fa;
-      font-size: 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      color: #a5b4fc;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
       margin-bottom: 20px;
     }
-    h1 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 8px; }
-    p.subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 24px; line-height: 1.5; }
+
+    h1 { 
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px; 
+      font-weight: 800; 
+      color: #ffffff; 
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+
+    p.subtitle { 
+      font-size: 13px; 
+      color: var(--text-muted); 
+      margin-bottom: 24px; 
+      line-height: 1.5; 
+    }
     
     .emp-card {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(3, 7, 18, 0.5);
+      border: 1px solid var(--border-subtle);
       border-radius: 16px;
-      padding: 16px;
+      padding: 16px 18px;
       margin-bottom: 24px;
       text-align: left;
     }
-    .emp-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
-    .emp-label { color: #64748b; font-weight: 500; }
-    .emp-val { color: #f1f5f9; font-weight: 700; text-align: right; }
+
+    .emp-row { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      font-size: 13px; 
+      margin-bottom: 8px; 
+    }
+
+    .emp-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .emp-label { 
+      color: var(--text-muted); 
+      font-weight: 600; 
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .emp-val { 
+      color: var(--text-primary); 
+      font-weight: 700; 
+      text-align: right; 
+    }
 
     .photo-preview-box {
-      width: 180px;
-      height: 220px;
+      width: 170px;
+      height: 210px;
       margin: 0 auto 24px;
-      border-radius: 16px;
+      border-radius: 18px;
       border: 2px dashed rgba(255, 255, 255, 0.2);
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(3, 7, 18, 0.6);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -72,67 +149,132 @@
       overflow: hidden;
       position: relative;
       cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     }
+
+    .photo-preview-box:hover {
+      border-color: var(--brand-primary);
+      background: rgba(99, 102, 241, 0.05);
+      transform: translateY(-2px);
+    }
+
     .photo-preview-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: none;
     }
-    .photo-preview-box .upload-icon {
-      font-size: 36px;
-      margin-bottom: 8px;
-      color: #3b82f6;
-    }
-    .photo-preview-box p { font-size: 12px; color: #64748b; }
 
-    input[type="file"] { display: none; }
+    .photo-preview-box .upload-icon {
+      margin-bottom: 10px;
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-preview-box p { 
+      font-size: 12px; 
+      color: var(--text-muted); 
+      font-weight: 600;
+      padding: 0 10px;
+      line-height: 1.4;
+    }
+
+    input[type="file"] { 
+      display: none; 
+    }
 
     .btn {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 16px;
+      min-height: 48px;
+      padding: 13px 20px;
+      border-radius: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
       font-weight: 700;
       border: none;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
     }
+
     .btn-primary {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
     }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-primary:disabled { 
+      opacity: 0.55; 
+      cursor: not-allowed; 
+      transform: none !important;
+    }
+
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: #cbd5e1;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
     }
-    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+
+    .btn-secondary:hover { 
+      background: rgba(255, 255, 255, 0.12); 
+      border-color: rgba(255, 255, 255, 0.2);
+    }
 
     .msg {
       padding: 12px 16px;
       border-radius: 12px;
       font-size: 13px;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       display: none;
+      line-height: 1.4;
+      text-align: left;
     }
-    .msg-error { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
-    .msg-success { background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; }
 
-    .footer-note { font-size: 11px; color: #475569; margin-top: 16px; }
+    .msg-error { 
+      background: rgba(239, 68, 68, 0.12); 
+      border: 1px solid rgba(239, 68, 68, 0.3); 
+      color: #fca5a5; 
+    }
+
+    .msg-success { 
+      background: rgba(34, 197, 94, 0.12); 
+      border: 1px solid rgba(34, 197, 94, 0.3); 
+      color: #86efac; 
+    }
+
+    .footer-note { 
+      font-size: 11px; 
+      color: #64748b; 
+      margin-top: 20px; 
+    }
   </style>
 </head>
 <body>
 
-  <main class="container">
-    <div class="brand-badge">Valley Security Service Agency</div>
+  <main class="container" role="main">
+    <div class="brand-badge">
+      <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+      Valley Security Service Agency
+    </div>
     <h1>Upload ID Card Photo</h1>
-    <p class="subtitle">Please upload a clear, front-facing passport style photo for your official security ID card.</p>
+    <p class="subtitle">Please upload a clear, front-facing passport portrait for your official security identity card.</p>
 
     <div id="msgBox" class="msg"></div>
 
@@ -142,20 +284,28 @@
       <div class="emp-row"><span class="emp-label">Department:</span><span id="dispDept" class="emp-val"></span></div>
     </div>
 
-    <div class="photo-preview-box" onclick="document.getElementById('photoInput').click()">
+    <div class="photo-preview-box" onclick="document.getElementById('photoInput').click()" title="Click to choose or capture photo">
       <div id="placeholderUi">
-        <div class="upload-icon">📷</div>
-        <p>Tap to Select / Take Photo</p>
+        <div class="upload-icon">
+          <i data-lucide="camera" style="width: 36px; height: 36px; stroke-width: 1.5;"></i>
+        </div>
+        <p>Tap to Select or Take Photo</p>
       </div>
-      <img id="previewImg" alt="Preview">
+      <img id="previewImg" alt="Selected Photo Preview">
     </div>
 
     <input type="file" id="photoInput" accept="image/*" capture="user" onchange="handleFileSelect(event)">
 
-    <button id="chooseBtn" class="btn btn-secondary" onclick="document.getElementById('photoInput').click()">📁 Choose Photo / Take Picture</button>
-    <button id="uploadBtn" class="btn btn-primary" style="display:none;" onclick="submitPhoto()">Upload & Save Photo</button>
+    <button id="chooseBtn" class="btn btn-secondary" onclick="document.getElementById('photoInput').click()">
+      <i data-lucide="folder-up" style="width: 16px; height: 16px;"></i>
+      Choose Photo / Take Picture
+    </button>
+    <button id="uploadBtn" class="btn btn-primary" style="display:none;" onclick="submitPhoto()">
+      <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+      Upload & Save Photo
+    </button>
 
-    <div class="footer-note">Supported formats: JPG, PNG • Max size: 10 MB</div>
+    <div class="footer-note">Supported formats: JPG, PNG • Maximum size: 10 MB</div>
   </main>
 
   <script>
@@ -172,8 +322,12 @@
     }
 
     async function init() {
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+
       if (!empId || !token) {
-        showMsg('Invalid or missing upload link. Please request a new link.', true);
+        showMsg('Invalid or missing upload link. Please request a new link from office administration.', true);
         document.getElementById('chooseBtn').style.display = 'none';
         return;
       }
@@ -184,7 +338,7 @@
         if (data.success) {
           document.getElementById('dispId').textContent = data.id;
           document.getElementById('dispName').textContent = data.name;
-          document.getElementById('dispDept').textContent = data.department || 'IUST Awantipora';
+          document.getElementById('dispDept').textContent = data.department || 'General Duty';
           document.getElementById('empDetails').style.display = 'block';
 
           if (data.photo) {
@@ -197,7 +351,7 @@
           document.getElementById('chooseBtn').style.display = 'none';
         }
       } catch (err) {
-        showMsg('Network error connecting to server.', true);
+        showMsg('Network error connecting to security server.', true);
       }
     }
 
@@ -216,7 +370,7 @@
         document.getElementById('previewImg').src = selectedBase64;
         document.getElementById('previewImg').style.display = 'block';
         document.getElementById('placeholderUi').style.display = 'none';
-        document.getElementById('uploadBtn').style.display = 'block';
+        document.getElementById('uploadBtn').style.display = 'flex';
         showMsg('Photo selected! Tap "Upload & Save Photo" below to submit.');
       };
       reader.readAsDataURL(file);
@@ -244,18 +398,21 @@
         });
         const data = await res.json();
         if (data.success) {
-          showMsg('✅ Photo saved successfully! Your ID card is ready.');
+          showMsg('✅ Photo saved successfully! Your official ID card is updated.');
           btn.style.display = 'none';
-          document.getElementById('chooseBtn').textContent = 'Change Photo';
+          document.getElementById('chooseBtn').innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Change Photo';
+          if (typeof lucide !== 'undefined') lucide.createIcons();
         } else {
           showMsg(data.error || 'Failed to save photo. Try again.', true);
           btn.disabled = false;
-          btn.textContent = 'Upload & Save Photo';
+          btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Upload & Save Photo';
+          if (typeof lucide !== 'undefined') lucide.createIcons();
         }
       } catch (err) {
         showMsg('Error uploading photo to server.', true);
         btn.disabled = false;
-        btn.textContent = 'Upload & Save Photo';
+        btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px;"></i> Upload & Save Photo';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
       }
     }
 

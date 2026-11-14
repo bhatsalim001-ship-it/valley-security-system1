@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="verify-page-title">Employee Verification Portal</title>
+    <title id="verify-page-title">Employee Verification Portal - Valley Security</title>
     <meta name="description" content="Official Employee Verification Portal of Valley Security Service Agency. Verify security guard credentials and active status instantly via QR code.">
     <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification Portal, QR Code Verify, Active Guards">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -27,28 +27,25 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.321.0/dist/umd/lucide.min.js"></script>
     <!-- QRious QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
         :root {
-            --primary-bg: #f4f6f5;
-            --secondary-bg: #ffffff;
-            --theme-gold: #0e3e2b;
-            --theme-sage: #52b788;
-            --text-primary: #1c2621;
-            --text-secondary: #5a6560;
-            --text-muted: #8e9a94;
-            --status-active: #2e7d32;
-            --status-suspended: #d32f2f;
-            --status-pending: #ed6c02;
-            
-            --glass-border: #e1e7e4;
-            --glass-background: #ffffff;
-            --glass-blur: none;
-            --card-shadow: 0 4px 20px rgba(14, 62, 43, 0.03), 0 1px 2px rgba(14, 62, 43, 0.01);
+            --bg-canvas: #080c14;
+            --bg-surface: rgba(15, 23, 42, 0.82);
+            --bg-surface-elevated: rgba(30, 41, 59, 0.6);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: #6366f1;
+            --brand-primary: #6366f1;
+            --theme-gold: #f59e0b;
+            --theme-green: #10b981;
+            --theme-red: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
         }
 
         * {
@@ -58,44 +55,51 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--primary-bg);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-canvas);
+            background-image: 
+                radial-gradient(ellipse 80% 60% at 50% -10%, rgba(16, 185, 129, 0.12), transparent 70%),
+                radial-gradient(ellipse 60% 50% at 50% 110%, rgba(99, 102, 241, 0.08), transparent 70%);
+            background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 28px 16px;
             position: relative;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Ambient luxury background glow */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(82, 183, 136, 0.12) 0%, transparent 70%);
-            top: 15%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-            pointer-events: none;
-        }
-
         .verify-container {
             width: 100%;
-            max-width: 440px;
-            background: var(--glass-background);
-            border: 1px solid var(--glass-border);
+            max-width: 460px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
             border-radius: 24px;
-            box-shadow: var(--card-shadow);
-            padding: 30px;
+            box-shadow: 
+                0 25px 60px -15px rgba(0, 0, 0, 0.75),
+                0 0 0 1px rgba(255, 255, 255, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            padding: 36px 30px;
             position: relative;
             z-index: 2;
             text-align: center;
+            animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .agency-brand {
@@ -103,33 +107,37 @@
         }
 
         .brand-logo {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: rgba(14, 62, 43, 0.08);
-            border: 1px solid var(--theme-gold);
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(99, 102, 241, 0.15));
+            border: 1px solid rgba(16, 185, 129, 0.3);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 8px;
-            color: var(--theme-gold);
+            margin-bottom: 12px;
+            color: var(--theme-green);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
         }
 
         .brand-title {
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
-            font-size: 20px;
-            letter-spacing: 1.5px;
+            font-size: 22px;
+            letter-spacing: 1.2px;
             line-height: 1.2;
-            color: var(--theme-gold);
+            color: #ffffff;
+            text-transform: uppercase;
         }
 
         .brand-subtitle {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 1.5px;
-            color: var(--theme-sage);
-            font-weight: 600;
+            color: var(--text-muted);
+            font-weight: 700;
             text-transform: uppercase;
+            margin-top: 4px;
+            display: block;
         }
 
         /* Status Banner Badge */
@@ -143,65 +151,60 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 16px;
+            padding: 7px 18px;
             border-radius: 30px;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .status-verified {
-            background: #e2f0d9;
-            color: var(--status-active);
-            border: 1px solid #c5e1a5;
+            background: rgba(16, 185, 129, 0.14);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
         }
 
         .status-suspended {
-            background: #fce4d6;
-            color: var(--status-suspended);
-            border: 1px solid #f8cbad;
+            background: rgba(239, 68, 68, 0.14);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
         }
 
         .status-notfound {
-            background: #f0f3f1;
+            background: rgba(148, 163, 184, 0.12);
             color: var(--text-secondary);
-            border: 1px solid #e1e7e4;
-        }
-
-        @keyframes badgeEntry {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            border: 1px solid rgba(148, 163, 184, 0.25);
         }
 
         /* Guard Profile Card info */
         .guard-avatar-frame {
             width: 130px;
-            height: 155px;
-            margin: 0 auto 20px auto;
-            border: 2px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 4px;
-            background: var(--dark-accent);
+            height: 160px;
+            margin: 0 auto 18px auto;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 3px;
+            background: rgba(3, 7, 18, 0.7);
             overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             transition: border-color 0.3s;
-        }
-
-        .status-verified ~ .guard-avatar-frame {
-            border-color: var(--status-active);
         }
 
         .guard-avatar-frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 12px;
         }
 
         .guard-name {
             font-family: 'Outfit', sans-serif;
             font-size: 22px;
             font-weight: 700;
+            color: #ffffff;
             margin-bottom: 4px;
         }
 
@@ -210,16 +213,58 @@
             font-weight: 700;
             color: var(--theme-gold);
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 24px;
+            letter-spacing: 1.2px;
+            margin-bottom: 20px;
+        }
+
+        /* Countdown Section */
+        #countdown-container {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(3, 7, 18, 0.6);
+            border-radius: 14px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .countdown-timer-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .time-unit {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            min-width: 54px;
+        }
+
+        .time-unit span:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--theme-gold);
+            display: block;
+            line-height: 1.1;
+        }
+
+        .time-unit span:last-child {
+            font-size: 8px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 3px;
+            display: block;
         }
 
         .info-grid {
-            border-top: 1px solid var(--glass-border);
+            border-top: 1px solid var(--border-subtle);
             padding-top: 20px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             text-align: left;
             margin-bottom: 20px;
         }
@@ -233,75 +278,111 @@
 
         .info-label {
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .info-value {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-primary);
+            text-align: right;
         }
 
         .footer-note {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--text-muted);
-            border-top: 1px solid var(--glass-border);
-            padding-top: 15px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 16px;
             margin-top: 20px;
+            line-height: 1.5;
         }
 
         .footer-note strong {
             color: var(--theme-gold);
+            font-family: 'JetBrains Mono', monospace;
         }
 
         /* Error States styling */
         .error-message {
-            padding: 40px 0;
+            padding: 36px 0;
+            text-align: center;
         }
 
         .error-icon {
-            color: var(--status-suspended);
+            color: var(--theme-red);
             margin-bottom: 16px;
+            display: inline-block;
         }
 
         .error-message h3 {
+            font-family: 'Outfit', sans-serif;
             font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
             margin-bottom: 8px;
         }
 
-        /* Disable all transitions and animations */
-        *, *::before, *::after {
-            transition: none !important;
-            animation: none !important;
+        .placeholder-message {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            .verify-container {
+                padding: 28px 20px;
+                border-radius: 20px;
+            }
+
+            .brand-title {
+                font-size: 20px;
+            }
+
+            .countdown-timer-display {
+                gap: 6px;
+            }
+
+            .time-unit {
+                min-width: 46px;
+                padding: 6px 8px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="verify-container">
+    <main class="verify-container" role="main">
         <!-- Brand -->
         <div class="agency-brand">
             <div class="brand-logo">
-                <i data-lucide="shield-check" style="width: 32px; height: 32px;"></i>
+                <i data-lucide="shield-check" style="width: 30px; height: 30px;"></i>
             </div>
-            <h2 class="brand-title" id="verify-firm-title">VALLEY SECURITY</h2>
-            <span class="brand-subtitle">Verification Service</span>
+            <h1 class="brand-title" id="verify-firm-title">VALLEY SECURITY</h1>
+            <span class="brand-subtitle">Official Identity Verification Service</span>
         </div>
 
         <div id="portal-content">
             <!-- Dynamic Content goes here -->
-            <div class="placeholder-message" style="padding: 40px 0; text-align: center;">
-                <p class="text-muted">Loading employee credentials from central node database...</p>
+            <div class="placeholder-message">
+                <i data-lucide="loader" class="animate-spin" style="width: 24px; height: 24px; margin-bottom: 12px; display: inline-block;"></i>
+                <p>Loading employee credentials from central security node...</p>
             </div>
         </div>
 
         <div class="footer-note">
             Licence No: <strong id="verify-license-no">PSA | L | 99 | JK |2024 | DEC | 3| 62</strong><br>
-            <p id="verify-footer-address">Valley Security Service Agency Head Office: SHAHEED GUNJ NATH COMPLEX SRINAGAR 190001</p>
+            <p id="verify-footer-address" style="margin-top: 6px;">Valley Security Service Agency Head Office: SHAHEED GUNJ NATH COMPLEX SRINAGAR 190001</p>
         </div>
-    </div>
+    </main>
 
     <script>
         // Apply FIRM_CONFIG on verification page
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
             if (typeof FIRM_CONFIG !== 'undefined') {
                 const C = FIRM_CONFIG;
                 const t = document.getElementById('verify-page-title');
@@ -346,17 +427,18 @@
 
                 // Render success status card details
                 renderGuardDetails(contentDiv, guard);
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
             } catch (err) {
-                // local fallback if server unreachable
                 console.error(err);
-                renderError(contentDiv, "Network Connection Node Failure", "Unable to establish contact with the Valley Security Agency Local Cloud. Verify server status.");
+                renderError(contentDiv, "Network Connection Failure", "Unable to establish contact with the Valley Security Agency Local Cloud. Verify server status.");
             }
         }
 
         function getFallbackAvatar(initial) {
             const safeInitial = escapeHtml(String(initial || '?').slice(0, 1).toUpperCase());
-            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23c8102e'/><stop offset='100%' stop-color='%230f1218'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${safeInitial}</text></svg>`;
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='120' viewBox='0 0 100 120'><defs><linearGradient id='avatarGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%236366f1'/><stop offset='100%' stop-color='%230f172a'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23avatarGrad)'/><text x='50%' y='55%' font-family='sans-serif' font-weight='bold' font-size='32' fill='%23ffffff' text-anchor='middle'>${safeInitial}</text></svg>`;
             return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
         }
 
@@ -392,18 +474,18 @@
                 <p class="guard-title">${escapeHtml(guard.designation)}</p>
 
                 <!-- Countdown Section -->
-                <div id="countdown-container" style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid var(--glass-border);">
+                <div id="countdown-container">
                     <!-- Loaded dynamically via ticker -->
                 </div>
 
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label">Employee ID</span>
-                        <span class="info-value">${escapeHtml(guard.id)}</span>
+                        <span class="info-value" style="font-family: 'JetBrains Mono', monospace;">${escapeHtml(guard.id)}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Department</span>
-                        <span class="info-value" style="color: var(--theme-gold); font-weight: 700;">${escapeHtml(guard.department || "-")}</span>
+                        <span class="info-value" style="color: var(--brand-primary); font-weight: 700;">${escapeHtml(guard.department || "-")}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Designation</span>
@@ -416,11 +498,11 @@
 
                     <div class="info-item">
                         <span class="info-label">Blood Group</span>
-                        <span class="info-value">${escapeHtml(guard.bloodGroup)}</span>
+                        <span class="info-value">${escapeHtml(guard.bloodGroup || "-")}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Joining Date</span>
-                        <span class="info-value">${escapeHtml(guard.joiningDate)}</span>
+                        <span class="info-value">${escapeHtml(guard.joiningDate || "-")}</span>
                     </div>
                 </div>
             `;
@@ -432,18 +514,18 @@
 
             if (!isActive) {
                 if (countdownContainer) {
-                    let alertColor = 'var(--status-suspended)';
+                    let alertColor = 'var(--theme-red)';
                     let message = 'ACCESS REVOKED / INACTIVE';
                     if (guard.status === 'Fired') {
                         message = 'ACCESS REVOKED - FIRED';
                     } else if (guard.status === 'Left') {
                         message = 'INACTIVE - LEFT SERVICE';
-                        alertColor = 'var(--text-secondary)';
+                        alertColor = 'var(--text-muted)';
                     } else if (guard.status === 'Suspended') {
                         message = 'ACCESS SUSPENDED';
                     }
                     countdownContainer.innerHTML = `
-                        <div style="color: ${alertColor}; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px;">
+                        <div style="color: ${alertColor}; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1.2px;">
                             <i data-lucide="shield-off" style="display: inline-block; vertical-align: middle; width: 18px; height: 18px; margin-right: 4px;"></i>
                             ${escapeHtml(message)}
                         </div>
@@ -452,7 +534,7 @@
                         </div>
                     `;
                 }
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
                 return;
             }
 
@@ -473,7 +555,7 @@
                     clearInterval(window.countdownTimer);
                     if (countdownContainer) {
                         countdownContainer.innerHTML = `
-                            <div style="color: var(--status-suspended); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                            <div style="color: var(--theme-red); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
                                 <i data-lucide="shield-alert" style="display: inline-block; vertical-align: middle; width: 16px; height: 16px; margin-right: 4px;"></i>
                                 Card Expired
                             </div>
@@ -486,7 +568,7 @@
                         statusBadge.className = 'verification-status status-suspended';
                         statusBadge.innerHTML = `<i data-lucide="alert-octagon" style="width: 16px; height: 16px;"></i> CARD EXPIRED`;
                     }
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                     return;
                 }
 
@@ -497,23 +579,23 @@
 
                 if (countdownContainer) {
                     countdownContainer.innerHTML = `
-                        <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600;">Card Validity Countdown</div>
-                        <div class="countdown-timer-display" style="display: flex; justify-content: center; gap: 8px; font-family: 'Inter', sans-serif;">
-                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 55px;">
-                                <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${days}</span>
-                                <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Days</span>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700;">Card Validity Countdown</div>
+                        <div class="countdown-timer-display">
+                            <div class="time-unit">
+                                <span>${days}</span>
+                                <span>Days</span>
                             </div>
-                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
-                                <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${hours}</span>
-                                <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Hrs</span>
+                            <div class="time-unit">
+                                <span>${hours}</span>
+                                <span>Hrs</span>
                             </div>
-                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
-                                <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${minutes}</span>
-                                <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Mins</span>
+                            <div class="time-unit">
+                                <span>${minutes}</span>
+                                <span>Mins</span>
                             </div>
-                            <div class="time-unit" style="background: var(--dark-accent); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); min-width: 50px;">
-                                <span style="font-size: 15px; font-weight: 700; color: var(--theme-gold); display: block; line-height: 1.1;">${seconds}</span>
-                                <span style="font-size: 7pt; color: var(--text-muted); text-transform: uppercase; font-weight: 500;">Secs</span>
+                            <div class="time-unit">
+                                <span>${seconds}</span>
+                                <span>Secs</span>
                             </div>
                         </div>
                     `;
@@ -527,12 +609,14 @@
         function renderError(container, heading, details) {
             container.innerHTML = `
                 <div class="error-message">
-                    <i data-lucide="shield-alert" class="error-icon" style="width: 48px; height: 48px;"></i>
+                    <i data-lucide="shield-alert" class="error-icon" style="width: 44px; height: 44px;"></i>
                     <h3>${escapeHtml(heading)}</h3>
-                    <p class="text-muted" style="font-size: 13px; line-height: 1.5; margin-top: 10px;">${escapeHtml(details)}</p>
+                    <p style="font-size: 13px; line-height: 1.5; color: var(--text-muted); margin-top: 10px;">${escapeHtml(details)}</p>
                 </div>
             `;
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
 
         function escapeHtml(str) {
