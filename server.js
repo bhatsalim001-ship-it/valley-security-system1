@@ -66,7 +66,7 @@ function escapeCsvCell(val) {
 
 const devEphemeralSecret = crypto.randomBytes(32).toString('hex');
 const JWT_SECRET = checkEnv('JWT_SECRET', { minLength: 32, fallback: devEphemeralSecret });
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 const BCRYPT_COST = parseInt(process.env.BCRYPT_COST || '12', 10);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -2064,13 +2064,13 @@ app.post('/api/login', authLimiter, async (req, res) => {
     if (authSuccess && userRecord) {
       clearFailedAttempts(emailTrim);
 
-      // Short-lived JWT session cookie
+      // JWT session cookie
       const token = jwt.sign(userRecord, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
       res.cookie('auth_token', token, {
         httpOnly: true,
         secure: NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 60 * 60 * 1000 // 1 hour – matches default JWT_EXPIRES_IN
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
 
       return res.json({
@@ -2181,7 +2181,7 @@ app.post('/api/auth/google-login', authLimiter, async (req, res) => {
       httpOnly: true,
       secure: NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 1000 // 1 hour – matches default JWT_EXPIRES_IN
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
     return res.json({
@@ -2519,9 +2519,10 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
 // 5. Employee Create Profile
 app.post('/api/employees', authenticateToken, async (req, res) => {
   const newEmp = req.body;
-  if (!newEmp.name) {
+  if (!newEmp || !newEmp.name || typeof newEmp.name !== 'string' || !newEmp.name.trim()) {
     return res.status(400).json({ error: 'Employee name is required.' });
   }
+  newEmp.name = newEmp.name.trim();
 
   try {
     const db = readLocalDb();
@@ -2532,9 +2533,9 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
 
     if (usePostgres && pool) {
       const dbRes = await pool.query('SELECT id FROM employees');
-      allIds = dbRes.rows.map(r => parseInt(r.id.replace('VSA-', ''))).filter(n => !isNaN(n));
+      allIds = dbRes.rows.map(r => parseInt(String(r.id || '').replace(/^vsa-/i, ''))).filter(n => !isNaN(n));
     } else {
-      allIds = db.employees.map(e => parseInt(e.id.replace('VSA-', ''))).filter(n => !isNaN(n));
+      allIds = (db.employees || []).map(e => parseInt(String(e.id || '').replace(/^vsa-/i, ''))).filter(n => !isNaN(n));
     }
 
     if (allIds.length > 0) {
@@ -2562,9 +2563,19 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
 
     if (usePostgres && pool) {
       if (photoBase64 || signatureBase64) {
-        await pool.query('INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)', [newEmp.id, photoBase64, signatureBase64]);
+        await pool.query(
+          `INSERT INTO employee_photos (employee_id, photo, signature) 
+           VALUES ($1, $2, $3) 
+           ON CONFLICT (employee_id) DO UPDATE SET photo = EXCLUDED.photo, signature = EXCLUDED.signature, updated_at = CURRENT_TIMESTAMP`,
+          [newEmp.id, photoBase64, signatureBase64]
+        );
       }
-      await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2)', [newEmp.id, JSON.stringify(newEmp)]);
+      await pool.query(
+        `INSERT INTO employees (id, data) 
+         VALUES ($1, $2) 
+         ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = CURRENT_TIMESTAMP`,
+        [newEmp.id, JSON.stringify(newEmp)]
+      );
     } else {
       if (photoBase64 || signatureBase64) {
         const photosDb = readPhotosDb();
@@ -2597,8 +2608,8 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
 
     return res.status(201).json(responseData);
   } catch (e) {
-    console.error(e);
-    return res.status(e.statusCode || 500).json({ error: e.statusCode ? e.message : 'Failed to register guard profile.' });
+    console.error('Error creating employee:', e);
+    return res.status(e.statusCode || 500).json({ error: e.message || 'Failed to register guard profile.' });
   }
 });
 
@@ -2926,8 +2937,8 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
 
     return res.json(responseData);
   } catch (e) {
-    console.error(e);
-    return res.status(e.statusCode || 500).json({ error: e.statusCode ? e.message : 'Failed to update employee details.' });
+    console.error('Error updating employee:', e);
+    return res.status(e.statusCode || 500).json({ error: e.message || 'Failed to update employee details.' });
   }
 });
 

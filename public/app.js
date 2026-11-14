@@ -696,6 +696,11 @@ async function fetchData() {
                 fetch('/api/employees'),
                 fetch('/api/classifications')
             ]);
+            if (empRes.status === 401) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = '/login.html';
+                return;
+            }
             if (empRes.ok) {
                 emps = await empRes.json();
                 if (classRes.ok) {
@@ -704,6 +709,11 @@ async function fetchData() {
             } else {
                 // Graceful fallback to /api/db if /api/employees fails
                 const dbRes = await fetch('/api/db');
+                if (dbRes.status === 401) {
+                    sessionStorage.removeItem('currentUser');
+                    window.location.href = '/login.html';
+                    return;
+                }
                 if (!dbRes.ok) throw new Error('API Sync failure');
                 const db = await dbRes.json();
                 emps = db.employees || [];
@@ -715,6 +725,11 @@ async function fetchData() {
             }
         } catch (fetchErr) {
             const dbRes = await fetch('/api/db');
+            if (dbRes.status === 401) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = '/login.html';
+                return;
+            }
             if (!dbRes.ok) throw new Error('API Sync failure');
             const db = await dbRes.json();
             emps = db.employees || [];
@@ -2240,7 +2255,20 @@ async function saveEmployee(event) {
             });
         }
 
-        if (!response.ok) throw new Error('Saving guard record failed');
+        if (!response.ok) {
+            let errorMsg = 'Saving guard record failed';
+            try {
+                const errJson = await response.json();
+                if (errJson && (errJson.error || errJson.message)) errorMsg = errJson.error || errJson.message;
+            } catch (_) {}
+            if (response.status === 401) {
+                alert('Your session has expired. Please log in again.');
+                sessionStorage.removeItem('currentUser');
+                window.location.href = '/login.html';
+                return;
+            }
+            throw new Error(errorMsg);
+        }
         
         document.getElementById('employee-modal').classList.add('hidden');
         fetchData(); // Reload UI state
@@ -4227,6 +4255,8 @@ function showRegistrationForm(mode = 'add', empId = null) {
 }
 
 function resetRegistrationForm() {
+    currentRegistrationMode = 'add';
+    currentRegistrationEmpId = null;
     document.getElementById('employee-registration-form').reset();
     document.getElementById('reg-emp-id').value = '';
     
@@ -4749,24 +4779,60 @@ async function saveEmployeeFromRegistration(e) {
     };
     
     try {
-        const method = currentRegistrationMode === 'edit' ? 'PUT' : 'POST';
-        const endpoint = currentRegistrationMode === 'edit' ? `/api/employees/${empData.id}` : '/api/employees';
+        const isEdit = (currentRegistrationMode === 'edit' && !!empId);
+        const method = isEdit ? 'PUT' : 'POST';
+        const endpoint = isEdit ? `/api/employees/${empId}` : '/api/employees';
         
         const response = await fetch(endpoint, {
             method: method,
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(empData)
         });
         
-        if (!response.ok) throw new Error('Employee registration failed');
+        if (!response.ok) {
+            let errorMsg = `Server error (${response.status})`;
+            try {
+                const errData = await response.json();
+                if (errData && (errData.error || errData.message)) {
+                    errorMsg = errData.error || errData.message;
+                }
+            } catch (parseErr) {
+                try {
+                    const textErr = await response.text();
+                    if (textErr && textErr.length < 200) errorMsg = textErr;
+                } catch (_) {}
+            }
+
+            if (response.status === 401) {
+                alert('Your session has expired. Please log in again.');
+                sessionStorage.removeItem('currentUser');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            throw new Error(errorMsg);
+        }
+
+        let savedEmp = null;
+        try {
+            savedEmp = await response.json();
+        } catch (_) {}
+        const effectiveId = (savedEmp && savedEmp.id) ? savedEmp.id : (empId || empData.id);
         
-        alert(`Employee ${currentRegistrationMode === 'edit' ? 'updated' : 'registered'} successfully!`);
+        alert(`Employee ${isEdit ? 'updated' : 'registered'} successfully!`);
         await fetchData();
         
         // Show ID card generation for new employee
-        if (currentRegistrationMode === 'add') {
-            document.getElementById('id-select-employee').value = empData.id;
-            loadIdCardDetails(empData.id);
+        if (!isEdit) {
+            resetRegistrationForm();
+            const selectEl = document.getElementById('id-select-employee');
+            if (selectEl) {
+                selectEl.value = effectiveId;
+            }
+            if (typeof loadIdCardDetails === 'function') {
+                loadIdCardDetails(effectiveId);
+            }
             window.location.hash = 'id-cards';
         } else {
             window.location.hash = 'employees';
