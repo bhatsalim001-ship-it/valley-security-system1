@@ -2962,7 +2962,9 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
 
     if (usePostgres && pool) {
       const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
-      if (dbRes.rows.length > 0) existingEmp = dbRes.rows[0].data;
+      if (dbRes.rows.length > 0) {
+        existingEmp = typeof dbRes.rows[0].data === 'string' ? JSON.parse(dbRes.rows[0].data) : dbRes.rows[0].data;
+      }
     } else {
       existingEmp = db.employees.find(e => e.id === empId);
     }

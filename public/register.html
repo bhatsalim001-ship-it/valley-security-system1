@@ -482,6 +482,185 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
+        /* Step Sections (Phase 3) */
+        .form-step-header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            margin-top: 14px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .step-pill {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .step-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .field-hint {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .field-hint.valid {
+            color: #34d399;
+        }
+
+        .field-hint.warn {
+            color: #f59e0b;
+        }
+
+        .field-hint.error {
+            color: #f87171;
+        }
+
+        .lock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 2px 7px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .photo-success-chip {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin: 12px auto 0 auto;
+            max-width: 360px;
+        }
+
+        .tender-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+        }
+
+        /* Receipt Card (Phase 3) */
+        .receipt-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px auto 24px auto;
+            max-width: 460px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .receipt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+            margin-bottom: 14px;
+        }
+
+        .receipt-id-badge {
+            font-family: 'Outfit', monospace, sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.15);
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            letter-spacing: 0.8px;
+        }
+
+        .receipt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .receipt-item label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .receipt-item .val {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        .receipt-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 4px 10px;
+        }
+
+        .receipt-steps {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-left: 3px solid #6366f1;
+        }
+
+        .receipt-steps ol {
+            margin: 6px 0 0 18px;
+            padding: 0;
+            line-height: 1.5;
+        }
+
         /* Buttons & Footer */
         .btn-submit {
             width: 100%;
@@ -886,46 +1065,23 @@
 
         <form id="registration-form" onsubmit="handleRegistrationSubmit(event)">
             
-            <!-- 📸 Photo Upload Box -->
-            <div class="photo-section" id="photo-drop-zone">
-                <div class="photo-preview-container">
-                    <div class="photo-preview-placeholder" id="preview-placeholder">
-                        <i data-lucide="user" style="width: 44px; height: 44px; stroke-width: 1.5;"></i>
-                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">No Photo Chosen</span>
-                    </div>
-                    <img id="photo-preview-img" style="display: none;" alt="Preview">
-                </div>
-                <input type="file" id="file-input-field" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-                <div class="photo-actions">
-                    <button type="button" class="btn-photo-action" onclick="triggerFileInput()">
-                        <i data-lucide="upload" style="width: 16px; height: 16px;"></i>
-                        Choose Photo
-                    </button>
-                    <button type="button" class="btn-photo-action" onclick="openLiveCamera()">
-                        <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
-                        Take Selfie
-                    </button>
-                </div>
+            <!-- STEP 1: PERSONAL DETAILS -->
+            <div class="form-step-header">
+                <span class="step-pill">Step 1 of 3</span>
+                <span class="step-title"><i data-lucide="user-check" style="width: 17px; height: 17px; color: #818cf8;"></i> Personal Details</span>
             </div>
 
-            <!-- Form Fields Grid -->
             <div class="form-grid">
                 <!-- Name -->
                 <div class="form-group">
                     <label for="guard-name">Full Name (As per Aadhaar) *</label>
-                    <input type="text" id="guard-name" required placeholder="Enter full name" autocomplete="name">
-                </div>
-
-                <!-- Phone -->
-                <div class="form-group">
-                    <label for="guard-mobile">Mobile Number *</label>
-                    <input type="tel" id="guard-mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number" autocomplete="tel">
+                    <input type="text" id="guard-name" required placeholder="e.g. Mohammad Tariq Lone" autocomplete="name">
                 </div>
 
                 <!-- Father/Spouse name -->
                 <div class="form-group">
                     <label for="guard-guardian">Father's / Husband's Name *</label>
-                    <input type="text" id="guard-guardian" required placeholder="Parent or spouse full name">
+                    <input type="text" id="guard-guardian" required placeholder="e.g. Ghulam Hassan Lone">
                 </div>
 
                 <!-- Relation -->
@@ -943,6 +1099,17 @@
                 <div class="form-group">
                     <label for="guard-dob">Date of Birth (As per Aadhaar) *</label>
                     <input type="date" id="guard-dob" required autocomplete="bday">
+                    <div id="dob-age-hint" class="field-hint"></div>
+                </div>
+
+                <!-- Gender -->
+                <div class="form-group">
+                    <label for="guard-gender">Gender *</label>
+                    <select id="guard-gender" required>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
 
                 <!-- Blood Group -->
@@ -961,6 +1128,38 @@
                         <option value="Unknown">Unknown</option>
                     </select>
                 </div>
+            </div>
+
+            <!-- STEP 2: DEPUTATION & CONTACT -->
+            <div class="form-step-header">
+                <span class="step-pill">Step 2 of 3</span>
+                <span class="step-title"><i data-lucide="briefcase" style="width: 17px; height: 17px; color: #818cf8;"></i> Deputation & Contact</span>
+            </div>
+
+            <div class="form-grid">
+                <!-- Phone -->
+                <div class="form-group">
+                    <label for="guard-mobile">Mobile Number (Calling & WhatsApp) *</label>
+                    <input type="tel" id="guard-mobile" required pattern="[0-9]{10}" maxlength="10" inputmode="numeric" placeholder="10-digit mobile number" autocomplete="tel">
+                    <div id="mobile-validation-hint" class="field-hint"></div>
+                </div>
+
+                <!-- Deputed Location / Department -->
+                <div class="form-group">
+                    <label for="guard-department">
+                        Deputed Location / Department *
+                        <span id="department-lock-badge" class="lock-badge" style="display: none;">
+                            <i data-lucide="lock" style="width: 10px; height: 10px;"></i> Tender Locked
+                        </span>
+                    </label>
+                    <select id="guard-department" required>
+                        <option value="ACCOUNTANT GENERAL'S OFFICE">Accountant General's Office</option>
+                        <option value="NIFT">NIFT Srinagar</option>
+                        <option value="CHILDREN HOSPITAL">Children Hospital</option>
+                        <option value="SUPER SPECIALTY HOSPITAL">Super Specialty Hospital</option>
+                        <option value="OTHER">Other / Head Office</option>
+                    </select>
+                </div>
 
                 <!-- Designation -->
                 <div class="form-group">
@@ -973,35 +1172,50 @@
                     </select>
                 </div>
 
-                <!-- Deputed Location / Department -->
-                <div class="form-group">
-                    <label for="guard-department">Deputed Location / Department *</label>
-                    <select id="guard-department" required>
-                        <option value="ACCOUNTANT GENERAL'S OFFICE">Accountant General's Office</option>
-                        <option value="NIFT">NIFT Srinagar</option>
-                        <option value="CHILDREN HOSPITAL">Children Hospital</option>
-                        <option value="SUPER SPECIALTY HOSPITAL">Super Specialty Hospital</option>
-                        <option value="OTHER">Other / Head Office</option>
-                    </select>
-                </div>
-
-                <!-- Gender -->
-                <div class="form-group">
-                    <label for="guard-gender">Gender *</label>
-                    <select id="guard-gender" required>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
-
                 <!-- Current Address -->
                 <div class="form-group full-width">
-                    <label for="guard-address">Present Address (Village, Tehsil, District) *</label>
-                    <textarea id="guard-address" rows="2" required placeholder="Enter complete present residential address" autocomplete="street-address"></textarea>
+                    <label for="guard-address">Present Address (Village, Tehsil, District, PIN) *</label>
+                    <textarea id="guard-address" rows="2" required placeholder="Enter complete residential address" autocomplete="street-address"></textarea>
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit" id="btn-submit-form">
+            <!-- STEP 3: DUTY PORTRAIT PHOTOGRAPH -->
+            <div class="form-step-header">
+                <span class="step-pill">Step 3 of 3</span>
+                <span class="step-title"><i data-lucide="camera" style="width: 17px; height: 17px; color: #818cf8;"></i> Duty Portrait Photograph</span>
+            </div>
+
+            <div class="photo-section" id="photo-drop-zone">
+                <div class="photo-preview-container">
+                    <div class="photo-preview-placeholder" id="preview-placeholder">
+                        <i data-lucide="user" style="width: 44px; height: 44px; stroke-width: 1.5;"></i>
+                        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">No Photo Chosen</span>
+                    </div>
+                    <img id="photo-preview-img" style="display: none;" alt="Preview">
+                </div>
+                
+                <div id="photo-attached-badge" class="photo-success-chip">
+                    <i data-lucide="check-circle" style="width: 15px; height: 15px;"></i>
+                    Portrait Photo Attached & Ready
+                </div>
+
+                <input type="file" id="file-input-field" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                <div class="photo-actions" style="margin-top: 14px;">
+                    <button type="button" class="btn-photo-action" onclick="triggerFileInput()">
+                        <i data-lucide="upload" style="width: 16px; height: 16px;"></i>
+                        Choose Photo
+                    </button>
+                    <button type="button" class="btn-photo-action" onclick="openLiveCamera()">
+                        <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
+                        Camera Selfie / Photo
+                    </button>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px;">
+                    Please provide a clear front portrait with plain background. No physical documents or finger signatures needed.
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btn-submit-form" style="margin-top: 10px;">
                 <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
                 Submit Onboarding Profile
             </button>
@@ -1011,7 +1225,13 @@
     <!-- CAMERA SCREEN VIEW -->
     <div class="camera-overlay" id="camera-modal">
         <div class="camera-container">
-            <h3 style="font-family: 'Outfit'; font-size: 20px; font-weight: 700;">Position face in oval frame</h3>
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <h3 style="font-family: 'Outfit'; font-size: 18px; font-weight: 700; color: #fff;">Position face in oval frame</h3>
+                <button type="button" class="btn-crop-tool" id="btn-flip-camera" onclick="toggleCameraFacing()" title="Switch Front/Rear Camera" style="min-height: 38px; padding: 6px 12px;">
+                    <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                    <span id="camera-facing-label">Flip Camera</span>
+                </button>
+            </div>
             <div class="camera-view-wrapper">
                 <video id="camera-stream-video" autoplay playsinline muted></video>
                 <div class="camera-overlay-frame"></div>
@@ -1033,10 +1253,57 @@
         </div>
         <h2 class="state-title">Registration Submitted!</h2>
         <p class="state-description" id="success-description-text">
-            Your details and photo have been received. Your profile has been sent to the office admin queue for verification.<br><br>
-            Once approved, your official ID card will be activated and generated automatically. You do not need to submit the form again.
+            Your details and photo have been received. Your profile has been sent to the office admin queue for verification.
         </p>
-        <button type="button" class="btn-submit" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border-subtle); max-width: 320px; margin: 0 auto;" onclick="resetRegistrationForm()">
+
+        <!-- Digital Receipt Card -->
+        <div class="receipt-card" id="success-receipt-card">
+            <div class="receipt-header">
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px;">ENROLMENT ACKNOWLEDGEMENT</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Valley Security System</div>
+                </div>
+                <div class="receipt-id-badge" id="success-receipt-id">VSA-PENDING</div>
+            </div>
+            
+            <div class="receipt-grid">
+                <div class="receipt-item">
+                    <label>Candidate Name</label>
+                    <div class="val" id="success-receipt-name">-</div>
+                </div>
+                <div class="receipt-item">
+                    <label>Designation</label>
+                    <div class="val" id="success-receipt-designation">-</div>
+                </div>
+                <div class="receipt-item">
+                    <label>Assigned Department</label>
+                    <div class="val" id="success-receipt-dept">-</div>
+                </div>
+                <div class="receipt-item">
+                    <label>Deployment Project</label>
+                    <div class="val" id="success-receipt-project">General Onboarding</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Intake Status</span>
+                <span class="receipt-status-badge">
+                    <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+                    Pending Office Verification
+                </span>
+            </div>
+
+            <div class="receipt-steps">
+                <strong>What Happens Next:</strong>
+                <ol>
+                    <li>Admin verifies your submitted details against roster.</li>
+                    <li>Official Smart ID Card is activated upon approval.</li>
+                    <li>Badge issued at site during duty deployment.</li>
+                </ol>
+            </div>
+        </div>
+
+        <button type="button" class="btn-submit" style="background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid var(--border-subtle); max-width: 320px; margin: 0 auto;" onclick="resetRegistrationForm()">
             Submit Another Profile
         </button>
     </div>
@@ -1276,7 +1543,7 @@
                     imageSmoothingQuality: 'high'
                 });
 
-                base64PhotoData = canvas.toDataURL('image/jpeg', 0.9);
+                base64PhotoData = canvas.toDataURL('image/jpeg', 0.85);
 
                 // Render preview
                 const previewImg = document.getElementById('photo-preview-img');
@@ -1284,28 +1551,64 @@
                 previewImg.style.display = 'block';
                 document.getElementById('preview-placeholder').style.display = 'none';
 
+                // Surface Photo Attached Badge
+                const attachedBadge = document.getElementById('photo-attached-badge');
+                if (attachedBadge) {
+                    attachedBadge.style.display = 'inline-flex';
+                    if (window.lucide && lucide.createIcons) lucide.createIcons();
+                }
+
                 closeCropper();
             });
         }
 
         setupCropperControls();
 
+        let currentFacingMode = 'user'; // 'user' for guard selfie, 'environment' for supervisor taking photo
+
         // Open live camera capture modal
         async function openLiveCamera() {
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('camera-stream-video');
+            const facingLabel = document.getElementById('camera-facing-label');
+
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+                activeStream = null;
+            }
 
             try {
                 activeStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: 640, height: 480 },
+                    video: { 
+                        facingMode: currentFacingMode, 
+                        width: { ideal: 1280 }, 
+                        height: { ideal: 960 } 
+                    },
                     audio: false
                 });
                 video.srcObject = activeStream;
+
+                // Mirror video stream only for front selfie
+                if (currentFacingMode === 'user') {
+                    video.style.transform = 'scaleX(-1)';
+                    if (facingLabel) facingLabel.textContent = 'Rear Cam';
+                } else {
+                    video.style.transform = 'none';
+                    if (facingLabel) facingLabel.textContent = 'Front Cam';
+                }
+
                 modal.classList.add('active');
+                if (window.lucide && lucide.createIcons) lucide.createIcons();
             } catch (err) {
                 console.error("Camera access failed:", err);
                 alert("Could not access your camera. Please check your browser permissions or upload a photo from your gallery instead.");
             }
+        }
+
+        // Toggle Front / Rear Camera
+        async function toggleCameraFacing() {
+            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+            await openLiveCamera();
         }
 
         // Close camera modal
@@ -1318,7 +1621,7 @@
             }
         }
 
-        // Snap selfie photo and stop stream
+        // Snap portrait photo and stop stream
         function snapSelfie() {
             const video = document.getElementById('camera-stream-video');
             const canvas = document.createElement('canvas');
@@ -1327,8 +1630,10 @@
             canvas.height = 640;
             
             const ctx = canvas.getContext('2d');
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
+            if (currentFacingMode === 'user') {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             const selfieBase64 = canvas.toDataURL('image/jpeg', 0.9);
@@ -1361,6 +1666,100 @@
 
         let activeDeploymentProject = null;
 
+        // Title Case Helper for names
+        function toTitleCase(str) {
+            if (!str) return '';
+            return str.toLowerCase().replace(/(?:^|\s|-|\.)\S/g, function(char) {
+                return char.toUpperCase();
+            });
+        }
+
+        // Real-Time Age Calculation from DOB
+        function updateAgeHint() {
+            const dobInput = document.getElementById('guard-dob');
+            const hintEl = document.getElementById('dob-age-hint');
+            if (!dobInput || !hintEl) return;
+            
+            const val = dobInput.value;
+            if (!val) {
+                hintEl.textContent = '';
+                hintEl.className = 'field-hint';
+                return;
+            }
+            const birthDate = new Date(val);
+            if (isNaN(birthDate.getTime())) {
+                hintEl.textContent = '';
+                hintEl.className = 'field-hint';
+                return;
+            }
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 0) {
+                hintEl.className = 'field-hint error';
+                hintEl.textContent = '⚠ Date of birth cannot be in the future';
+            } else if (age < 18) {
+                hintEl.className = 'field-hint warn';
+                hintEl.textContent = `⚠ Age: ${age} years old (Must be 18+ for deployment)`;
+            } else {
+                hintEl.className = 'field-hint valid';
+                hintEl.textContent = `✓ Age: ${age} years old (Eligible for duty)`;
+            }
+        }
+
+        // Real-Time 10-Digit Mobile Live Validation
+        function updateMobileHint() {
+            const mobileInput = document.getElementById('guard-mobile');
+            const hintEl = document.getElementById('mobile-validation-hint');
+            if (!mobileInput || !hintEl) return;
+
+            mobileInput.value = mobileInput.value.replace(/\D/g, '');
+            const val = mobileInput.value;
+            if (!val) {
+                hintEl.textContent = '';
+                hintEl.className = 'field-hint';
+                return;
+            }
+            if (val.length === 10) {
+                hintEl.className = 'field-hint valid';
+                hintEl.textContent = '✓ Valid 10-digit mobile number';
+            } else {
+                hintEl.className = 'field-hint warn';
+                hintEl.textContent = `⚠ ${10 - val.length} more digit${10 - val.length === 1 ? '' : 's'} required`;
+            }
+        }
+
+        // Bind Live Input Validation Listeners
+        const nameInput = document.getElementById('guard-name');
+        if (nameInput) {
+            nameInput.addEventListener('blur', function() {
+                this.value = toTitleCase(this.value.trim());
+            });
+        }
+
+        const guardianInput = document.getElementById('guard-guardian');
+        if (guardianInput) {
+            guardianInput.addEventListener('blur', function() {
+                this.value = toTitleCase(this.value.trim());
+            });
+        }
+
+        const mobileInput = document.getElementById('guard-mobile');
+        if (mobileInput) {
+            mobileInput.addEventListener('input', updateMobileHint);
+        }
+
+        const dobInput = document.getElementById('guard-dob');
+        if (dobInput) {
+            dobInput.addEventListener('change', updateAgeHint);
+            dobInput.addEventListener('input', updateAgeHint);
+            dobInput.max = new Date().toISOString().split('T')[0];
+        }
+
         async function loadDeploymentProjectContext() {
             const urlParams = new URLSearchParams(window.location.search);
             const projectSlug = urlParams.get('project');
@@ -1380,18 +1779,24 @@
                 const instEl = document.getElementById('deployment-project-instructions');
                 const pageTitle = document.getElementById('registration-page-title');
                 const pageSubtitle = document.getElementById('registration-page-subtitle');
+                const lockBadge = document.getElementById('department-lock-badge');
+
+                if (lockBadge) lockBadge.style.display = 'inline-flex';
 
                 if (card && nameEl) {
                     nameEl.textContent = project.name;
                     let detailsHtml = '';
                     if (project.clientName) {
-                        detailsHtml += `<span style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="shield" style="width:13px;height:13px;color:#818cf8;"></i> <strong>Client:</strong> ${project.clientName}</span>`;
+                        detailsHtml += `<span class="tender-chip"><i data-lucide="shield" style="width:13px;height:13px;color:#818cf8;"></i> <strong>Client:</strong> ${project.clientName}</span>`;
                     }
                     if (project.location) {
-                        detailsHtml += `<span style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="map-pin" style="width:13px;height:13px;color:#34d399;"></i> <strong>Location:</strong> ${project.location}</span>`;
+                        detailsHtml += `<span class="tender-chip"><i data-lucide="map-pin" style="width:13px;height:13px;color:#34d399;"></i> <strong>Location:</strong> ${project.location}</span>`;
                     }
                     if (project.targetGuards > 0) {
-                        detailsHtml += `<span style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="users" style="width:13px;height:13px;color:#f59e0b;"></i> <strong>Target Intake:</strong> ${project.targetGuards} Guards</span>`;
+                        detailsHtml += `<span class="tender-chip"><i data-lucide="users" style="width:13px;height:13px;color:#f59e0b;"></i> <strong>Target Intake:</strong> ${project.targetGuards} Guards</span>`;
+                    }
+                    if (project.deadline) {
+                        detailsHtml += `<span class="tender-chip"><i data-lucide="calendar" style="width:13px;height:13px;color:#60a5fa;"></i> <strong>Deadline:</strong> ${project.deadline}</span>`;
                     }
                     detailsEl.innerHTML = detailsHtml;
 
@@ -1446,13 +1851,20 @@
             event.preventDefault();
 
             const btnSubmit = document.getElementById('btn-submit-form');
+            const mobileVal = document.getElementById('guard-mobile').value.trim();
+
+            if (!/^\d{10}$/.test(mobileVal)) {
+                alert('Please enter a valid 10-digit mobile number.');
+                return;
+            }
+
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 18px; height: 18px; display:inline-block; vertical-align:middle;"></i> Submitting Profile...';
             lucide.createIcons();
 
             const payload = {
                 name: document.getElementById('guard-name').value.trim(),
-                mobile: document.getElementById('guard-mobile').value.trim(),
+                mobile: mobileVal,
                 guardianName: document.getElementById('guard-guardian').value.trim(),
                 relationType: document.getElementById('guard-relation').value,
                 dob: document.getElementById('guard-dob').value,
@@ -1479,14 +1891,33 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    if (activeDeploymentProject) {
-                        const descEl = document.getElementById('success-description-text');
-                        if (descEl) {
-                            descEl.innerHTML = `Your details and photo have been received for <strong>${activeDeploymentProject.name}</strong>.<br><br>Your profile has been linked to this deployment project and sent for verification. Once approved, your official ID card will be activated automatically.`;
+                    const empId = result.employeeId || 'VSA-PENDING';
+                    const projTitle = result.projectName || (activeDeploymentProject ? activeDeploymentProject.name : 'General Onboarding');
+
+                    const descEl = document.getElementById('success-description-text');
+                    if (descEl) {
+                        if (activeDeploymentProject) {
+                            descEl.innerHTML = `Your details and photo have been received for <strong>${activeDeploymentProject.name}</strong>.<br>Your profile has been linked to this deployment project and sent for office verification.`;
+                        } else {
+                            descEl.innerHTML = `Your employee onboarding profile has been received and submitted to the office verification queue.`;
                         }
                     }
+
+                    // Populate receipt fields
+                    const rId = document.getElementById('success-receipt-id');
+                    if (rId) rId.textContent = empId;
+                    const rName = document.getElementById('success-receipt-name');
+                    if (rName) rName.textContent = payload.name;
+                    const rDes = document.getElementById('success-receipt-designation');
+                    if (rDes) rDes.textContent = payload.designation;
+                    const rDept = document.getElementById('success-receipt-dept');
+                    if (rDept) rDept.textContent = payload.department;
+                    const rProj = document.getElementById('success-receipt-project');
+                    if (rProj) rProj.textContent = projTitle;
+
                     document.getElementById('view-form-panel').style.display = 'none';
                     document.getElementById('view-success-panel').classList.add('active');
+                    if (window.lucide && lucide.createIcons) lucide.createIcons();
                 } else {
                     alert(`Submission failed: ${result.error || 'Server error'}`);
                     btnSubmit.disabled = false;
@@ -1509,9 +1940,36 @@
             document.getElementById('photo-preview-img').style.display = 'none';
             document.getElementById('preview-placeholder').style.display = 'flex';
             
+            const attachedBadge = document.getElementById('photo-attached-badge');
+            if (attachedBadge) attachedBadge.style.display = 'none';
+
+            const ageHint = document.getElementById('dob-age-hint');
+            if (ageHint) { ageHint.textContent = ''; ageHint.className = 'field-hint'; }
+
+            const mobileHint = document.getElementById('mobile-validation-hint');
+            if (mobileHint) { mobileHint.textContent = ''; mobileHint.className = 'field-hint'; }
+            
             document.getElementById('view-success-panel').classList.remove('active');
             document.getElementById('view-form-panel').style.display = 'block';
             
+            // Re-apply deployment project defaults if active
+            if (activeDeploymentProject) {
+                if (activeDeploymentProject.department) {
+                    const deptSelect = document.getElementById('guard-department');
+                    if (deptSelect) {
+                        let opt = Array.from(deptSelect.options).find(o => o.value.toLowerCase() === activeDeploymentProject.department.toLowerCase());
+                        if (opt) opt.selected = true;
+                    }
+                }
+                if (activeDeploymentProject.designation) {
+                    const desSelect = document.getElementById('guard-designation');
+                    if (desSelect) {
+                        let opt = Array.from(desSelect.options).find(o => o.value.toLowerCase() === activeDeploymentProject.designation.toLowerCase());
+                        if (opt) opt.selected = true;
+                    }
+                }
+            }
+
             const btnSubmit = document.getElementById('btn-submit-form');
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = '<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> Submit Onboarding Profile';
