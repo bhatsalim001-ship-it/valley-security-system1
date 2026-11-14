@@ -63,10 +63,10 @@
             if (sysName) sysName.innerText = C.name;
         });
     </script>
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Precision Enterprise Typography (Tender Radar Standard) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.321.0/dist/umd/lucide.min.js"></script>
     <!-- QRious QR Code Generator -->
@@ -305,7 +305,7 @@
                                         <!-- Active green track -->
                                         <path id="gauge-active-path" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--vs-accent-emerald)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="0"/>
                                         <!-- Text inside -->
-                                        <text x="100" y="80" font-family="'Outfit', sans-serif" font-size="28" font-weight="700" fill="var(--vs-text-primary)" text-anchor="middle" id="gauge-percentage-text">0%</text>
+                                        <text x="100" y="80" font-family="'Plus Jakarta Sans', sans-serif" font-size="28" font-weight="700" fill="var(--vs-text-primary)" text-anchor="middle" id="gauge-percentage-text">0%</text>
                                         <text x="100" y="98" font-family="inherit" font-size="10" font-weight="600" fill="var(--vs-text-muted)" text-anchor="middle">Active Guards</text>
                                     </svg>
                                 </div>
@@ -1166,7 +1166,7 @@
                                             </div>
 
                                             <div class="studio-ai-prompt-wrapper">
-                                                <textarea id="tpl-ai-prompt" class="form-control studio-ai-prompt" rows="2" placeholder="e.g. Make a modern premium dark vertical card with golden header bar, Outfit font, and large photo..."></textarea>
+                                                <textarea id="tpl-ai-prompt" class="form-control studio-ai-prompt" rows="2" placeholder="e.g. Make a modern premium dark vertical card with golden header bar, Plus Jakarta Sans font, and large photo..."></textarea>
                                             </div>
 
                                             <button type="button" class="btn btn-success btn-ai-generate" id="btn-tpl-generate-ai">
@@ -1202,7 +1202,8 @@
                                             <div class="form-group">
                                                 <label for="tpl-font">Card Font *</label>
                                                 <select id="tpl-font" class="form-control">
-                                                    <option value="'Outfit', sans-serif" selected>Outfit (Modern)</option>
+                                                    <option value="'Plus Jakarta Sans', sans-serif" selected>Plus Jakarta Sans (Precision Enterprise)</option>
+                                                    <option value="'JetBrains Mono', monospace">JetBrains Mono (Security Monospace)</option>
                                                     <option value="'Inter', sans-serif">Inter (Clean)</option>
                                                     <option value="'Poppins', sans-serif">Poppins (Elegant)</option>
                                                     <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>

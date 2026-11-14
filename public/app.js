@@ -2471,7 +2471,7 @@ function ensureFontLoaded(fontFamilyStr) {
     const fontName = match[1];
     
     // Core fonts are already loaded on startup
-    const coreFonts = ['Plus Jakarta Sans', 'Outfit', 'Inter'];
+    const coreFonts = ['Plus Jakarta Sans', 'JetBrains Mono', 'Inter'];
     if (coreFonts.includes(fontName)) return;
     
     const fontId = `gfont-${fontName.toLowerCase().replace(/ /g, '-')}`;
@@ -2568,7 +2568,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     if (!template) {
         template = {
             layout: 'vertical',
-            font: "'Outfit', sans-serif",
+            font: "'Plus Jakarta Sans', sans-serif",
             backgroundColor: '#ffffff',
             headerBgColor: '#0e3e2b',
             accentColor: '#c8102e',
@@ -2725,7 +2725,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         const initial = emp.name ? emp.name[0].toUpperCase() : '?';
         photoHtml = `
         <div style="width: 100%; height: 100%; background: linear-gradient(135deg, ${template.accentColor || '#c8102e'} 0%, #0f1218 100%); display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-            <span style="font-family: 'Outfit', sans-serif; font-weight: bold; font-size: ${photoWidth * 0.35}px; color: #ffffff;">${initial}</span>
+            <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: bold; font-size: ${photoWidth * 0.35}px; color: #ffffff;">${initial}</span>
         </div>`;
     }
 
@@ -2836,15 +2836,15 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         return `
         <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
             <!-- SINGLE-SIDED HORIZONTAL ID CARD -->
-            <div class="id-card-horizontal visual-id-card-render" style="font-family: ${template.font || "'Outfit', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; --logo-size: ${logoSize}px; --photo-width: ${photoWidth}px; --photo-height: ${photoHeight}px; --qr-size: ${qrSize}px; --name-font-size: ${nameFontSize}px; --designation-font-size: ${designationFontSize}px; --details-font-size: ${detailsFontSize}px; --row-padding: ${rowPadding}px;">
+            <div class="id-card-horizontal visual-id-card-render" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; --logo-size: ${logoSize}px; --photo-width: ${photoWidth}px; --photo-height: ${photoHeight}px; --qr-size: ${qrSize}px; --name-font-size: ${nameFontSize}px; --designation-font-size: ${designationFontSize}px; --details-font-size: ${detailsFontSize}px; --row-padding: ${rowPadding}px;">
                 <!-- Header -->
                 <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-bottom: 2px solid ${template.accentColor || '#dfba5f'}; color: ${headerTextColor}; height: ${headerHeight}px; display: flex; align-items: center; gap: 12px; padding: 0 12px; margin: -15px -15px 8px -15px; border-radius: 10px 10px 0 0; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                     <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         ${logoHtml}
                     </div>
                     <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
-                        <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                        <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                     </div>
                 </div>
 
@@ -2921,15 +2921,15 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         return `
         <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
             <!-- SINGLE-SIDED VERTICAL ID CARD -->
-            <div class="id-card-portrait visual-id-card-render" style="font-family: ${template.font || "'Outfit', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; display: flex; flex-direction: column; justify-content: flex-start; height: 500px; width: 320px; box-sizing: border-box; overflow: hidden; position: relative; --logo-size: ${logoSize}px; --photo-width: ${photoWidth}px; --photo-height: ${photoHeight}px; --qr-size: ${qrSize}px; --name-font-size: ${nameFontSize}px; --designation-font-size: ${designationFontSize}px; --details-font-size: ${detailsFontSize}px; --row-padding: ${rowPadding}px;">
+            <div class="id-card-portrait visual-id-card-render" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; display: flex; flex-direction: column; justify-content: flex-start; height: 500px; width: 320px; box-sizing: border-box; overflow: hidden; position: relative; --logo-size: ${logoSize}px; --photo-width: ${photoWidth}px; --photo-height: ${photoHeight}px; --qr-size: ${qrSize}px; --name-font-size: ${nameFontSize}px; --designation-font-size: ${designationFontSize}px; --details-font-size: ${detailsFontSize}px; --row-padding: ${rowPadding}px;">
                 <!-- Header -->
                 <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-bottom: 2px solid ${template.accentColor || '#dfba5f'}; color: ${headerTextColor}; height: ${headerHeight}px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 10px; margin: -15px -15px 10px -15px; border-radius: 10px 10px 0 0; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                     <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         ${logoHtml}
                     </div>
                     <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
-                        <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Outfit', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                        <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                     </div>
                 </div>
 
@@ -5947,7 +5947,7 @@ function convertToVisualTemplate(template) {
             id: `el-${Date.now()}-2`,
             type: 'text',
             text: template.headerText || (typeof FIRM_CONFIG !== 'undefined' ? FIRM_CONFIG.badgeHeader : 'VALLEY SECURITY AGENCY'),
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 14,
             fontWeight: '700',
             color: '#ffffff',
@@ -5990,7 +5990,7 @@ function convertToVisualTemplate(template) {
             id: `el-${Date.now()}-5`,
             type: 'text',
             text: '{{employee_name}}',
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 16,
             fontWeight: '700',
             color: '#0e3e2b',
@@ -6147,7 +6147,7 @@ function convertToVisualTemplate(template) {
             id: `el-${Date.now()}-b1`,
             type: 'text',
             text: 'TERMS & CONDITIONS',
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 12,
             fontWeight: '700',
             color: template.headerBgColor || '#0e3e2b',
@@ -6177,7 +6177,7 @@ function convertToVisualTemplate(template) {
             id: `el-${Date.now()}-b3`,
             type: 'text',
             text: 'PSARA License No:\nPSA | L | 99 | JK | 2024 | DEC',
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 8,
             fontWeight: '700',
             color: '#0e3e2b',
@@ -6231,7 +6231,7 @@ function convertToVisualTemplate(template) {
             id: `el-${Date.now()}-b7`,
             type: 'text',
             text: typeof FIRM_CONFIG !== 'undefined' ? FIRM_CONFIG.name.toUpperCase() : 'VALLEY SECURITY SYSTEMS',
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: 8,
             fontWeight: '600',
             color: '#ffffff',
@@ -6492,7 +6492,7 @@ function loadTemplateInStudio(id) {
     document.getElementById('tpl-id').value = tpl.id || '';
     document.getElementById('tpl-name').value = tpl.name || '';
     document.getElementById('tpl-layout').value = tpl.layout || 'vertical';
-    document.getElementById('tpl-font').value = tpl.font || "'Outfit', sans-serif";
+    document.getElementById('tpl-font').value = tpl.font || "'Plus Jakarta Sans', sans-serif";
     document.getElementById('tpl-bg-color').value = tpl.backgroundColor || '#ffffff';
     document.getElementById('tpl-header-bg').value = tpl.headerBgColor || '#0e3e2b';
     document.getElementById('tpl-accent-color').value = tpl.accentColor || '#c8102e';
@@ -6843,7 +6843,7 @@ function resetTemplateForm() {
     document.getElementById('tpl-id').value = '';
     document.getElementById('tpl-name').value = '';
     document.getElementById('tpl-layout').value = 'vertical';
-    document.getElementById('tpl-font').value = "'Outfit', sans-serif";
+    document.getElementById('tpl-font').value = "'Plus Jakarta Sans', sans-serif";
     document.getElementById('tpl-bg-color').value = '#ffffff';
     document.getElementById('tpl-header-bg').value = '#0e3e2b';
     document.getElementById('tpl-accent-color').value = '#c8102e';
