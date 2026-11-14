@@ -111,6 +111,11 @@
                     <i data-lucide="users"></i>
                     <span>Employees</span>
                 </a>
+                <a href="#deployments" class="nav-item" data-view="deployments">
+                    <i data-lucide="building-2"></i>
+                    <span>Deployments</span>
+                    <span id="nav-deployments-badge" class="nav-badge" style="display:none; margin-left:auto; background:rgba(99,102,241,0.25); color:#818cf8; font-size:11px; padding:1px 6px; border-radius:10px; font-weight:700;">0</span>
+                </a>
 
                 <a href="#id-cards" class="nav-item" data-view="id-cards">
                     <i data-lucide="contact"></i>
@@ -500,6 +505,107 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </section>
+
+                <!-- 2B. DEPLOYMENT PROJECTS VIEW (TENDER ONBOARDING COMMAND CENTER) -->
+                <section id="view-deployments" class="app-view hidden">
+                    <!-- Top Action Header & Quick Stats -->
+                    <div class="dashboard-card" style="margin-bottom: 24px;">
+                        <div class="card-header" style="flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;">
+                            <div>
+                                <h3 style="display: flex; align-items: center; gap: 10px; font-size: 18px; color: var(--vs-text-primary);">
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; background: rgba(99,102,241,0.15); color: #818cf8;">
+                                        <i data-lucide="building-2" style="width: 18px; height: 18px;"></i>
+                                    </span>
+                                    Tender Deployments & Candidate Onboarding
+                                </h3>
+                                <p style="font-size: 13px; color: var(--vs-text-muted); margin-top: 4px; margin-left: 44px;">
+                                    Generate tender onboarding links, track guard intake progress live, and bulk-approve personnel for ID card printing.
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <button class="btn btn-outline" id="btn-refresh-deployments" onclick="loadDeploymentsData()">
+                                    <i data-lucide="refresh-cw"></i> Refresh
+                                </button>
+                                <button class="btn btn-primary" id="btn-create-deployment-project" onclick="openCreateProjectModal()">
+                                    <i data-lucide="plus-circle"></i> New Deployment Project
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4 Stat Pill Summary Strip -->
+                        <div class="card-body" style="padding-top: 4px;">
+                            <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px;">
+                                <div class="stat-card" style="background: var(--vs-surface-2); border: 1px solid var(--vs-border-subtle); border-radius: 14px; padding: 16px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--vs-text-muted);">Active Tenders</span>
+                                        <i data-lucide="briefcase" style="width: 16px; height: 16px; color: #818cf8;"></i>
+                                    </div>
+                                    <div id="stat-dep-active-projects" style="font-size: 26px; font-weight: 800; color: var(--vs-text-primary);">0</div>
+                                    <div style="font-size: 12px; color: var(--vs-text-muted); margin-top: 4px;" id="stat-dep-total-projects-sub">0 total tenders</div>
+                                </div>
+
+                                <div class="stat-card" style="background: var(--vs-surface-2); border: 1px solid var(--vs-border-subtle); border-radius: 14px; padding: 16px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--vs-text-muted);">Total Intake Target</span>
+                                        <i data-lucide="target" style="width: 16px; height: 16px; color: #f59e0b;"></i>
+                                    </div>
+                                    <div id="stat-dep-target-guards" style="font-size: 26px; font-weight: 800; color: #f59e0b;">0</div>
+                                    <div style="font-size: 12px; color: var(--vs-text-muted); margin-top: 4px;">Guards required across sites</div>
+                                </div>
+
+                                <div class="stat-card" style="background: var(--vs-surface-2); border: 1px solid var(--vs-border-subtle); border-radius: 14px; padding: 16px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--vs-text-muted);">Registered Intake</span>
+                                        <i data-lucide="users" style="width: 16px; height: 16px; color: #60a5fa;"></i>
+                                    </div>
+                                    <div id="stat-dep-registered-guards" style="font-size: 26px; font-weight: 800; color: #60a5fa;">0</div>
+                                    <div style="font-size: 12px; color: var(--vs-text-muted); margin-top: 4px;" id="stat-dep-overall-progress">0% overall progress</div>
+                                </div>
+
+                                <div class="stat-card" style="background: var(--vs-surface-2); border: 1px solid var(--vs-border-subtle); border-radius: 14px; padding: 16px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--vs-text-muted);">Approved & Active</span>
+                                        <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #10b981;"></i>
+                                    </div>
+                                    <div id="stat-dep-approved-guards" style="font-size: 26px; font-weight: 800; color: #10b981;">0</div>
+                                    <div style="font-size: 12px; color: #f59e0b; margin-top: 4px;" id="stat-dep-pending-guards">0 awaiting review</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter Controls for Projects -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 280px; max-width: 480px;">
+                            <input type="text" id="deployments-search-input" placeholder="Search tenders by project name, client, or location..." oninput="filterDeploymentProjects()" style="width: 100%; padding: 10px 14px; border-radius: 10px; background: var(--vs-surface-1); border: 1px solid var(--vs-border-subtle); color: var(--vs-text-primary); font-size: 13px;">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="deployments-status-filter" onchange="filterDeploymentProjects()" style="padding: 10px 14px; border-radius: 10px; background: var(--vs-surface-1); border: 1px solid var(--vs-border-subtle); color: var(--vs-text-primary); font-size: 13px;">
+                                <option value="All">All Statuses</option>
+                                <option value="Active" selected>Active Only</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Archived">Archived</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Projects Grid Container -->
+                    <div id="deployment-projects-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+                        <!-- Dynamically populated via renderDeploymentProjects() -->
+                    </div>
+
+                    <!-- Empty State Placeholder (when 0 projects) -->
+                    <div id="deployment-projects-empty" style="display: none; text-align: center; padding: 60px 20px; background: var(--vs-surface-1); border: 1px dashed var(--vs-border-subtle); border-radius: 20px; margin-top: 20px;">
+                        <i data-lucide="building-2" style="width: 48px; height: 48px; color: var(--vs-text-muted); margin-bottom: 16px;"></i>
+                        <h3 style="font-size: 18px; color: var(--vs-text-primary); margin-bottom: 8px;">No Deployment Projects Yet</h3>
+                        <p style="font-size: 14px; color: var(--vs-text-muted); max-width: 480px; margin: 0 auto 20px;">
+                            Create your first tender deployment project (e.g., SKIMS Soura, GMC Anantnag) to generate dedicated onboarding links and track guard recruitment.
+                        </p>
+                        <button class="btn btn-primary" onclick="openCreateProjectModal()">
+                            <i data-lucide="plus-circle"></i> Create Deployment Project
+                        </button>
                     </div>
                 </section>
 
@@ -1919,6 +2025,174 @@
                 </section>
             </div>
         </main>
+    </div>
+
+    <!-- DEPLOYMENT PROJECT MODAL (CREATE / EDIT) -->
+    <div id="deployment-project-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="deployment-project-modal-title">
+        <div class="modal-container" style="max-width: 650px;">
+            <div class="modal-header">
+                <h2 id="deployment-project-modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="building-2" style="width: 20px; height: 20px; color: #818cf8;"></i>
+                    Create Deployment Project
+                </h2>
+                <button class="modal-close" onclick="closeDeploymentProjectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="deployment-project-form" class="luxury-form" onsubmit="handleDeploymentProjectSubmit(event)">
+                    <input type="hidden" id="dep-project-id">
+                    
+                    <div class="form-row col-2">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="dep-project-name">Project / Tender Name *</label>
+                            <input type="text" id="dep-project-name" required placeholder="e.g. SKIMS Soura Security Deployment 2026">
+                        </div>
+                        <div class="form-group">
+                            <label for="dep-project-client">Client / Authority *</label>
+                            <input type="text" id="dep-project-client" placeholder="e.g. SKIMS Hospital Soura">
+                        </div>
+                        <div class="form-group">
+                            <label for="dep-project-location">Deployment Location</label>
+                            <input type="text" id="dep-project-location" placeholder="e.g. Soura, Srinagar, J&K">
+                        </div>
+                        <div class="form-group">
+                            <label for="dep-project-target">Target Guard Requirement *</label>
+                            <input type="number" id="dep-project-target" min="1" max="5000" required placeholder="e.g. 100">
+                        </div>
+                        <div class="form-group">
+                            <label for="dep-project-deadline">Onboarding Deadline</label>
+                            <input type="date" id="dep-project-deadline">
+                        </div>
+                        <div class="form-group">
+                            <label for="dep-project-department">Department / Station</label>
+                            <input type="text" id="dep-project-department" placeholder="e.g. SKIMS SOURA">
+                        </div>
+                        <div class="form-group">
+                            <label for="dep-project-designation">Primary Designation</label>
+                            <input type="text" id="dep-project-designation" value="Security Guard" placeholder="e.g. Security Guard">
+                        </div>
+                        <div class="form-group" id="dep-project-status-group" style="display:none;">
+                            <label for="dep-project-status">Project Status</label>
+                            <select id="dep-project-status">
+                                <option value="Active">Active</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Archived">Archived</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="dep-project-instructions">Guard Onboarding Instructions (Displayed on mobile form)</label>
+                            <textarea id="dep-project-instructions" rows="2" placeholder="e.g. Please upload your uniform portrait photo. Report to Site Supervisor on Monday."></textarea>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="dep-project-notes">Internal Agency Notes (Admin Only)</label>
+                            <textarea id="dep-project-notes" rows="2" placeholder="e.g. Tender reference #SKIMS/SEC/2026/04. Supervisor: Mohammad Ashraf."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--vs-border-subtle);">
+                        <button type="button" class="btn btn-outline" onclick="closeDeploymentProjectModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-deployment-project">
+                            <i data-lucide="check-circle"></i> Save Deployment Project
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECT CANDIDATES DRAWER / MODAL -->
+    <div id="project-candidates-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="project-candidates-modal-title">
+        <div class="modal-container" style="max-width: 950px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+                <div>
+                    <h2 id="project-candidates-modal-title" style="display: flex; align-items: center; gap: 8px; font-size: 18px; color: var(--vs-text-primary);">
+                        <i data-lucide="users" style="width: 20px; height: 20px; color: #60a5fa;"></i>
+                        <span id="candidates-project-title">Tender Onboarding Candidates</span>
+                    </h2>
+                    <p id="candidates-project-subtitle" style="font-size: 12px; color: var(--vs-text-muted); margin-top: 2px;">
+                        Candidates registered for this deployment.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btn-bulk-approve-project" onclick="bulkApproveCurrentProject()" style="background: #059669; border-color: #059669;">
+                        <i data-lucide="check-check"></i> Bulk Approve Pending
+                    </button>
+                    <button class="btn btn-outline" id="btn-print-project-cards" onclick="printProjectCards()">
+                        <i data-lucide="printer"></i> Print ID Badges
+                    </button>
+                    <button class="modal-close" onclick="closeProjectCandidatesModal()">&times;</button>
+                </div>
+            </div>
+
+            <!-- Live Count Chips -->
+            <div style="padding: 12px 24px; background: var(--vs-surface-2); border-bottom: 1px solid var(--vs-border-subtle); display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                <span id="badge-cand-total" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(99,102,241,0.15); color: #818cf8;">0 Total Registered</span>
+                <span id="badge-cand-approved" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(16,185,129,0.15); color: #34d399;">0 Approved</span>
+                <span id="badge-cand-pending" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(245,158,11,0.15); color: #f59e0b;">0 Pending Review</span>
+                <span id="badge-cand-target" style="font-size: 12px; color: var(--vs-text-muted); margin-left: auto;">Target: 0 Guards</span>
+            </div>
+
+            <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 16px 24px;">
+                <div id="project-candidates-table-wrap" style="overflow-x: auto;">
+                    <table class="luxury-table w-100" style="width: 100%; font-size: 13px;">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Staff ID</th>
+                                <th>Name & Father's Name</th>
+                                <th>Contact Mobile</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="project-candidates-tbody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="project-candidates-empty" style="display: none; text-align: center; padding: 40px 20px; color: var(--vs-text-muted);">
+                    <i data-lucide="user-x" style="width: 36px; height: 36px; margin-bottom: 8px; opacity: 0.5;"></i>
+                    <p>No candidates have registered for this deployment project yet.</p>
+                    <p style="font-size: 12px; margin-top: 4px;">Share the onboarding link or QR code with candidates or supervisors to start receiving submissions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEPLOYMENT QR CODE & SHARE MODAL -->
+    <div id="deployment-qr-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="deployment-qr-modal-title">
+        <div class="modal-container" style="max-width: 440px; text-align: center;">
+            <div class="modal-header">
+                <h2 id="deployment-qr-modal-title" style="font-size: 16px; color: var(--vs-text-primary);">
+                    Onboarding QR Code & Link
+                </h2>
+                <button class="modal-close" onclick="closeDeploymentQrModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px 20px;">
+                <h3 id="qr-modal-project-name" style="font-size: 16px; font-weight: 700; color: var(--vs-text-primary); margin-bottom: 4px;">Tender Name</h3>
+                <p id="qr-modal-client-sub" style="font-size: 12px; color: var(--vs-text-muted); margin-bottom: 20px;">Client Location</p>
+                
+                <div style="display: inline-block; padding: 16px; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-bottom: 18px;">
+                    <canvas id="deployment-qr-canvas" width="220" height="220" style="display: block;"></canvas>
+                </div>
+
+                <div style="background: var(--vs-surface-2); border: 1px solid var(--vs-border-subtle); border-radius: 10px; padding: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; text-align: left;">
+                    <span id="qr-modal-url-text" style="font-size: 11px; color: var(--vs-text-muted); word-break: break-all; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">URL</span>
+                    <button class="btn btn-outline" onclick="copyProjectLinkFromModal()" style="padding: 4px 10px; font-size: 11px; white-space: nowrap;">
+                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                    </button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn btn-primary" onclick="shareProjectWhatsAppFromModal()" style="background: #25D366; border-color: #25D366; color: #fff;">
+                        <i data-lucide="send" style="width: 14px; height: 14px;"></i> WhatsApp
+                    </button>
+                    <button class="btn btn-outline" onclick="downloadQrCodeImage()">
+                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Save PNG
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- EMPLOYEE MODAL (ADD / EDIT FORM) -->

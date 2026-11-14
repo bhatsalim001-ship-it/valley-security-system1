@@ -79,6 +79,8 @@ let VSA_STATE = {
     manpowerTypes: [],
     templates: [],
     selectedEmployeeIds: [],
+    deploymentProjects: [],
+    activeDeploymentProjectId: null,
     lanIp: 'localhost:3000'
 };
 
@@ -661,6 +663,10 @@ function handleHashRoute() {
         const mode = params.mode || 'add';
         const empId = params.id || null;
         showRegistrationForm(mode, empId);
+    } else if (targetView === 'deployments') {
+        if (typeof loadDeploymentsData === 'function') {
+            loadDeploymentsData();
+        }
     }
 }
 
@@ -671,7 +677,7 @@ function updateHeaderTitles(view) {
     const titles = {
         dashboard: { main: "Dashboard Overview", sub: "Valley Security operations control center." },
         employees: { main: "Employee Directory", sub: "Manage active and suspended security guards." },
-        deployments: { main: "Client Deployments", sub: "Monitor personnel deployed across active client locations." },
+        deployments: { main: "Tender Deployments & Candidate Onboarding", sub: "Generate onboarding links, track guard intake progress live, and bulk-approve personnel." },
         "id-cards": { main: "ID Badge Generator", sub: "Design, review, and print security clearance ID badges." },
         templates: { main: "ID Card Templates", sub: "Create, customize, and manage security ID layout configurations." },
         "emp-record": { main: "Employee Record - Letterhead", sub: "Print employee records on company letterhead with photo for office files." },
@@ -793,6 +799,17 @@ async function fetchData() {
             console.error('Error fetching DB status:', e);
         }
         
+        // Fetch Deployment Projects
+        try {
+            const depResponse = await fetch('/api/deployment-projects');
+            if (depResponse.ok) {
+                VSA_STATE.deploymentProjects = await depResponse.json();
+                if (typeof updateDeploymentsBadge === 'function') updateDeploymentsBadge();
+            }
+        } catch (e) {
+            // Silently fallback if offline
+        }
+
         // Refresh UI components
         renderDashboard();
         renderEmployeeDirectory();
@@ -8671,5 +8688,690 @@ function setupOcrScanner() {
   }, 30000);
   checkNotifications();
 })();
+
+/* ==========================================================================
+   PHASE 2: DEPLOYMENT ONBOARDING COMMAND CENTRE (TENDER WORKSPACE)
+   ========================================================================== */
+
+function formatProjectDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const mon = String(d.getMonth() + 1).padStart(2, '0');
+    const yr = d.getFullYear();
+    return `${day}/${mon}/${yr}`;
+}
+
+function updateDeploymentsBadge() {
+    const badge = document.getElementById('nav-deployments-badge');
+    if (!badge) return;
+    const activeProjects = (VSA_STATE.deploymentProjects || []).filter(p => p.status === 'Active');
+    const count = activeProjects.length;
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+async function loadDeploymentsData() {
+    try {
+        const res = await fetch('/api/deployment-projects');
+        if (res.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
+        if (!res.ok) {
+            console.error('Failed to load deployment projects');
+            return;
+        }
+        const projects = await res.json();
+        VSA_STATE.deploymentProjects = Array.isArray(projects) ? projects : [];
+
+        // Calculate KPI summary
+        const total = VSA_STATE.deploymentProjects.length;
+        const active = VSA_STATE.deploymentProjects.filter(p => p.status === 'Active').length;
+        let totalTarget = 0;
+        let totalRegistered = 0;
+        let totalApproved = 0;
+        let totalPending = 0;
+
+        VSA_STATE.deploymentProjects.forEach(p => {
+            const st = p.stats || {};
+            totalTarget += Number(p.targetGuards || st.targetGuards || 0);
+            totalRegistered += Number(st.totalRegistered || 0);
+            totalApproved += Number(st.approvedCount || 0);
+            totalPending += Number(st.pendingCount || 0);
+        });
+
+        const overallPct = totalTarget > 0 ? Math.min(100, Math.round((totalRegistered / totalTarget) * 100)) : 0;
+
+        // Populate Top KPI Cards
+        const elActive = document.getElementById('stat-dep-active-projects');
+        if (elActive) elActive.textContent = active;
+
+        const elSubTotal = document.getElementById('stat-dep-total-projects-sub');
+        if (elSubTotal) elSubTotal.textContent = `${total} total tender${total === 1 ? '' : 's'}`;
+
+        const elTarget = document.getElementById('stat-dep-target-guards');
+        if (elTarget) elTarget.textContent = totalTarget;
+
+        const elReg = document.getElementById('stat-dep-registered-guards');
+        if (elReg) elReg.textContent = totalRegistered;
+
+        const elProg = document.getElementById('stat-dep-overall-progress');
+        if (elProg) elProg.textContent = `${overallPct}% overall intake progress`;
+
+        const elApp = document.getElementById('stat-dep-approved-guards');
+        if (elApp) elApp.textContent = totalApproved;
+
+        const elPend = document.getElementById('stat-dep-pending-guards');
+        if (elPend) elPend.textContent = `${totalPending} candidate${totalPending === 1 ? '' : 's'} awaiting review`;
+
+        updateDeploymentsBadge();
+        filterDeploymentProjects();
+    } catch (err) {
+        console.error('Error loading deployments data:', err);
+    }
+}
+
+function filterDeploymentProjects() {
+    const searchInput = document.getElementById('deployments-search-input');
+    const statusSelect = document.getElementById('deployments-status-filter');
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    const statusFilter = statusSelect?.value || 'Active';
+
+    const projects = VSA_STATE.deploymentProjects || [];
+    const filtered = projects.filter(p => {
+        // Status filter
+        if (statusFilter !== 'All' && p.status !== statusFilter) {
+            return false;
+        }
+        // Search query
+        if (query) {
+            const name = (p.name || '').toLowerCase();
+            const client = (p.clientName || '').toLowerCase();
+            const loc = (p.location || '').toLowerCase();
+            const dept = (p.department || '').toLowerCase();
+            if (!name.includes(query) && !client.includes(query) && !loc.includes(query) && !dept.includes(query)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    renderDeploymentProjects(filtered);
+}
+
+function renderDeploymentProjects(projects) {
+    const grid = document.getElementById('deployment-projects-grid');
+    const empty = document.getElementById('deployment-projects-empty');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    if (!projects || projects.length === 0) {
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    projects.forEach(p => {
+        const stats = p.stats || {};
+        const target = Number(p.targetGuards || stats.targetGuards || 0);
+        const registered = Number(stats.totalRegistered || 0);
+        const approved = Number(stats.approvedCount || 0);
+        const pending = Number(stats.pendingCount || 0);
+        const pct = target > 0 ? Math.min(100, Math.round((registered / target) * 100)) : 0;
+
+        // Status badge color
+        let statusBg = 'rgba(16,185,129,0.15)';
+        let statusColor = '#34d399';
+        if (p.status === 'Completed') {
+            statusBg = 'rgba(99,102,241,0.15)';
+            statusColor = '#818cf8';
+        } else if (p.status === 'Archived') {
+            statusBg = 'rgba(148,163,184,0.15)';
+            statusColor = '#94a3b8';
+        }
+
+        // Deadline label
+        let deadlineHtml = '';
+        if (p.deadline) {
+            const dlFormatted = formatProjectDate(p.deadline);
+            const dlDate = new Date(p.deadline);
+            const isOverdue = !isNaN(dlDate.getTime()) && dlDate < new Date() && p.status === 'Active';
+            deadlineHtml = `
+                <span style="font-size: 11px; padding: 3px 8px; border-radius: 6px; background: ${isOverdue ? 'rgba(239,68,68,0.15)' : 'var(--vs-surface-2)'}; color: ${isOverdue ? '#f87171' : 'var(--vs-text-muted)'}; display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                    ${isOverdue ? 'Overdue: ' : 'Deadline: '}${escapeHtml(dlFormatted)}
+                </span>
+            `;
+        }
+
+        const fullInviteUrl = `${window.location.origin}/register.html?project=${encodeURIComponent(p.slug)}`;
+        const card = document.createElement('div');
+        card.className = 'dashboard-card';
+        card.style.cssText = 'padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid var(--vs-border-subtle); background: var(--vs-surface-1); transition: transform 0.2s ease, box-shadow 0.2s ease;';
+
+        card.innerHTML = `
+            <div>
+                <!-- Top Meta Row -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 9px; border-radius: 10px; background: ${statusBg}; color: ${statusColor};">
+                        ${escapeHtml(p.status || 'Active')}
+                    </span>
+                    ${deadlineHtml}
+                </div>
+
+                <!-- Project Title & Client -->
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--vs-text-primary); margin-bottom: 4px; line-height: 1.35;">
+                    ${escapeHtml(p.name)}
+                </h3>
+                <div style="font-size: 12px; color: var(--vs-text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 16px;">
+                    <i data-lucide="map-pin" style="width: 13px; height: 13px; color: #818cf8; flex-shrink: 0;"></i>
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${escapeHtml(p.clientName || 'General Tender')} ${p.location ? '• ' + escapeHtml(p.location) : ''}
+                    </span>
+                </div>
+
+                <!-- Progress Bar & Target -->
+                <div style="background: var(--vs-surface-2); border: 1px solid var(--vs-border-subtle); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 6px;">
+                        <span style="color: var(--vs-text-primary); font-weight: 600;">
+                            ${registered} / ${target} Guards
+                        </span>
+                        <span style="color: ${pct >= 100 ? '#10b981' : '#818cf8'}; font-weight: 700;">
+                            ${pct}% Intake
+                        </span>
+                    </div>
+                    <div style="height: 7px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden;">
+                        <div style="height: 100%; border-radius: 4px; background: ${pct >= 100 ? '#10b981' : 'linear-gradient(90deg, #6366f1, #3b82f6)'}; width: ${pct}%; transition: width 0.4s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 8px;">
+                        <span style="color: #34d399; font-weight: 600;">${approved} Approved</span>
+                        <span style="color: #f59e0b; font-weight: 600;">${pending} Pending Review</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <button class="btn btn-primary" onclick="openProjectCandidatesModal('${escapeHtml(p.id)}')" style="flex: 1; padding: 8px 12px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                        Candidates (${registered})
+                    </button>
+                    <button class="btn btn-outline" onclick="openDeploymentQrModal('${escapeHtml(p.id)}')" title="View Onboarding QR & Link" style="padding: 8px 12px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i>
+                        QR Link
+                    </button>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--vs-border-subtle);">
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-outline" onclick="copyProjectLink('${encodeURIComponent(fullInviteUrl)}')" title="Copy Onboarding Link" style="padding: 5px 8px; font-size: 11px;">
+                            <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                        </button>
+                        <button class="btn btn-outline" onclick="shareProjectWhatsApp('${encodeURIComponent(p.name)}', '${encodeURIComponent(fullInviteUrl)}')" title="Share to WhatsApp" style="padding: 5px 8px; font-size: 11px; color: #25D366; border-color: rgba(37,211,102,0.3);">
+                            <i data-lucide="send" style="width: 12px; height: 12px;"></i> WhatsApp
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn btn-outline" onclick="openEditProjectModal('${escapeHtml(p.id)}')" title="Edit Project Details" style="padding: 5px 8px; font-size: 11px;">
+                            <i data-lucide="edit-3" style="width: 12px; height: 12px;"></i>
+                        </button>
+                        <button class="btn btn-outline" onclick="deleteOrArchiveProject('${escapeHtml(p.id)}')" title="Delete or Archive Project" style="padding: 5px 8px; font-size: 11px; color: #ef4444; border-color: rgba(239,68,68,0.3);">
+                            <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
+function openCreateProjectModal() {
+    const form = document.getElementById('deployment-project-form');
+    if (form) form.reset();
+    document.getElementById('dep-project-id').value = '';
+    document.getElementById('dep-project-designation').value = 'Security Guard';
+    document.getElementById('dep-project-status-group').style.display = 'none';
+    document.getElementById('deployment-project-modal-title').innerHTML = `
+        <i data-lucide="building-2" style="width: 20px; height: 20px; color: #818cf8;"></i>
+        Create Deployment Project
+    `;
+    document.getElementById('btn-save-deployment-project').innerHTML = `
+        <i data-lucide="check-circle"></i> Save Deployment Project
+    `;
+    const modal = document.getElementById('deployment-project-modal');
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function openEditProjectModal(projectId) {
+    const project = (VSA_STATE.deploymentProjects || []).find(p => p.id === projectId);
+    if (!project) return;
+
+    document.getElementById('dep-project-id').value = project.id;
+    document.getElementById('dep-project-name').value = project.name || '';
+    document.getElementById('dep-project-client').value = project.clientName || '';
+    document.getElementById('dep-project-location').value = project.location || '';
+    document.getElementById('dep-project-target').value = project.targetGuards || '';
+    document.getElementById('dep-project-deadline').value = project.deadline || '';
+    document.getElementById('dep-project-department').value = project.department || '';
+    document.getElementById('dep-project-designation').value = project.designation || 'Security Guard';
+    document.getElementById('dep-project-status').value = project.status || 'Active';
+    document.getElementById('dep-project-instructions').value = project.instructions || '';
+    document.getElementById('dep-project-notes').value = project.notes || '';
+
+    document.getElementById('dep-project-status-group').style.display = 'block';
+    document.getElementById('deployment-project-modal-title').innerHTML = `
+        <i data-lucide="edit-3" style="width: 20px; height: 20px; color: #818cf8;"></i>
+        Edit Deployment Project
+    `;
+    document.getElementById('btn-save-deployment-project').innerHTML = `
+        <i data-lucide="check-circle"></i> Update Project
+    `;
+    const modal = document.getElementById('deployment-project-modal');
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function closeDeploymentProjectModal() {
+    const modal = document.getElementById('deployment-project-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function handleDeploymentProjectSubmit(event) {
+    event.preventDefault();
+    const id = document.getElementById('dep-project-id').value;
+    const name = document.getElementById('dep-project-name').value.trim();
+    const clientName = document.getElementById('dep-project-client').value.trim();
+    const location = document.getElementById('dep-project-location').value.trim();
+    const targetGuards = parseInt(document.getElementById('dep-project-target').value, 10) || 0;
+    const deadline = document.getElementById('dep-project-deadline').value.trim();
+    const department = document.getElementById('dep-project-department').value.trim();
+    const designation = document.getElementById('dep-project-designation').value.trim();
+    const status = document.getElementById('dep-project-status').value;
+    const instructions = document.getElementById('dep-project-instructions').value.trim();
+    const notes = document.getElementById('dep-project-notes').value.trim();
+
+    if (!name) {
+        alert("Project name is required.");
+        return;
+    }
+
+    const payload = {
+        name,
+        clientName,
+        location,
+        targetGuards,
+        deadline,
+        department,
+        designation,
+        status,
+        instructions,
+        notes
+    };
+
+    const saveBtn = document.getElementById('btn-save-deployment-project');
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+        let res;
+        if (id) {
+            // Update
+            res = await fetch(`/api/deployment-projects/${encodeURIComponent(id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            // Create
+            res = await fetch('/api/deployment-projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        const data = await res.json();
+        if (saveBtn) saveBtn.disabled = false;
+
+        if (!res.ok) {
+            alert(data.error || "Failed to save deployment project.");
+            return;
+        }
+
+        closeDeploymentProjectModal();
+        alert(id ? "Deployment project updated successfully!" : "Deployment project created successfully!");
+        loadDeploymentsData();
+    } catch (err) {
+        if (saveBtn) saveBtn.disabled = false;
+        console.error('Error saving deployment project:', err);
+        alert("Network error while saving deployment project.");
+    }
+}
+
+async function openProjectCandidatesModal(projectId) {
+    VSA_STATE.activeDeploymentProjectId = projectId;
+    const modal = document.getElementById('project-candidates-modal');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    document.getElementById('candidates-project-title').textContent = "Loading candidates...";
+    document.getElementById('candidates-project-subtitle').textContent = "Connecting to server...";
+    document.getElementById('project-candidates-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 30px; color: var(--vs-text-muted);">Fetching registered candidates...</td></tr>';
+
+    try {
+        const res = await fetch(`/api/deployment-projects/${encodeURIComponent(projectId)}`);
+        if (!res.ok) {
+            alert("Could not load candidates for this deployment.");
+            closeProjectCandidatesModal();
+            return;
+        }
+        const data = await res.json();
+        const project = data.project || {};
+        const stats = data.stats || {};
+        const employees = data.employees || [];
+
+        // Save active candidates for ID card handoff
+        VSA_STATE.activeProjectCandidates = employees;
+
+        document.getElementById('candidates-project-title').textContent = `${project.name} Candidates`;
+        document.getElementById('candidates-project-subtitle').textContent = `${project.clientName || ''} ${project.location ? '• ' + project.location : ''} • Department: ${project.department || 'All'}`;
+
+        const totalReg = employees.length;
+        const approvedCount = employees.filter(e => e.status === 'Active').length;
+        const pendingCount = employees.filter(e => e.status === 'Pending').length;
+
+        document.getElementById('badge-cand-total').textContent = `${totalReg} Total Registered`;
+        document.getElementById('badge-cand-approved').textContent = `${approvedCount} Approved`;
+        document.getElementById('badge-cand-pending').textContent = `${pendingCount} Pending Review`;
+        document.getElementById('badge-cand-target').textContent = `Target: ${project.targetGuards || stats.targetGuards || 0} Guards`;
+
+        const tbody = document.getElementById('project-candidates-tbody');
+        const emptyDiv = document.getElementById('project-candidates-empty');
+        const tableWrap = document.getElementById('project-candidates-table-wrap');
+
+        tbody.innerHTML = '';
+        if (employees.length === 0) {
+            if (emptyDiv) emptyDiv.style.display = 'block';
+            if (tableWrap) tableWrap.style.display = 'none';
+        } else {
+            if (emptyDiv) emptyDiv.style.display = 'none';
+            if (tableWrap) tableWrap.style.display = 'block';
+
+            employees.forEach(emp => {
+                const tr = document.createElement('tr');
+                const photoSrc = emp.documents?.photo || '';
+                const photoHtml = photoSrc
+                    ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Candidate')}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid var(--vs-border-subtle);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">`
+                    : `<div style="width: 36px; height: 36px; border-radius: 8px; background: var(--vs-surface-2); display: flex; align-items: center; justify-content: center; color: var(--vs-text-muted);"><i data-lucide="user" style="width: 16px; height: 16px;"></i></div>`;
+
+                let statusBadge = '<span style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(245,158,11,0.15); color: #f59e0b; font-weight: 700;">Pending</span>';
+                if (emp.status === 'Active') {
+                    statusBadge = '<span style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(16,185,129,0.15); color: #34d399; font-weight: 700;">Active</span>';
+                } else if (emp.status === 'Suspended') {
+                    statusBadge = '<span style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; font-weight: 700;">Suspended</span>';
+                }
+
+                const empId = emp.id || emp.employeeId;
+                const approveBtn = emp.status === 'Pending'
+                    ? `<button class="btn btn-xs btn-primary" onclick="approveIndividualCandidate('${escapeHtml(empId)}')" style="background: #059669; border-color: #059669; padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                        <i data-lucide="check" style="width: 12px; height: 12px;"></i> Approve
+                       </button>`
+                    : `<span style="font-size: 11px; color: var(--vs-text-muted);"><i data-lucide="check-circle" style="width: 14px; height: 14px; color: #10b981; vertical-align: middle;"></i> Ready</span>`;
+
+                tr.innerHTML = `
+                    <td style="width: 48px;">${photoHtml}</td>
+                    <td style="font-weight: 700; color: #818cf8; font-family: monospace;">${escapeHtml(empId)}</td>
+                    <td>
+                        <div style="font-weight: 600; color: var(--vs-text-primary);">${escapeHtml(toTitleCase(emp.name || ''))}</div>
+                        <div style="font-size: 11px; color: var(--vs-text-muted);">S/o: ${escapeHtml(toTitleCase(emp.fatherName || emp.father_name || '-'))}</div>
+                    </td>
+                    <td>${escapeHtml(emp.mobile || '-')}</td>
+                    <td>${escapeHtml(emp.department || '-')}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: right;">${approveBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+        console.error('Error fetching candidates:', err);
+        alert("Failed to fetch project candidate list.");
+    }
+}
+
+function closeProjectCandidatesModal() {
+    const modal = document.getElementById('project-candidates-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function approveIndividualCandidate(empId) {
+    if (!empId) return;
+    try {
+        const res = await fetch(`/api/employees/${encodeURIComponent(empId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Active' })
+        });
+        if (!res.ok) {
+            alert("Failed to approve candidate.");
+            return;
+        }
+        alert(`Candidate ${empId} approved to Active status!`);
+        // Refresh modal and main list
+        if (VSA_STATE.activeDeploymentProjectId) {
+            openProjectCandidatesModal(VSA_STATE.activeDeploymentProjectId);
+        }
+        loadDeploymentsData();
+        fetchData();
+    } catch (err) {
+        console.error('Error approving candidate:', err);
+        alert("Network error while approving candidate.");
+    }
+}
+
+async function bulkApproveCurrentProject() {
+    if (!VSA_STATE.activeDeploymentProjectId) {
+        alert("No active deployment selected.");
+        return;
+    }
+    const candidates = VSA_STATE.activeProjectCandidates || [];
+    const pendingCandidates = candidates.filter(e => e.status === 'Pending');
+    if (pendingCandidates.length === 0) {
+        alert("No pending candidates awaiting approval in this deployment project.");
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to bulk-approve all ${pendingCandidates.length} pending candidate(s) to 'Active' status?`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/deployment-projects/${encodeURIComponent(VSA_STATE.activeDeploymentProjectId)}/bulk-approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || "Failed to bulk approve candidates.");
+            return;
+        }
+
+        alert(`Successfully approved ${data.approvedCount} candidates to Active!`);
+        openProjectCandidatesModal(VSA_STATE.activeDeploymentProjectId);
+        loadDeploymentsData();
+        fetchData();
+    } catch (err) {
+        console.error('Error during bulk approve:', err);
+        alert("Network error while bulk approving candidates.");
+    }
+}
+
+function printProjectCards() {
+    if (!VSA_STATE.activeDeploymentProjectId) {
+        alert("No active deployment selected.");
+        return;
+    }
+    const project = (VSA_STATE.deploymentProjects || []).find(p => p.id === VSA_STATE.activeDeploymentProjectId);
+    const candidates = (VSA_STATE.activeProjectCandidates && VSA_STATE.activeProjectCandidates.length > 0)
+        ? VSA_STATE.activeProjectCandidates
+        : (VSA_STATE.employees || []).filter(e => e.deployment_project_id === VSA_STATE.activeDeploymentProjectId);
+
+    if (candidates.length === 0) {
+        alert("No candidates registered for this project to print badges.");
+        return;
+    }
+
+    const ids = candidates.map(c => c.id || c.employeeId);
+    VSA_STATE.idSelectedEmployeeIds = ids;
+    VSA_STATE.selectedEmployeeIds = ids;
+
+    // Ensure candidates exist in VSA_STATE.employees
+    candidates.forEach(cand => {
+        const cid = cand.id || cand.employeeId;
+        const exists = VSA_STATE.employees.some(e => e.id === cid);
+        if (!exists) {
+            VSA_STATE.employees.push({ ...cand, id: cid });
+        }
+    });
+
+    closeProjectCandidatesModal();
+    window.location.hash = 'id-cards';
+
+    setTimeout(() => {
+        const idEmpSel = document.getElementById('id-select-employee');
+        if (idEmpSel && ids.length > 0) {
+            populateIdEmployeeSelect();
+            idEmpSel.value = ids[0];
+            if (typeof loadIdCardDetails === 'function') {
+                loadIdCardDetails(ids[0]);
+            }
+        }
+        if (typeof populateIdEmployeeChecklist === 'function') {
+            populateIdEmployeeChecklist();
+        }
+    }, 150);
+
+    alert(`Loaded ${ids.length} guard badges from ${project ? project.name : 'deployment'} into ID Badge Studio.`);
+}
+
+let activeQrProject = null;
+
+function openDeploymentQrModal(projectId) {
+    const project = (VSA_STATE.deploymentProjects || []).find(p => p.id === projectId);
+    if (!project) return;
+
+    activeQrProject = project;
+    const modal = document.getElementById('deployment-qr-modal');
+    if (!modal) return;
+
+    document.getElementById('qr-modal-project-name').textContent = project.name;
+    document.getElementById('qr-modal-client-sub').textContent = `${project.clientName || 'General Tender'} ${project.location ? '• ' + project.location : ''}`;
+
+    const fullUrl = `${window.location.origin}/register.html?project=${encodeURIComponent(project.slug)}`;
+    document.getElementById('qr-modal-url-text').textContent = fullUrl;
+
+    const canvas = document.getElementById('deployment-qr-canvas');
+    if (canvas && window.QRious) {
+        new window.QRious({
+            element: canvas,
+            value: fullUrl,
+            size: 220,
+            level: 'H'
+        });
+    }
+
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function closeDeploymentQrModal() {
+    const modal = document.getElementById('deployment-qr-modal');
+    if (modal) modal.classList.add('hidden');
+    activeQrProject = null;
+}
+
+function copyProjectLinkFromModal() {
+    if (!activeQrProject) return;
+    const fullUrl = `${window.location.origin}/register.html?project=${encodeURIComponent(activeQrProject.slug)}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+        alert("Onboarding link copied to clipboard!");
+    }).catch(() => {
+        prompt("Copy this onboarding link:", fullUrl);
+    });
+}
+
+function shareProjectWhatsAppFromModal() {
+    if (!activeQrProject) return;
+    const fullUrl = `${window.location.origin}/register.html?project=${encodeURIComponent(activeQrProject.slug)}`;
+    shareProjectWhatsApp(activeQrProject.name, fullUrl);
+}
+
+function copyProjectLink(encodedUrl) {
+    const url = decodeURIComponent(encodedUrl);
+    navigator.clipboard.writeText(url).then(() => {
+        alert("Onboarding link copied to clipboard!");
+    }).catch(() => {
+        prompt("Copy onboarding link:", url);
+    });
+}
+
+function shareProjectWhatsApp(projectName, inviteUrl) {
+    const name = decodeURIComponent(projectName);
+    const url = decodeURIComponent(inviteUrl);
+    const message = `*VALLEY SECURITY SERVICES*\nOfficial Guard Onboarding Link for: *${name}*\n\nPlease complete your guard registration and upload portrait photo here:\n${url}\n\nThank you.`;
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+}
+
+function downloadQrCodeImage() {
+    const canvas = document.getElementById('deployment-qr-canvas');
+    if (!canvas || !activeQrProject) return;
+    const link = document.createElement('a');
+    link.download = `${activeQrProject.slug}-onboarding-qr.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
+async function deleteOrArchiveProject(projectId) {
+    const project = (VSA_STATE.deploymentProjects || []).find(p => p.id === projectId);
+    if (!project) return;
+
+    if (!confirm(`Are you sure you want to remove or archive "${project.name}"? If guards have registered under this project, it will be safely archived to preserve their records.`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/deployment-projects/${encodeURIComponent(projectId)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || "Failed to remove project.");
+            return;
+        }
+        alert(data.message || "Project updated.");
+        loadDeploymentsData();
+    } catch (err) {
+        console.error('Error deleting project:', err);
+        alert("Network error while removing project.");
+    }
+}
+
 
 

@@ -4268,6 +4268,7 @@ app.post('/api/deployment-projects/:id/bulk-approve', authenticateToken, async (
     return res.json({
       success: true,
       count: approvedCount,
+      approvedCount,
       approvedIds,
       message: `Successfully approved ${approvedCount} guard${approvedCount === 1 ? '' : 's'} for ${project.name}.`
     });
