@@ -53,18 +53,22 @@
             window.lucide.createIcons();
         }
         
-        setTimeout(() => toast.classList.add('active'), 50);
+        setTimeout(() => toast.classList.add('active'), 20);
         
         const removeToast = () => {
             if (toast.classList.contains('remove')) return;
             toast.classList.add('remove');
-            setTimeout(() => toast.remove(), 400);
+            setTimeout(() => toast.remove(), 120);
         };
         
         toast.querySelector('.toast-close').addEventListener('click', removeToast);
-        setTimeout(removeToast, 4500);
+        setTimeout(removeToast, 2200);
     };
+    window.showToast = window.alert;
 })();
+
+const showToast = (msg) => window.alert(msg);
+
 
 /* ==========================================================================
    VALLEY SECURITY SYSTEM - SPA FRONTEND CONTROLLER
@@ -2295,14 +2299,116 @@ async function saveEmployee(event) {
 }
 
 async function deleteEmployeeRecord(empId) {
-    if (!confirm(`Are you sure you want to delete guard record ${empId}?`)) return;
+    if (!confirm(`Are you sure you want to delete employee record ${empId}?`)) return;
+
+    // Optimistically remove card or row from DOM immediately in 0ms (no long animation)
+    document.querySelectorAll(`.directory-card`).forEach(c => {
+        if (c.querySelector(`[data-id="${empId}"]`)) {
+            c.classList.add('row-optimistic-deleted');
+            setTimeout(() => c.remove(), 80);
+        }
+    });
+    document.querySelectorAll(`#employees-list-tbody tr, #employee-directory-body tr`).forEach(r => {
+        if (r.querySelector(`[data-id="${empId}"]`)) {
+            r.classList.add('row-optimistic-deleted');
+            setTimeout(() => r.remove(), 80);
+        }
+    });
+
+    VSA_STATE.employees = VSA_STATE.employees.filter(e => e.id !== empId);
+    VSA_STATE.selectedEmployeeIds = VSA_STATE.selectedEmployeeIds.filter(id => id !== empId);
+    updateBulkActionBanner();
 
     try {
-        const response = await fetch(`/api/employees/${empId}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Deletion failed');
-        fetchData();
+        const response = await fetch(`/api/employees/${encodeURIComponent(empId)}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Deletion failed on server');
+        showToast(`Employee ${empId} deleted successfully.`);
     } catch (err) {
-        alert(err.message);
+        showToast(`Error deleting employee: ${err.message}`);
+        fetchData(); // Rollback if error
+    }
+}
+
+async function bulkDeleteEmployees() {
+    const selectedIds = [...VSA_STATE.selectedEmployeeIds];
+    if (selectedIds.length === 0) {
+        showToast("Please select at least one employee to delete.");
+        return;
+    }
+
+    if (!confirm(`Permanently delete ${selectedIds.length} selected employee record(s)? This action cannot be undone.`)) {
+        return;
+    }
+
+    // Optimistically remove all selected rows/cards from DOM immediately in 0ms
+    selectedIds.forEach(empId => {
+        document.querySelectorAll(`.directory-card`).forEach(c => {
+            if (c.querySelector(`[data-id="${empId}"]`)) {
+                c.classList.add('row-optimistic-deleted');
+                setTimeout(() => c.remove(), 80);
+            }
+        });
+        document.querySelectorAll(`#employees-list-tbody tr, #employee-directory-body tr`).forEach(r => {
+            if (r.querySelector(`[data-id="${empId}"]`)) {
+                r.classList.add('row-optimistic-deleted');
+                setTimeout(() => r.remove(), 80);
+            }
+        });
+    });
+
+    // Update global state and banner immediately
+    VSA_STATE.employees = VSA_STATE.employees.filter(e => !selectedIds.includes(e.id));
+    VSA_STATE.selectedEmployeeIds = [];
+    updateBulkActionBanner();
+
+    try {
+        const response = await fetch('/api/employees/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employeeIds: selectedIds })
+        });
+        const resData = await response.json();
+        if (!response.ok) throw new Error(resData.error || 'Bulk delete failed');
+        showToast(`Successfully deleted ${resData.count || selectedIds.length} employee(s).`);
+    } catch (err) {
+        console.error('Bulk delete error:', err);
+        showToast(`Bulk delete error: ${err.message}`);
+        fetchData();
+    }
+}
+
+async function bulkUpdateEmployeeStatus(targetStatus) {
+    const selectedIds = [...VSA_STATE.selectedEmployeeIds];
+    if (selectedIds.length === 0) {
+        showToast(`Please select at least one employee to set status to ${targetStatus}.`);
+        return;
+    }
+
+    // Optimistically update status on screen immediately in 0ms
+    selectedIds.forEach(empId => {
+        const emp = VSA_STATE.employees.find(e => e.id === empId);
+        if (emp) emp.status = targetStatus;
+
+        document.querySelectorAll(`.directory-status-select[data-id="${empId}"]`).forEach(sel => {
+            sel.value = targetStatus;
+            sel.setAttribute('data-status', targetStatus);
+        });
+    });
+
+    showToast(`Updated ${selectedIds.length} employee(s) to ${targetStatus}.`);
+
+    try {
+        const response = await fetch('/api/employees/bulk-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employeeIds: selectedIds, status: targetStatus })
+        });
+        const resData = await response.json();
+        if (!response.ok) throw new Error(resData.error || 'Bulk status update failed');
+    } catch (err) {
+        console.error('Bulk status update error:', err);
+        showToast(`Status sync error: ${err.message}`);
+        fetchData();
     }
 }
 
@@ -3225,17 +3331,17 @@ async function updateEmployeeStatus(empId, status) {
     const emp = VSA_STATE.employees.find(e => e.id === empId);
     if (!emp) return;
     emp.status = status;
+    showToast(`Employee ${empId} status set to ${status}.`);
     try {
-        const response = await fetch(`/api/employees/${empId}`, {
+        const response = await fetch(`/api/employees/${encodeURIComponent(empId)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(emp)
         });
         if (!response.ok) throw new Error("Sync failure");
-        await fetchData();
-        renderEmployeeDirectory();
     } catch (err) {
         console.error("Error saving card status:", err);
+        showToast("Error updating status on server.");
     }
 }
 
@@ -7982,22 +8088,28 @@ function renderInboxPendingList() {
             const emp = VSA_STATE.employees.find(e => e.id === empId);
             if (!emp) return;
 
-            if (!confirm(`Are you sure you want to approve onboarding profile for ${emp.name}?`)) return;
+            if (!confirm(`Approve onboarding profile for ${emp.name}?`)) return;
 
             try {
                 emp.status = 'Active';
-                const response = await fetch(`/api/employees/${empId}`, {
+                const row = btn.closest('tr');
+                if (row) {
+                    row.classList.add('row-optimistic-deleted');
+                    setTimeout(() => row.remove(), 80);
+                }
+
+                showToast(`Registration for ${emp.name} approved successfully!`);
+
+                const response = await fetch(`/api/employees/${encodeURIComponent(empId)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(emp)
                 });
                 
-                if (!response.ok) throw new Error('Failed to approve registration');
-                alert('Registration approved successfully!');
-                await fetchData();
-                renderInbox();
+                if (!response.ok) throw new Error('Failed to approve registration on server');
             } catch (err) {
-                alert('Error approving: ' + err.message);
+                showToast('Error approving: ' + err.message);
+                fetchData();
             }
         });
     });
@@ -8006,11 +8118,10 @@ function renderInboxPendingList() {
         btn.addEventListener('click', async () => {
             const empId = btn.getAttribute('data-id');
             const reason = prompt("Enter the reason for rejecting this onboarding profile (this will be logged):");
-            if (reason === null) return; // user cancelled prompt
+            if (reason === null) return;
             
             const cleanReason = reason.trim() || "Details or photo did not meet requirements.";
             
-            // Reject & save as status 'Rejected'
             try {
                 const emp = VSA_STATE.employees.find(e => e.id === empId);
                 if (!emp) return;
@@ -8019,18 +8130,24 @@ function renderInboxPendingList() {
                 emp.rejectionReason = cleanReason;
                 emp.rejectionDate = new Date().toISOString().substring(0, 10);
                 
-                const response = await fetch(`/api/employees/${empId}`, {
+                const row = btn.closest('tr');
+                if (row) {
+                    row.classList.add('row-optimistic-deleted');
+                    setTimeout(() => row.remove(), 80);
+                }
+
+                showToast(`Registration for ${emp.name} rejected.`);
+
+                const response = await fetch(`/api/employees/${encodeURIComponent(empId)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(emp)
                 });
                 
-                if (!response.ok) throw new Error('Failed to reject registration');
-                alert('Registration successfully rejected and logged.');
-                await fetchData();
-                renderInbox();
+                if (!response.ok) throw new Error('Failed to reject registration on server');
             } catch (err) {
-                alert('Error rejecting: ' + err.message);
+                showToast('Error rejecting: ' + err.message);
+                fetchData();
             }
         });
     });
@@ -8101,11 +8218,11 @@ function openOnboardingPreview(empId) {
             });
             
             if (!response.ok) throw new Error('Failed to approve registration');
-            alert('Registration approved successfully!');
+            showToast('Registration approved successfully!');
             await fetchData();
             renderInbox();
         } catch (err) {
-            alert('Error approving: ' + err.message);
+            showToast('Error approving: ' + err.message);
         }
     });
     
@@ -8130,9 +8247,9 @@ function openOnboardingPreview(empId) {
             document.getElementById('onboarding-preview-modal').classList.add('hidden');
             await fetchData();
             renderInbox();
-            alert('Registration successfully rejected and logged.');
+            showToast('Registration rejected and logged.');
         } catch (err) {
-            alert('Error rejecting: ' + err.message);
+            showToast('Error rejecting: ' + err.message);
         }
     });
     
@@ -8208,16 +8325,22 @@ function renderInboxRejectedList() {
     tbody.querySelectorAll('.btn-inbox-delete-log').forEach(btn => {
         btn.addEventListener('click', async () => {
             const empId = btn.getAttribute('data-id');
-            if (!confirm(`Are you sure you want to permanently delete rejected log for guard ${empId}?`)) return;
+            if (!confirm(`Permanently delete rejected log for guard ${empId}?`)) return;
             
             try {
-                const response = await fetch(`/api/employees/${empId}`, { method: 'DELETE' });
-                if (!response.ok) throw new Error('Deletion failed');
-                alert('Rejected submission record deleted.');
-                await fetchData();
-                renderInbox();
+                const row = btn.closest('tr');
+                if (row) {
+                    row.classList.add('row-optimistic-deleted');
+                    setTimeout(() => row.remove(), 80);
+                }
+                VSA_STATE.employees = VSA_STATE.employees.filter(e => e.id !== empId);
+                showToast(`Rejected record ${empId} deleted.`);
+
+                const response = await fetch(`/api/employees/${encodeURIComponent(empId)}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Deletion failed on server');
             } catch (err) {
-                alert('Error: ' + err.message);
+                showToast('Error: ' + err.message);
+                fetchData();
             }
         });
     });
@@ -9096,10 +9219,13 @@ async function openProjectCandidatesModal(projectId) {
         const totalReg = employees.length;
         const approvedCount = employees.filter(e => e.status === 'Active' || e.status === 'Approved').length;
         const pendingCount = employees.filter(e => e.status === 'Pending').length;
+        const rejectedCount = employees.filter(e => e.status === 'Rejected' || e.status === 'Suspended').length;
 
         document.getElementById('badge-cand-total').textContent = `${totalReg} Total Registered`;
         document.getElementById('badge-cand-approved').textContent = `${approvedCount} Approved`;
         document.getElementById('badge-cand-pending').textContent = `${pendingCount} Pending Review`;
+        const rejBadge = document.getElementById('badge-cand-rejected');
+        if (rejBadge) rejBadge.textContent = `${rejectedCount} Rejected`;
         document.getElementById('badge-cand-target').textContent = `Target: ${project.targetGuards || stats.targetGuards || 0} Guards`;
 
         const batchPrintBtn = document.getElementById('btn-print-project-cards');
@@ -9121,24 +9247,41 @@ async function openProjectCandidatesModal(projectId) {
 
             employees.forEach(emp => {
                 const tr = document.createElement('tr');
+                const empId = emp.id || emp.employeeId;
+                tr.setAttribute('data-cand-id', empId);
                 const photoSrc = emp.documents?.photo || '';
                 const photoHtml = photoSrc
                     ? `<img src="${photoSrc}" alt="${escapeHtml(emp.name || 'Candidate')}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid var(--vs-border-subtle);" onerror="this.onerror=null; this.src='/api/employees/default-avatar.svg';">`
                     : `<div style="width: 36px; height: 36px; border-radius: 8px; background: var(--vs-surface-2); display: flex; align-items: center; justify-content: center; color: var(--vs-text-muted);"><i data-lucide="user" style="width: 16px; height: 16px;"></i></div>`;
 
-                let statusBadge = '<span style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(245,158,11,0.15); color: #f59e0b; font-weight: 700;">Pending</span>';
-                if (emp.status === 'Active') {
-                    statusBadge = '<span style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(16,185,129,0.15); color: #34d399; font-weight: 700;">Active</span>';
-                } else if (emp.status === 'Suspended') {
-                    statusBadge = '<span style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; font-weight: 700;">Suspended</span>';
+                let statusBadge = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(245,158,11,0.15); color: #f59e0b; font-weight: 700;">Pending</span>';
+                if (emp.status === 'Active' || emp.status === 'Approved') {
+                    statusBadge = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(16,185,129,0.15); color: #34d399; font-weight: 700;">Active</span>';
+                } else if (emp.status === 'Suspended' || emp.status === 'Rejected') {
+                    statusBadge = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; font-weight: 700;">Rejected</span>';
                 }
 
-                const empId = emp.id || emp.employeeId;
-                const approveBtn = emp.status === 'Pending'
-                    ? `<button class="btn btn-xs btn-primary" onclick="approveIndividualCandidate('${escapeHtml(empId)}')" style="background: #059669; border-color: #059669; padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
-                        <i data-lucide="check" style="width: 12px; height: 12px;"></i> Approve
-                       </button>`
-                    : `<span style="font-size: 11px; color: var(--vs-text-muted);"><i data-lucide="check-circle" style="width: 14px; height: 14px; color: #10b981; vertical-align: middle;"></i> Ready</span>`;
+                const actionsHtml = `
+                    <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
+                        ${(emp.status !== 'Active' && emp.status !== 'Approved') ? `
+                            <button class="btn btn-xs btn-primary" onclick="quickUpdateCandidateStatus('${escapeHtml(empId)}', 'Active')" title="Accept / Approve Candidate" style="background: #059669; border-color: #059669; padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i data-lucide="check" style="width: 12px; height: 12px;"></i> Accept
+                            </button>
+                        ` : `
+                            <button class="btn btn-xs btn-outline" onclick="quickUpdateCandidateStatus('${escapeHtml(empId)}', 'Suspended')" title="Suspend / Reject Candidate" style="color: #f59e0b; border-color: rgba(245,158,11,0.4); padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i data-lucide="x" style="width: 12px; height: 12px;"></i> Reject
+                            </button>
+                        `}
+                        ${emp.status === 'Pending' ? `
+                            <button class="btn btn-xs btn-outline" onclick="quickUpdateCandidateStatus('${escapeHtml(empId)}', 'Rejected')" title="Reject Candidate" style="color: #f87171; border-color: rgba(239,68,68,0.4); padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                                <i data-lucide="x-circle" style="width: 12px; height: 12px;"></i> Reject
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-xs btn-outline" onclick="quickDeleteCandidate('${escapeHtml(empId)}')" title="Permanently Delete Candidate" style="color: #ef4444; border-color: rgba(239,68,68,0.3); padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center;">
+                            <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                        </button>
+                    </div>
+                `;
 
                 tr.innerHTML = `
                     <td style="width: 48px;">${photoHtml}</td>
@@ -9149,8 +9292,8 @@ async function openProjectCandidatesModal(projectId) {
                     </td>
                     <td>${escapeHtml(emp.mobile || '-')}</td>
                     <td>${escapeHtml(emp.department || '-')}</td>
-                    <td>${statusBadge}</td>
-                    <td style="text-align: right;">${approveBtn}</td>
+                    <td class="cand-status-cell">${statusBadge}</td>
+                    <td style="text-align: right;" class="cand-actions-cell">${actionsHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -9159,7 +9302,7 @@ async function openProjectCandidatesModal(projectId) {
         if (window.lucide) window.lucide.createIcons();
     } catch (err) {
         console.error('Error fetching candidates:', err);
-        alert("Failed to fetch project candidate list.");
+        showToast("Failed to fetch project candidate list.");
     }
 }
 
@@ -9168,68 +9311,253 @@ function closeProjectCandidatesModal() {
     if (modal) modal.classList.add('hidden');
 }
 
-async function approveIndividualCandidate(empId) {
+function updateProjectCandidatesLiveBadges() {
+    const candidates = VSA_STATE.activeProjectCandidates || [];
+    const totalReg = candidates.length;
+    const approvedCount = candidates.filter(e => e.status === 'Active' || e.status === 'Approved').length;
+    const pendingCount = candidates.filter(e => e.status === 'Pending').length;
+    const rejectedCount = candidates.filter(e => e.status === 'Rejected' || e.status === 'Suspended').length;
+
+    const bTotal = document.getElementById('badge-cand-total');
+    if (bTotal) bTotal.textContent = `${totalReg} Total Registered`;
+    const bApp = document.getElementById('badge-cand-approved');
+    if (bApp) bApp.textContent = `${approvedCount} Approved`;
+    const bPend = document.getElementById('badge-cand-pending');
+    if (bPend) bPend.textContent = `${pendingCount} Pending Review`;
+    const bRej = document.getElementById('badge-cand-rejected');
+    if (bRej) bRej.textContent = `${rejectedCount} Rejected`;
+
+    const batchPrintBtn = document.getElementById('btn-print-project-cards');
+    if (batchPrintBtn) {
+        batchPrintBtn.innerHTML = `<i data-lucide="zap" style="width: 16px; height: 16px; fill: currentColor;"></i> ⚡ Print All Project ID Cards (${approvedCount})`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+async function quickUpdateCandidateStatus(empId, targetStatus) {
     if (!empId) return;
+
+    // 1. Optimistic update in memory
+    const candidates = VSA_STATE.activeProjectCandidates || [];
+    const cand = candidates.find(c => (c.id || c.employeeId) === empId);
+    if (cand) cand.status = targetStatus;
+
+    const globalEmp = VSA_STATE.employees.find(e => e.id === empId);
+    if (globalEmp) globalEmp.status = targetStatus;
+
+    // 2. Optimistic DOM update in candidates drawer
+    const row = document.querySelector(`tr[data-cand-id="${empId}"]`);
+    if (row) {
+        const statusCell = row.querySelector('.cand-status-cell');
+        const actionsCell = row.querySelector('.cand-actions-cell');
+
+        let statusBadge = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(245,158,11,0.15); color: #f59e0b; font-weight: 700;">Pending</span>';
+        if (targetStatus === 'Active' || targetStatus === 'Approved') {
+            statusBadge = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(16,185,129,0.15); color: #34d399; font-weight: 700;">Active</span>';
+        } else if (targetStatus === 'Suspended' || targetStatus === 'Rejected') {
+            statusBadge = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; font-weight: 700;">Rejected</span>';
+        }
+        if (statusCell) statusCell.innerHTML = statusBadge;
+
+        const actionsHtml = `
+            <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
+                ${(targetStatus !== 'Active' && targetStatus !== 'Approved') ? `
+                    <button class="btn btn-xs btn-primary" onclick="quickUpdateCandidateStatus('${escapeHtml(empId)}', 'Active')" title="Accept / Approve Candidate" style="background: #059669; border-color: #059669; padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                        <i data-lucide="check" style="width: 12px; height: 12px;"></i> Accept
+                    </button>
+                ` : `
+                    <button class="btn btn-xs btn-outline" onclick="quickUpdateCandidateStatus('${escapeHtml(empId)}', 'Suspended')" title="Suspend / Reject Candidate" style="color: #f59e0b; border-color: rgba(245,158,11,0.4); padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;">
+                        <i data-lucide="x" style="width: 12px; height: 12px;"></i> Reject
+                    </button>
+                `}
+                <button class="btn btn-xs btn-outline" onclick="quickDeleteCandidate('${escapeHtml(empId)}')" title="Permanently Delete Candidate" style="color: #ef4444; border-color: rgba(239,68,68,0.3); padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center;">
+                    <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                </button>
+            </div>
+        `;
+        if (actionsCell) actionsCell.innerHTML = actionsHtml;
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    updateProjectCandidatesLiveBadges();
+    showToast(`Candidate ${empId} set to ${targetStatus}.`);
+
+    // 3. Background server sync
     try {
-        const res = await fetch(`/api/employees/${encodeURIComponent(empId)}`, {
+        await fetch(`/api/employees/${encodeURIComponent(empId)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'Active' })
+            body: JSON.stringify({ status: targetStatus })
         });
-        if (!res.ok) {
-            alert("Failed to approve candidate.");
-            return;
-        }
-        alert(`Candidate ${empId} approved to Active status!`);
-        // Refresh modal and main list
-        if (VSA_STATE.activeDeploymentProjectId) {
-            openProjectCandidatesModal(VSA_STATE.activeDeploymentProjectId);
-        }
         loadDeploymentsData();
-        fetchData();
     } catch (err) {
-        console.error('Error approving candidate:', err);
-        alert("Network error while approving candidate.");
+        console.error('Error updating candidate status:', err);
+        showToast(`Sync failed for ${empId}: ${err.message}`);
+    }
+}
+
+async function quickDeleteCandidate(empId) {
+    if (!empId) return;
+    if (!confirm(`Are you sure you want to permanently delete candidate ${empId}?`)) return;
+
+    // 1. Optimistic removal from DOM in 80ms
+    const row = document.querySelector(`tr[data-cand-id="${empId}"]`);
+    if (row) {
+        row.classList.add('row-optimistic-deleted');
+        setTimeout(() => row.remove(), 80);
+    }
+
+    // 2. Remove from local states
+    if (VSA_STATE.activeProjectCandidates) {
+        VSA_STATE.activeProjectCandidates = VSA_STATE.activeProjectCandidates.filter(c => (c.id || c.employeeId) !== empId);
+    }
+    VSA_STATE.employees = VSA_STATE.employees.filter(e => e.id !== empId);
+    updateProjectCandidatesLiveBadges();
+    showToast(`Candidate ${empId} deleted successfully.`);
+
+    // 3. Background server delete
+    try {
+        await fetch(`/api/employees/${encodeURIComponent(empId)}`, { method: 'DELETE' });
+        loadDeploymentsData();
+    } catch (err) {
+        console.error('Error deleting candidate:', err);
+        showToast(`Failed to delete candidate ${empId}: ${err.message}`);
     }
 }
 
 async function bulkApproveCurrentProject() {
     if (!VSA_STATE.activeDeploymentProjectId) {
-        alert("No active deployment selected.");
+        showToast("No active deployment selected.");
         return;
     }
     const candidates = VSA_STATE.activeProjectCandidates || [];
     const pendingCandidates = candidates.filter(e => e.status === 'Pending');
     if (pendingCandidates.length === 0) {
-        alert("No pending candidates awaiting approval in this deployment project.");
+        showToast("No pending candidates awaiting approval.");
         return;
     }
 
-    if (!confirm(`Are you sure you want to bulk-approve all ${pendingCandidates.length} pending candidate(s) to 'Active' status?`)) {
+    if (!confirm(`Bulk approve all ${pendingCandidates.length} pending candidate(s) to 'Active' status?`)) {
         return;
     }
+
+    // Optimistically update all pending rows in 0ms
+    pendingCandidates.forEach(c => {
+        c.status = 'Active';
+        const cid = c.id || c.employeeId;
+        const row = document.querySelector(`tr[data-cand-id="${cid}"]`);
+        if (row) {
+            const statusCell = row.querySelector('.cand-status-cell');
+            if (statusCell) {
+                statusCell.innerHTML = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(16,185,129,0.15); color: #34d399; font-weight: 700;">Active</span>';
+            }
+        }
+    });
+    updateProjectCandidatesLiveBadges();
+    showToast(`Bulk approved ${pendingCandidates.length} candidates to Active!`);
 
     try {
-        const res = await fetch(`/api/deployment-projects/${encodeURIComponent(VSA_STATE.activeDeploymentProjectId)}/bulk-approve`, {
+        await fetch(`/api/deployment-projects/${encodeURIComponent(VSA_STATE.activeDeploymentProjectId)}/bulk-approve`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
         });
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.error || "Failed to bulk approve candidates.");
-            return;
-        }
-
-        alert(`Successfully approved ${data.approvedCount} candidates to Active!`);
-        openProjectCandidatesModal(VSA_STATE.activeDeploymentProjectId);
         loadDeploymentsData();
-        fetchData();
     } catch (err) {
         console.error('Error during bulk approve:', err);
-        alert("Network error while bulk approving candidates.");
+        showToast("Network error while bulk approving candidates.");
     }
 }
+
+async function bulkRejectCurrentProject() {
+    if (!VSA_STATE.activeDeploymentProjectId) {
+        showToast("No active deployment selected.");
+        return;
+    }
+    const candidates = VSA_STATE.activeProjectCandidates || [];
+    const pendingCandidates = candidates.filter(e => e.status === 'Pending');
+    if (pendingCandidates.length === 0) {
+        showToast("No pending candidates to reject.");
+        return;
+    }
+
+    if (!confirm(`Bulk reject all ${pendingCandidates.length} pending candidate(s)?`)) {
+        return;
+    }
+
+    const pendingIds = pendingCandidates.map(c => c.id || c.employeeId);
+    pendingCandidates.forEach(c => {
+        c.status = 'Rejected';
+        const cid = c.id || c.employeeId;
+        const row = document.querySelector(`tr[data-cand-id="${cid}"]`);
+        if (row) {
+            const statusCell = row.querySelector('.cand-status-cell');
+            if (statusCell) {
+                statusCell.innerHTML = '<span class="cand-status-pill" style="font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(239,68,68,0.15); color: #f87171; font-weight: 700;">Rejected</span>';
+            }
+        }
+    });
+    updateProjectCandidatesLiveBadges();
+    showToast(`Bulk rejected ${pendingCandidates.length} candidate(s).`);
+
+    try {
+        await fetch('/api/employees/bulk-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employeeIds: pendingIds, status: 'Rejected' })
+        });
+        loadDeploymentsData();
+    } catch (err) {
+        console.error('Error during bulk reject:', err);
+        showToast("Network error while bulk rejecting candidates.");
+    }
+}
+
+async function bulkDeleteCurrentProjectCandidates() {
+    if (!VSA_STATE.activeDeploymentProjectId) {
+        showToast("No active deployment selected.");
+        return;
+    }
+    const candidates = VSA_STATE.activeProjectCandidates || [];
+    const targetCandidates = candidates.filter(e => e.status !== 'Active' && e.status !== 'Approved');
+    if (targetCandidates.length === 0) {
+        showToast("No rejected or inactive candidates to delete in this project.");
+        return;
+    }
+
+    if (!confirm(`Permanently delete ${targetCandidates.length} rejected/inactive candidate record(s) from this deployment?`)) {
+        return;
+    }
+
+    const targetIds = targetCandidates.map(c => c.id || c.employeeId);
+    targetIds.forEach(id => {
+        const row = document.querySelector(`tr[data-cand-id="${id}"]`);
+        if (row) {
+            row.classList.add('row-optimistic-deleted');
+            setTimeout(() => row.remove(), 80);
+        }
+    });
+
+    VSA_STATE.activeProjectCandidates = candidates.filter(c => !targetIds.includes(c.id || c.employeeId));
+    VSA_STATE.employees = VSA_STATE.employees.filter(e => !targetIds.includes(e.id));
+    updateProjectCandidatesLiveBadges();
+    showToast(`Bulk deleted ${targetIds.length} candidate(s).`);
+
+    try {
+        await fetch('/api/employees/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employeeIds: targetIds })
+        });
+        loadDeploymentsData();
+    } catch (err) {
+        console.error('Error during candidate bulk delete:', err);
+        showToast("Network error while deleting candidates.");
+    }
+}
+
+// Backwards-compatibility alias
+window.approveIndividualCandidate = (empId) => quickUpdateCandidateStatus(empId, 'Active');
 
 async function batchPrintProjectCards(projectId) {
     const targetProjectId = projectId || VSA_STATE.activeDeploymentProjectId;

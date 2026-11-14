@@ -1603,7 +1603,7 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(var(--theme-accent-rgb), 0.15);
     backface-visibility: hidden;
     overflow: hidden;
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s ease-out;
 }
 
 /* Metallic gold stripe details */
@@ -7650,28 +7650,26 @@ body::before {
 
 /* 1. Hardware Accelerated View Switching */
 .app-view.active {
-    animation: viewFadeSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    will-change: transform, opacity;
+    animation: viewFadeSlideIn 0.06s ease-out forwards;
+    will-change: opacity;
 }
 
 @keyframes viewFadeSlideIn {
     0% {
         opacity: 0;
-        transform: translateY(6px);
     }
     100% {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
 /* 2. Tactile Button Micro-interactions */
 .btn {
-    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-                background-color 0.15s ease,
-                border-color 0.15s ease,
-                filter 0.15s ease;
+    transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.1s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.08s ease,
+                border-color 0.08s ease,
+                filter 0.08s ease;
     will-change: transform;
 }
 
@@ -7695,11 +7693,11 @@ body::before {
 
 /* 3. Modal Spring & Backdrop Micro-Interactions */
 .modal-overlay:not(.hidden) {
-    animation: modalBackdropFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalBackdropFadeIn 0.06s ease-out forwards;
 }
 
 .modal-overlay:not(.hidden) .modal-container {
-    animation: modalSpringIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalSpringIn 0.08s ease-out forwards;
     will-change: transform, opacity;
 }
 
@@ -7710,19 +7708,26 @@ body::before {
     }
     to {
         opacity: 1;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(4px);
     }
 }
 
 @keyframes modalSpringIn {
     0% {
         opacity: 0;
-        transform: scale(0.95) translateY(12px);
+        transform: scale(0.99) translateY(4px);
     }
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+}
+
+/* Instant optimistic action feedback */
+.row-optimistic-deleted {
+    opacity: 0 !important;
+    transform: scale(0.96) !important;
+    transition: opacity 0.08s ease, transform 0.08s ease !important;
 }
 
 /* Modal Close Button Hover */

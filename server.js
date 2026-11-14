@@ -3110,6 +3110,77 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// 7B. Bulk Employee Delete
+app.post('/api/employees/bulk-delete', authenticateToken, async (req, res) => {
+  const { employeeIds } = req.body || {};
+  if (!Array.isArray(employeeIds) || employeeIds.length === 0) {
+    return res.status(400).json({ error: 'No employee IDs provided for bulk deletion.' });
+  }
+
+  try {
+    let deletedCount = 0;
+    if (usePostgres && pool) {
+      await pool.query('DELETE FROM employee_photos WHERE employee_id = ANY($1::text[])', [employeeIds]);
+      const delRes = await pool.query('DELETE FROM employees WHERE id = ANY($1::text[])', [employeeIds]);
+      deletedCount = delRes.rowCount || employeeIds.length;
+    } else {
+      const db = readLocalDb();
+      const photosDb = readPhotosDb();
+      employeeIds.forEach(id => {
+        delete photosDb[id];
+      });
+      writePhotosDb(photosDb);
+      const beforeLen = db.employees.length;
+      db.employees = db.employees.filter(e => !employeeIds.includes(e.id));
+      deletedCount = beforeLen - db.employees.length;
+      writeLocalDb(db);
+    }
+    return res.json({ success: true, count: deletedCount, message: `Successfully deleted ${deletedCount} employee(s).` });
+  } catch (e) {
+    console.error('Error in bulk delete:', e);
+    return res.status(500).json({ error: 'Failed to bulk delete employees.' });
+  }
+});
+
+// 7C. Bulk Employee Status Update (Accept / Reject / Suspend)
+app.post('/api/employees/bulk-status', authenticateToken, async (req, res) => {
+  const { employeeIds, status } = req.body || {};
+  if (!Array.isArray(employeeIds) || employeeIds.length === 0) {
+    return res.status(400).json({ error: 'No employee IDs provided for bulk status update.' });
+  }
+
+  const validStatuses = ['Active', 'Pending', 'Rejected', 'Suspended'];
+  const targetStatus = validStatuses.includes(status) ? status : 'Active';
+
+  try {
+    let updatedCount = 0;
+    if (usePostgres && pool) {
+      const updRes = await pool.query(
+        `UPDATE employees 
+         SET data = jsonb_set(data::jsonb, '{status}', to_jsonb($1::text), true),
+             updated_at = NOW() 
+         WHERE id = ANY($2::text[])`,
+        [targetStatus, employeeIds]
+      );
+      updatedCount = updRes.rowCount || employeeIds.length;
+    } else {
+      const db = readLocalDb();
+      (db.employees || []).forEach(emp => {
+        if (employeeIds.includes(emp.id)) {
+          emp.status = targetStatus;
+          emp.updatedAt = new Date().toISOString();
+          updatedCount++;
+        }
+      });
+      writeLocalDb(db);
+    }
+    return res.json({ success: true, count: updatedCount, status: targetStatus, message: `Successfully set ${updatedCount} employee(s) to ${targetStatus}.` });
+  } catch (e) {
+    console.error('Error in bulk status update:', e);
+    return res.status(500).json({ error: 'Failed to bulk update status.' });
+  }
+});
+
 // Asynchronous Git Sync utility function (saves backup and pushes to GitHub & Render)
 let isGitSyncing = false;
 let pendingGitSync = false;

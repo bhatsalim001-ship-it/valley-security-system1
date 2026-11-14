@@ -470,6 +470,15 @@
                             <button class="btn btn-xs btn-bulk-action btn-bulk-download" id="btn-bulk-download">
                                 <i data-lucide="download"></i> Bulk Photo Download
                             </button>
+                            <button class="btn btn-xs btn-bulk-action" id="btn-bulk-approve" onclick="bulkUpdateEmployeeStatus('Active')" style="background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.4);" title="Accept and set all selected guards to Active">
+                                <i data-lucide="check"></i> Accept Selected
+                            </button>
+                            <button class="btn btn-xs btn-bulk-action" id="btn-bulk-reject" onclick="bulkUpdateEmployeeStatus('Suspended')" style="background: rgba(245,158,11,0.15); color: #f59e0b; border-color: rgba(245,158,11,0.4);" title="Reject or suspend all selected guards">
+                                <i data-lucide="x-circle"></i> Reject Selected
+                            </button>
+                            <button class="btn btn-xs btn-bulk-action" id="btn-bulk-delete" onclick="bulkDeleteEmployees()" style="background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.4);" title="Permanently delete all selected guards">
+                                <i data-lucide="trash-2"></i> Bulk Delete
+                            </button>
                             <button class="btn btn-xs btn-bulk-clear" id="btn-bulk-clear">
                                 Clear Selection
                             </button>
@@ -2117,6 +2126,12 @@
                     <button class="btn btn-primary" id="btn-bulk-approve-project" onclick="bulkApproveCurrentProject()" style="background: #059669; border-color: #059669; min-height: 44px;">
                         <i data-lucide="check-check"></i> Bulk Approve Pending
                     </button>
+                    <button class="btn btn-outline" id="btn-bulk-reject-project" onclick="bulkRejectCurrentProject()" style="background: rgba(245,158,11,0.1); color: #f59e0b; border-color: rgba(245,158,11,0.4); min-height: 44px;" title="Reject all pending candidates in this deployment">
+                        <i data-lucide="x-circle"></i> Bulk Reject Pending
+                    </button>
+                    <button class="btn btn-outline" id="btn-bulk-delete-project" onclick="bulkDeleteCurrentProjectCandidates()" style="background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.4); min-height: 44px;" title="Delete rejected or pending candidates">
+                        <i data-lucide="trash-2"></i> Bulk Delete
+                    </button>
                     <button class="btn btn-success" id="btn-print-project-cards" onclick="batchPrintProjectCards()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #059669; color: #fff; font-weight: 700; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;">
                         <i data-lucide="zap" style="width: 16px; height: 16px; fill: currentColor;"></i> ⚡ Print All Project ID Cards
                     </button>
@@ -2129,6 +2144,7 @@
                 <span id="badge-cand-total" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(99,102,241,0.15); color: #818cf8;">0 Total Registered</span>
                 <span id="badge-cand-approved" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(16,185,129,0.15); color: #34d399;">0 Approved</span>
                 <span id="badge-cand-pending" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(245,158,11,0.15); color: #f59e0b;">0 Pending Review</span>
+                <span id="badge-cand-rejected" style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(239,68,68,0.15); color: #f87171;">0 Rejected</span>
                 <span id="badge-cand-target" style="font-size: 12px; color: var(--vs-text-muted); margin-left: auto;">Target: 0 Guards</span>
             </div>
 
