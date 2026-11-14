@@ -2114,11 +2114,11 @@
                     </p>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" id="btn-bulk-approve-project" onclick="bulkApproveCurrentProject()" style="background: #059669; border-color: #059669;">
+                    <button class="btn btn-primary" id="btn-bulk-approve-project" onclick="bulkApproveCurrentProject()" style="background: #059669; border-color: #059669; min-height: 44px;">
                         <i data-lucide="check-check"></i> Bulk Approve Pending
                     </button>
-                    <button class="btn btn-outline" id="btn-print-project-cards" onclick="printProjectCards()">
-                        <i data-lucide="printer"></i> Print ID Badges
+                    <button class="btn btn-success" id="btn-print-project-cards" onclick="batchPrintProjectCards()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #059669; color: #fff; font-weight: 700; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;">
+                        <i data-lucide="zap" style="width: 16px; height: 16px; fill: currentColor;"></i> ⚡ Print All Project ID Cards
                     </button>
                     <button class="modal-close" onclick="closeProjectCandidatesModal()">&times;</button>
                 </div>

@@ -8899,11 +8899,15 @@ function renderDeploymentProjects(projects) {
             <!-- Action Buttons Footer -->
             <div>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <button class="btn btn-primary" onclick="openProjectCandidatesModal('${escapeHtml(p.id)}')" style="flex: 1; padding: 8px 12px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <button class="btn btn-primary" onclick="openProjectCandidatesModal('${escapeHtml(p.id)}')" style="flex: 1; padding: 8px 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px;">
                         <i data-lucide="users" style="width: 14px; height: 14px;"></i>
                         Candidates (${registered})
                     </button>
-                    <button class="btn btn-outline" onclick="openDeploymentQrModal('${escapeHtml(p.id)}')" title="View Onboarding QR & Link" style="padding: 8px 12px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <button class="btn btn-outline" onclick="batchPrintProjectCards('${escapeHtml(p.id)}')" title="⚡ 1-Click Print All Approved ID Badges" style="padding: 8px 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; color: #10b981; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); font-weight: 600;">
+                        <i data-lucide="zap" style="width: 14px; height: 14px; fill: currentColor;"></i>
+                        ⚡ Print Cards (${approved})
+                    </button>
+                    <button class="btn btn-outline" onclick="openDeploymentQrModal('${escapeHtml(p.id)}')" title="View Onboarding QR & Link" style="padding: 8px 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px;">
                         <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i>
                         QR Link
                     </button>
@@ -9090,13 +9094,18 @@ async function openProjectCandidatesModal(projectId) {
         document.getElementById('candidates-project-subtitle').textContent = `${project.clientName || ''} ${project.location ? '• ' + project.location : ''} • Department: ${project.department || 'All'}`;
 
         const totalReg = employees.length;
-        const approvedCount = employees.filter(e => e.status === 'Active').length;
+        const approvedCount = employees.filter(e => e.status === 'Active' || e.status === 'Approved').length;
         const pendingCount = employees.filter(e => e.status === 'Pending').length;
 
         document.getElementById('badge-cand-total').textContent = `${totalReg} Total Registered`;
         document.getElementById('badge-cand-approved').textContent = `${approvedCount} Approved`;
         document.getElementById('badge-cand-pending').textContent = `${pendingCount} Pending Review`;
         document.getElementById('badge-cand-target').textContent = `Target: ${project.targetGuards || stats.targetGuards || 0} Guards`;
+
+        const batchPrintBtn = document.getElementById('btn-print-project-cards');
+        if (batchPrintBtn) {
+            batchPrintBtn.innerHTML = `<i data-lucide="zap" style="width: 16px; height: 16px; fill: currentColor;"></i> ⚡ Print All Project ID Cards (${approvedCount})`;
+        }
 
         const tbody = document.getElementById('project-candidates-tbody');
         const emptyDiv = document.getElementById('project-candidates-empty');
@@ -9222,53 +9231,148 @@ async function bulkApproveCurrentProject() {
     }
 }
 
-function printProjectCards() {
-    if (!VSA_STATE.activeDeploymentProjectId) {
-        alert("No active deployment selected.");
+async function batchPrintProjectCards(projectId) {
+    const targetProjectId = projectId || VSA_STATE.activeDeploymentProjectId;
+    if (!targetProjectId) {
+        alert("Please select a deployment project first.");
         return;
     }
-    const project = (VSA_STATE.deploymentProjects || []).find(p => p.id === VSA_STATE.activeDeploymentProjectId);
-    const candidates = (VSA_STATE.activeProjectCandidates && VSA_STATE.activeProjectCandidates.length > 0)
+
+    let project = (VSA_STATE.deploymentProjects || []).find(p => p.id === targetProjectId);
+    let candidates = (VSA_STATE.activeDeploymentProjectId === targetProjectId && VSA_STATE.activeProjectCandidates && VSA_STATE.activeProjectCandidates.length > 0)
         ? VSA_STATE.activeProjectCandidates
-        : (VSA_STATE.employees || []).filter(e => e.deployment_project_id === VSA_STATE.activeDeploymentProjectId);
+        : null;
 
-    if (candidates.length === 0) {
-        alert("No candidates registered for this project to print badges.");
+    // If candidates not yet loaded in active state, fetch fresh from server
+    if (!candidates) {
+        try {
+            const res = await fetch(`/api/deployment-projects/${encodeURIComponent(targetProjectId)}`);
+            if (!res.ok) throw new Error("Server returned status " + res.status);
+            const data = await res.json();
+            project = project || data.project;
+            candidates = data.employees || [];
+            VSA_STATE.activeProjectCandidates = candidates;
+            VSA_STATE.activeDeploymentProjectId = targetProjectId;
+        } catch (err) {
+            console.error("Error loading candidates for batch printing:", err);
+            alert("Could not load project candidate data for batch ID card printing.");
+            return;
+        }
+    }
+
+    if (!candidates || candidates.length === 0) {
+        alert(`No candidates registered for ${project ? project.name : 'this deployment'}.`);
         return;
     }
 
-    const ids = candidates.map(c => c.id || c.employeeId);
+    // Filter for approved / active guards
+    let approvedGuards = candidates.filter(e => e.status === 'Active' || e.status === 'Approved');
+    if (approvedGuards.length === 0) {
+        const proceedWithAll = confirm(
+            `None of the ${candidates.length} candidate(s) in this project are marked 'Active' (Approved) yet.\n\nWould you like to batch print ID badges for all ${candidates.length} registered candidates anyway?`
+        );
+        if (!proceedWithAll) return;
+        approvedGuards = [...candidates];
+    }
+
+    // Standardize and sync candidates into VSA_STATE.employees for ID Card Studio
+    const ids = approvedGuards.map(c => c.id || c.employeeId);
     VSA_STATE.idSelectedEmployeeIds = ids;
     VSA_STATE.selectedEmployeeIds = ids;
 
-    // Ensure candidates exist in VSA_STATE.employees
-    candidates.forEach(cand => {
+    approvedGuards.forEach(cand => {
         const cid = cand.id || cand.employeeId;
-        const exists = VSA_STATE.employees.some(e => e.id === cid);
-        if (!exists) {
-            VSA_STATE.employees.push({ ...cand, id: cid });
+        if (!cand.documents) cand.documents = {};
+        if (cand.photo && !cand.documents.photo) cand.documents.photo = cand.photo;
+        if (!cand.fatherName && cand.father_name) cand.fatherName = cand.father_name;
+
+        const empRecord = {
+            ...cand,
+            id: cid,
+            name: cand.name || 'Security Guard',
+            fatherName: cand.fatherName || cand.father_name || '',
+            designation: cand.designation || project?.designation || 'Security Guard',
+            department: cand.department || project?.department || project?.name || 'Security'
+        };
+
+        const idx = VSA_STATE.employees.findIndex(e => e.id === cid);
+        if (idx >= 0) {
+            VSA_STATE.employees[idx] = { ...VSA_STATE.employees[idx], ...empRecord };
+        } else {
+            VSA_STATE.employees.push(empRecord);
         }
     });
 
+    // Resolve template
+    const selectedTemplateId = document.getElementById('id-select-template')?.value || document.getElementById('bulk-select-template')?.value;
+    const template = (VSA_STATE.templates || []).find(t => t.id === selectedTemplateId) || (VSA_STATE.templates && VSA_STATE.templates[0]) || {
+        id: 'tpl-standard',
+        layout: 'vertical',
+        font: "'Plus Jakarta Sans', sans-serif"
+    };
+
+    if (template.font && typeof ensureFontLoaded === 'function') {
+        ensureFontLoaded(template.font);
+    }
+
+    const bulkContainer = document.getElementById('printable-id-bulk');
+    if (!bulkContainer) {
+        alert("Batch print container (#printable-id-bulk) not found in DOM.");
+        return;
+    }
+
+    // Grid layout: 8 cards per A4 for horizontal (2x4), 9 cards per A4 for vertical (3x3)
+    const isHorizontal = template.layout === 'horizontal';
+    const cardsPerPage = isHorizontal ? 8 : 9;
+    const gridClass = isHorizontal ? 'horizontal-grid' : 'vertical-grid';
+    const validity = parseInt(document.getElementById('id-validity-years')?.value, 10) || 3;
+    const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
+
+    let bulkHtml = '';
+    for (let i = 0; i < approvedGuards.length; i += cardsPerPage) {
+        const pageCards = approvedGuards.slice(i, i + cardsPerPage);
+        bulkHtml += `<div class="print-page ${gridClass}">`;
+        pageCards.forEach(cand => {
+            const cid = cand.id || cand.employeeId;
+            const fullEmp = VSA_STATE.employees.find(e => e.id === cid) || cand;
+            bulkHtml += `
+                <div class="printable-id-card-wrapper">
+                    ${generateIdCardHtml(fullEmp, template, fullEmp.cardValidity || validity, issueDateVal)}
+                </div>
+            `;
+        });
+        bulkHtml += `</div>`;
+    }
+
+    bulkContainer.innerHTML = bulkHtml;
+    if (typeof renderQrsInContainer === 'function') {
+        renderQrsInContainer(bulkContainer);
+    }
+
+    // Update ID Studio controls in background
+    if (typeof populateIdEmployeeSelect === 'function') {
+        try { populateIdEmployeeSelect(); } catch(e) {}
+    }
+    if (typeof populateIdEmployeeChecklist === 'function') {
+        try { populateIdEmployeeChecklist(); } catch(e) {}
+    }
+
+    // Close candidates modal if open
     closeProjectCandidatesModal();
-    window.location.hash = 'id-cards';
 
+    // Activate print styles
+    bulkContainer.classList.remove('hidden');
+    document.body.classList.add('bulk-print-active');
+
+    // Trigger print dialog after brief render delay for barcodes & portraits
     setTimeout(() => {
-        const idEmpSel = document.getElementById('id-select-employee');
-        if (idEmpSel && ids.length > 0) {
-            populateIdEmployeeSelect();
-            idEmpSel.value = ids[0];
-            if (typeof loadIdCardDetails === 'function') {
-                loadIdCardDetails(ids[0]);
-            }
-        }
-        if (typeof populateIdEmployeeChecklist === 'function') {
-            populateIdEmployeeChecklist();
-        }
-    }, 150);
-
-    alert(`Loaded ${ids.length} guard badges from ${project ? project.name : 'deployment'} into ID Badge Studio.`);
+        window.print();
+    }, 350);
 }
+
+// Global aliases
+window.batchPrintProjectCards = batchPrintProjectCards;
+window.printProjectCards = batchPrintProjectCards;
 
 let activeQrProject = null;
 
