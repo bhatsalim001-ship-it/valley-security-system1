@@ -431,14 +431,62 @@
 
         .camera-overlay-frame {
             position: absolute;
-            top: 10%;
-            left: 10%;
-            width: 80%;
-            height: 80%;
-            border: 2px dashed rgba(245, 158, 11, 0.7);
-            border-radius: 50% / 40%;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
             pointer-events: none;
+            overflow: hidden;
+        }
+
+        .head-guide-oval {
+            position: absolute;
+            top: 14%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            height: 48%;
+            border: 2px dashed rgba(245, 158, 11, 0.85);
+            border-radius: 50%;
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+            pointer-events: none;
+        }
+
+        .shoulder-guide-arch {
+            position: absolute;
+            bottom: 4%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 86%;
+            height: 34%;
+            border-top: 2px dashed rgba(245, 158, 11, 0.65);
+            border-left: 2px dashed rgba(245, 158, 11, 0.35);
+            border-right: 2px dashed rgba(245, 158, 11, 0.35);
+            border-radius: 50% 50% 0 0 / 80% 80% 0 0;
+            pointer-events: none;
+        }
+
+        .camera-guide-caption {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f59e0b;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 5;
         }
 
         .camera-controls {
@@ -563,6 +611,107 @@
             padding: 8px 14px;
             margin: 12px auto 0 auto;
             max-width: 360px;
+        }
+
+        .photo-spec-chip {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin: 8px auto 0 auto;
+            max-width: 380px;
+            transition: all 0.2s ease;
+        }
+
+        .photo-spec-chip.pass {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .photo-spec-chip.warn {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Quality Diagnostic HUD */
+        .quality-hud {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin: 6px 0;
+            text-align: left;
+        }
+
+        .quality-hud-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .quality-hud-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quality-hud-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quality-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .quality-chip.pass {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .quality-chip.warn {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .quality-chip.info {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .quality-tip-box {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-radius: 8px;
+            font-size: 11px;
+            color: #fde047;
+            line-height: 1.4;
         }
 
         .tender-chip {
@@ -1199,6 +1348,11 @@
                     Portrait Photo Attached & Ready
                 </div>
 
+                <div id="photo-quality-badge" class="photo-spec-chip">
+                    <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                    <span id="photo-quality-badge-text">ID Card Spec: 300×400 px | Quality Verified</span>
+                </div>
+
                 <input type="file" id="file-input-field" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
                 <div class="photo-actions" style="margin-top: 14px;">
                     <button type="button" class="btn-photo-action" onclick="triggerFileInput()">
@@ -1234,7 +1388,14 @@
             </div>
             <div class="camera-view-wrapper">
                 <video id="camera-stream-video" autoplay playsinline muted></video>
-                <div class="camera-overlay-frame"></div>
+                <div class="camera-overlay-frame">
+                    <div class="head-guide-oval"></div>
+                    <div class="shoulder-guide-arch"></div>
+                </div>
+                <div class="camera-guide-caption">
+                    <i data-lucide="scan-face" style="width: 14px; height: 14px;"></i>
+                    Position head inside oval, shoulders at base
+                </div>
             </div>
             <div class="camera-controls">
                 <button type="button" class="btn-camera btn-camera-cancel" onclick="closeLiveCamera()">Cancel</button>
@@ -1331,6 +1492,42 @@
                     <i data-lucide="lock" style="width: 16px; height: 16px;"></i>
                     <span id="crop-aspect-text">Card Ratio</span>
                 </button>
+
+                <button type="button" class="btn-crop-tool" id="btn-crop-retake" title="Retake Photo via Camera" style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">
+                    <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
+                    <span>Retake</span>
+                </button>
+            </div>
+
+            <!-- Assistive Quality Diagnostic HUD (Phase 4) -->
+            <div class="quality-hud" id="photo-quality-hud">
+                <div class="quality-hud-header">
+                    <span class="quality-hud-title">
+                        <i data-lucide="sparkles" style="width: 13px; height: 13px; color: #818cf8;"></i>
+                        Intelligent ID Card Quality Check
+                    </span>
+                    <span id="hud-quality-summary" style="font-size: 10px; font-weight: 700; color: #34d399;">Ready for Card Print</span>
+                </div>
+                <div class="quality-hud-chips">
+                    <span class="quality-chip pass" id="hud-chip-lighting">
+                        <i data-lucide="sun" style="width: 12px; height: 12px;"></i>
+                        <span id="hud-text-lighting">Lighting: Balanced</span>
+                    </span>
+                    <span class="quality-chip pass" id="hud-chip-focus">
+                        <i data-lucide="focus" style="width: 12px; height: 12px;"></i>
+                        <span id="hud-text-focus">Focus: In Sharp Focus</span>
+                    </span>
+                    <span class="quality-chip pass" id="hud-chip-framing">
+                        <i data-lucide="user" style="width: 12px; height: 12px;"></i>
+                        <span id="hud-text-framing">Framing: Well Centered</span>
+                    </span>
+                </div>
+                <div class="quality-tip-box" id="hud-tip-box">
+                    <div style="display: flex; align-items: flex-start; gap: 6px;">
+                        <i data-lucide="lightbulb" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px;"></i>
+                        <span id="hud-tip-message">Tip: Position head inside guide with balanced lighting for sharp ID card printing.</span>
+                    </div>
+                </div>
             </div>
 
             <div class="cropper-footer">
@@ -1452,6 +1649,201 @@
             reader.readAsDataURL(file);
         }
 
+        // =========================================================================
+        // OMEGA Intelligent Photograph Diagnostic Engine (Phase 4)
+        // =========================================================================
+        function analyzeImageQuality(canvasOrImg) {
+            const result = {
+                lighting: { status: 'pass', text: 'Lighting: Balanced', luminance: 128 },
+                focus: { status: 'pass', text: 'Focus: In Sharp Focus', variance: 100 },
+                framing: { status: 'pass', text: 'Framing: Well Centered' },
+                tips: [],
+                readyForPrint: true
+            };
+
+            try {
+                let sampleCanvas;
+                let ctx;
+                const sampleW = 120;
+                const sampleH = 160;
+
+                if (typeof document !== 'undefined' && document.createElement) {
+                    sampleCanvas = document.createElement('canvas');
+                    sampleCanvas.width = sampleW;
+                    sampleCanvas.height = sampleH;
+                    ctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+                } else if (canvasOrImg && canvasOrImg.getContext) {
+                    sampleCanvas = canvasOrImg;
+                    ctx = sampleCanvas.getContext('2d');
+                }
+
+                if (!ctx) return result;
+
+                // Draw downsampled frame for instant, zero-lag analysis
+                ctx.drawImage(canvasOrImg, 0, 0, sampleW, sampleH);
+                const imgData = ctx.getImageData(0, 0, sampleW, sampleH);
+                const data = imgData.data;
+
+                // 1. Rec. 601 Luminance Analysis (Y = 0.299R + 0.587G + 0.114B)
+                let totalLum = 0;
+                let brightPixels = 0;
+                let darkPixels = 0;
+                const totalPixels = sampleW * sampleH;
+                const grayMatrix = new Float32Array(totalPixels);
+
+                for (let i = 0; i < totalPixels; i++) {
+                    const idx = i * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+                    const y = 0.299 * r + 0.587 * g + 0.114 * b;
+                    grayMatrix[i] = y;
+                    totalLum += y;
+                    if (y > 235) brightPixels++;
+                    if (y < 35) darkPixels++;
+                }
+
+                const avgLum = Math.round(totalLum / totalPixels);
+                result.lighting.luminance = avgLum;
+
+                if (avgLum < 55) {
+                    result.lighting.status = 'warn';
+                    result.lighting.text = 'Lighting: Too Dark';
+                    result.tips.push('Move towards a window or turn on a light to brighten your face.');
+                    result.readyForPrint = false;
+                } else if (avgLum > 215 || (brightPixels / totalPixels) > 0.35) {
+                    result.lighting.status = 'warn';
+                    result.lighting.text = 'Lighting: Too Bright / Glare';
+                    result.tips.push('Reduce harsh backlight or glare reflecting directly on your face.');
+                    result.readyForPrint = false;
+                } else {
+                    result.lighting.status = 'pass';
+                    result.lighting.text = 'Lighting: Balanced & Clear';
+                }
+
+                // 2. Sharpness & Blur Detection: Discrete 2D Laplacian operator (sigma^2)
+                let lapSum = 0;
+                let lapSqSum = 0;
+                let count = 0;
+
+                for (let y = 1; y < sampleH - 1; y++) {
+                    for (let x = 1; x < sampleW - 1; x++) {
+                        const idx = y * sampleW + x;
+                        const val = (4 * grayMatrix[idx])
+                                  - grayMatrix[idx - 1]
+                                  - grayMatrix[idx + 1]
+                                  - grayMatrix[idx - sampleW]
+                                  - grayMatrix[idx + sampleW];
+                        lapSum += val;
+                        lapSqSum += val * val;
+                        count++;
+                    }
+                }
+
+                const meanLap = lapSum / count;
+                const varianceLap = Math.round((lapSqSum / count) - (meanLap * meanLap));
+                result.focus.variance = varianceLap;
+
+                if (varianceLap < 55) {
+                    result.focus.status = 'warn';
+                    result.focus.text = 'Focus: Soft / Blurry';
+                    result.tips.push('Hold the phone steady and clean your camera lens for a sharp portrait.');
+                    result.readyForPrint = false;
+                } else {
+                    result.focus.status = 'pass';
+                    result.focus.text = 'Focus: In Sharp Focus';
+                }
+
+                // 3. Framing & Centering: Compare center ROI (head area) vs background corners
+                let centerLum = 0;
+                let centerCount = 0;
+                let cornerLum = 0;
+                let cornerCount = 0;
+
+                for (let y = 0; y < sampleH; y++) {
+                    for (let x = 0; x < sampleW; x++) {
+                        const idx = y * sampleW + x;
+                        const val = grayMatrix[idx];
+                        if (x >= 35 && x <= 85 && y >= 25 && y <= 95) {
+                            centerLum += val;
+                            centerCount++;
+                        }
+                        if ((x < 25 || x > 95) && y < 35) {
+                            cornerLum += val;
+                            cornerCount++;
+                        }
+                    }
+                }
+
+                const avgCenter = centerCount > 0 ? centerLum / centerCount : 128;
+                const avgCorner = cornerCount > 0 ? cornerLum / cornerCount : 128;
+
+                if (Math.abs(avgCenter - avgCorner) < 4 && varianceLap < 35) {
+                    result.framing.status = 'warn';
+                    result.framing.text = 'Framing: Center Head in Frame';
+                    result.tips.push('Position your face inside the center oval frame guide.');
+                    result.readyForPrint = false;
+                } else {
+                    result.framing.status = 'pass';
+                    result.framing.text = 'Framing: Well Centered';
+                }
+
+                if (result.tips.length === 0) {
+                    result.readyForPrint = true;
+                }
+            } catch (err) {
+                console.warn('Image quality analysis non-fatal fallback:', err);
+            }
+
+            return result;
+        }
+
+        // Expose to window for client inspection and automated test suites
+        if (typeof window !== 'undefined') {
+            window.analyzeImageQuality = analyzeImageQuality;
+        }
+
+        function updateQualityHud(sourceEl) {
+            const diag = analyzeImageQuality(sourceEl);
+            const chipLighting = document.getElementById('hud-chip-lighting');
+            const chipFocus = document.getElementById('hud-chip-focus');
+            const chipFraming = document.getElementById('hud-chip-framing');
+            const textLighting = document.getElementById('hud-text-lighting');
+            const textFocus = document.getElementById('hud-text-focus');
+            const textFraming = document.getElementById('hud-text-framing');
+            const tipBox = document.getElementById('hud-tip-box');
+            const tipMsg = document.getElementById('hud-tip-message');
+            const summary = document.getElementById('hud-quality-summary');
+
+            if (chipLighting && textLighting) {
+                chipLighting.className = 'quality-chip ' + (diag.lighting.status === 'pass' ? 'pass' : 'warn');
+                textLighting.textContent = diag.lighting.text;
+            }
+            if (chipFocus && textFocus) {
+                chipFocus.className = 'quality-chip ' + (diag.focus.status === 'pass' ? 'pass' : 'warn');
+                textFocus.textContent = diag.focus.text;
+            }
+            if (chipFraming && textFraming) {
+                chipFraming.className = 'quality-chip ' + (diag.framing.status === 'pass' ? 'pass' : 'warn');
+                textFraming.textContent = diag.framing.text;
+            }
+
+            if (tipBox && tipMsg && summary) {
+                if (diag.tips.length > 0) {
+                    tipBox.style.display = 'block';
+                    tipMsg.textContent = diag.tips.join(' • ');
+                    summary.textContent = 'Review Advised';
+                    summary.style.color = '#fbbf24';
+                } else {
+                    tipBox.style.display = 'none';
+                    summary.textContent = 'Ready for Card Print';
+                    summary.style.color = '#34d399';
+                }
+            }
+            if (window.lucide && lucide.createIcons) lucide.createIcons();
+            return diag;
+        }
+
         // Open Cropper Modal
         function startCropper(base64Source) {
             if (activeCropper) {
@@ -1464,6 +1856,14 @@
 
             const modal = document.getElementById('cropper-modal');
             modal.classList.add('active');
+
+            // Run quality diagnostic check on loaded portrait image
+            const tempImg = new Image();
+            tempImg.crossOrigin = 'anonymous';
+            tempImg.onload = function() {
+                updateQualityHud(tempImg);
+            };
+            tempImg.src = base64Source;
 
             const aspectText = document.getElementById('crop-aspect-text');
             if (aspectText) aspectText.textContent = isAspectLocked ? 'Card Ratio' : 'Free Crop';
@@ -1503,6 +1903,15 @@
 
             document.getElementById('btn-close-cropper').addEventListener('click', closeCropper);
             document.getElementById('btn-cancel-cropper').addEventListener('click', closeCropper);
+
+            // Retake Button -> Returns to camera directly
+            const retakeBtn = document.getElementById('btn-crop-retake');
+            if (retakeBtn) {
+                retakeBtn.addEventListener('click', () => {
+                    closeCropper();
+                    openLiveCamera();
+                });
+            }
 
             document.getElementById('btn-crop-zoom-in').addEventListener('click', () => {
                 if (activeCropper) activeCropper.zoom(0.1);
@@ -1545,6 +1954,9 @@
 
                 base64PhotoData = canvas.toDataURL('image/jpeg', 0.85);
 
+                // Run final quality diagnostic check on the saved 300x400 ID card photo
+                const finalDiag = analyzeImageQuality(canvas);
+
                 // Render preview
                 const previewImg = document.getElementById('photo-preview-img');
                 previewImg.src = base64PhotoData;
@@ -1555,8 +1967,24 @@
                 const attachedBadge = document.getElementById('photo-attached-badge');
                 if (attachedBadge) {
                     attachedBadge.style.display = 'inline-flex';
-                    if (window.lucide && lucide.createIcons) lucide.createIcons();
                 }
+
+                // Surface Verified ID Card Quality Badge
+                const qualityBadge = document.getElementById('photo-quality-badge');
+                const qualityBadgeText = document.getElementById('photo-quality-badge-text');
+                if (qualityBadge && qualityBadgeText) {
+                    qualityBadge.style.display = 'inline-flex';
+                    if (finalDiag.readyForPrint) {
+                        qualityBadge.className = 'photo-spec-chip pass';
+                        qualityBadgeText.textContent = '✓ ID Card Spec: 300×400 px | Lighting: Balanced | Focus: Sharp';
+                    } else {
+                        qualityBadge.className = 'photo-spec-chip warn';
+                        const reason = finalDiag.lighting.status === 'warn' ? 'Low Light' : (finalDiag.focus.status === 'warn' ? 'Soft Focus' : 'Check Framing');
+                        qualityBadgeText.textContent = `⚠ ID Card Spec: 300×400 px | ${reason} (Office Review Flag)`;
+                    }
+                }
+
+                if (window.lucide && lucide.createIcons) lucide.createIcons();
 
                 closeCropper();
             });
@@ -1943,6 +2371,9 @@
             const attachedBadge = document.getElementById('photo-attached-badge');
             if (attachedBadge) attachedBadge.style.display = 'none';
 
+            const qualityBadge = document.getElementById('photo-quality-badge');
+            if (qualityBadge) qualityBadge.style.display = 'none';
+
             const ageHint = document.getElementById('dob-age-hint');
             if (ageHint) { ageHint.textContent = ''; ageHint.className = 'field-hint'; }
 
@@ -2041,6 +2472,11 @@
         const dobField = document.getElementById('guard-dob');
         if (dobField) {
             dobField.max = new Date().toISOString().split('T')[0];
+        }
+
+        // Module exports for automated verification in Node environments
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = { analyzeImageQuality, updateQualityHud, toTitleCase };
         }
     </script>
 </body>
