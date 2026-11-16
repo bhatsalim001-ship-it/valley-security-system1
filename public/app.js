@@ -2956,10 +2956,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     const makeAlignedRow = (label, val, isImportant = false) => {
         if (!val || val === '-') return '';
         return `
-        <tr>
-            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${labelWidth}%; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"};">${label}</td>
-            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPadding}px 0;">:</td>
-            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"};">${val}</td>
+        <tr style="border-bottom: none !important;">
+            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: 88px; max-width: 88px; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; border-bottom: none !important;">${label}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 14px; text-align: center; padding: ${rowPadding}px 0; border-bottom: none !important;">:</td>
+            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; border-bottom: none !important;">${val}</td>
         </tr>`;
     };
 
@@ -3001,12 +3001,12 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     // 1. Photo Container Style (Circle, Squircle, Standard)
     let photoContainerStyle = '';
     if (photoShape === 'circle') {
-        const dim = Math.min(photoWidth, photoHeight, 120);
+        const dim = Math.min(photoWidth, photoHeight, 135);
         photoContainerStyle = `width: ${dim}px; height: ${dim}px; border-radius: 50%; overflow: hidden; border: 3.5px solid #ffffff; outline: 3.5px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 14px rgba(0,0,0,0.22); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     } else if (photoShape === 'squircle') {
-        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 18px; overflow: hidden; border: 2.5px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 10px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 18px; overflow: hidden; border: 3px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 12px rgba(0,0,0,0.18); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     } else {
-        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     }
 
     // 2. Name Block Style (Banner, Boxed, Clean)
@@ -3074,9 +3074,9 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (cardTheme === 'organic-wave') {
             return `
             <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
-                <div class="id-card-horizontal visual-id-card-render theme-organic-wave" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#009688'}; border-radius: 12px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; background: #ffffff;">
+                <div class="id-card-horizontal visual-id-card-render theme-organic-wave" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#009688'}; border-radius: 14px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; background: #ffffff;">
                     <!-- SVG Fluid Waves Top with Gradient -->
-                    <svg viewBox="0 0 500 115" preserveAspectRatio="none" style="position: absolute; top: 0; left: 0; width: 100%; height: 115px; pointer-events: none; z-index: 1;">
+                    <svg viewBox="0 0 500 135" preserveAspectRatio="none" style="position: absolute; top: 0; left: 0; width: 100%; height: 135px; pointer-events: none; z-index: 1;">
                         <defs>
                             <linearGradient id="hanoverWaveGradH" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stop-color="${template.headerBgColor || '#0d7a6e'}" />
@@ -3084,8 +3084,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                                 <stop offset="100%" stop-color="#00b4d8" />
                             </linearGradient>
                         </defs>
-                        <path d="M0,0 L500,0 L500,68 C410,105 320,60 230,95 C140,120 70,80 0,100 Z" fill="${template.accentColor || '#009688'}" opacity="0.32"/>
-                        <path d="M0,0 L500,0 L500,55 C390,92 290,52 200,85 C110,112 40,75 0,90 Z" fill="url(#hanoverWaveGradH)"/>
+                        <path d="M0,0 L500,0 L500,68 C410,110 320,60 220,102 C130,132 60,95 0,122 Z" fill="${template.accentColor || '#009688'}" opacity="0.32"/>
+                        <path d="M0,0 L500,0 L500,56 C390,98 290,52 195,92 C110,122 35,90 0,110 Z" fill="url(#hanoverWaveGradH)"/>
                     </svg>
 
                     <!-- SVG Harmonic Guilloche Security Wave Lines -->
@@ -3104,9 +3104,9 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                     </svg>
 
                     <!-- Top Wave Header: Brand (Left) + Display Title (Right) -->
-                    <div class="id-portrait-header" style="height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; box-sizing: border-box; z-index: 2; position: relative; flex-shrink: 0;">
+                    <div class="id-portrait-header" style="height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; box-sizing: border-box; z-index: 2; position: relative; flex-shrink: 0;">
                         <!-- Left: Brand Logo + Text -->
-                        <div style="display: flex; align-items: center; gap: 10px; max-width: 60%;">
+                        <div style="display: flex; align-items: center; gap: 10px; max-width: 62%;">
                             <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));">
                                 ${logoHtml}
                             </div>
@@ -3117,47 +3117,54 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                         </div>
                         <!-- Right: High-Impact Display Serif Card Title (SECURITY ID CARD / STUDENT ID CARD) -->
                         <div style="text-align: right; line-height: 1.05; padding-right: 2px;">
-                            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 19px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: 0 1px 4px rgba(0,0,0,0.35);">
-                                ${titleLine1}${titleLine2 ? `<br><span style="font-size: 17px; font-weight: 700; opacity: 0.95;">${titleLine2}</span>` : ''}
+                            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: 0 1px 4px rgba(0,0,0,0.35);">
+                                ${titleLine1}${titleLine2 ? `<br><span style="font-size: 18px; font-weight: 700; opacity: 0.95;">${titleLine2}</span>` : ''}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Body Content Split -->
-                    <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 4px 16px 12px 16px; z-index: 2; position: relative;">
-                        <!-- Column 1: Circular Photo overlapping wave + Barcode Directly Below -->
-                        <div style="width: 125px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 3;">
-                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-top: -12px; margin-bottom: 6px;">${photoHtml}</div>` : ''}
-                            <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 4px;">
-                                ${barcodePosition === 'bottom-left' ? getBarcodeHtml('120px', '22px') : (barcodePosition === 'bottom-center' ? '' : getBarcodeHtml('120px', '22px'))}
+                    <!-- Body Content Split: Left Pillar (Photo + Barcode) vs Right Details & Security Lockup -->
+                    <div style="display: flex; gap: 16px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 2px 18px 10px 18px; z-index: 2; position: relative;">
+                        <!-- Column 1 (Left Pillar): Large Circular Photo overlapping wave + Barcode Directly Below -->
+                        <div style="width: 135px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 3;">
+                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-top: -26px; margin-bottom: 6px;">${photoHtml}</div>` : ''}
+                            <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 2px;">
+                                ${getBarcodeHtml('125px', '24px')}
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; color: #475569; letter-spacing: 0.8px; margin-top: 2px;">${cleanTextVal(emp.id, false)}</span>
                             </div>
                         </div>
 
-                        <!-- Column 2: Name, Designation, Clean Details Table -->
-                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; padding-left: 6px; padding-right: 12px; z-index: 2;">
-                            <div style="margin-bottom: 4px; padding-bottom: 2px;">
+                        <!-- Column 2 (Right Area): Name, Designation, Details Table, and Bottom Security Lockup -->
+                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding-left: 2px; z-index: 2;">
+                            <div style="margin-bottom: 2px; padding-bottom: 2px;">
                                 ${nameBlockHtml}
                                 ${showDesignation ? `
-                                <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#009688'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 4px 0; white-space: normal; line-height: 1.1; word-break: break-word; letter-spacing: 0.5px; text-transform: uppercase;">
+                                <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#009688'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 3px 0; white-space: normal; line-height: 1.1; word-break: break-word; letter-spacing: 0.5px; text-transform: uppercase;">
                                     ${cleanTextVal(emp.designation)}
                                 </h3>` : ''}
                             </div>
+
                             <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
                                 ${cleanDetailsRowsHtml}
                             </table>
-                            ${barcodePosition === 'bottom-center' ? `
-                                <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px;">
-                                    ${getBarcodeHtml('140px', '18px')}
-                                </div>
-                            ` : ''}
-                        </div>
 
-                        <!-- Column 3: QR Code, Notice, and Authority Signature -->
-                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 2; padding-bottom: 4px;">
-                            ${getQrHtml(qrSize)}
-                            ${getNoticeHtml(true)}
-                            <div style="margin-top: auto; width: 100%;">
-                                ${getSigHtml(`${Math.max(85, qrSize + 15)}px`, '26px')}
+                            <!-- Bottom Security Verification Lockup: Signature (Left) + QR Code (Right) -->
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 4px; padding-bottom: 2px;">
+                                <!-- Authority Signature -->
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 105px;">
+                                    <div style="height: 30px; width: 100px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+                                    <div style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 100px; text-align: center; white-space: nowrap;">AUTHORITY SIGNATURE</div>
+                                </div>
+                                <!-- Official QR Verification -->
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="text-align: right; line-height: 1.15;">
+                                        <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
+                                        <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
+                                    </div>
+                                    <div class="id-portrait-qr" style="width: 50px; height: 50px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#009688'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="46" style="width: 46px; height: 46px; display: block;"></canvas>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3168,9 +3175,9 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         if (cardTheme === 'geometric-tech') {
             return `
             <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
-                <div class="id-card-horizontal visual-id-card-render theme-geometric-tech" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#2563eb'}; border-radius: 12px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; background: #ffffff;">
+                <div class="id-card-horizontal visual-id-card-render theme-geometric-tech" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#2563eb'}; border-radius: 14px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; background: #ffffff;">
                     <!-- Geometric Angular Header -->
-                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 0, 100% 0, 100% 75%, 70% 100%, 0 75%); border-bottom: 2px solid ${template.accentColor || '#2563eb'}; height: ${headerHeight}px; display: flex; align-items: center; gap: 12px; padding: 0 16px; margin: -15px -15px 4px -15px; box-sizing: border-box; flex-shrink: 0;">
+                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 0, 100% 0, 100% 75%, 70% 100%, 0 75%); border-bottom: 2px solid ${template.accentColor || '#2563eb'}; height: 68px; display: flex; align-items: center; gap: 12px; padding: 0 18px; box-sizing: border-box; flex-shrink: 0; z-index: 2;">
                         <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                             ${logoHtml}
                         </div>
@@ -3178,42 +3185,54 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                             <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; letter-spacing: 0.5px;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
                             <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                         </div>
+                        <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; padding-right: 4px;">
+                            ${rawCardTitle}
+                        </div>
                     </div>
 
-                    <!-- Body Content Split -->
-                    <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 4px 14px 6px 14px; z-index: 2;">
-                        <!-- Column 1: Photo & Barcode -->
-                        <div style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 4px;">${photoHtml}</div>` : ''}
-                            ${barcodePosition === 'bottom-left' ? getBarcodeHtml(`${photoWidth}px`, '20px') : getSigHtml(`${photoWidth}px`, '28px')}
+                    <!-- Body Content Split: Left Pillar (Photo + Barcode) vs Right Details & Security Lockup -->
+                    <div style="display: flex; gap: 16px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 6px 18px 10px 18px; z-index: 2;">
+                        <!-- Column 1 (Left Pillar): Photo & Barcode -->
+                        <div style="width: 135px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 6px;">${photoHtml}</div>` : ''}
+                            <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 2px;">
+                                ${getBarcodeHtml('125px', '24px')}
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; color: #475569; letter-spacing: 0.8px; margin-top: 2px;">${cleanTextVal(emp.id, false)}</span>
+                            </div>
                         </div>
 
-                        <!-- Column 2: Name Banner, Designation, Clean Table -->
-                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; padding-left: 6px; padding-right: 10px;">
-                            <div style="margin-bottom: 4px; padding-bottom: 2px;">
+                        <!-- Column 2 (Right Area): Name Banner, Designation, Clean Table & Lockup -->
+                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding-left: 2px;">
+                            <div style="margin-bottom: 2px; padding-bottom: 2px;">
                                 ${nameBlockHtml}
-                                ${showDesignation ? `<h3 class="id-portrait-designation" style="color: ${template.accentColor || '#2563eb'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${cleanTextVal(emp.designation)}</h3>` : ''}
+                                ${showDesignation ? `<h3 class="id-portrait-designation" style="color: ${template.accentColor || '#2563eb'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 3px 0; text-transform: uppercase; letter-spacing: 0.8px;">${cleanTextVal(emp.designation)}</h3>` : ''}
                             </div>
+
                             <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
                                 ${cleanDetailsRowsHtml}
                             </table>
-                            ${barcodePosition === 'bottom-center' ? `
-                                <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px;">
-                                    ${getBarcodeHtml('140px', '18px')}
-                                </div>
-                            ` : ''}
-                        </div>
 
-                        <!-- Column 3: QR Code, Notice, Right Item -->
-                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                            ${getQrHtml(qrSize)}
-                            ${getNoticeHtml(true)}
-                            ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                            <!-- Bottom Security Verification Lockup: Signature (Left) + QR Code (Right) -->
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 4px; padding-bottom: 2px;">
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 105px;">
+                                    <div style="height: 30px; width: 100px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+                                    <div style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 100px; text-align: center; white-space: nowrap;">AUTHORITY SIGNATURE</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="text-align: right; line-height: 1.15;">
+                                        <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
+                                        <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
+                                    </div>
+                                    <div class="id-portrait-qr" style="width: 50px; height: 50px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#2563eb'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="46" style="width: 46px; height: 46px; display: block;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Bottom Geometric Accent Bar -->
-                    <div style="background: ${template.headerBgColor || '#0c2340'}; height: 8px; clip-path: polygon(0 0, 30% 100%, 100% 100%, 100% 0); margin: auto -15px -15px -15px;"></div>
+                    <div style="background: ${template.headerBgColor || '#0c2340'}; height: 8px; clip-path: polygon(0 0, 30% 100%, 100% 100%, 100% 0); margin: auto 0 0 0;"></div>
                 </div>
             </div>`;
         }
@@ -3223,7 +3242,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
             <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
                 <div class="id-card-horizontal visual-id-card-render theme-modern-pill" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#006039'}; border-radius: 16px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; background: #ffffff;">
                     <!-- Salford Top Bar: Floating Green Pill Badge (Left) + Agency Brand (Right) -->
-                    <div class="id-portrait-header" style="padding: 10px 16px 4px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 2; flex-shrink: 0;">
+                    <div class="id-portrait-header" style="padding: 10px 18px 4px 18px; display: flex; align-items: center; justify-content: space-between; z-index: 2; flex-shrink: 0;">
                         <!-- Solid Green Pill Container with Card Title -->
                         <div style="background: ${template.headerBgColor || '#006039'}; border-radius: 9999px; padding: 6px 18px; color: #ffffff; box-shadow: 0 3px 10px rgba(0,0,0,0.18); display: inline-flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;">${rawCardTitle}</span>
@@ -3240,42 +3259,49 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                         </div>
                     </div>
 
-                    <!-- Body Content Split -->
-                    <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 6px 16px 8px 16px; z-index: 2;">
-                        <!-- Column 1: Squircle Photo & Barcode Below -->
-                        <div style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 4px;">${photoHtml}</div>` : ''}
-                            <div style="width: 100%; display: flex; justify-content: center; margin-top: auto;">
-                                ${barcodePosition === 'bottom-left' ? getBarcodeHtml(`${photoWidth}px`, '20px') : getSigHtml(`${photoWidth}px`, '28px')}
+                    <!-- Body Content Split: Left Pillar (Squircle Photo + Barcode) vs Right Details & Lockup -->
+                    <div style="display: flex; gap: 16px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 6px 18px 6px 18px; z-index: 2;">
+                        <!-- Column 1 (Left Pillar): Squircle Photo & Barcode Below -->
+                        <div style="width: 135px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 6px;">${photoHtml}</div>` : ''}
+                            <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 2px;">
+                                ${getBarcodeHtml('125px', '24px')}
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; color: #475569; letter-spacing: 0.8px; margin-top: 2px;">${cleanTextVal(emp.id, false)}</span>
                             </div>
                         </div>
 
-                        <!-- Column 2: Name, Designation, Clean Table -->
-                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; padding-left: 6px; padding-right: 10px;">
-                            <div style="margin-bottom: 4px; padding-bottom: 2px;">
+                        <!-- Column 2 (Right Area): Name, Designation, Clean Table & Lockup -->
+                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding-left: 2px;">
+                            <div style="margin-bottom: 2px; padding-bottom: 2px;">
                                 ${nameBlockHtml}
-                                ${showDesignation ? `<h3 class="id-portrait-designation" style="color: ${template.accentColor || '#006039'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${cleanTextVal(emp.designation)}</h3>` : ''}
+                                ${showDesignation ? `<h3 class="id-portrait-designation" style="color: ${template.accentColor || '#006039'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 3px 0; text-transform: uppercase; letter-spacing: 0.8px;">${cleanTextVal(emp.designation)}</h3>` : ''}
                             </div>
+
                             <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
                                 ${cleanDetailsRowsHtml}
                             </table>
-                            ${barcodePosition === 'bottom-center' ? `
-                                <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px;">
-                                    ${getBarcodeHtml('140px', '18px')}
-                                </div>
-                            ` : ''}
-                        </div>
 
-                        <!-- Column 3: QR Code, Notice, Right Item -->
-                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                            ${getQrHtml(qrSize)}
-                            ${getNoticeHtml(true)}
-                            ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                            <!-- Bottom Security Verification Lockup: Signature (Left) + QR Code (Right) -->
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 4px; padding-bottom: 2px;">
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 105px;">
+                                    <div style="height: 30px; width: 100px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+                                    <div style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 100px; text-align: center; white-space: nowrap;">AUTHORITY SIGNATURE</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="text-align: right; line-height: 1.15;">
+                                        <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
+                                        <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
+                                    </div>
+                                    <div class="id-portrait-qr" style="width: 50px; height: 50px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#006039'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="46" style="width: 46px; height: 46px; display: block;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Salford Striped Geometric Bottom Accent -->
-                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 4px 16px 8px 16px; margin-top: auto; z-index: 1;">
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 2px 18px 6px 18px; margin-top: auto; z-index: 1;">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: ${template.accentColor || '#006039'};"></span>
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: ${template.accentColor || '#006039'}; opacity: 0.5;"></span>
                         <div style="height: 6px; width: 90px; border-radius: 3px; background: repeating-linear-gradient(45deg, ${template.accentColor || '#006039'}, ${template.accentColor || '#006039'} 4px, transparent 4px, transparent 8px);"></div>
@@ -7716,21 +7742,21 @@ const MASTER_CLONE_PRESETS = {
         backgroundColor: '#ffffff',
         headerBgColor: '#0d7a6e',
         accentColor: '#009688',
-        labelColor: '#1e293b',
+        labelColor: '#475569',
         valueColor: '#0f172a',
         headerText: 'VALLEY SECURITY AGENCY',
-        subheaderText: 'GOVT REGD. SHAHIDGUNJ SRINAGAR',
-        logoSize: 46,
-        headerHeight: 64,
+        subheaderText: 'SHAHIDGUNJ SRINAGAR',
+        logoSize: 44,
+        headerHeight: 68,
         headerFontSize: 13,
-        photoWidth: 115,
-        photoHeight: 115,
-        qrSize: 52,
-        detailsFontSize: 8.5,
-        nameFontSize: 15,
-        designationFontSize: 10,
-        rowPadding: 2,
-        labelWidth: 38,
+        photoWidth: 125,
+        photoHeight: 125,
+        qrSize: 50,
+        detailsFontSize: 9,
+        nameFontSize: 18,
+        designationFontSize: 10.5,
+        rowPadding: 2.5,
+        labelWidth: 92,
         labelValueSpacing: 6,
         logo: 'preset-vsa-logo',
         signature: 'preset-vsa-sig',
@@ -7742,7 +7768,7 @@ const MASTER_CLONE_PRESETS = {
             empid: true,
             father: true,
             phone: true,
-            email: true,
+            email: false,
             blood: true,
             address: false,
             signature: true,
