@@ -2755,6 +2755,47 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Shared Gemini Model Invocation with Auto-Fallback
+ * Uses primary model (gemini-3.8-flash, configurable via GEMINI_MODEL).
+ * If Google returns a temporary 503 high-demand spike, gracefully falls back to gemini-2.5-flash.
+ */
+async function generateWithGemini(apiKey, contents, options = {}) {
+  const { GoogleGenerativeAI } = require('@google/generative-ai');
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const primaryModel = (process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
+  const fallbackModel = 'gemini-2.5-flash';
+
+  const modelOptions = {
+    model: primaryModel,
+    ...(options.generationConfig ? { generationConfig: options.generationConfig } : {})
+  };
+
+  try {
+    const model = genAI.getGenerativeModel(modelOptions);
+    return await model.generateContent(contents);
+  } catch (err) {
+    const isTransientFailure = err.message && (
+      err.message.includes('503') ||
+      err.message.includes('high demand') ||
+      err.message.includes('overloaded') ||
+      err.message.includes('ResourceExhausted') ||
+      err.message.includes('fetch failed') ||
+      err.message.includes('ECONNRESET') ||
+      err.message.includes('ETIMEDOUT')
+    );
+    if (isTransientFailure && primaryModel !== fallbackModel) {
+      console.warn(`[Gemini AI] Primary model ${primaryModel} transient failure (${err.message.slice(0, 80)}...). Auto-falling back to ${fallbackModel}...`);
+      const fallbackGenModel = genAI.getGenerativeModel({
+        model: fallbackModel,
+        ...(options.generationConfig ? { generationConfig: options.generationConfig } : {})
+      });
+      return await fallbackGenModel.generateContent(contents);
+    }
+    throw err;
+  }
+}
+
 // AI OCR Document Auto-Enrollment Endpoint
 app.post('/api/employees/ocr', authenticateToken, async (req, res) => {
   const { image } = req.body;
@@ -2775,10 +2816,6 @@ app.post('/api/employees/ocr', authenticateToken, async (req, res) => {
 
     const mimeType = matches[1];
     const base64Data = matches[2];
-
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const part = {
       inlineData: {
@@ -2801,7 +2838,7 @@ app.post('/api/employees/ocr', authenticateToken, async (req, res) => {
 
 Do not include markdown or code block tags. Return only the raw JSON.`;
 
-    const result = await model.generateContent([part, prompt]);
+    const result = await generateWithGemini(apiKey, [part, prompt]);
     const text = result.response.text().trim();
     
     let jsonText = text;
@@ -2859,10 +2896,6 @@ app.post('/api/templates/generate-ai', authenticateToken, async (req, res) => {
   }
 
   try {
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
     const contents = [];
 
     // If an image reference is supplied, parse it and pass to Gemini
@@ -2927,7 +2960,7 @@ JSON Schema:
 
     contents.push(prompt + "\n\n" + systemPrompt);
 
-    const result = await model.generateContent(contents);
+    const result = await generateWithGemini(apiKey, contents);
     const responseText = result.response.text().trim();
     
     let jsonText = responseText;
@@ -3248,13 +3281,7 @@ app.get('/api/ai/dashboard-insights', authenticateToken, async (req, res) => {
       }
     });
 
-    // 3. Prompt Gemini with 3000ms timeout
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' }
-    });
+    // 3. Prompt Gemini with auto-fallback
 
     const prompt = `You are the AI Operations Advisor for Valley Security Service Agency (VSSA), an elite corporate security guard provider in Kashmir.
 Here is the current real-time operations database state for our guards:
@@ -3282,9 +3309,11 @@ Format the output strictly as a JSON object matching this schema:
   ]
 }`;
 
-    const generatePromise = model.generateContent(prompt);
+    const generatePromise = generateWithGemini(apiKey, prompt, {
+      generationConfig: { responseMimeType: 'application/json' }
+    });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('AI request timed out after 3000ms')), 3000)
+      setTimeout(() => reject(new Error('AI request timed out after 5000ms')), 5000)
     );
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
@@ -3440,13 +3469,6 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
   }
 
   try {
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' }
-    });
-    
     const prompt = `You are a geographical and administrative resolver. Given a query describing a place, landmark, or government office (often with typos or colloquial phrasing like 'ag office srinagar' or 'eifle tower'), resolve it to its exact, standardized, official, formal name (without any address details, coordinates, or description).
     
     Examples:
@@ -3464,9 +3486,11 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
       "officialName": "The official name of the place"
     }`;
 
-    const generatePromise = model.generateContent(prompt);
+    const generatePromise = generateWithGemini(apiKey, prompt, {
+      generationConfig: { responseMimeType: 'application/json' }
+    });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('AI request timed out after 3000ms')), 3000)
+      setTimeout(() => reject(new Error('AI request timed out after 5000ms')), 5000)
     );
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
@@ -3513,13 +3537,6 @@ app.get('/api/audit-departments', authenticateToken, async (req, res) => {
       return res.json({ success: true, audit: {} });
     }
 
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' }
-    });
-
     const prompt = `You are an administrative data auditor. You are given a list of current department names.
     For each name, resolve it to its exact, standardized, official, formal name (without any address details, coordinates, or description).
     If a name is already completely official, standard, and correct, keep it exactly as is.
@@ -3532,9 +3549,11 @@ app.get('/api/audit-departments', authenticateToken, async (req, res) => {
       "Current Name 2": "Official Name 2"
     }`;
 
-    const generatePromise = model.generateContent(prompt);
+    const generatePromise = generateWithGemini(apiKey, prompt, {
+      generationConfig: { responseMimeType: 'application/json' }
+    });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('AI request timed out after 3000ms')), 3000)
+      setTimeout(() => reject(new Error('AI request timed out after 5000ms')), 5000)
     );
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();

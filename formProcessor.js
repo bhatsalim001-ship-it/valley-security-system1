@@ -35,9 +35,11 @@ async function processRegistrationForm(base64Image, apiKey) {
     const width = metadata.width;
     const height = metadata.height;
 
-    // 1. Send the image to Gemini 2.5 Flash
+    // 1. Send the image to Gemini (primary: gemini-3.8-flash, fallback: gemini-2.5-flash)
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const primaryModel = (process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
+    const fallbackModel = 'gemini-2.5-flash';
+    let model = genAI.getGenerativeModel({ model: primaryModel });
 
     const imageParts = [
         {
@@ -83,7 +85,27 @@ Guidelines for bounding boxes:
 
 Do not include markdown code block tags. Return only the raw JSON.`;
 
-    const result = await model.generateContent([...imageParts, prompt]);
+    let result;
+    try {
+        result = await model.generateContent([...imageParts, prompt]);
+    } catch (err) {
+        const isTransientFailure = err.message && (
+            err.message.includes('503') ||
+            err.message.includes('high demand') ||
+            err.message.includes('overloaded') ||
+            err.message.includes('ResourceExhausted') ||
+            err.message.includes('fetch failed') ||
+            err.message.includes('ECONNRESET') ||
+            err.message.includes('ETIMEDOUT')
+        );
+        if (isTransientFailure && primaryModel !== fallbackModel) {
+            console.warn(`[Form Scanner] Primary model ${primaryModel} transient failure. Auto-falling back to ${fallbackModel}...`);
+            const fallbackGenModel = genAI.getGenerativeModel({ model: fallbackModel });
+            result = await fallbackGenModel.generateContent([...imageParts, prompt]);
+        } else {
+            throw err;
+        }
+    }
     const responseText = result.response.text().trim();
     
     let jsonText = responseText;
