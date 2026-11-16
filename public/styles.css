@@ -8987,3 +8987,31 @@ html, body {
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #f87171;
 }
+
+/* Phase 3: Universal Orientation & Custom Dimension Controls */
+.uice-preset-dim-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.uice-preset-dim-btn:hover {
+    color: #ffffff;
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.uice-preset-dim-btn.active {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    font-weight: 700;
+}
+

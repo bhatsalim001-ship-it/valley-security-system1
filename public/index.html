@@ -1164,9 +1164,16 @@
                                     <select id="uice-orientation-sel" class="form-control" style="font-size: 11px; padding: 4px 8px; width: 175px;">
                                         <option value="horizontal">Horizontal (500x320)</option>
                                         <option value="vertical">Vertical (320x500)</option>
+                                        <option value="custom">Custom Dimensions...</option>
                                     </select>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-convert-orient" title="Intelligently Adapt Design to Opposite Orientation">
+                                        <i data-lucide="refresh-cw"></i> Convert
+                                    </button>
                                     <button type="button" class="uice-tool-btn" id="btn-uice-auto-arrange" title="Smart Auto-Arrange Elements">
                                         <i data-lucide="wand-2"></i> Auto-Arrange
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-revert-layout" title="Revert Changes to Saved/Initial State">
+                                        <i data-lucide="history"></i> Revert
                                     </button>
                                     <button type="button" class="uice-tool-btn" id="btn-uice-reset-layout" title="Reset to Archetype Defaults">
                                         <i data-lucide="rotate-ccw"></i> Reset
@@ -3355,6 +3362,54 @@
             <div class="modal-footer" style="gap: 12px;">
                 <button type="button" class="btn btn-outline" id="btn-cancel-card-renewal" style="flex: 1; height: 44px;">Cancel</button>
                 <button type="button" class="btn btn-primary" id="btn-submit-card-renewal" style="flex: 1.2; height: 44px;">Confirm & Renew (₹50)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UICE CUSTOM DIMENSIONS MODAL -->
+    <div id="uice-custom-dim-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uice-custom-dim-title">
+        <div class="modal-container" style="max-width: 480px; width: 92%;">
+            <div class="modal-header">
+                <h2 id="uice-custom-dim-title" style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--vs-text-primary);">
+                    <i data-lucide="proportions" style="width: 20px; height: 20px; color: #3b82f6;"></i>
+                    Custom Canvas Dimensions
+                </h2>
+                <button type="button" class="modal-close" id="btn-close-uice-custom-dim" onclick="closeUiceCustomDimModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-uice-custom-dim" onsubmit="handleUiceCustomDimSubmit(event)">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px;">Standard Dimension Presets</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button type="button" class="uice-preset-dim-btn" data-w="500" data-h="320">CR80 Landscape (500×320)</button>
+                            <button type="button" class="uice-preset-dim-btn" data-w="320" data-h="500">CR80 Portrait (320×500)</button>
+                            <button type="button" class="uice-preset-dim-btn" data-w="400" data-h="600">Event Badge (400×600)</button>
+                            <button type="button" class="uice-preset-dim-btn" data-w="420" data-h="420">Square Pass (420×420)</button>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="uice-custom-width" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Width (px)</label>
+                            <input type="number" id="uice-custom-width" min="200" max="1400" step="10" required class="form-control" style="font-size: 14px; font-weight: 700;">
+                        </div>
+                        <div class="form-group">
+                            <label for="uice-custom-height" style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Height (px)</label>
+                            <input type="number" id="uice-custom-height" min="200" max="1400" step="10" required class="form-control" style="font-size: 14px; font-weight: 700;">
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; background: rgba(59, 130, 246, 0.08); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <input type="checkbox" id="uice-custom-reflow" checked style="width: 16px; height: 16px; accent-color: #3b82f6;">
+                        <label for="uice-custom-reflow" style="font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                            Intelligently reflow and optimize elements for new aspect ratio
+                        </label>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 0;">
+                        <button type="button" class="btn btn-outline" onclick="closeUiceCustomDimModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-apply-uice-custom-dim">
+                            <i data-lucide="check"></i> Apply Dimensions
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

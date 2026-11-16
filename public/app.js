@@ -7291,7 +7291,8 @@ function renderReorderableFieldsList() {
 
 const UICE_STATE = {
     template: null,
-    orientation: 'horizontal', // 'horizontal' | 'vertical'
+    orientation: 'horizontal', // 'horizontal' | 'vertical' | 'custom'
+    initialSnapshots: null,
     selectedId: null,
     hoveredId: null,
     zoom: 1.0,
@@ -7827,6 +7828,7 @@ function initUiceWithTemplate(tplSource) {
     UICE_STATE.selectedId = null;
     UICE_STATE.history = [];
     UICE_STATE.historyIndex = -1;
+    UICE_STATE.initialSnapshots = JSON.parse(JSON.stringify(tpl.layouts));
 
     // Set preview employee
     if (VSA_STATE.employees && VSA_STATE.employees.length > 0) {
@@ -9179,14 +9181,32 @@ function setupUiceListeners() {
     const orientSel = document.getElementById('uice-orientation-sel');
     if (orientSel) {
         orientSel.addEventListener('change', function() {
-            switchUiceOrientation(this.value);
+            if (this.value === 'custom') {
+                openUiceCustomDimModal();
+            } else {
+                switchUiceOrientation(this.value);
+            }
         });
     }
 
-    // Auto-Arrange
+    // Convert Layout (Intelligent Adaptation)
+    const btnConvertOrient = document.getElementById('btn-uice-convert-orient');
+    if (btnConvertOrient) {
+        btnConvertOrient.addEventListener('click', function() {
+            convertUiceOrientation();
+        });
+    }
+
+    // Auto-Arrange (Intelligent Ergonomic Reflow)
     const btnAutoArrange = document.getElementById('btn-uice-auto-arrange');
     if (btnAutoArrange) {
         btnAutoArrange.addEventListener('click', autoArrangeUiceLayout);
+    }
+
+    // Revert Changes
+    const btnRevertLayout = document.getElementById('btn-uice-revert-layout');
+    if (btnRevertLayout) {
+        btnRevertLayout.addEventListener('click', revertUiceLayout);
     }
 
     // Reset Layout
@@ -9194,6 +9214,20 @@ function setupUiceListeners() {
     if (btnResetLayout) {
         btnResetLayout.addEventListener('click', resetUiceLayout);
     }
+
+    // Custom Dimension Preset Buttons
+    document.querySelectorAll('.uice-preset-dim-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const w = this.getAttribute('data-w');
+            const h = this.getAttribute('data-h');
+            const inpW = document.getElementById('uice-custom-width');
+            const inpH = document.getElementById('uice-custom-height');
+            if (inpW && w) inpW.value = w;
+            if (inpH && h) inpH.value = h;
+            document.querySelectorAll('.uice-preset-dim-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
 
     // Grid, Snap, Guides Toggles
     const btnGridToggle = document.getElementById('btn-uice-grid-toggle');
@@ -9583,33 +9617,530 @@ function drawUiceGuides(lines) {
 }
 
 /**
+ * Intelligently transforms an ID card layout from one orientation/aspect-ratio to another.
+ * Semantic Role Detection -> Spatial Ergonomics -> Proportion Refactor -> Collision Avoidance -> Scannability Sentinel.
+ * 
+ * @param {Object} sourceLayout - The source layout object ({ width, height, background, elements })
+ * @param {number} targetW - Target width in pixels (e.g. 320 for vertical, 500 for horizontal, or custom)
+ * @param {number} targetH - Target height in pixels (e.g. 500 for vertical, 320 for horizontal, or custom)
+ * @param {string} targetOrient - 'horizontal' | 'vertical' | 'custom'
+ * @returns {Object} A brand new independent layout object tailored for the target dimensions.
+ */
+function transformLayoutBetweenOrientations(sourceLayout, targetW, targetH, targetOrient) {
+    if (!sourceLayout || !Array.isArray(sourceLayout.elements)) {
+        return {
+            width: targetW,
+            height: targetH,
+            background: { color: '#ffffff', headerBg: '#0e3e2b', accent: '#009688', borderRadius: 14 },
+            elements: getUiceDefaultElements(targetOrient || (targetW >= targetH ? 'horizontal' : 'vertical'))
+        };
+    }
+
+    const sourceW = sourceLayout.width || 500;
+    const sourceH = sourceLayout.height || 320;
+    const isTargetVertical = targetH >= targetW;
+
+    // Deep clone background and preserve custom palette
+    const targetBg = JSON.parse(JSON.stringify(sourceLayout.background || {
+        color: '#ffffff',
+        headerBg: '#0e3e2b',
+        accent: '#009688',
+        borderRadius: 14
+    }));
+
+    // Clone elements array
+    const sourceElements = JSON.parse(JSON.stringify(sourceLayout.elements));
+
+    // Categorize elements by semantic roles
+    const headerBars = [];
+    const brands = [];
+    const badges = [];
+    const photos = [];
+    const names = [];
+    const designations = [];
+    const tables = [];
+    const barcodes = [];
+    const signatures = [];
+    const qrs = [];
+    const others = [];
+
+    sourceElements.forEach(el => {
+        if (!el || el.visible === false) return;
+        const type = el.type;
+        const nameLower = (el.name || '').toLowerCase();
+        if (type === 'shape' && (el.y <= 20 || nameLower.includes('header') || nameLower.includes('bar')) && el.width >= sourceW * 0.65) {
+            headerBars.push(el);
+        } else if (type === 'agency-brand' || type === 'agency-logo') {
+            brands.push(el);
+        } else if (type === 'badge-pill') {
+            badges.push(el);
+        } else if (type === 'employee-photo') {
+            photos.push(el);
+        } else if (type === 'employee-name') {
+            names.push(el);
+        } else if (type === 'designation') {
+            designations.push(el);
+        } else if (type === 'details-table') {
+            tables.push(el);
+        } else if (type === 'barcode') {
+            barcodes.push(el);
+        } else if (type === 'signature') {
+            signatures.push(el);
+        } else if (type === 'qr-code') {
+            qrs.push(el);
+        } else {
+            others.push(el);
+        }
+    });
+
+    const transformedElements = [];
+
+    if (isTargetVertical) {
+        // =========================================================================
+        // TARGET: VERTICAL / PORTRAIT COMPOSITION (e.g. 320 x 500)
+        // Hierarchy: Top Banner -> Brand -> Badge -> Hero Photo -> Name -> Designation -> Table -> Footer Lockup (Barcode | Sig | QR)
+        // =========================================================================
+
+        const headerHeight = Math.max(54, Math.min(74, Math.round(targetH * 0.124)));
+
+        // 1. Top Header Accent Shape
+        headerBars.forEach(el => {
+            el.x = 0;
+            el.y = 0;
+            el.width = targetW;
+            el.height = headerHeight;
+            el.zIndex = el.zIndex || 1;
+            transformedElements.push(el);
+        });
+
+        // 2. Agency Brand / Logo
+        brands.forEach(el => {
+            el.x = 10;
+            el.y = 8;
+            el.width = Math.max(200, targetW - 20);
+            el.height = headerHeight - 16;
+            el.zIndex = Math.max(2, el.zIndex || 2);
+            if (el.properties) {
+                if (el.properties.titleFontSize) el.properties.titleFontSize = Math.min(12, Math.max(10, el.properties.titleFontSize * 0.95));
+                if (el.properties.logoSize) el.properties.logoSize = Math.min(36, Math.max(28, el.properties.logoSize));
+            }
+            transformedElements.push(el);
+        });
+
+        // 3. Card Title Badge Pill
+        let badgeY = headerHeight + 6;
+        badges.forEach(el => {
+            const badgeW = Math.min(220, targetW - 40);
+            el.width = badgeW;
+            el.height = 24;
+            el.x = Math.round((targetW - badgeW) / 2);
+            el.y = badgeY;
+            if (el.properties && el.properties.fontSize) {
+                el.properties.fontSize = Math.min(11, el.properties.fontSize);
+            }
+            transformedElements.push(el);
+            badgeY += 28;
+        });
+
+        // 4. Employee Photo (Centered Hero Anchor)
+        const photoSize = Math.max(90, Math.min(120, Math.round(targetW * 0.35))); // e.g. 110px for 320w
+        let photoY = badges.length > 0 ? (badgeY + 4) : (headerHeight + 10);
+        photos.forEach(el => {
+            el.width = photoSize;
+            el.height = photoSize;
+            el.x = Math.round((targetW - photoSize) / 2);
+            el.y = photoY;
+            el.zIndex = Math.max(3, el.zIndex || 3);
+            transformedElements.push(el);
+        });
+
+        // 5. Employee Name (Centered Under Photo)
+        let nameY = photos.length > 0 ? (photoY + photoSize + 8) : (headerHeight + 20);
+        names.forEach(el => {
+            el.x = 10;
+            el.y = nameY;
+            el.width = targetW - 20;
+            el.height = 26;
+            if (el.properties) {
+                el.properties.textAlign = 'center';
+                el.properties.fontSize = Math.min(16.5, Math.max(13, el.properties.fontSize || 16));
+            }
+            transformedElements.push(el);
+            nameY += 26;
+        });
+
+        // 6. Designation (Centered Under Name)
+        let desigY = nameY;
+        designations.forEach(el => {
+            el.x = 10;
+            el.y = desigY;
+            el.width = targetW - 20;
+            el.height = 18;
+            if (el.properties) {
+                el.properties.textAlign = 'center';
+                el.properties.fontSize = Math.min(11, Math.max(9, el.properties.fontSize || 10.5));
+            }
+            transformedElements.push(el);
+            desigY += 22;
+        });
+
+        // 7. Details Table (Full Width Below Designation)
+        let tableY = desigY + 4;
+        const footerY = targetH - 92;
+        const availableTableH = Math.max(90, footerY - tableY - 6);
+        tables.forEach(el => {
+            el.x = 16;
+            el.y = tableY;
+            el.width = targetW - 32;
+            el.height = availableTableH;
+            if (el.properties) {
+                el.properties.rowPadding = 2.5;
+                el.properties.labelWidth = Math.min(44, Math.round(targetW * 0.13));
+                el.properties.fontSize = Math.min(8.5, Math.max(7.5, el.properties.fontSize || 8));
+            }
+            transformedElements.push(el);
+        });
+
+        // 8. Footer Security Lockup: Barcode (Left), Signature (Center), QR (Right)
+        const footerActualY = targetH - 90;
+        barcodes.forEach(el => {
+            el.x = 12;
+            el.y = footerActualY + 8;
+            el.width = Math.min(130, Math.max(100, Math.round(targetW * 0.39)));
+            el.height = 26;
+            if (el.properties) {
+                el.properties.fontSize = 8;
+            }
+            transformedElements.push(el);
+        });
+
+        signatures.forEach(el => {
+            el.x = Math.round(targetW * 0.46);
+            el.y = footerActualY + 2;
+            el.width = Math.min(100, Math.max(85, Math.round(targetW * 0.30)));
+            el.height = 44;
+            transformedElements.push(el);
+        });
+
+        qrs.forEach(el => {
+            const qrSize = Math.max(46, Math.min(54, Math.round(targetW * 0.16)));
+            el.x = targetW - qrSize - 14;
+            el.y = footerActualY;
+            el.width = qrSize;
+            el.height = qrSize;
+            transformedElements.push(el);
+        });
+
+    } else {
+        // =========================================================================
+        // TARGET: HORIZONTAL / LANDSCAPE COMPOSITION (e.g. 500 x 320)
+        // Hierarchy: Top Banner -> Left Pillar (Photo + Barcode) -> Right Column (Name, Desig, Table, Sig, QR)
+        // =========================================================================
+
+        const headerHeight = Math.max(48, Math.min(58, Math.round(targetH * 0.165)));
+
+        // 1. Top Header Accent Shape
+        headerBars.forEach(el => {
+            el.x = 0;
+            el.y = 0;
+            el.width = targetW;
+            el.height = headerHeight;
+            el.zIndex = el.zIndex || 1;
+            transformedElements.push(el);
+        });
+
+        // 2. Agency Brand (Top Left)
+        brands.forEach(el => {
+            el.x = 14;
+            el.y = 8;
+            el.width = Math.max(220, Math.round(targetW * 0.58));
+            el.height = headerHeight - 14;
+            el.zIndex = Math.max(2, el.zIndex || 2);
+            if (el.properties) {
+                if (el.properties.titleFontSize) el.properties.titleFontSize = 12;
+                if (el.properties.logoSize) el.properties.logoSize = 32;
+            }
+            transformedElements.push(el);
+        });
+
+        // 3. Card Title Badge Pill (Top Right)
+        badges.forEach(el => {
+            const badgeW = Math.min(180, Math.round(targetW * 0.34));
+            el.width = badgeW;
+            el.height = 28;
+            el.x = targetW - badgeW - 14;
+            el.y = 12;
+            if (el.properties && el.properties.fontSize) {
+                el.properties.fontSize = 12;
+            }
+            transformedElements.push(el);
+        });
+
+        // Left Pillar Layout (Photo & Barcode)
+        const leftPillarX = 18;
+        const photoSize = Math.max(90, Math.min(125, Math.round(targetH * 0.36))); // e.g. 114px
+        const photoY = headerHeight + 14;
+        photos.forEach(el => {
+            el.width = photoSize;
+            el.height = photoSize;
+            el.x = leftPillarX;
+            el.y = photoY;
+            el.zIndex = Math.max(3, el.zIndex || 3);
+            transformedElements.push(el);
+        });
+
+        // Barcode (Under Photo in left pillar)
+        const barcodeY = photoY + photoSize + 14;
+        barcodes.forEach(el => {
+            el.x = Math.max(12, leftPillarX - 4);
+            el.y = Math.min(targetH - 36, barcodeY);
+            el.width = Math.max(110, photoSize + 10);
+            el.height = 28;
+            transformedElements.push(el);
+        });
+
+        // Right Column Layout
+        const rightColX = Math.round(leftPillarX + photoSize + 20); // e.g. 152px
+        const rightColW = targetW - rightColX - 16; // e.g. 332px
+
+        // 4. Employee Name
+        const nameY = headerHeight + 14;
+        names.forEach(el => {
+            el.x = rightColX;
+            el.y = nameY;
+            el.width = rightColW;
+            el.height = 30;
+            if (el.properties) {
+                el.properties.textAlign = 'left';
+                el.properties.fontSize = 16.5;
+            }
+            transformedElements.push(el);
+        });
+
+        // 5. Designation
+        const desigY = nameY + 30;
+        designations.forEach(el => {
+            el.x = rightColX;
+            el.y = desigY;
+            el.width = rightColW;
+            el.height = 20;
+            if (el.properties) {
+                el.properties.textAlign = 'left';
+                el.properties.fontSize = 10;
+            }
+            transformedElements.push(el);
+        });
+
+        // 6. Details Table
+        const tableY = desigY + 22;
+        const tableH = Math.max(90, Math.min(126, targetH - tableY - 76));
+        tables.forEach(el => {
+            el.x = rightColX;
+            el.y = tableY;
+            el.width = rightColW;
+            el.height = tableH;
+            if (el.properties) {
+                el.properties.rowPadding = 3;
+                el.properties.labelWidth = 38;
+                el.properties.fontSize = 8;
+            }
+            transformedElements.push(el);
+        });
+
+        // 7. Signature and QR Code (Bottom Right Validation cluster)
+        const footerY = targetH - 74;
+        signatures.forEach(el => {
+            el.x = Math.round(rightColX + (rightColW * 0.25));
+            el.y = footerY + 2;
+            el.width = 115;
+            el.height = 48;
+            transformedElements.push(el);
+        });
+
+        qrs.forEach(el => {
+            const qrSize = Math.max(48, Math.min(58, Math.round(targetH * 0.17)));
+            el.x = targetW - qrSize - 22;
+            el.y = footerY;
+            el.width = qrSize;
+            el.height = qrSize;
+            transformedElements.push(el);
+        });
+    }
+
+    // Proportional placement for any auxiliary / custom elements
+    const scaleX = targetW / sourceW;
+    const scaleY = targetH / sourceH;
+    others.forEach(el => {
+        el.x = Math.max(6, Math.min(targetW - el.width - 6, Math.round(el.x * scaleX)));
+        el.y = Math.max(6, Math.min(targetH - el.height - 6, Math.round(el.y * scaleY)));
+        el.width = Math.min(targetW - 12, Math.max(16, Math.round(el.width * scaleX)));
+        el.height = Math.min(targetH - 12, Math.max(16, Math.round(el.height * scaleY)));
+        transformedElements.push(el);
+    });
+
+    // Scannability Sentinel Safeguard Pass:
+    transformedElements.forEach(el => {
+        if (el.type === 'qr-code') {
+            if (el.width < 44) el.width = 44;
+            if (el.height < 44) el.height = 44;
+        }
+        if (el.type === 'barcode') {
+            if (el.width < 100) el.width = 100;
+            if (el.height < 22) el.height = 22;
+        }
+    });
+
+    // Boundary clamping pass to prevent overflow
+    transformedElements.forEach(el => {
+        if (el.x < 0) el.x = 0;
+        if (el.y < 0) el.y = 0;
+        if (el.x + el.width > targetW) {
+            el.x = Math.max(0, targetW - el.width);
+        }
+        if (el.y + el.height > targetH) {
+            el.y = Math.max(0, targetH - el.height);
+        }
+    });
+
+    return {
+        width: targetW,
+        height: targetH,
+        background: targetBg,
+        elements: transformedElements
+    };
+}
+
+/**
+ * Intelligently reflows and optimizes an existing layout for custom dimensions.
+ */
+function reflowLayoutForDimensions(layout, targetW, targetH) {
+    if (!layout) return layout;
+    const targetOrient = targetW >= targetH ? 'horizontal' : 'vertical';
+    const transformed = transformLayoutBetweenOrientations(layout, targetW, targetH, targetOrient);
+    layout.width = targetW;
+    layout.height = targetH;
+    layout.background = transformed.background;
+    layout.elements = transformed.elements;
+    return layout;
+}
+
+/**
  * Switches between Horizontal and Vertical orientations.
+ * Preserves the independent layout configurations of both orientations.
  */
 function switchUiceOrientation(newOrientation) {
     if (!UICE_STATE.template) return;
+    if (!UICE_STATE.template.layouts) {
+        UICE_STATE.template.layouts = {};
+    }
+
+    const prevOrient = UICE_STATE.orientation;
     UICE_STATE.orientation = newOrientation;
     UICE_STATE.template.layout = newOrientation;
     UICE_STATE.selectedId = null;
 
-    // Ensure layout exists
-    convertLegacyTemplateToUice(UICE_STATE.template);
+    // If target layout doesn't exist or is empty, intelligently derive from previous layout!
+    if (!UICE_STATE.template.layouts[newOrientation] || 
+        !Array.isArray(UICE_STATE.template.layouts[newOrientation].elements) || 
+        UICE_STATE.template.layouts[newOrientation].elements.length === 0) {
+        
+        const sourceLayout = UICE_STATE.template.layouts[prevOrient];
+        const targetDims = newOrientation === 'vertical' ? { w: 320, h: 500 } : { w: 500, h: 320 };
+        if (sourceLayout && Array.isArray(sourceLayout.elements) && sourceLayout.elements.length > 0) {
+            UICE_STATE.template.layouts[newOrientation] = transformLayoutBetweenOrientations(
+                sourceLayout, targetDims.w, targetDims.h, newOrientation
+            );
+        } else {
+            convertLegacyTemplateToUice(UICE_STATE.template);
+        }
+    }
+
+    // Sync orientation dropdown
+    const orientSel = document.getElementById('uice-orientation-sel');
+    if (orientSel) orientSel.value = newOrientation;
 
     renderUiceStage();
     pushUiceHistory(`Switch to ${newOrientation}`);
 }
 
 /**
- * Auto-arranges elements using the golden-ratio intelligent layout algorithm.
+ * Converts the active design to the target orientation using intelligent spatial reflow.
+ * Preserves the source orientation layout completely intact.
+ */
+function convertUiceOrientation(targetOrient) {
+    if (!UICE_STATE.template || !UICE_STATE.template.layouts) return;
+
+    const sourceOrient = UICE_STATE.orientation;
+    if (!targetOrient) {
+        targetOrient = sourceOrient === 'vertical' ? 'horizontal' : 'vertical';
+    }
+
+    if (sourceOrient === targetOrient) {
+        alert(`Already in ${sourceOrient.toUpperCase()} orientation.`);
+        return;
+    }
+
+    const confirmMsg = `Intelligently adapt current ${sourceOrient.toUpperCase()} design into ${targetOrient.toUpperCase()} orientation?\n\nThis will generate an ergonomically optimized ${targetOrient} layout without altering your saved ${sourceOrient} layout.`;
+    if (!confirm(confirmMsg)) return;
+
+    const sourceLayout = UICE_STATE.template.layouts[sourceOrient];
+    const targetDims = targetOrient === 'vertical' ? { w: 320, h: 500 } : { w: 500, h: 320 };
+
+    // Run intelligent transformation
+    const newLayout = transformLayoutBetweenOrientations(sourceLayout, targetDims.w, targetDims.h, targetOrient);
+    UICE_STATE.template.layouts[targetOrient] = newLayout;
+    UICE_STATE.orientation = targetOrient;
+    UICE_STATE.template.layout = targetOrient;
+    UICE_STATE.selectedId = null;
+
+    // Update orientation dropdown
+    const orientSel = document.getElementById('uice-orientation-sel');
+    if (orientSel) orientSel.value = targetOrient;
+
+    renderUiceStage();
+    pushUiceHistory(`Intelligent Convert to ${targetOrient}`);
+    alert(`Successfully converted card layout to ${targetOrient} orientation with intelligent spatial reflow!`);
+}
+
+/**
+ * Reverts active orientation layout back to initial or last saved snapshot.
+ */
+function revertUiceLayout() {
+    if (!UICE_STATE.template || !UICE_STATE.template.layouts) return;
+    const orient = UICE_STATE.orientation;
+
+    if (!UICE_STATE.initialSnapshots || !UICE_STATE.initialSnapshots[orient]) {
+        alert('No previous snapshot available to revert to.');
+        return;
+    }
+
+    if (!confirm(`Revert ${orient.toUpperCase()} layout to the initial loaded state? Any unsaved edits will be discarded.`)) return;
+
+    UICE_STATE.template.layouts[orient] = JSON.parse(JSON.stringify(UICE_STATE.initialSnapshots[orient]));
+    UICE_STATE.selectedId = null;
+
+    renderUiceStage();
+    pushUiceHistory(`Revert Changes (${orient})`);
+    alert(`${orient.toUpperCase()} layout reverted successfully!`);
+}
+
+/**
+ * Auto-arranges elements using the intelligent spatial layout algorithm.
+ * Intelligently balances active elements, resolves collisions, and ensures scannability.
  */
 function autoArrangeUiceLayout() {
     const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
     if (!layout) return;
 
-    // Regenerate default clean coordinates
-    layout.elements = getUiceDefaultElements(UICE_STATE.orientation, UICE_STATE.template);
+    reflowLayoutForDimensions(
+        layout,
+        layout.width || (UICE_STATE.orientation === 'vertical' ? 320 : 500),
+        layout.height || (UICE_STATE.orientation === 'vertical' ? 500 : 320)
+    );
+
     renderUiceStage();
     pushUiceHistory('Auto-Arrange Layout');
-    alert('Layout automatically arranged according to high-impact ergonomic standards!');
+    alert('Layout automatically arranged with intelligent spatial reflow & scannability sentinel checks!');
 }
 
 /**
@@ -9617,7 +10148,94 @@ function autoArrangeUiceLayout() {
  */
 function resetUiceLayout() {
     if (!confirm('Reset current layout to factory defaults?')) return;
-    autoArrangeUiceLayout();
+    const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
+    if (!layout) return;
+
+    layout.elements = getUiceDefaultElements(UICE_STATE.orientation, UICE_STATE.template);
+    renderUiceStage();
+    pushUiceHistory('Reset Layout Defaults');
+    alert('Reset layout to factory defaults.');
+}
+
+/**
+ * Opens Custom Dimensions modal.
+ */
+function openUiceCustomDimModal() {
+    const modal = document.getElementById('uice-custom-dim-modal');
+    if (!modal) return;
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts
+        ? UICE_STATE.template.layouts[UICE_STATE.orientation]
+        : null;
+
+    const curW = layout ? layout.width : (UICE_STATE.orientation === 'vertical' ? 320 : 500);
+    const curH = layout ? layout.height : (UICE_STATE.orientation === 'vertical' ? 500 : 320);
+
+    const inpW = document.getElementById('uice-custom-width');
+    const inpH = document.getElementById('uice-custom-height');
+    if (inpW) inpW.value = curW;
+    if (inpH) inpH.value = curH;
+
+    modal.classList.remove('hidden');
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons({ root: modal });
+    }
+}
+
+/**
+ * Closes Custom Dimensions modal.
+ */
+function closeUiceCustomDimModal() {
+    const modal = document.getElementById('uice-custom-dim-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Handles submission of Custom Dimensions modal.
+ */
+function handleUiceCustomDimSubmit(e) {
+    if (e) e.preventDefault();
+    const inpW = document.getElementById('uice-custom-width');
+    const inpH = document.getElementById('uice-custom-height');
+    const chkReflow = document.getElementById('uice-custom-reflow');
+
+    const w = parseInt(inpW ? inpW.value : 500) || 500;
+    const h = parseInt(inpH ? inpH.value : 320) || 320;
+    const reflow = chkReflow ? chkReflow.checked : true;
+
+    applyUiceCustomDimensions(w, h, reflow);
+    closeUiceCustomDimModal();
+}
+
+/**
+ * Applies custom dimensions to active layout and optionally runs reflow.
+ */
+function applyUiceCustomDimensions(w, h, shouldReflow = true) {
+    if (!UICE_STATE.template || !UICE_STATE.template.layouts) return;
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!layout) return;
+
+    layout.width = w;
+    layout.height = h;
+
+    if (shouldReflow) {
+        reflowLayoutForDimensions(layout, w, h);
+    }
+
+    // Sync orientation dropdown text to Custom
+    const orientSel = document.getElementById('uice-orientation-sel');
+    if (orientSel) {
+        let optCustom = orientSel.querySelector('option[value="custom"]');
+        if (!optCustom) {
+            optCustom = document.createElement('option');
+            optCustom.value = 'custom';
+            orientSel.appendChild(optCustom);
+        }
+        optCustom.textContent = `Custom (${w}×${h})`;
+        orientSel.value = 'custom';
+    }
+
+    renderUiceStage();
+    pushUiceHistory(`Custom Dimensions (${w}×${h})`);
 }
 
 /**
