@@ -1124,9 +1124,483 @@
 
                 <!-- 5C. ID CARD TEMPLATES MANAGER VIEW -->
                 <section id="view-templates" class="app-view hidden">
-                    <div class="studio-layout-row">
-                        <!-- Left Column: Controls & Configuration -->
-                        <div class="studio-controls-column">
+                    <div class="uice-workspace-container">
+                        <!-- Studio Mode Switcher & Global Header -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 4px;">
+                            <div class="uice-mode-nav">
+                                <button type="button" id="tab-uice-visual" class="uice-mode-tab active">
+                                    <i data-lucide="layout-grid"></i> Visual Canvas Designer
+                                    <span class="badge badge-accent">Omega UICE</span>
+                                </button>
+                                <button type="button" id="tab-uice-classic" class="uice-mode-tab">
+                                    <i data-lucide="sliders"></i> Classic Form Settings
+                                </button>
+                            </div>
+                            <div class="studio-selector-bar" style="background: var(--surface-primary); border: 1px solid var(--border-default); border-radius: 10px; padding: 6px 14px; display: inline-flex; align-items: center; gap: 10px; margin: 0;">
+                                <label for="uice-top-tpl-select" style="font-size: 12px; font-weight: 700; color: #94a3b8; margin: 0;">Template:</label>
+                                <select id="uice-top-tpl-select" class="form-control" style="font-size: 12px; padding: 4px 10px; width: 220px;"></select>
+                                <button type="button" class="btn btn-primary" id="btn-uice-new-template" style="font-size: 12px; padding: 5px 12px;">
+                                    <i data-lucide="plus"></i> New
+                                </button>
+                                <button type="button" class="btn btn-danger" id="btn-uice-delete-template" style="font-size: 12px; padding: 5px 12px;">
+                                    <i data-lucide="trash-2"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. UNIVERSAL INTELLIGENT CANVAS ENGINE (UICE) VISUAL WORKSPACE -->
+                        <div id="uice-visual-workspace">
+                            <!-- Command Bar Above Stage -->
+                            <div class="uice-command-bar">
+                                <div class="uice-cmd-group">
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-undo" title="Undo (Ctrl+Z)" disabled>
+                                        <i data-lucide="undo-2"></i> Undo
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-redo" title="Redo (Ctrl+Y)" disabled>
+                                        <i data-lucide="redo-2"></i> Redo
+                                    </button>
+                                    <div class="uice-divider"></div>
+                                    <label for="uice-orientation-sel" style="font-size: 11px; font-weight: 700; color: #94a3b8; margin: 0;">Orientation:</label>
+                                    <select id="uice-orientation-sel" class="form-control" style="font-size: 11px; padding: 4px 8px; width: 175px;">
+                                        <option value="horizontal">Horizontal (500x320)</option>
+                                        <option value="vertical">Vertical (320x500)</option>
+                                    </select>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-auto-arrange" title="Smart Auto-Arrange Elements">
+                                        <i data-lucide="wand-2"></i> Auto-Arrange
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-reset-layout" title="Reset to Archetype Defaults">
+                                        <i data-lucide="rotate-ccw"></i> Reset
+                                    </button>
+                                </div>
+
+                                <div class="uice-cmd-group">
+                                    <button type="button" class="uice-tool-btn active" id="btn-uice-grid-toggle" title="Toggle Grid Overlay">
+                                        <i data-lucide="grid"></i> Grid
+                                    </button>
+                                    <button type="button" class="uice-tool-btn active" id="btn-uice-snap-toggle" title="Toggle Snap to Grid">
+                                        <i data-lucide="magnet"></i> Snap
+                                    </button>
+                                    <button type="button" class="uice-tool-btn active" id="btn-uice-guides-toggle" title="Toggle Alignment Guides">
+                                        <i data-lucide="ruler"></i> Guides
+                                    </button>
+                                    <div class="uice-divider"></div>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-zoom-out" title="Zoom Out">
+                                        <i data-lucide="minus"></i>
+                                    </button>
+                                    <span id="lbl-uice-zoom" style="font-size: 11px; font-weight: 700; color: #cbd5e1; min-width: 40px; text-align: center;">100%</span>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-zoom-in" title="Zoom In">
+                                        <i data-lucide="plus"></i>
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-zoom-fit" title="Fit to Screen">
+                                        <i data-lucide="maximize-2"></i> Fit
+                                    </button>
+                                </div>
+
+                                <div class="uice-cmd-group">
+                                    <label for="uice-preview-emp-select" style="font-size: 11px; font-weight: 700; color: #94a3b8; margin: 0;">Preview Guard:</label>
+                                    <select id="uice-preview-emp-select" class="form-control" style="font-size: 11px; padding: 4px 8px; width: 160px;"></select>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-export-png" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
+                                        <i data-lucide="download"></i> Export PNG
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="btn-uice-save-template" style="font-size: 11px; padding: 5px 14px; gap: 6px;">
+                                        <i data-lucide="save"></i> Save Layout
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 3-Column Studio Grid -->
+                            <div class="uice-studio-grid">
+                                <!-- LEFT COLUMN: Element Palette & Layer Manager -->
+                                <div class="uice-col-panel uice-left-palette">
+                                    <div class="uice-panel-header">
+                                        <h3><i data-lucide="layers"></i> Canvas Elements</h3>
+                                    </div>
+                                    <div class="uice-palette-tabs">
+                                        <button type="button" class="uice-palette-tab active" id="uice-tab-elements">
+                                            <i data-lucide="plus-circle" style="width: 14px; height: 14px; vertical-align: -2px;"></i> Add Items
+                                        </button>
+                                        <button type="button" class="uice-palette-tab" id="uice-tab-layers">
+                                            <i data-lucide="list-tree" style="width: 14px; height: 14px; vertical-align: -2px;"></i> Layers (<span id="lbl-uice-layer-count">0</span>)
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="uice-palette-body">
+                                        <!-- Subview 1: Add Elements Palette -->
+                                        <div id="uice-view-elements" class="uice-elements-grid">
+                                            <button type="button" class="uice-element-add-btn" data-add-type="agency-brand">
+                                                <i data-lucide="building"></i>
+                                                <span>Agency Header</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="agency-logo">
+                                                <i data-lucide="shield"></i>
+                                                <span>Agency Logo</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="employee-photo">
+                                                <i data-lucide="user-square-2"></i>
+                                                <span>Employee Photo</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="employee-name">
+                                                <i data-lucide="type"></i>
+                                                <span>Employee Name</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="designation">
+                                                <i data-lucide="briefcase"></i>
+                                                <span>Designation</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="details-table">
+                                                <i data-lucide="table"></i>
+                                                <span>Details Table</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="qr-code">
+                                                <i data-lucide="qr-code"></i>
+                                                <span>QR Code</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="barcode">
+                                                <i data-lucide="barcode"></i>
+                                                <span>Barcode</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="signature">
+                                                <i data-lucide="pen-tool"></i>
+                                                <span>Signature</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="badge-pill">
+                                                <i data-lucide="tag"></i>
+                                                <span>Title Badge</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="custom-text">
+                                                <i data-lucide="file-text"></i>
+                                                <span>Custom Text</span>
+                                            </button>
+                                            <button type="button" class="uice-element-add-btn" data-add-type="shape">
+                                                <i data-lucide="shapes"></i>
+                                                <span>Accent Shape</span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Subview 2: Layers Manager List -->
+                                        <div id="uice-view-layers" style="display: none;">
+                                            <div id="uice-layers-container" class="uice-layers-list">
+                                                <!-- Populated dynamically -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CENTER COLUMN: Interactive Canvas Stage & Pixel Rulers -->
+                                <div class="uice-col-panel uice-center-stage">
+                                    <div class="uice-viewport-wrapper" id="uice-viewport">
+                                        <div class="uice-rulers-box">
+                                            <div class="uice-ruler-corner">PX</div>
+                                            <div class="uice-ruler-top" id="uice-ruler-top-container">
+                                                <canvas id="uice-ruler-top-canvas" height="24"></canvas>
+                                            </div>
+                                            <div class="uice-ruler-left" id="uice-ruler-left-container">
+                                                <canvas id="uice-ruler-left-canvas" width="24"></canvas>
+                                            </div>
+                                            <div class="uice-canvas-stage" id="uice-canvas-stage">
+                                                <!-- The Physical Card Artboard -->
+                                                <div id="uice-artboard" class="uice-artboard-card" style="width: 500px; height: 320px; border-radius: 14px;">
+                                                    <!-- Background Layer -->
+                                                    <div id="uice-card-background" style="position: absolute; inset: 0; pointer-events: none; z-index: 0; background: #ffffff;"></div>
+                                                    
+                                                    <!-- Grid Overlay -->
+                                                    <div id="uice-grid-overlay" class="uice-grid-overlay visible"></div>
+
+                                                    <!-- Smart Alignment Guidelines -->
+                                                    <div id="uice-guides-container" style="position: absolute; inset: 0; pointer-events: none; z-index: 9998;"></div>
+
+                                                    <!-- Dynamic Element Nodes -->
+                                                    <div id="uice-elements-container" style="position: absolute; inset: 0; z-index: 10;">
+                                                        <!-- Element nodes rendered here -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- RIGHT COLUMN: Contextual Property Inspector -->
+                                <div class="uice-col-panel uice-inspector-panel">
+                                    <div class="uice-panel-header">
+                                        <h3><i data-lucide="sliders"></i> Properties</h3>
+                                        <span id="lbl-uice-selected-type" class="badge badge-accent" style="font-size: 10px; display: none;"></span>
+                                    </div>
+                                    
+                                    <div class="uice-inspector-body">
+                                        <!-- Empty State: No Element Selected -->
+                                        <div id="uice-inspector-empty" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #64748b; text-align: center; padding: 30px 16px;">
+                                            <i data-lucide="mouse-pointer-click" style="width: 36px; height: 36px; margin-bottom: 12px; opacity: 0.5;"></i>
+                                            <p style="font-size: 13px; font-weight: 600; margin: 0 0 6px 0; color: #94a3b8;">No Element Selected</p>
+                                            <p style="font-size: 11px; margin: 0; line-height: 1.5;">Click any element on the card canvas or layer list to configure dimensions, typography, and visual styling.</p>
+                                        </div>
+
+                                        <!-- Active State: Element Selected -->
+                                        <div id="uice-inspector-active" style="display: none; flex-direction: column; gap: 14px;">
+                                            <!-- Quick Element Actions Bar -->
+                                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 8px;">
+                                                <span id="lbl-uice-elem-id" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #60a5fa; font-weight: 700;"></span>
+                                                <div style="display: flex; gap: 4px;">
+                                                    <button type="button" class="uice-layer-btn" id="btn-uice-elem-lock" title="Lock/Unlock Element"><i data-lucide="lock" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-layer-btn" id="btn-uice-elem-dup" title="Duplicate Element"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-layer-btn" id="btn-uice-elem-front" title="Bring to Front"><i data-lucide="bring-to-front" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-layer-btn" id="btn-uice-elem-back" title="Send to Back"><i data-lucide="send-to-back" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-layer-btn" id="btn-uice-elem-del" title="Delete Element" style="color: #ef4444;"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Geometry & Positioning -->
+                                            <div class="uice-section-card">
+                                                <h4 class="uice-section-title">Geometry & Positioning</h4>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">X Position (px)</label>
+                                                        <input type="number" id="prop-uice-x" class="uice-num-input">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Y Position (px)</label>
+                                                        <input type="number" id="prop-uice-y" class="uice-num-input">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Width (px)</label>
+                                                        <input type="number" id="prop-uice-w" class="uice-num-input" min="5">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Height (px)</label>
+                                                        <input type="number" id="prop-uice-h" class="uice-num-input" min="5">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Rotation (°)</label>
+                                                        <input type="number" id="prop-uice-rot" class="uice-num-input" min="-180" max="180">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Layer Z-Index</label>
+                                                        <input type="number" id="prop-uice-z" class="uice-num-input" min="0" max="100">
+                                                    </div>
+                                                </div>
+
+                                                <!-- Quick Align Matrix -->
+                                                <div class="uice-align-bar">
+                                                    <button type="button" class="uice-align-btn" id="btn-align-left" title="Align Left"><i data-lucide="align-horizontal-justify-start" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-align-btn" id="btn-align-center-x" title="Align Center Horizontally"><i data-lucide="align-horizontal-justify-center" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-align-btn" id="btn-align-right" title="Align Right"><i data-lucide="align-horizontal-justify-end" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-align-btn" id="btn-align-top" title="Align Top"><i data-lucide="align-vertical-justify-start" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-align-btn" id="btn-align-center-y" title="Align Center Vertically"><i data-lucide="align-vertical-justify-center" style="width: 14px; height: 14px;"></i></button>
+                                                    <button type="button" class="uice-align-btn" id="btn-align-bottom" title="Align Bottom"><i data-lucide="align-vertical-justify-end" style="width: 14px; height: 14px;"></i></button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Typography Section -->
+                                            <div class="uice-section-card" id="prop-sec-typography" style="display: none;">
+                                                <h4 class="uice-section-title">Typography & Text</h4>
+                                                <div class="uice-input-group">
+                                                    <label class="uice-input-label">Font Family</label>
+                                                    <select id="prop-uice-font" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern Clean)</option>
+                                                        <option value="'Inter', sans-serif">Inter (Precision Tech)</option>
+                                                        <option value="'Roboto', sans-serif">Roboto (Universal)</option>
+                                                        <option value="'Playfair Display', serif">Playfair Display (Executive Serif)</option>
+                                                        <option value="'JetBrains Mono', monospace">JetBrains Mono (Security Monospace)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Font Size (px)</label>
+                                                        <input type="number" id="prop-uice-font-size" class="uice-num-input" min="6" max="64">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Font Weight</label>
+                                                        <select id="prop-uice-font-weight" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="400">Regular (400)</option>
+                                                            <option value="600">SemiBold (600)</option>
+                                                            <option value="700">Bold (700)</option>
+                                                            <option value="800">ExtraBold (800)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Text Color</label>
+                                                        <input type="color" id="prop-uice-color" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Letter Spacing (px)</label>
+                                                        <input type="number" id="prop-uice-letter-spacing" class="uice-num-input" step="0.1" min="-2" max="10">
+                                                    </div>
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Alignment</label>
+                                                        <select id="prop-uice-text-align" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="left">Left</option>
+                                                            <option value="center">Center</option>
+                                                            <option value="right">Right</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Transform</label>
+                                                        <select id="prop-uice-text-transform" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="none">Normal</option>
+                                                            <option value="uppercase">UPPERCASE</option>
+                                                            <option value="capitalize">Capitalize</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Photo Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-photo" style="display: none;">
+                                                <h4 class="uice-section-title">Photograph Styling</h4>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Shape</label>
+                                                        <select id="prop-uice-photo-shape" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="circle">Circle Lens</option>
+                                                            <option value="rounded">Rounded Rectangle</option>
+                                                            <option value="rectangle">Square/Rectangle</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Border Width (px)</label>
+                                                        <input type="number" id="prop-uice-photo-border" class="uice-num-input" min="0" max="10">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Border Color</label>
+                                                        <input type="color" id="prop-uice-photo-border-color" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Accent Outline Ring</label>
+                                                        <input type="color" id="prop-uice-photo-outline-color" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- QR Code Specific Properties & Sentinel -->
+                                            <div class="uice-section-card" id="prop-sec-qr" style="display: none;">
+                                                <h4 class="uice-section-title">QR Code & Verification</h4>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Foreground</label>
+                                                        <input type="color" id="prop-uice-qr-fg" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Background</label>
+                                                        <input type="color" id="prop-uice-qr-bg" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Error Correction</label>
+                                                        <select id="prop-uice-qr-ecc" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="H">High (30% recovery)</option>
+                                                            <option value="Q">Quartile (25%)</option>
+                                                            <option value="M">Medium (15%)</option>
+                                                            <option value="L">Low (7%)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Quiet Zone (px)</label>
+                                                        <input type="number" id="prop-uice-qr-quiet" class="uice-num-input" min="0" max="10">
+                                                    </div>
+                                                </div>
+                                                <!-- Scannability Sentinel Live Validator -->
+                                                <div id="uice-qr-sentinel" class="uice-sentinel-badge valid">
+                                                    <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
+                                                    <span>QR Scannable & Optical Standards Verified</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Barcode Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-barcode" style="display: none;">
+                                                <h4 class="uice-section-title">Barcode Settings</h4>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Barcode Format</label>
+                                                        <select id="prop-uice-barcode-format" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="CODE128">Code 128 (Standard)</option>
+                                                            <option value="CODE39">Code 39</option>
+                                                            <option value="EAN13">EAN-13</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Line Color</label>
+                                                        <input type="color" id="prop-uice-barcode-color" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                                                    <label for="prop-uice-barcode-text" style="font-size: 11px; font-weight: 600; color: #cbd5e1; margin: 0;">Show Employee ID Text</label>
+                                                    <input type="checkbox" id="prop-uice-barcode-text" checked>
+                                                </div>
+                                            </div>
+
+                                            <!-- Details Table Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-table" style="display: none;">
+                                                <h4 class="uice-section-title">Details Table Styling</h4>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Row Spacing (px)</label>
+                                                        <input type="number" id="prop-uice-table-row-pad" class="uice-num-input" min="1" max="12">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Label Width (%)</label>
+                                                        <input type="number" id="prop-uice-table-label-w" class="uice-num-input" min="15" max="75">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Label Color</label>
+                                                        <input type="color" id="prop-uice-table-label-c" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Value Color</label>
+                                                        <input type="color" id="prop-uice-table-value-c" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Signature Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-signature" style="display: none;">
+                                                <h4 class="uice-section-title">Signature Styling</h4>
+                                                <div class="uice-input-group">
+                                                    <label class="uice-input-label">Signature Preset</label>
+                                                    <select id="prop-uice-sig-preset" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                        <option value="preset-vsa-sig">VSA Official Managing Director</option>
+                                                        <option value="preset-sig1">Cursive Signature Alpha</option>
+                                                        <option value="preset-sig2">Executive Signature Beta</option>
+                                                    </select>
+                                                </div>
+                                                <div class="uice-input-group">
+                                                    <label class="uice-input-label">Authority Label</label>
+                                                    <input type="text" id="prop-uice-sig-label" class="form-control" style="font-size: 11px; padding: 4px 8px;" value="AUTHORITY SIGNATURE">
+                                                </div>
+                                            </div>
+
+                                            <!-- Shapes & Backgrounds -->
+                                            <div class="uice-section-card" id="prop-sec-shape" style="display: none;">
+                                                <h4 class="uice-section-title">Shape & Fill Styling</h4>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Fill Color</label>
+                                                        <input type="color" id="prop-uice-shape-fill" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Border Color</label>
+                                                        <input type="color" id="prop-uice-shape-border" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Border Width (px)</label>
+                                                        <input type="number" id="prop-uice-shape-border-w" class="uice-num-input" min="0" max="20">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Corner Radius (px)</label>
+                                                        <input type="number" id="prop-uice-shape-radius" class="uice-num-input" min="0" max="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. CLASSIC FORM SETTINGS CONTAINER (Toggled via Tabs) -->
+                        <div id="uice-classic-workspace" style="display: none;">
+                            <div class="studio-layout-row">
+                                <!-- Left Column: Controls & Configuration -->
+                                <div class="studio-controls-column">
                             <!-- Quick Template Selector Bar -->
                             <div class="studio-selector-card">
                                 <div class="studio-selector-bar">
@@ -1627,8 +2101,9 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div> <!-- End of Studio Layout Row -->
+                        </div> <!-- End of uice-classic-workspace -->
+                    </div> <!-- End of uice-workspace-container -->
                 </section>
 
                  <!-- 5B. EMPLOYEE RECORD (LETTERHEAD PRINTABLE FORM) -->

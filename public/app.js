@@ -612,6 +612,16 @@ function switchToView(targetView) {
 
     // Update Headers Text
     updateHeaderTitles(targetView);
+
+    // Refresh UICE Studio Stage if entering templates view
+    if (targetView === 'templates' && typeof renderUiceStage === 'function') {
+        setTimeout(() => {
+            renderUiceStage();
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }, 50);
+    }
 }
 
 function initSpaRouter() {
@@ -2597,6 +2607,14 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     }
 
     if (!emp) return '';
+
+    // If template has modern UICE layout nodes, render with UICE canvas engine
+    if (template && template.layouts && typeof generateUiceCardHtml === 'function') {
+        const orient = template.layout || 'horizontal';
+        if (template.layouts[orient] && Array.isArray(template.layouts[orient].elements) && template.layouts[orient].elements.length > 0) {
+            return generateUiceCardHtml(emp, template.layouts[orient], template, validityYears, issueDate);
+        }
+    }
 
     // Helper to format date
     const formatDateDDMMYYYYLocal = (date) => {
@@ -7266,6 +7284,2454 @@ function renderReorderableFieldsList() {
     });
 }
 
+// ============================================================================
+// PROJECT OMEGA — UNIVERSAL INTELLIGENT CANVAS ENGINE (UICE)
+// Figma / Canva Grade Visual ID Card Studio & Manipulation Engine
+// ============================================================================
+
+const UICE_STATE = {
+    template: null,
+    orientation: 'horizontal', // 'horizontal' | 'vertical'
+    selectedId: null,
+    hoveredId: null,
+    zoom: 1.0,
+    snapToGrid: true,
+    gridSize: 10,
+    showGuides: true,
+    showGrid: true,
+    history: [],
+    historyIndex: -1,
+    previewEmp: null,
+    drag: {
+        isDragging: false,
+        isResizing: false,
+        isRotating: false,
+        handle: null,
+        startX: 0,
+        startY: 0,
+        origX: 0,
+        origY: 0,
+        origW: 0,
+        origH: 0,
+        origRot: 0,
+        centerX: 0,
+        centerY: 0,
+        startAngle: 0,
+        hasMoved: false
+    }
+};
+
+/**
+ * Returns default UICE element nodes for a given orientation.
+ */
+function getUiceDefaultElements(orientation, tpl = {}) {
+    const isHoriz = orientation === 'horizontal';
+    const headerBg = tpl.headerBgColor || '#0e3e2b';
+    const accent = tpl.accentColor || '#009688';
+    const brandTitle = tpl.headerText || 'VALLEY SECURITY AGENCY';
+    const brandSubtitle = tpl.subheaderText || 'SHAHIDGUNJ SRINAGAR';
+    const cardTitle = tpl.cardTitle || 'SECURITY ID CARD';
+
+    if (isHoriz) {
+        return [
+            // 1. Top Decorative Accent Bar
+            {
+                id: 'uice-shape-top-bar',
+                type: 'shape',
+                name: 'Top Header Bar',
+                x: 0,
+                y: 0,
+                width: 500,
+                height: 52,
+                rotation: 0,
+                zIndex: 1,
+                locked: true,
+                visible: true,
+                properties: {
+                    fill: headerBg,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                    opacity: 1
+                }
+            },
+            // 2. Agency Header (Brand Logo + Title + Subtitle)
+            {
+                id: 'uice-elem-header',
+                type: 'agency-brand',
+                name: 'Agency Header',
+                x: 14,
+                y: 8,
+                width: 290,
+                height: 38,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    title: brandTitle,
+                    subtitle: brandSubtitle,
+                    titleFontSize: 12,
+                    subtitleFontSize: 6.5,
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    color: '#ffffff',
+                    logoSize: 32,
+                    logoPreset: tpl.logo || 'preset-vsa-logo'
+                }
+            },
+            // 3. Card Badge Title Pill
+            {
+                id: 'uice-elem-badge',
+                type: 'badge-pill',
+                name: 'Card Title Badge',
+                x: 318,
+                y: 12,
+                width: 168,
+                height: 28,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: cardTitle,
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    color: '#ffffff',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    borderRadius: 6
+                }
+            },
+            // 4. Employee Photo
+            {
+                id: 'uice-elem-photo',
+                type: 'employee-photo',
+                name: 'Employee Photo',
+                x: 18,
+                y: 66,
+                width: 114,
+                height: 114,
+                rotation: 0,
+                zIndex: 3,
+                locked: false,
+                visible: true,
+                properties: {
+                    shape: 'circle',
+                    borderWidth: 3.5,
+                    borderColor: '#ffffff',
+                    outlineColor: accent,
+                    objectFit: 'cover'
+                }
+            },
+            // 5. Barcode (under photo)
+            {
+                id: 'uice-elem-barcode',
+                type: 'barcode',
+                name: 'Employee Barcode',
+                x: 14,
+                y: 194,
+                width: 122,
+                height: 28,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    format: 'CODE128',
+                    lineColor: '#000000',
+                    background: '#ffffff',
+                    showText: true,
+                    fontSize: 8.5
+                }
+            },
+            // 6. Employee Full Name
+            {
+                id: 'uice-elem-name',
+                type: 'employee-name',
+                name: 'Employee Name',
+                x: 152,
+                y: 66,
+                width: 334,
+                height: 30,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    fontSize: 16.5,
+                    fontWeight: 800,
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    color: '#0f172a',
+                    textAlign: 'left',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.3
+                }
+            },
+            // 7. Employee Designation
+            {
+                id: 'uice-elem-designation',
+                type: 'designation',
+                name: 'Designation',
+                x: 152,
+                y: 96,
+                width: 334,
+                height: 20,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    color: accent,
+                    textAlign: 'left',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5
+                }
+            },
+            // 8. Details Table (Emp ID, Father, Dept, Blood, Validity, Address, Mobile)
+            {
+                id: 'uice-elem-details-table',
+                type: 'details-table',
+                name: 'Details Table',
+                x: 152,
+                y: 118,
+                width: 334,
+                height: 116,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    fontSize: 8,
+                    labelColor: '#475569',
+                    valueColor: '#0f172a',
+                    rowPadding: 3,
+                    labelWidth: 38,
+                    fields: ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone']
+                }
+            },
+            // 9. Authority Signature
+            {
+                id: 'uice-elem-signature',
+                type: 'signature',
+                name: 'Authority Signature',
+                x: 240,
+                y: 246,
+                width: 115,
+                height: 48,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    preset: tpl.signature || 'preset-vsa-sig',
+                    color: '#000000',
+                    label: 'AUTHORITY SIGNATURE'
+                }
+            },
+            // 10. Official Verification QR Code
+            {
+                id: 'uice-elem-qr',
+                type: 'qr-code',
+                name: 'Verification QR Code',
+                x: 424,
+                y: 244,
+                width: 54,
+                height: 54,
+                rotation: 0,
+                zIndex: 3,
+                locked: false,
+                visible: true,
+                properties: {
+                    errorCorrection: 'H',
+                    foreground: '#000000',
+                    background: '#ffffff',
+                    quietZone: 2,
+                    borderColor: accent,
+                    borderWidth: 1.5
+                }
+            }
+        ];
+    } else {
+        // Vertical Orientation (320 x 500)
+        return [
+            // 1. Top Decorative Header Bar
+            {
+                id: 'uice-shape-top-bar-v',
+                type: 'shape',
+                name: 'Top Header Bar',
+                x: 0,
+                y: 0,
+                width: 320,
+                height: 62,
+                rotation: 0,
+                zIndex: 1,
+                locked: true,
+                visible: true,
+                properties: {
+                    fill: headerBg,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                    opacity: 1
+                }
+            },
+            // 2. Agency Header
+            {
+                id: 'uice-elem-header-v',
+                type: 'agency-brand',
+                name: 'Agency Header',
+                x: 10,
+                y: 8,
+                width: 300,
+                height: 46,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    title: brandTitle,
+                    subtitle: brandSubtitle,
+                    titleFontSize: 11.5,
+                    subtitleFontSize: 6.5,
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    color: '#ffffff',
+                    logoSize: 34,
+                    logoPreset: tpl.logo || 'preset-vsa-logo'
+                }
+            },
+            // 3. Card Title Badge
+            {
+                id: 'uice-elem-badge-v',
+                type: 'badge-pill',
+                name: 'Card Title Badge',
+                x: 60,
+                y: 68,
+                width: 200,
+                height: 24,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: cardTitle,
+                    background: accent,
+                    color: '#ffffff',
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    borderRadius: 4
+                }
+            },
+            // 4. Employee Photo (Centered in Vertical)
+            {
+                id: 'uice-elem-photo-v',
+                type: 'employee-photo',
+                name: 'Employee Photo',
+                x: 105,
+                y: 98,
+                width: 110,
+                height: 110,
+                rotation: 0,
+                zIndex: 3,
+                locked: false,
+                visible: true,
+                properties: {
+                    shape: 'circle',
+                    borderWidth: 3.5,
+                    borderColor: '#ffffff',
+                    outlineColor: accent,
+                    objectFit: 'cover'
+                }
+            },
+            // 5. Employee Name
+            {
+                id: 'uice-elem-name-v',
+                type: 'employee-name',
+                name: 'Employee Name',
+                x: 10,
+                y: 216,
+                width: 300,
+                height: 26,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    fontSize: 16,
+                    fontWeight: 800,
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    color: '#0f172a',
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.4
+                }
+            },
+            // 6. Designation
+            {
+                id: 'uice-elem-designation-v',
+                type: 'designation',
+                name: 'Designation',
+                x: 10,
+                y: 242,
+                width: 300,
+                height: 18,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    color: accent,
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.6
+                }
+            },
+            // 7. Details Table
+            {
+                id: 'uice-elem-details-table-v',
+                type: 'details-table',
+                name: 'Details Table',
+                x: 16,
+                y: 268,
+                width: 288,
+                height: 135,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    fontSize: 8,
+                    labelColor: '#475569',
+                    valueColor: '#0f172a',
+                    rowPadding: 2.5,
+                    labelWidth: 40,
+                    fields: ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone']
+                }
+            },
+            // 8. Barcode (Bottom Left)
+            {
+                id: 'uice-elem-barcode-v',
+                type: 'barcode',
+                name: 'Employee Barcode',
+                x: 12,
+                y: 418,
+                width: 125,
+                height: 26,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    format: 'CODE128',
+                    lineColor: '#000000',
+                    background: '#ffffff',
+                    showText: true,
+                    fontSize: 8
+                }
+            },
+            // 9. Authority Signature (Bottom Center)
+            {
+                id: 'uice-elem-signature-v',
+                type: 'signature',
+                name: 'Authority Signature',
+                x: 150,
+                y: 412,
+                width: 95,
+                height: 44,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    preset: tpl.signature || 'preset-vsa-sig',
+                    color: '#000000',
+                    label: 'SIGNATURE'
+                }
+            },
+            // 10. QR Code (Bottom Right)
+            {
+                id: 'uice-elem-qr-v',
+                type: 'qr-code',
+                name: 'Verification QR Code',
+                x: 258,
+                y: 410,
+                width: 48,
+                height: 48,
+                rotation: 0,
+                zIndex: 3,
+                locked: false,
+                visible: true,
+                properties: {
+                    errorCorrection: 'H',
+                    foreground: '#000000',
+                    background: '#ffffff',
+                    quietZone: 2,
+                    borderColor: accent,
+                    borderWidth: 1.5
+                }
+            }
+        ];
+    }
+}
+
+/**
+ * Ensures a template object has modern UICE dual-orientation layout nodes.
+ */
+function convertLegacyTemplateToUice(tpl) {
+    if (!tpl.layouts) {
+        tpl.layouts = {};
+    }
+    if (!tpl.layouts.horizontal) {
+        tpl.layouts.horizontal = {
+            width: 500,
+            height: 320,
+            background: {
+                color: tpl.backgroundColor || '#ffffff',
+                headerBg: tpl.headerBgColor || '#0e3e2b',
+                accent: tpl.accentColor || '#009688',
+                borderRadius: 14
+            },
+            elements: getUiceDefaultElements('horizontal', tpl)
+        };
+    }
+    if (!tpl.layouts.vertical) {
+        tpl.layouts.vertical = {
+            width: 320,
+            height: 500,
+            background: {
+                color: tpl.backgroundColor || '#ffffff',
+                headerBg: tpl.headerBgColor || '#0e3e2b',
+                accent: tpl.accentColor || '#009688',
+                borderRadius: 14
+            },
+            elements: getUiceDefaultElements('vertical', tpl)
+        };
+    }
+    return tpl;
+}
+
+/**
+ * Initializes UICE state with a selected template.
+ */
+function initUiceWithTemplate(tplSource) {
+    if (!tplSource) return;
+    const tpl = JSON.parse(JSON.stringify(tplSource));
+    convertLegacyTemplateToUice(tpl);
+
+    UICE_STATE.template = tpl;
+    UICE_STATE.orientation = tpl.layout === 'vertical' ? 'vertical' : 'horizontal';
+    UICE_STATE.selectedId = null;
+    UICE_STATE.history = [];
+    UICE_STATE.historyIndex = -1;
+
+    // Set preview employee
+    if (VSA_STATE.employees && VSA_STATE.employees.length > 0) {
+        UICE_STATE.previewEmp = VSA_STATE.employees[0];
+    } else {
+        UICE_STATE.previewEmp = MOCK_GUARD;
+    }
+
+    // Populate top template select
+    const topTplSel = document.getElementById('uice-top-tpl-select');
+    if (topTplSel) {
+        topTplSel.innerHTML = (VSA_STATE.templates || []).map(t => 
+            `<option value="${t.id}" ${t.id === tpl.id ? 'selected' : ''}>${t.name || t.id}</option>`
+        ).join('');
+    }
+
+    // Populate preview guard select
+    const previewEmpSel = document.getElementById('uice-preview-emp-select');
+    if (previewEmpSel) {
+        previewEmpSel.innerHTML = (VSA_STATE.employees || []).map(e =>
+            `<option value="${e.id}" ${e.id === UICE_STATE.previewEmp.id ? 'selected' : ''}>${e.name} (${e.id})</option>`
+        ).join('');
+    }
+
+    // Sync orientation dropdown
+    const orientSel = document.getElementById('uice-orientation-sel');
+    if (orientSel) {
+        orientSel.value = UICE_STATE.orientation;
+    }
+
+    // Render Canvas Stage & Push Initial History Snapshot
+    renderUiceStage();
+    pushUiceHistory('Initial Template Load');
+
+    // Attach listeners once
+    if (!UICE_STATE._listenersAttached) {
+        setupUiceListeners();
+        UICE_STATE._listenersAttached = true;
+    }
+}
+
+/**
+ * Pushes a snapshot of current layouts to the 50-step undo stack.
+ */
+function pushUiceHistory(actionName = 'Edit') {
+    if (!UICE_STATE.template || !UICE_STATE.template.layouts) return;
+
+    // Truncate any redo steps
+    if (UICE_STATE.historyIndex < UICE_STATE.history.length - 1) {
+        UICE_STATE.history = UICE_STATE.history.slice(0, UICE_STATE.historyIndex + 1);
+    }
+
+    // Clone layouts
+    const snapshot = JSON.parse(JSON.stringify(UICE_STATE.template.layouts));
+    UICE_STATE.history.push({
+        action: actionName,
+        layouts: snapshot,
+        orientation: UICE_STATE.orientation
+    });
+
+    // Cap at 50 levels
+    if (UICE_STATE.history.length > 50) {
+        UICE_STATE.history.shift();
+    }
+    UICE_STATE.historyIndex = UICE_STATE.history.length - 1;
+
+    updateUiceUndoRedoButtons();
+}
+
+function updateUiceUndoRedoButtons() {
+    const btnUndo = document.getElementById('btn-uice-undo');
+    const btnRedo = document.getElementById('btn-uice-redo');
+    if (btnUndo) btnUndo.disabled = UICE_STATE.historyIndex <= 0;
+    if (btnRedo) btnRedo.disabled = UICE_STATE.historyIndex >= UICE_STATE.history.length - 1;
+}
+
+function undoUice() {
+    if (UICE_STATE.historyIndex > 0) {
+        UICE_STATE.historyIndex--;
+        const item = UICE_STATE.history[UICE_STATE.historyIndex];
+        UICE_STATE.template.layouts = JSON.parse(JSON.stringify(item.layouts));
+        renderUiceStage();
+        updateUiceUndoRedoButtons();
+    }
+}
+
+function redoUice() {
+    if (UICE_STATE.historyIndex < UICE_STATE.history.length - 1) {
+        UICE_STATE.historyIndex++;
+        const item = UICE_STATE.history[UICE_STATE.historyIndex];
+        UICE_STATE.template.layouts = JSON.parse(JSON.stringify(item.layouts));
+        renderUiceStage();
+        updateUiceUndoRedoButtons();
+    }
+}
+
+/**
+ * Renders the interactive artboard stage, all element nodes, handles, and guides.
+ */
+function renderUiceStage() {
+    if (!UICE_STATE.template || !UICE_STATE.template.layouts) return;
+
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!layout) return;
+
+    const artboard = document.getElementById('uice-artboard');
+    const container = document.getElementById('uice-elements-container');
+    const bgLayer = document.getElementById('uice-card-background');
+    if (!artboard || !container) return;
+
+    // Set dimensions
+    artboard.style.width = layout.width + 'px';
+    artboard.style.height = layout.height + 'px';
+    artboard.style.transform = `scale(${UICE_STATE.zoom})`;
+    artboard.style.borderRadius = (layout.background && layout.background.borderRadius !== undefined ? layout.background.borderRadius : 14) + 'px';
+
+    // Set background
+    if (bgLayer) {
+        const bg = layout.background || {};
+        bgLayer.style.background = bg.color || '#ffffff';
+        bgLayer.style.borderRadius = (bg.borderRadius !== undefined ? bg.borderRadius : 14) + 'px';
+        bgLayer.style.border = `${bg.borderWidth || 2}px solid ${bg.accent || '#009688'}`;
+        bgLayer.style.boxSizing = 'border-box';
+    }
+
+    // Grid Overlay toggle
+    const gridEl = document.getElementById('uice-grid-overlay');
+    if (gridEl) {
+        if (UICE_STATE.showGrid) {
+            gridEl.classList.add('visible');
+        } else {
+            gridEl.classList.remove('visible');
+        }
+    }
+
+    // Clear and re-populate elements
+    container.innerHTML = '';
+    const emp = UICE_STATE.previewEmp || MOCK_GUARD;
+
+    // Sort elements by zIndex
+    const sorted = [...(layout.elements || [])].sort((a, b) => (a.zIndex || 1) - (b.zIndex || 1));
+
+    sorted.forEach(el => {
+        if (el.visible === false) return;
+
+        const isSelected = el.id === UICE_STATE.selectedId;
+        const node = document.createElement('div');
+        node.className = `uice-node ${isSelected ? 'selected' : ''} ${el.locked ? 'locked' : ''}`;
+        node.setAttribute('data-id', el.id);
+        node.style.left = el.x + 'px';
+        node.style.top = el.y + 'px';
+        node.style.width = el.width + 'px';
+        node.style.height = el.height + 'px';
+        node.style.transform = `rotate(${el.rotation || 0}deg)`;
+        node.style.zIndex = el.zIndex || 1;
+
+        // Render inner HTML based on element type
+        node.innerHTML = renderUiceElementHtml(el, emp);
+
+        // Append 8 resize handles and rotation stalk if selected and not locked
+        if (isSelected && !el.locked) {
+            node.insertAdjacentHTML('beforeend', `
+                <div class="uice-handle handle-nw" data-handle="nw"></div>
+                <div class="uice-handle handle-n" data-handle="n"></div>
+                <div class="uice-handle handle-ne" data-handle="ne"></div>
+                <div class="uice-handle handle-e" data-handle="e"></div>
+                <div class="uice-handle handle-se" data-handle="se"></div>
+                <div class="uice-handle handle-s" data-handle="s"></div>
+                <div class="uice-handle handle-sw" data-handle="sw"></div>
+                <div class="uice-handle handle-w" data-handle="w"></div>
+                <div class="uice-handle-rot-stalk"></div>
+                <div class="uice-handle handle-rot" data-handle="rot" title="Rotate (360°)"></div>
+            `);
+        } else if (isSelected && el.locked) {
+            // Lock badge indicator
+            node.insertAdjacentHTML('beforeend', `
+                <div style="position: absolute; top: 2px; right: 2px; background: #ef4444; color: #fff; border-radius: 4px; padding: 2px 4px; font-size: 9px; font-weight: bold; pointer-events: none; z-index: 1000; display: flex; align-items: center; gap: 2px;">
+                    <i data-lucide="lock" style="width: 10px; height: 10px;"></i>
+                </div>
+            `);
+        }
+
+        container.appendChild(node);
+    });
+
+    // Render live QRs and Barcodes inside artboard
+    renderQrsInContainer(artboard);
+
+    // Refresh Lucide icons inside artboard
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons({ root: artboard });
+    }
+
+    // Render Layer Manager list
+    renderUiceLayersList();
+
+    // Update Property Inspector
+    const selectedEl = layout.elements.find(e => e.id === UICE_STATE.selectedId);
+    updateUicePropertyInspector(selectedEl);
+
+    // Draw pixel rulers
+    drawUiceRulers();
+}
+
+/**
+ * Builds the inner HTML for an element node inside the artboard.
+ */
+function renderUiceElementHtml(el, emp) {
+    const p = el.properties || {};
+
+    switch (el.type) {
+        case 'agency-brand': {
+            const logoSrc = resolveUiceLogoSrc(p.logoPreset);
+            return `
+                <div style="display: flex; align-items: center; gap: 8px; width: 100%; height: 100%; pointer-events: none;">
+                    <div style="width: ${p.logoSize || 32}px; height: ${p.logoSize || 32}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 6px; padding: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);">
+                        ${logoSrc}
+                    </div>
+                    <div style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                        <h1 style="color: ${p.color || '#ffffff'}; font-size: ${p.titleFontSize || 12}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15; font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.title || 'VALLEY SECURITY AGENCY'}</h1>
+                        <p style="color: ${p.color || '#ffffff'}; opacity: 0.9; font-size: ${p.subtitleFontSize || 6.5}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.4px;">${p.subtitle || 'SHAHIDGUNJ SRINAGAR'}</p>
+                    </div>
+                </div>`;
+        }
+
+        case 'agency-logo': {
+            const logoSrc = resolveUiceLogoSrc(p.logoPreset);
+            return `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">${logoSrc}</div>`;
+        }
+
+        case 'employee-photo': {
+            let photoUrl = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
+            if (photoUrl.startsWith('/api/employees/') && emp.secureToken) {
+                photoUrl += (photoUrl.includes('?') ? '&' : '?') + `token=${emp.secureToken}`;
+            }
+
+            const shape = p.shape || 'circle';
+            const borderRadius = shape === 'circle' ? '50%' : (shape === 'rounded' ? '12px' : '0px');
+            const outline = p.outlineColor ? `0 0 0 2px ${p.outlineColor}` : 'none';
+
+            if (photoUrl) {
+                return `
+                    <div style="width: 100%; height: 100%; border-radius: ${borderRadius}; border: ${p.borderWidth || 3}px solid ${p.borderColor || '#ffffff'}; box-shadow: ${outline}; overflow: hidden; box-sizing: border-box; pointer-events: none;">
+                        <img src="${photoUrl}" alt="Photo" crossorigin="anonymous" style="width: 100%; height: 100%; object-fit: ${p.objectFit || 'cover'}; display: block;">
+                    </div>`;
+            } else {
+                const initial = emp.name ? emp.name[0].toUpperCase() : '?';
+                return `
+                    <div style="width: 100%; height: 100%; border-radius: ${borderRadius}; border: ${p.borderWidth || 3}px solid ${p.borderColor || '#ffffff'}; box-shadow: ${outline}; overflow: hidden; box-sizing: border-box; background: linear-gradient(135deg, #0e3e2b 0%, #009688 100%); display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                        <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 32px; font-weight: 800; color: #ffffff;">${initial}</span>
+                    </div>`;
+            }
+        }
+
+        case 'employee-name': {
+            return `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; pointer-events: none;">
+                    <h2 style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${p.fontSize || 16}px; font-weight: ${p.fontWeight || 800}; color: ${p.color || '#0f172a'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'uppercase'}; letter-spacing: ${p.letterSpacing || 0.3}px; margin: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.15;">
+                        ${emp.name || 'MOHD SALIM'}
+                    </h2>
+                </div>`;
+        }
+
+        case 'designation': {
+            return `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; pointer-events: none;">
+                    <h3 style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${p.fontSize || 10}px; font-weight: ${p.fontWeight || 700}; color: ${p.color || '#009688'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'uppercase'}; letter-spacing: ${p.letterSpacing || 0.5}px; margin: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.1;">
+                        ${emp.designation || 'SECURITY GUARD'}
+                    </h3>
+                </div>`;
+        }
+
+        case 'badge-pill': {
+            return `
+                <div style="width: 100%; height: 100%; background: ${p.background || '#009688'}; color: ${p.color || '#ffffff'}; border-radius: ${p.borderRadius !== undefined ? p.borderRadius : 6}px; display: flex; align-items: center; justify-content: center; font-family: 'Plus Jakarta Sans', sans-serif; font-size: ${p.fontSize || 11}px; font-weight: ${p.fontWeight || 800}; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); pointer-events: none;">
+                    ${p.text || 'SECURITY ID CARD'}
+                </div>`;
+        }
+
+        case 'details-table': {
+            const rowPad = p.rowPadding !== undefined ? p.rowPadding : 3;
+            const labelW = p.labelWidth || 38;
+            const labelColor = p.labelColor || '#475569';
+            const valueColor = p.valueColor || '#0f172a';
+            const fontSize = p.fontSize || 8;
+
+            const rows = [
+                { label: 'Staff ID:', value: emp.id || 'VSA-0042' },
+                { label: 'Father:', value: emp.fatherName || 'Ghulam Ahmad' },
+                { label: 'Dept:', value: emp.department || 'Operations' },
+                { label: 'Blood Group:', value: emp.bloodGroup || 'O+' },
+                { label: 'Validity:', value: '31-12-2028' },
+                { label: 'Address:', value: emp.currentAddress || emp.permanentAddress || 'Srinagar, Kashmir' },
+                { label: 'Mobile:', value: emp.mobile || '+91 9419000000' }
+            ];
+
+            const rowsHtml = rows.map(r => `
+                <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
+                    <td style="font-size: ${fontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPad}px 0; width: ${labelW}%; text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px;">${r.label}</td>
+                    <td style="font-size: ${fontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPad}px 0; width: ${100 - labelW}%; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;">${r.value}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div style="width: 100%; height: 100%; overflow: hidden; pointer-events: none;">
+                    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                        ${rowsHtml}
+                    </table>
+                </div>`;
+        }
+
+        case 'qr-code': {
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const qrHost = (isLocalhost && VSA_STATE.lanIp && !VSA_STATE.lanIp.startsWith('localhost'))
+                ? VSA_STATE.lanIp
+                : window.location.host;
+            const secureTokenParam = emp.secureToken ? `&token=${emp.secureToken}` : '';
+            const verificationUrl = `${window.location.protocol}//${qrHost}/verification.html?id=${emp.id || 'VSA-0042'}${secureTokenParam}`;
+            const qrSize = Math.min(el.width, el.height) - (p.quietZone || 2) * 2;
+
+            return `
+                <div style="width: 100%; height: 100%; background: ${p.background || '#ffffff'}; padding: ${p.quietZone || 2}px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: ${p.borderWidth || 1.5}px solid ${p.borderColor || '#009688'}; display: flex; align-items: center; justify-content: center; box-sizing: border-box; pointer-events: none;">
+                    <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize}" data-qr-bg="${p.background || '#ffffff'}" data-qr-fg="${p.foreground || '#000000'}" style="width: ${qrSize}px; height: ${qrSize}px; display: block;"></canvas>
+                </div>`;
+        }
+
+        case 'barcode': {
+            return `
+                <div style="width: 100%; height: 100%; background: ${p.background || '#ffffff'}; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; pointer-events: none;">
+                    <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id || 'VSA-0042'}" data-barcode-type="${p.format || 'CODE128'}" data-barcode-bg="${p.background || '#ffffff'}" data-barcode-fg="${p.lineColor || '#000000'}" style="width: ${el.width - 4}px; height: ${p.showText ? el.height - 12 : el.height}px; display: block;"></canvas>
+                    ${p.showText ? `<span style="font-family: 'JetBrains Mono', monospace; font-size: ${p.fontSize || 8.5}px; font-weight: 800; color: #334155; letter-spacing: 0.8px; margin-top: 1px;">${emp.id || 'VSA-0042'}</span>` : ''}
+                </div>`;
+        }
+
+        case 'signature': {
+            const sigSrc = resolveUiceSigSrc(p.preset);
+            return `
+                <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; box-sizing: border-box; pointer-events: none;">
+                    <div style="flex-grow: 1; width: 100%; display: flex; align-items: center; justify-content: center;">
+                        ${sigSrc}
+                    </div>
+                    <div style="font-size: 6px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 100%; text-align: center; white-space: nowrap;">
+                        ${p.label || 'AUTHORITY SIGNATURE'}
+                    </div>
+                </div>`;
+        }
+
+        case 'shape': {
+            return `
+                <div style="width: 100%; height: 100%; background: ${p.fill || '#0e3e2b'}; border: ${p.borderWidth || 0}px solid ${p.borderColor || 'transparent'}; border-radius: ${p.borderRadius || 0}px; opacity: ${p.opacity !== undefined ? p.opacity : 1}; pointer-events: none;"></div>`;
+        }
+
+        case 'custom-text': {
+            return `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; pointer-events: none;">
+                    <div style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${p.fontSize || 12}px; font-weight: ${p.fontWeight || 600}; color: ${p.color || '#0f172a'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'none'}; line-height: 1.2; width: 100%;">
+                        ${p.text || 'Custom Text'}
+                    </div>
+                </div>`;
+        }
+
+        default:
+            return `<div style="width: 100%; height: 100%; border: 1px dashed #64748b;"></div>`;
+    }
+}
+
+function resolveUiceLogoSrc(preset) {
+    if (preset === 'preset-vsa-logo') {
+        const vsaLogo = getVsaDefaultLogo();
+        if (vsaLogo && vsaLogo.startsWith('data:image/')) {
+            return `<img src="${vsaLogo}" alt="Logo" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+        }
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="#009688" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
+}
+
+function resolveUiceSigSrc(preset) {
+    if (preset === 'preset-vsa-sig') {
+        const vsaSig = getVsaDefaultSig();
+        if (vsaSig && vsaSig.startsWith('data:image/')) {
+            return `<img src="${vsaSig}" alt="Signature" crossorigin="anonymous" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
+        }
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30" viewBox="0 0 150 40"><path d="M10,25 C30,10 50,35 70,15 C90,-5 110,30 130,20" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`;
+}
+
+/**
+ * Renders the Layers Manager list in the left panel.
+ */
+function renderUiceLayersList() {
+    const listContainer = document.getElementById('uice-layers-container');
+    const countBadge = document.getElementById('lbl-uice-layer-count');
+    if (!listContainer) return;
+
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!layout) return;
+
+    if (countBadge) countBadge.textContent = layout.elements.length;
+
+    // Sort reversed so highest Z-index is at top
+    const sorted = [...layout.elements].sort((a, b) => (b.zIndex || 1) - (a.zIndex || 1));
+
+    listContainer.innerHTML = sorted.map(el => {
+        const isSelected = el.id === UICE_STATE.selectedId;
+        return `
+            <div class="uice-layer-item ${isSelected ? 'selected' : ''} ${el.locked ? 'locked' : ''}" data-id="${el.id}">
+                <div class="uice-layer-drag-handle">
+                    <i data-lucide="grip-vertical" style="width: 12px; height: 12px;"></i>
+                </div>
+                <div class="uice-layer-name" title="${el.name || el.type}">
+                    ${el.name || el.type}
+                </div>
+                <div class="uice-layer-actions">
+                    <button type="button" class="uice-layer-btn btn-layer-lock ${el.locked ? 'active' : ''}" data-id="${el.id}" title="${el.locked ? 'Unlock' : 'Lock'}">
+                        <i data-lucide="${el.locked ? 'lock' : 'unlock'}" style="width: 12px; height: 12px;"></i>
+                    </button>
+                    <button type="button" class="uice-layer-btn btn-layer-vis ${el.visible === false ? 'active' : ''}" data-id="${el.id}" title="${el.visible === false ? 'Show' : 'Hide'}">
+                        <i data-lucide="${el.visible === false ? 'eye-off' : 'eye'}" style="width: 12px; height: 12px;"></i>
+                    </button>
+                    <button type="button" class="uice-layer-btn btn-layer-del" data-id="${el.id}" title="Delete" style="color: #ef4444;">
+                        <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                    </button>
+                </div>
+            </div>`;
+    }).join('');
+
+    // Attach click listeners to layer rows
+    listContainer.querySelectorAll('.uice-layer-item').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('.uice-layer-actions')) return;
+            const id = this.getAttribute('data-id');
+            selectUiceElement(id);
+        });
+    });
+
+    // Layer action buttons
+    listContainer.querySelectorAll('.btn-layer-lock').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            const el = layout.elements.find(x => x.id === id);
+            if (el) {
+                el.locked = !el.locked;
+                renderUiceStage();
+                pushUiceHistory(`${el.locked ? 'Lock' : 'Unlock'} ${el.name}`);
+            }
+        });
+    });
+
+    listContainer.querySelectorAll('.btn-layer-vis').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            const el = layout.elements.find(x => x.id === id);
+            if (el) {
+                el.visible = el.visible === false ? true : false;
+                renderUiceStage();
+                pushUiceHistory(`${el.visible ? 'Show' : 'Hide'} ${el.name}`);
+            }
+        });
+    });
+
+    listContainer.querySelectorAll('.btn-layer-del').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            deleteUiceElement(id);
+        });
+    });
+
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons({ root: listContainer });
+    }
+}
+
+/**
+ * Selects an element by ID and updates the Property Inspector.
+ */
+function selectUiceElement(id) {
+    UICE_STATE.selectedId = id;
+    renderUiceStage();
+}
+
+/**
+ * Deletes an element from the active layout.
+ */
+function deleteUiceElement(id) {
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!layout) return;
+
+    const idx = layout.elements.findIndex(x => x.id === id);
+    if (idx !== -1) {
+        const removed = layout.elements.splice(idx, 1)[0];
+        if (UICE_STATE.selectedId === id) {
+            UICE_STATE.selectedId = null;
+        }
+        renderUiceStage();
+        pushUiceHistory(`Delete ${removed.name || removed.type}`);
+    }
+}
+
+/**
+ * Duplicates an element with a 12px offset.
+ */
+function duplicateUiceElement(id) {
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!layout) return;
+
+    const source = layout.elements.find(x => x.id === id);
+    if (!source) return;
+
+    const clone = JSON.parse(JSON.stringify(source));
+    clone.id = 'uice-elem-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+    clone.name = `${source.name || source.type} (Copy)`;
+    clone.x = Math.min(layout.width - clone.width, clone.x + 12);
+    clone.y = Math.min(layout.height - clone.height, clone.y + 12);
+    clone.zIndex = (source.zIndex || 1) + 1;
+    clone.locked = false;
+
+    layout.elements.push(clone);
+    UICE_STATE.selectedId = clone.id;
+    renderUiceStage();
+    pushUiceHistory(`Duplicate ${source.name || source.type}`);
+}
+
+/**
+ * Adds a new element of the specified type to the center of the canvas.
+ */
+function addUiceElement(type) {
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!layout) return;
+
+    const id = 'uice-elem-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+    const centerX = Math.round((layout.width - 120) / 2);
+    const centerY = Math.round((layout.height - 40) / 2);
+
+    let newEl = null;
+
+    switch (type) {
+        case 'agency-brand':
+            newEl = {
+                id,
+                type: 'agency-brand',
+                name: 'Agency Header',
+                x: 16,
+                y: 12,
+                width: 280,
+                height: 42,
+                zIndex: layout.elements.length + 1,
+                properties: {
+                    title: 'VALLEY SECURITY AGENCY',
+                    subtitle: 'SHAHIDGUNJ SRINAGAR',
+                    titleFontSize: 12,
+                    subtitleFontSize: 6.5,
+                    color: '#ffffff',
+                    logoSize: 32,
+                    logoPreset: 'preset-vsa-logo'
+                }
+            };
+            break;
+
+        case 'agency-logo':
+            newEl = {
+                id,
+                type: 'agency-logo',
+                name: 'Agency Logo',
+                x: centerX,
+                y: centerY,
+                width: 48,
+                height: 48,
+                zIndex: layout.elements.length + 1,
+                properties: { logoPreset: 'preset-vsa-logo' }
+            };
+            break;
+
+        case 'employee-photo':
+            newEl = {
+                id,
+                type: 'employee-photo',
+                name: 'Employee Photo',
+                x: centerX,
+                y: centerY,
+                width: 100,
+                height: 100,
+                zIndex: layout.elements.length + 1,
+                properties: { shape: 'circle', borderWidth: 3, borderColor: '#ffffff', outlineColor: '#009688' }
+            };
+            break;
+
+        case 'employee-name':
+            newEl = {
+                id,
+                type: 'employee-name',
+                name: 'Employee Name',
+                x: centerX - 40,
+                y: centerY,
+                width: 200,
+                height: 28,
+                zIndex: layout.elements.length + 1,
+                properties: { fontSize: 16, fontWeight: 800, color: '#0f172a', textAlign: 'center', textTransform: 'uppercase' }
+            };
+            break;
+
+        case 'designation':
+            newEl = {
+                id,
+                type: 'designation',
+                name: 'Designation',
+                x: centerX - 40,
+                y: centerY,
+                width: 200,
+                height: 20,
+                zIndex: layout.elements.length + 1,
+                properties: { fontSize: 10.5, fontWeight: 700, color: '#009688', textAlign: 'center', textTransform: 'uppercase' }
+            };
+            break;
+
+        case 'details-table':
+            newEl = {
+                id,
+                type: 'details-table',
+                name: 'Details Table',
+                x: 20,
+                y: centerY,
+                width: layout.width - 40,
+                height: 100,
+                zIndex: layout.elements.length + 1,
+                properties: { fontSize: 8, labelColor: '#475569', valueColor: '#0f172a', rowPadding: 3, labelWidth: 38 }
+            };
+            break;
+
+        case 'qr-code':
+            newEl = {
+                id,
+                type: 'qr-code',
+                name: 'QR Code',
+                x: centerX,
+                y: centerY,
+                width: 54,
+                height: 54,
+                zIndex: layout.elements.length + 1,
+                properties: { errorCorrection: 'H', foreground: '#000000', background: '#ffffff', quietZone: 2, borderColor: '#009688', borderWidth: 1.5 }
+            };
+            break;
+
+        case 'barcode':
+            newEl = {
+                id,
+                type: 'barcode',
+                name: 'Barcode',
+                x: centerX - 20,
+                y: centerY,
+                width: 120,
+                height: 28,
+                zIndex: layout.elements.length + 1,
+                properties: { format: 'CODE128', lineColor: '#000000', background: '#ffffff', showText: true, fontSize: 8.5 }
+            };
+            break;
+
+        case 'signature':
+            newEl = {
+                id,
+                type: 'signature',
+                name: 'Signature',
+                x: centerX,
+                y: centerY,
+                width: 100,
+                height: 44,
+                zIndex: layout.elements.length + 1,
+                properties: { preset: 'preset-vsa-sig', label: 'AUTHORITY SIGNATURE' }
+            };
+            break;
+
+        case 'badge-pill':
+            newEl = {
+                id,
+                type: 'badge-pill',
+                name: 'Title Badge',
+                x: centerX - 30,
+                y: 14,
+                width: 160,
+                height: 26,
+                zIndex: layout.elements.length + 1,
+                properties: { text: 'SECURITY ID CARD', background: '#009688', color: '#ffffff', fontSize: 11, fontWeight: 800, borderRadius: 6 }
+            };
+            break;
+
+        case 'custom-text':
+            newEl = {
+                id,
+                type: 'custom-text',
+                name: 'Custom Text',
+                x: centerX,
+                y: centerY,
+                width: 140,
+                height: 24,
+                zIndex: layout.elements.length + 1,
+                properties: { text: 'Custom Text Label', fontSize: 12, fontWeight: 600, color: '#0f172a' }
+            };
+            break;
+
+        case 'shape':
+            newEl = {
+                id,
+                type: 'shape',
+                name: 'Accent Shape',
+                x: centerX - 40,
+                y: centerY - 20,
+                width: 120,
+                height: 40,
+                zIndex: 1,
+                properties: { fill: '#009688', borderWidth: 0, borderRadius: 8, opacity: 1 }
+            };
+            break;
+    }
+
+    if (newEl) {
+        layout.elements.push(newEl);
+        UICE_STATE.selectedId = newEl.id;
+        renderUiceStage();
+        pushUiceHistory(`Add ${newEl.name}`);
+    }
+}
+
+/**
+ * Updates the Right Property Inspector with the active element's properties.
+ */
+function updateUicePropertyInspector(el) {
+    const emptyState = document.getElementById('uice-inspector-empty');
+    const activeState = document.getElementById('uice-inspector-active');
+    const typeBadge = document.getElementById('lbl-uice-selected-type');
+    const idBadge = document.getElementById('lbl-uice-elem-id');
+
+    if (!el) {
+        if (emptyState) emptyState.style.display = 'flex';
+        if (activeState) activeState.style.display = 'none';
+        if (typeBadge) typeBadge.style.display = 'none';
+        return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (activeState) activeState.style.display = 'flex';
+    if (typeBadge) {
+        typeBadge.style.display = 'inline-block';
+        typeBadge.textContent = el.type;
+    }
+    if (idBadge) {
+        idBadge.textContent = el.name || el.id;
+    }
+
+    // Geometry fields
+    const propX = document.getElementById('prop-uice-x');
+    const propY = document.getElementById('prop-uice-y');
+    const propW = document.getElementById('prop-uice-w');
+    const propH = document.getElementById('prop-uice-h');
+    const propRot = document.getElementById('prop-uice-rot');
+    const propZ = document.getElementById('prop-uice-z');
+
+    if (propX) propX.value = Math.round(el.x);
+    if (propY) propY.value = Math.round(el.y);
+    if (propW) propW.value = Math.round(el.width);
+    if (propH) propH.value = Math.round(el.height);
+    if (propRot) propRot.value = Math.round(el.rotation || 0);
+    if (propZ) propZ.value = el.zIndex || 1;
+
+    // Toggle specific sub-sections
+    const secTypo = document.getElementById('prop-sec-typography');
+    const secPhoto = document.getElementById('prop-sec-photo');
+    const secQr = document.getElementById('prop-sec-qr');
+    const secBarcode = document.getElementById('prop-sec-barcode');
+    const secTable = document.getElementById('prop-sec-table');
+    const secSig = document.getElementById('prop-sec-signature');
+    const secShape = document.getElementById('prop-sec-shape');
+
+    const hasTypo = ['employee-name', 'designation', 'custom-text', 'agency-brand', 'badge-pill'].includes(el.type);
+    if (secTypo) secTypo.style.display = hasTypo ? 'flex' : 'none';
+    if (secPhoto) secPhoto.style.display = el.type === 'employee-photo' ? 'flex' : 'none';
+    if (secQr) secQr.style.display = el.type === 'qr-code' ? 'flex' : 'none';
+    if (secBarcode) secBarcode.style.display = el.type === 'barcode' ? 'flex' : 'none';
+    if (secTable) secTable.style.display = el.type === 'details-table' ? 'flex' : 'none';
+    if (secSig) secSig.style.display = el.type === 'signature' ? 'flex' : 'none';
+    if (secShape) secShape.style.display = el.type === 'shape' ? 'flex' : 'none';
+
+    const p = el.properties || {};
+
+    // Typography bindings
+    if (hasTypo) {
+        const fontSel = document.getElementById('prop-uice-font');
+        const fontSizeInp = document.getElementById('prop-uice-font-size');
+        const fontWeightSel = document.getElementById('prop-uice-font-weight');
+        const colorInp = document.getElementById('prop-uice-color');
+        const letterSpacingInp = document.getElementById('prop-uice-letter-spacing');
+        const textAlignSel = document.getElementById('prop-uice-text-align');
+        const textTransformSel = document.getElementById('prop-uice-text-transform');
+
+        if (fontSel) fontSel.value = p.fontFamily || "'Plus Jakarta Sans', sans-serif";
+        if (fontSizeInp) fontSizeInp.value = p.fontSize || p.titleFontSize || 14;
+        if (fontWeightSel) fontWeightSel.value = p.fontWeight || '700';
+        if (colorInp) colorInp.value = p.color || '#0f172a';
+        if (letterSpacingInp) letterSpacingInp.value = p.letterSpacing || 0;
+        if (textAlignSel) textAlignSel.value = p.textAlign || 'left';
+        if (textTransformSel) textTransformSel.value = p.textTransform || 'none';
+    }
+
+    // Photo bindings
+    if (el.type === 'employee-photo') {
+        const shapeSel = document.getElementById('prop-uice-photo-shape');
+        const borderWInp = document.getElementById('prop-uice-photo-border');
+        const borderCInp = document.getElementById('prop-uice-photo-border-color');
+        const outlineCInp = document.getElementById('prop-uice-photo-outline-color');
+
+        if (shapeSel) shapeSel.value = p.shape || 'circle';
+        if (borderWInp) borderWInp.value = p.borderWidth !== undefined ? p.borderWidth : 3.5;
+        if (borderCInp) borderCInp.value = p.borderColor || '#ffffff';
+        if (outlineCInp) outlineCInp.value = p.outlineColor || '#009688';
+    }
+
+    // QR bindings & Sentinel check
+    if (el.type === 'qr-code') {
+        const fgInp = document.getElementById('prop-uice-qr-fg');
+        const bgInp = document.getElementById('prop-uice-qr-bg');
+        const eccSel = document.getElementById('prop-uice-qr-ecc');
+        const quietInp = document.getElementById('prop-uice-qr-quiet');
+
+        if (fgInp) fgInp.value = p.foreground || '#000000';
+        if (bgInp) bgInp.value = p.background || '#ffffff';
+        if (eccSel) eccSel.value = p.errorCorrection || 'H';
+        if (quietInp) quietInp.value = p.quietZone !== undefined ? p.quietZone : 2;
+
+        // Scannability Sentinel check
+        const sentinelBadge = document.getElementById('uice-qr-sentinel');
+        if (sentinelBadge) {
+            const minDim = Math.min(el.width, el.height);
+            if (minDim < 36) {
+                sentinelBadge.className = 'uice-sentinel-badge warning';
+                sentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Warning: QR Size (${Math.round(minDim)}px) below recommended 40px optical threshold</span>`;
+            } else {
+                sentinelBadge.className = 'uice-sentinel-badge valid';
+                sentinelBadge.innerHTML = `<i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i><span>QR Scannable & Optical Standards Verified</span>`;
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: sentinelBadge });
+            }
+        }
+    }
+
+    // Barcode bindings
+    if (el.type === 'barcode') {
+        const fmtSel = document.getElementById('prop-uice-barcode-format');
+        const lineCInp = document.getElementById('prop-uice-barcode-color');
+        const showTextCb = document.getElementById('prop-uice-barcode-text');
+
+        if (fmtSel) fmtSel.value = p.format || 'CODE128';
+        if (lineCInp) lineCInp.value = p.lineColor || '#000000';
+        if (showTextCb) showTextCb.checked = p.showText !== false;
+    }
+
+    // Details Table bindings
+    if (el.type === 'details-table') {
+        const rowPadInp = document.getElementById('prop-uice-table-row-pad');
+        const labelWInp = document.getElementById('prop-uice-table-label-w');
+        const labelCInp = document.getElementById('prop-uice-table-label-c');
+        const valueCInp = document.getElementById('prop-uice-table-value-c');
+
+        if (rowPadInp) rowPadInp.value = p.rowPadding !== undefined ? p.rowPadding : 3;
+        if (labelWInp) labelWInp.value = p.labelWidth || 38;
+        if (labelCInp) labelCInp.value = p.labelColor || '#475569';
+        if (valueCInp) valueCInp.value = p.valueColor || '#0f172a';
+    }
+
+    // Signature bindings
+    if (el.type === 'signature') {
+        const sigPresetSel = document.getElementById('prop-uice-sig-preset');
+        const sigLabelInp = document.getElementById('prop-uice-sig-label');
+
+        if (sigPresetSel) sigPresetSel.value = p.preset || 'preset-vsa-sig';
+        if (sigLabelInp) sigLabelInp.value = p.label || 'AUTHORITY SIGNATURE';
+    }
+
+    // Shape bindings
+    if (el.type === 'shape') {
+        const fillInp = document.getElementById('prop-uice-shape-fill');
+        const borderCInp = document.getElementById('prop-uice-shape-border');
+        const borderWInp = document.getElementById('prop-uice-shape-border-w');
+        const radiusInp = document.getElementById('prop-uice-shape-radius');
+
+        if (fillInp) fillInp.value = p.fill || '#009688';
+        if (borderCInp) borderCInp.value = p.borderColor || '#000000';
+        if (borderWInp) borderWInp.value = p.borderWidth || 0;
+        if (radiusInp) radiusInp.value = p.borderRadius || 0;
+    }
+}
+
+/**
+ * Draws pixel markings and numbers on top and left rulers.
+ */
+function drawUiceRulers() {
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts
+        ? UICE_STATE.template.layouts[UICE_STATE.orientation]
+        : null;
+    if (!layout) return;
+
+    const topCanvas = document.getElementById('uice-ruler-top-canvas');
+    const leftCanvas = document.getElementById('uice-ruler-left-canvas');
+    if (!topCanvas || !leftCanvas) return;
+
+    const w = layout.width + 120;
+    const h = layout.height + 120;
+
+    topCanvas.width = w;
+    leftCanvas.height = h;
+
+    const ctxTop = topCanvas.getContext('2d');
+    const ctxLeft = leftCanvas.getContext('2d');
+
+    // Draw Top Horizontal Ruler
+    ctxTop.fillStyle = '#0f172a';
+    ctxTop.fillRect(0, 0, w, 24);
+    ctxTop.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctxTop.fillStyle = '#64748b';
+    ctxTop.font = '8px monospace';
+
+    for (let x = 0; x <= w; x += 10) {
+        const isMajor = x % 50 === 0;
+        const tickH = isMajor ? 12 : 5;
+        ctxTop.beginPath();
+        ctxTop.moveTo(x + 60, 24);
+        ctxTop.lineTo(x + 60, 24 - tickH);
+        ctxTop.stroke();
+
+        if (isMajor && x <= layout.width) {
+            ctxTop.fillText(x.toString(), x + 62, 10);
+        }
+    }
+
+    // Draw Left Vertical Ruler
+    ctxLeft.fillStyle = '#0f172a';
+    ctxLeft.fillRect(0, 0, 24, h);
+    ctxLeft.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctxLeft.fillStyle = '#64748b';
+    ctxLeft.font = '8px monospace';
+
+    for (let y = 0; y <= h; y += 10) {
+        const isMajor = y % 50 === 0;
+        const tickW = isMajor ? 12 : 5;
+        ctxLeft.beginPath();
+        ctxLeft.moveTo(24, y + 60);
+        ctxLeft.lineTo(24 - tickW, y + 60);
+        ctxLeft.stroke();
+
+        if (isMajor && y <= layout.height) {
+            ctxLeft.save();
+            ctxLeft.translate(10, y + 62);
+            ctxLeft.rotate(-Math.PI / 2);
+            ctxLeft.fillText(y.toString(), 0, 0);
+            ctxLeft.restore();
+        }
+    }
+}
+
+/**
+ * Attaches pointer, mouse, keyboard, and toolbar listeners for UICE.
+ */
+function setupUiceListeners() {
+    const artboard = document.getElementById('uice-artboard');
+    const elementsContainer = document.getElementById('uice-elements-container');
+    const guidesContainer = document.getElementById('uice-guides-container');
+
+    // 1. Pointer Down on Elements Container (Delegation)
+    if (elementsContainer) {
+        elementsContainer.addEventListener('pointerdown', function(e) {
+            const handle = e.target.closest('.uice-handle');
+            const node = e.target.closest('.uice-node');
+
+            if (handle) {
+                // Resize or Rotate Handle
+                e.preventDefault();
+                e.stopPropagation();
+                const handleType = handle.getAttribute('data-handle');
+                const parentNode = handle.closest('.uice-node');
+                const id = parentNode.getAttribute('data-id');
+                const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+                const el = layout.elements.find(x => x.id === id);
+                if (!el || el.locked) return;
+
+                if (handleType === 'rot') {
+                    // Start Rotation
+                    const rect = parentNode.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+
+                    UICE_STATE.drag = {
+                        isDragging: false,
+                        isResizing: false,
+                        isRotating: true,
+                        handle: 'rot',
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        origX: el.x,
+                        origY: el.y,
+                        origW: el.width,
+                        origH: el.height,
+                        origRot: el.rotation || 0,
+                        centerX,
+                        centerY,
+                        startAngle,
+                        hasMoved: false
+                    };
+                } else {
+                    // Start Resize
+                    UICE_STATE.drag = {
+                        isDragging: false,
+                        isResizing: true,
+                        isRotating: false,
+                        handle: handleType,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        origX: el.x,
+                        origY: el.y,
+                        origW: el.width,
+                        origH: el.height,
+                        origRot: el.rotation || 0,
+                        hasMoved: false
+                    };
+                }
+            } else if (node) {
+                // Element Node Click / Drag Start
+                e.preventDefault();
+                const id = node.getAttribute('data-id');
+                const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+                const el = layout.elements.find(x => x.id === id);
+                if (!el) return;
+
+                if (UICE_STATE.selectedId !== id) {
+                    selectUiceElement(id);
+                }
+
+                if (!el.locked) {
+                    UICE_STATE.drag = {
+                        isDragging: true,
+                        isResizing: false,
+                        isRotating: false,
+                        handle: null,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        origX: el.x,
+                        origY: el.y,
+                        origW: el.width,
+                        origH: el.height,
+                        origRot: el.rotation || 0,
+                        hasMoved: false
+                    };
+                }
+            } else {
+                // Clicked blank area on artboard -> deselect
+                UICE_STATE.selectedId = null;
+                renderUiceStage();
+            }
+        });
+    }
+
+    // 2. Global Window Pointer Move (60fps Drag / Resize / Rotate)
+    window.addEventListener('pointermove', function(e) {
+        if (!UICE_STATE.drag.isDragging && !UICE_STATE.drag.isResizing && !UICE_STATE.drag.isRotating) return;
+
+        const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
+        if (!layout) return;
+
+        const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+        if (!el || el.locked) return;
+
+        const d = UICE_STATE.drag;
+        const zoom = UICE_STATE.zoom || 1.0;
+        const deltaX = (e.clientX - d.startX) / zoom;
+        const deltaY = (e.clientY - d.startY) / zoom;
+
+        if (Math.hypot(deltaX, deltaY) > 2) {
+            d.hasMoved = true;
+        }
+
+        // Clear previous guide lines
+        if (guidesContainer) guidesContainer.innerHTML = '';
+
+        if (d.isDragging) {
+            let newX = Math.round(d.origX + deltaX);
+            let newY = Math.round(d.origY + deltaY);
+
+            // Snap-to-Grid
+            if (UICE_STATE.snapToGrid) {
+                const g = UICE_STATE.gridSize || 10;
+                newX = Math.round(newX / g) * g;
+                newY = Math.round(newY / g) * g;
+            }
+
+            // Smart Alignment Guidelines
+            if (UICE_STATE.showGuides) {
+                const guides = computeUiceAlignmentGuides(el, newX, newY, layout);
+                newX = guides.x;
+                newY = guides.y;
+                drawUiceGuides(guides.lines);
+            }
+
+            // Boundary clamping
+            newX = Math.max(-el.width + 20, Math.min(layout.width - 20, newX));
+            newY = Math.max(-el.height + 20, Math.min(layout.height - 20, newY));
+
+            el.x = newX;
+            el.y = newY;
+
+            // Direct DOM update for 60fps responsiveness
+            const node = elementsContainer.querySelector(`[data-id="${el.id}"]`);
+            if (node) {
+                node.style.left = newX + 'px';
+                node.style.top = newY + 'px';
+            }
+
+            // Live sync inspector
+            const propX = document.getElementById('prop-uice-x');
+            const propY = document.getElementById('prop-uice-y');
+            if (propX) propX.value = newX;
+            if (propY) propY.value = newY;
+        } else if (d.isResizing) {
+            let newX = d.origX;
+            let newY = d.origY;
+            let newW = d.origW;
+            let newH = d.origH;
+            const h = d.handle;
+
+            if (h.includes('e')) newW = Math.max(15, Math.round(d.origW + deltaX));
+            if (h.includes('s')) newH = Math.max(15, Math.round(d.origH + deltaY));
+            if (h.includes('w')) {
+                const rawW = Math.round(d.origW - deltaX);
+                if (rawW >= 15) {
+                    newW = rawW;
+                    newX = Math.round(d.origX + deltaX);
+                }
+            }
+            if (h.includes('n')) {
+                const rawH = Math.round(d.origH - deltaY);
+                if (rawH >= 15) {
+                    newH = rawH;
+                    newY = Math.round(d.origY + deltaY);
+                }
+            }
+
+            // Snap-to-Grid for dimensions
+            if (UICE_STATE.snapToGrid) {
+                const g = UICE_STATE.gridSize || 10;
+                newW = Math.round(newW / g) * g;
+                newH = Math.round(newH / g) * g;
+            }
+
+            el.x = newX;
+            el.y = newY;
+            el.width = Math.max(15, newW);
+            el.height = Math.max(15, newH);
+
+            const node = elementsContainer.querySelector(`[data-id="${el.id}"]`);
+            if (node) {
+                node.style.left = el.x + 'px';
+                node.style.top = el.y + 'px';
+                node.style.width = el.width + 'px';
+                node.style.height = el.height + 'px';
+            }
+
+            const propX = document.getElementById('prop-uice-x');
+            const propY = document.getElementById('prop-uice-y');
+            const propW = document.getElementById('prop-uice-w');
+            const propH = document.getElementById('prop-uice-h');
+            if (propX) propX.value = el.x;
+            if (propY) propY.value = el.y;
+            if (propW) propW.value = el.width;
+            if (propH) propH.value = el.height;
+        } else if (d.isRotating) {
+            const currentAngle = Math.atan2(e.clientY - d.centerY, e.clientX - d.centerX) * (180 / Math.PI);
+            let rot = Math.round(d.origRot + (currentAngle - d.startAngle));
+
+            // Normalize between -180 and 180
+            while (rot > 180) rot -= 360;
+            while (rot < -180) rot += 360;
+
+            // Snap to 0, 90, -90, 180 within 4 degrees
+            [0, 90, -90, 180, -180].forEach(snap => {
+                if (Math.abs(rot - snap) <= 4) rot = snap;
+            });
+
+            el.rotation = rot;
+            const node = elementsContainer.querySelector(`[data-id="${el.id}"]`);
+            if (node) {
+                node.style.transform = `rotate(${rot}deg)`;
+            }
+
+            const propRot = document.getElementById('prop-uice-rot');
+            if (propRot) propRot.value = rot;
+        }
+    });
+
+    // 3. Global Window Pointer Up
+    window.addEventListener('pointerup', function() {
+        if (UICE_STATE.drag.isDragging || UICE_STATE.drag.isResizing || UICE_STATE.drag.isRotating) {
+            const hasMoved = UICE_STATE.drag.hasMoved;
+            const wasResizing = UICE_STATE.drag.isResizing;
+
+            UICE_STATE.drag.isDragging = false;
+            UICE_STATE.drag.isResizing = false;
+            UICE_STATE.drag.isRotating = false;
+
+            if (guidesContainer) guidesContainer.innerHTML = '';
+
+            if (hasMoved) {
+                // If resized QR code or barcode, full re-render ensures clean canvases
+                if (wasResizing) {
+                    renderUiceStage();
+                }
+                pushUiceHistory('Transform Element');
+            }
+        }
+    });
+
+    // 4. Keyboard Shortcuts: Undo (Ctrl+Z), Redo (Ctrl+Y), Duplicate (Ctrl+D), Delete, Nudge
+    window.addEventListener('keydown', function(e) {
+        // Only active when Visual Workspace is visible and not typing inside input/textarea
+        const visualWs = document.getElementById('uice-visual-workspace');
+        if (!visualWs || visualWs.offsetParent === null) return;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+        const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
+        if (!layout) return;
+
+        // Undo: Ctrl+Z
+        if (e.ctrlKey && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            undoUice();
+            return;
+        }
+
+        // Redo: Ctrl+Y or Ctrl+Shift+Z
+        if ((e.ctrlKey && e.key.toLowerCase() === 'y') || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z')) {
+            e.preventDefault();
+            redoUice();
+            return;
+        }
+
+        // Duplicate: Ctrl+D
+        if (e.ctrlKey && e.key.toLowerCase() === 'd') {
+            e.preventDefault();
+            if (UICE_STATE.selectedId) {
+                duplicateUiceElement(UICE_STATE.selectedId);
+            }
+            return;
+        }
+
+        // Delete: Delete or Backspace
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (UICE_STATE.selectedId) {
+                e.preventDefault();
+                deleteUiceElement(UICE_STATE.selectedId);
+            }
+            return;
+        }
+
+        // Escape: Deselect
+        if (e.key === 'Escape') {
+            UICE_STATE.selectedId = null;
+            renderUiceStage();
+            return;
+        }
+
+        // Arrow Keys: Nudge 1px (or 10px with Shift)
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && UICE_STATE.selectedId) {
+            e.preventDefault();
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.locked) return;
+
+            const step = e.shiftKey ? 10 : 1;
+            if (e.key === 'ArrowLeft') el.x -= step;
+            if (e.key === 'ArrowRight') el.x += step;
+            if (e.key === 'ArrowUp') el.y -= step;
+            if (e.key === 'ArrowDown') el.y += step;
+
+            renderUiceStage();
+            pushUiceHistory(`Nudge ${el.name || el.type}`);
+        }
+    });
+
+    // 5. Studio Mode Tabs (Visual vs Classic)
+    const tabVisual = document.getElementById('tab-uice-visual');
+    const tabClassic = document.getElementById('tab-uice-classic');
+    const viewVisual = document.getElementById('uice-visual-workspace');
+    const viewClassic = document.getElementById('uice-classic-workspace');
+
+    if (tabVisual && tabClassic) {
+        tabVisual.addEventListener('click', function() {
+            tabVisual.classList.add('active');
+            tabClassic.classList.remove('active');
+            if (viewVisual) viewVisual.style.display = 'block';
+            if (viewClassic) viewClassic.style.display = 'none';
+            renderUiceStage();
+        });
+
+        tabClassic.addEventListener('click', function() {
+            tabClassic.classList.add('active');
+            tabVisual.classList.remove('active');
+            if (viewVisual) viewVisual.style.display = 'none';
+            if (viewClassic) viewClassic.style.display = 'block';
+            updateLivePreview();
+        });
+    }
+
+    // 6. Left Panel Palette Tabs (Add Items vs Layers)
+    const tabElem = document.getElementById('uice-tab-elements');
+    const tabLayer = document.getElementById('uice-tab-layers');
+    const viewElem = document.getElementById('uice-view-elements');
+    const viewLayer = document.getElementById('uice-view-layers');
+
+    if (tabElem && tabLayer) {
+        tabElem.addEventListener('click', function() {
+            tabElem.classList.add('active');
+            tabLayer.classList.remove('active');
+            if (viewElem) viewElem.style.display = 'grid';
+            if (viewLayer) viewLayer.style.display = 'none';
+        });
+
+        tabLayer.addEventListener('click', function() {
+            tabLayer.classList.add('active');
+            tabElem.classList.remove('active');
+            if (viewElem) viewElem.style.display = 'none';
+            if (viewLayer) viewLayer.style.display = 'block';
+            renderUiceLayersList();
+        });
+    }
+
+    // 7. Add Element Buttons
+    document.querySelectorAll('.uice-element-add-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const addType = this.getAttribute('data-add-type');
+            if (addType) addUiceElement(addType);
+        });
+    });
+
+    // 8. Command Bar Actions
+    const btnUndo = document.getElementById('btn-uice-undo');
+    if (btnUndo) btnUndo.addEventListener('click', undoUice);
+
+    const btnRedo = document.getElementById('btn-uice-redo');
+    if (btnRedo) btnRedo.addEventListener('click', redoUice);
+
+    // Orientation selector
+    const orientSel = document.getElementById('uice-orientation-sel');
+    if (orientSel) {
+        orientSel.addEventListener('change', function() {
+            switchUiceOrientation(this.value);
+        });
+    }
+
+    // Auto-Arrange
+    const btnAutoArrange = document.getElementById('btn-uice-auto-arrange');
+    if (btnAutoArrange) {
+        btnAutoArrange.addEventListener('click', autoArrangeUiceLayout);
+    }
+
+    // Reset Layout
+    const btnResetLayout = document.getElementById('btn-uice-reset-layout');
+    if (btnResetLayout) {
+        btnResetLayout.addEventListener('click', resetUiceLayout);
+    }
+
+    // Grid, Snap, Guides Toggles
+    const btnGridToggle = document.getElementById('btn-uice-grid-toggle');
+    if (btnGridToggle) {
+        btnGridToggle.addEventListener('click', function() {
+            UICE_STATE.showGrid = !UICE_STATE.showGrid;
+            this.classList.toggle('active', UICE_STATE.showGrid);
+            renderUiceStage();
+        });
+    }
+
+    const btnSnapToggle = document.getElementById('btn-uice-snap-toggle');
+    if (btnSnapToggle) {
+        btnSnapToggle.addEventListener('click', function() {
+            UICE_STATE.snapToGrid = !UICE_STATE.snapToGrid;
+            this.classList.toggle('active', UICE_STATE.snapToGrid);
+        });
+    }
+
+    const btnGuidesToggle = document.getElementById('btn-uice-guides-toggle');
+    if (btnGuidesToggle) {
+        btnGuidesToggle.addEventListener('click', function() {
+            UICE_STATE.showGuides = !UICE_STATE.showGuides;
+            this.classList.toggle('active', UICE_STATE.showGuides);
+        });
+    }
+
+    // Zoom Controls
+    const btnZoomIn = document.getElementById('btn-uice-zoom-in');
+    const btnZoomOut = document.getElementById('btn-uice-zoom-out');
+    const btnZoomFit = document.getElementById('btn-uice-zoom-fit');
+    const lblZoom = document.getElementById('lbl-uice-zoom');
+
+    if (btnZoomIn) {
+        btnZoomIn.addEventListener('click', function() {
+            UICE_STATE.zoom = Math.min(2.0, UICE_STATE.zoom + 0.15);
+            if (lblZoom) lblZoom.textContent = Math.round(UICE_STATE.zoom * 100) + '%';
+            renderUiceStage();
+        });
+    }
+
+    if (btnZoomOut) {
+        btnZoomOut.addEventListener('click', function() {
+            UICE_STATE.zoom = Math.max(0.5, UICE_STATE.zoom - 0.15);
+            if (lblZoom) lblZoom.textContent = Math.round(UICE_STATE.zoom * 100) + '%';
+            renderUiceStage();
+        });
+    }
+
+    if (btnZoomFit) {
+        btnZoomFit.addEventListener('click', function() {
+            UICE_STATE.zoom = 1.0;
+            if (lblZoom) lblZoom.textContent = '100%';
+            renderUiceStage();
+        });
+    }
+
+    // Preview guard select
+    const previewEmpSel = document.getElementById('uice-preview-emp-select');
+    if (previewEmpSel) {
+        previewEmpSel.addEventListener('change', function() {
+            const found = (VSA_STATE.employees || []).find(e => e.id == this.value);
+            if (found) {
+                UICE_STATE.previewEmp = found;
+                renderUiceStage();
+            }
+        });
+    }
+
+    // Top template selector
+    const topTplSel = document.getElementById('uice-top-tpl-select');
+    if (topTplSel) {
+        topTplSel.addEventListener('change', function() {
+            loadTemplateInStudio(this.value);
+        });
+    }
+
+    const btnNewTpl = document.getElementById('btn-uice-new-template');
+    if (btnNewTpl) {
+        btnNewTpl.addEventListener('click', function() {
+            resetTemplateForm();
+            const newTpl = getActiveTemplateFromForm();
+            newTpl.id = 'tpl-' + Date.now();
+            newTpl.name = 'New Custom Layout';
+            initUiceWithTemplate(newTpl);
+        });
+    }
+
+    const btnDelTpl = document.getElementById('btn-uice-delete-template');
+    if (btnDelTpl) {
+        btnDelTpl.addEventListener('click', function() {
+            if (UICE_STATE.template && UICE_STATE.template.id) {
+                if (UICE_STATE.template.id === 'tpl-default') {
+                    alert('Default template cannot be deleted.');
+                    return;
+                }
+                if (confirm(`Delete template "${UICE_STATE.template.name}"?`)) {
+                    deleteTemplate(UICE_STATE.template.id);
+                }
+            }
+        });
+    }
+
+    // Export PNG
+    const btnExportPng = document.getElementById('btn-uice-export-png');
+    if (btnExportPng) {
+        btnExportPng.addEventListener('click', exportUiceCardPng);
+    }
+
+    // Save Layout
+    const btnSaveTpl = document.getElementById('btn-uice-save-template');
+    if (btnSaveTpl) {
+        btnSaveTpl.addEventListener('click', saveUiceTemplate);
+    }
+
+    // Quick Inspector Actions
+    const btnElemLock = document.getElementById('btn-uice-elem-lock');
+    if (btnElemLock) {
+        btnElemLock.addEventListener('click', function() {
+            if (UICE_STATE.selectedId) {
+                const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+                const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+                if (el) {
+                    el.locked = !el.locked;
+                    renderUiceStage();
+                    pushUiceHistory(`${el.locked ? 'Lock' : 'Unlock'} ${el.name}`);
+                }
+            }
+        });
+    }
+
+    const btnElemDup = document.getElementById('btn-uice-elem-dup');
+    if (btnElemDup) {
+        btnElemDup.addEventListener('click', function() {
+            if (UICE_STATE.selectedId) duplicateUiceElement(UICE_STATE.selectedId);
+        });
+    }
+
+    const btnElemDel = document.getElementById('btn-uice-elem-del');
+    if (btnElemDel) {
+        btnElemDel.addEventListener('click', function() {
+            if (UICE_STATE.selectedId) deleteUiceElement(UICE_STATE.selectedId);
+        });
+    }
+
+    const btnElemFront = document.getElementById('btn-uice-elem-front');
+    if (btnElemFront) {
+        btnElemFront.addEventListener('click', function() {
+            if (UICE_STATE.selectedId) {
+                const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+                const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+                if (el) {
+                    const maxZ = Math.max(...layout.elements.map(x => x.zIndex || 1));
+                    el.zIndex = maxZ + 1;
+                    renderUiceStage();
+                    pushUiceHistory(`Bring to Front: ${el.name}`);
+                }
+            }
+        });
+    }
+
+    const btnElemBack = document.getElementById('btn-uice-elem-back');
+    if (btnElemBack) {
+        btnElemBack.addEventListener('click', function() {
+            if (UICE_STATE.selectedId) {
+                const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+                const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+                if (el) {
+                    const minZ = Math.min(...layout.elements.map(x => x.zIndex || 1));
+                    el.zIndex = Math.max(0, minZ - 1);
+                    renderUiceStage();
+                    pushUiceHistory(`Send to Back: ${el.name}`);
+                }
+            }
+        });
+    }
+
+    // Quick Align Buttons
+    const alignMap = {
+        'btn-align-left': 'left',
+        'btn-align-center-x': 'center-x',
+        'btn-align-right': 'right',
+        'btn-align-top': 'top',
+        'btn-align-center-y': 'center-y',
+        'btn-align-bottom': 'bottom'
+    };
+
+    Object.entries(alignMap).forEach(([btnId, alignType]) => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.addEventListener('click', function() {
+                alignSelectedUiceElement(alignType);
+            });
+        }
+    });
+
+    // Inspector Two-Way Data Binding
+    bindUiceInspectorInputs();
+}
+
+/**
+ * Binds input and change events to the Property Inspector fields.
+ */
+function bindUiceInspectorInputs() {
+    const bindNum = (id, propKey, isProp = false, nestedKey = null) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el) return;
+
+            const val = parseFloat(this.value) || 0;
+            if (isProp) {
+                if (!el.properties) el.properties = {};
+                if (nestedKey) {
+                    el.properties[nestedKey] = val;
+                } else {
+                    el.properties[propKey] = val;
+                }
+            } else {
+                el[propKey] = val;
+            }
+            renderUiceStage();
+        });
+        input.addEventListener('change', () => pushUiceHistory('Change Property'));
+    };
+
+    const bindVal = (id, propKey, isProp = false) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el) return;
+
+            const val = this.type === 'checkbox' ? this.checked : this.value;
+            if (isProp) {
+                if (!el.properties) el.properties = {};
+                el.properties[propKey] = val;
+            } else {
+                el[propKey] = val;
+            }
+            renderUiceStage();
+        });
+        input.addEventListener('change', () => pushUiceHistory('Change Property'));
+    };
+
+    // Geometry
+    bindNum('prop-uice-x', 'x');
+    bindNum('prop-uice-y', 'y');
+    bindNum('prop-uice-w', 'width');
+    bindNum('prop-uice-h', 'height');
+    bindNum('prop-uice-rot', 'rotation');
+    bindNum('prop-uice-z', 'zIndex');
+
+    // Typography
+    bindVal('prop-uice-font', 'fontFamily', true);
+    bindNum('prop-uice-font-size', 'fontSize', true);
+    bindVal('prop-uice-font-weight', 'fontWeight', true);
+    bindVal('prop-uice-color', 'color', true);
+    bindNum('prop-uice-letter-spacing', 'letterSpacing', true);
+    bindVal('prop-uice-text-align', 'textAlign', true);
+    bindVal('prop-uice-text-transform', 'textTransform', true);
+
+    // Photo
+    bindVal('prop-uice-photo-shape', 'shape', true);
+    bindNum('prop-uice-photo-border', 'borderWidth', true);
+    bindVal('prop-uice-photo-border-color', 'borderColor', true);
+    bindVal('prop-uice-photo-outline-color', 'outlineColor', true);
+
+    // QR
+    bindVal('prop-uice-qr-fg', 'foreground', true);
+    bindVal('prop-uice-qr-bg', 'background', true);
+    bindVal('prop-uice-qr-ecc', 'errorCorrection', true);
+    bindNum('prop-uice-qr-quiet', 'quietZone', true);
+
+    // Barcode
+    bindVal('prop-uice-barcode-format', 'format', true);
+    bindVal('prop-uice-barcode-color', 'lineColor', true);
+    bindVal('prop-uice-barcode-text', 'showText', true);
+
+    // Details Table
+    bindNum('prop-uice-table-row-pad', 'rowPadding', true);
+    bindNum('prop-uice-table-label-w', 'labelWidth', true);
+    bindVal('prop-uice-table-label-c', 'labelColor', true);
+    bindVal('prop-uice-table-value-c', 'valueColor', true);
+
+    // Signature
+    bindVal('prop-uice-sig-preset', 'preset', true);
+    bindVal('prop-uice-sig-label', 'label', true);
+
+    // Shape
+    bindVal('prop-uice-shape-fill', 'fill', true);
+    bindVal('prop-uice-shape-border', 'borderColor', true);
+    bindNum('prop-uice-shape-border-w', 'borderWidth', true);
+    bindNum('prop-uice-shape-radius', 'borderRadius', true);
+}
+
+/**
+ * Aligns selected element relative to artboard boundaries.
+ */
+function alignSelectedUiceElement(alignType) {
+    if (!UICE_STATE.selectedId) return;
+    const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+    if (!el || el.locked) return;
+
+    switch (alignType) {
+        case 'left': el.x = 0; break;
+        case 'center-x': el.x = Math.round((layout.width - el.width) / 2); break;
+        case 'right': el.x = layout.width - el.width; break;
+        case 'top': el.y = 0; break;
+        case 'center-y': el.y = Math.round((layout.height - el.height) / 2); break;
+        case 'bottom': el.y = layout.height - el.height; break;
+    }
+
+    renderUiceStage();
+    pushUiceHistory(`Align ${alignType}: ${el.name}`);
+}
+
+/**
+ * Computes magnetic alignment guidelines against artboard and peer elements.
+ */
+function computeUiceAlignmentGuides(activeEl, targetX, targetY, layout) {
+    const threshold = 5;
+    let resX = targetX;
+    let resY = targetY;
+    const lines = [];
+
+    const activeW = activeEl.width;
+    const activeH = activeEl.height;
+
+    const testX = [
+        { val: 0, guide: 0 },
+        { val: Math.round(layout.width / 2 - activeW / 2), guide: Math.round(layout.width / 2) },
+        { val: layout.width - activeW, guide: layout.width }
+    ];
+
+    const testY = [
+        { val: 0, guide: 0 },
+        { val: Math.round(layout.height / 2 - activeH / 2), guide: Math.round(layout.height / 2) },
+        { val: layout.height - activeH, guide: layout.height }
+    ];
+
+    // Check peers
+    layout.elements.forEach(other => {
+        if (other.id === activeEl.id || other.visible === false) return;
+        testX.push({ val: other.x, guide: other.x });
+        testX.push({ val: other.x + other.width - activeW, guide: other.x + other.width });
+        testX.push({ val: Math.round(other.x + other.width / 2 - activeW / 2), guide: Math.round(other.x + other.width / 2) });
+
+        testY.push({ val: other.y, guide: other.y });
+        testY.push({ val: other.y + other.height - activeH, guide: other.y + other.height });
+        testY.push({ val: Math.round(other.y + other.height / 2 - activeH / 2), guide: Math.round(other.y + other.height / 2) });
+    });
+
+    // Match X
+    for (const item of testX) {
+        if (Math.abs(targetX - item.val) <= threshold) {
+            resX = item.val;
+            lines.push({ type: 'vertical', pos: item.guide });
+            break;
+        }
+    }
+
+    // Match Y
+    for (const item of testY) {
+        if (Math.abs(targetY - item.val) <= threshold) {
+            resY = item.val;
+            lines.push({ type: 'horizontal', pos: item.guide });
+            break;
+        }
+    }
+
+    return { x: resX, y: resY, lines };
+}
+
+function drawUiceGuides(lines) {
+    const container = document.getElementById('uice-guides-container');
+    if (!container) return;
+    container.innerHTML = lines.map(l => `
+        <div class="uice-guide-line ${l.type}" style="${l.type === 'vertical' ? `left: ${l.pos}px;` : `top: ${l.pos}px;`}"></div>
+    `).join('');
+}
+
+/**
+ * Switches between Horizontal and Vertical orientations.
+ */
+function switchUiceOrientation(newOrientation) {
+    if (!UICE_STATE.template) return;
+    UICE_STATE.orientation = newOrientation;
+    UICE_STATE.template.layout = newOrientation;
+    UICE_STATE.selectedId = null;
+
+    // Ensure layout exists
+    convertLegacyTemplateToUice(UICE_STATE.template);
+
+    renderUiceStage();
+    pushUiceHistory(`Switch to ${newOrientation}`);
+}
+
+/**
+ * Auto-arranges elements using the golden-ratio intelligent layout algorithm.
+ */
+function autoArrangeUiceLayout() {
+    const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
+    if (!layout) return;
+
+    // Regenerate default clean coordinates
+    layout.elements = getUiceDefaultElements(UICE_STATE.orientation, UICE_STATE.template);
+    renderUiceStage();
+    pushUiceHistory('Auto-Arrange Layout');
+    alert('Layout automatically arranged according to high-impact ergonomic standards!');
+}
+
+/**
+ * Resets layout to factory archetype defaults.
+ */
+function resetUiceLayout() {
+    if (!confirm('Reset current layout to factory defaults?')) return;
+    autoArrangeUiceLayout();
+}
+
+/**
+ * Exports the active ID card canvas as a 300+ DPI high-res PNG.
+ */
+async function exportUiceCardPng() {
+    const artboard = document.getElementById('uice-artboard');
+    if (!artboard) return;
+
+    // Temporarily deselect and hide grid overlay for pure artwork render
+    const prevSelected = UICE_STATE.selectedId;
+    UICE_STATE.selectedId = null;
+    renderUiceStage();
+
+    try {
+        const canvas = await html2canvas(artboard, {
+            scale: 4,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: null,
+            logging: false,
+            letterRendering: true
+        });
+
+        const empId = UICE_STATE.previewEmp ? UICE_STATE.previewEmp.id : 'GUARD';
+        const tplName = (UICE_STATE.template ? UICE_STATE.template.name : 'Card').replace(/\s+/g, '_');
+        const link = document.createElement('a');
+        link.download = `VSA_Card_${empId}_${tplName}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (err) {
+        console.error('PNG Export failed:', err);
+        alert('PNG Export failed: ' + err.message);
+    } finally {
+        UICE_STATE.selectedId = prevSelected;
+        renderUiceStage();
+    }
+}
+
+/**
+ * Saves the UICE template layout to the Neon PostgreSQL database.
+ */
+async function saveUiceTemplate() {
+    if (!UICE_STATE.template) return;
+
+    const tpl = UICE_STATE.template;
+    if (!tpl.name) {
+        tpl.name = prompt('Enter a name for this template layout:', 'Custom ID Badge') || 'Custom ID Badge';
+    }
+
+    if (!tpl.id) {
+        tpl.id = 'tpl-' + Date.now();
+    }
+
+    try {
+        const response = await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tpl)
+        });
+
+        if (!response.ok) throw new Error('API save error');
+        const savedTpl = await response.json();
+
+        // Update state list
+        const idx = (VSA_STATE.templates || []).findIndex(t => t.id === savedTpl.id);
+        if (idx !== -1) {
+            VSA_STATE.templates[idx] = savedTpl;
+        } else {
+            VSA_STATE.templates.push(savedTpl);
+        }
+
+        renderTemplatesList();
+        populateSelectors();
+        initUiceWithTemplate(savedTpl);
+
+        alert(`Template "${savedTpl.name}" saved successfully with dual-orientation layout nodes!`);
+    } catch (err) {
+        console.error('Save template failed:', err);
+        alert('Failed to save template: ' + err.message);
+    }
+}
+
+/**
+ * Generates card HTML from modern UICE layout nodes for batch printing and modals.
+ */
+function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDate = null) {
+    if (!emp || !layout) return '';
+
+    const width = layout.width || 500;
+    const height = layout.height || 320;
+    const isHoriz = width >= height;
+    const bg = layout.background || {};
+    const borderRadius = bg.borderRadius !== undefined ? bg.borderRadius : 14;
+
+    const elementsHtml = (layout.elements || []).filter(el => el.visible !== false).map(el => {
+        const innerContent = renderUiceElementHtml(el, emp);
+        return `
+            <div style="position: absolute; left: ${el.x}px; top: ${el.y}px; width: ${el.width}px; height: ${el.height}px; transform: rotate(${el.rotation || 0}deg); z-index: ${el.zIndex || 1}; box-sizing: border-box; overflow: hidden;">
+                ${innerContent}
+            </div>`;
+    }).join('');
+
+    return `
+        <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+            <div class="visual-id-card-render ${isHoriz ? 'id-card-horizontal' : 'id-card-vertical'}" style="position: relative; width: ${width}px; height: ${height}px; border-radius: ${borderRadius}px; overflow: hidden; background: ${bg.color || '#ffffff'}; border: ${bg.borderWidth || 2}px solid ${bg.accent || '#009688'}; box-shadow: 0 4px 15px rgba(0,0,0,0.15); box-sizing: border-box; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"};">
+                <div style="position: absolute; inset: 0; pointer-events: none; z-index: 0; background: ${bg.color || '#ffffff'};"></div>
+                <div style="position: absolute; inset: 0; z-index: 1;">
+                    ${elementsHtml}
+                </div>
+            </div>
+        </div>`;
+}
+
 function loadTemplateInStudio(id) {
     const tplSource = VSA_STATE.templates.find(t => t.id === id) || VSA_STATE.templates[0];
     if (!tplSource) return;
@@ -7446,6 +9912,11 @@ function loadTemplateInStudio(id) {
     }
 
     updateLivePreview();
+
+    // Also initialize the Universal Intelligent Canvas Engine (UICE)
+    if (typeof initUiceWithTemplate === 'function') {
+        initUiceWithTemplate(tplSource);
+    }
 }
 
 function getActiveTemplateFromForm() {
