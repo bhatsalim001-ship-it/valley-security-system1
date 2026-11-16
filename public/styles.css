@@ -4722,6 +4722,22 @@ input[type="checkbox"].directory-select-item:checked::after {
     width: 100%;
 }
 
+/* Card Theme Overrides for Fluid Waves & Tech Banners */
+.visual-id-card-render.theme-organic-wave,
+.visual-id-card-render.theme-geometric-tech,
+.visual-id-card-render.theme-modern-pill,
+.visual-id-card-render.theme-creative-social {
+    padding: 0 !important;
+}
+
+.visual-id-card-render.theme-organic-wave .id-portrait-header,
+.visual-id-card-render.theme-geometric-tech .id-portrait-header,
+.visual-id-card-render.theme-modern-pill .id-portrait-header,
+.visual-id-card-render.theme-creative-social .id-portrait-header {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+}
+
 
 
 /* Responsive grid rows for Select Criteria and general forms */

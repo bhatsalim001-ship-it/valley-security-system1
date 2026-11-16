@@ -2709,6 +2709,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     const detailsFontSize = template.detailsFontSize || (template.layout === 'horizontal' ? 7.5 : 8);
     const nameFontSize = template.nameFontSize || (template.layout === 'horizontal' ? 13 : 14);
     const designationFontSize = template.designationFontSize || (template.layout === 'horizontal' ? 9 : 10);
+    const cardTheme = template.cardTheme || 'classic';
+    const photoShape = template.photoShape || 'standard';
+    const nameStyle = template.nameStyle || 'clean';
+    const barcodePosition = template.barcodePosition || 'bottom-right';
 
     // Normalize fields to support both DB format and Form format
     const isNift = template.id === 'tpl-nift';
@@ -2793,17 +2797,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         bgStyle = `background-color: #ffffff; color: #000000;`;
     }
 
-    const textColor = isBgDark ? '#ffffff' : '#111111';
-    const subtextColor = isBgDark ? 'rgba(255, 255, 255, 0.7)' : '#555555';
-
-    // User-overridable label/value colors and layout
-    const labelColor = template.labelColor || subtextColor;
-    const valueColor = template.valueColor || textColor;
-    const rowPadding = template.rowPadding !== undefined ? template.rowPadding : 3;
-    const labelWidth = template.labelWidth !== undefined ? template.labelWidth : 45;
-    const labelValueSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 10;
-
-    // Header light/dark detection
+    // Helper to calculate luminance / lightness of hex color
     const isColorLight = (hexColor) => {
         if (!hexColor) return false;
         const hex = hexColor.replace('#', '');
@@ -2815,6 +2809,26 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         }
         return false;
     };
+
+    const textColor = isBgDark ? '#ffffff' : '#0f172a';
+    const subtextColor = isBgDark ? 'rgba(255, 255, 255, 0.7)' : '#475569';
+
+    // User-overridable label/value colors and layout
+    let labelColor = template.labelColor || subtextColor;
+    let valueColor = template.valueColor || textColor;
+
+    // Contrast enforcement: Ensure label and value text is always crisp and legible
+    if (!isBgDark) {
+        if (isColorLight(labelColor)) labelColor = '#475569';
+        if (isColorLight(valueColor)) valueColor = '#0f172a';
+    } else {
+        if (!isColorLight(labelColor)) labelColor = '#94a3b8';
+        if (!isColorLight(valueColor)) valueColor = '#ffffff';
+    }
+    const rowPadding = template.rowPadding !== undefined ? template.rowPadding : 3;
+    const labelWidth = template.labelWidth !== undefined ? template.labelWidth : 45;
+    const labelValueSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 10;
+
     const isLightHeader = isColorLight(template.headerBgColor || '#0e3e2b');
     const headerTextColor = isLightHeader ? '#111111' : '#ffffff';
     const headerSubtextColor = isLightHeader ? '#555555' : 'rgba(255, 255, 255, 0.8)';
@@ -2938,7 +2952,267 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
         });
     }
 
+    // 1. Photo Container Style (Circle, Squircle, Standard)
+    let photoContainerStyle = '';
+    if (photoShape === 'circle') {
+        const dim = Math.min(photoWidth, photoHeight, 95);
+        photoContainerStyle = `width: ${dim}px; height: ${dim}px; border-radius: 50%; overflow: hidden; border: 3.5px solid #ffffff; outline: 2.5px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 14px rgba(0,0,0,0.22); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+    } else if (photoShape === 'squircle') {
+        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 18px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 10px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+    } else {
+        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+    }
+
+    // 2. Name Block Style (Banner, Boxed, Clean)
+    let nameBlockHtml = '';
+    if (showName) {
+        if (nameStyle === 'banner') {
+            const bannerLight = isColorLight(template.accentColor || '#0e3e2b');
+            const bannerTextColor = bannerLight ? '#0f172a' : '#ffffff';
+            nameBlockHtml = `
+            <div style="background: ${template.accentColor || '#0e3e2b'}; color: ${bannerTextColor}; padding: 3px 14px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.18); max-width: 98%; overflow: hidden; margin-bottom: 2px;">
+                <h2 class="id-portrait-name" style="color: ${bannerTextColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px; text-transform: uppercase;">
+                    ${cleanTextVal(emp.name)}
+                </h2>
+            </div>`;
+        } else if (nameStyle === 'boxed') {
+            nameBlockHtml = `
+            <div style="border: 1.5px solid ${template.accentColor || '#0e3e2b'}; background: rgba(128,128,128,0.06); padding: 2px 10px; border-radius: 6px; display: inline-flex; align-items: center; max-width: 98%; overflow: hidden; margin-bottom: 2px;">
+                <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
+                    ${cleanTextVal(emp.name)}
+                </h2>
+            </div>`;
+        } else {
+            nameBlockHtml = `
+            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
+                ${cleanTextVal(emp.name)}
+            </h2>`;
+        }
+    }
+
+    // 3. Reusable Component Helpers
+    const getBarcodeHtml = (customWidth = '130px', customHeight = '18px') => {
+        if (!showBarcode) return '';
+        return `<canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: ${customWidth}; height: ${customHeight}; display: block;"></canvas>`;
+    };
+
+    const getQrHtml = (customSize = qrSize) => {
+        if (!showQrCode) return '';
+        return `
+        <div class="id-portrait-qr" style="width: ${customSize}px; height: ${customSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${customSize - 6}" style="width: ${customSize - 6}px; height: ${customSize - 6}px; display: block;"></canvas>
+        </div>`;
+    };
+
+    const getSigHtml = (width = '100px', height = '28px') => {
+        return `
+        <div style="width: ${width}; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="height: ${height}; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                ${sigHtml}
+            </div>
+            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 1px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
+        </div>`;
+    };
+
+    const getNoticeHtml = (compact = false) => {
+        if (compact) {
+            return `<div style="font-size: ${Math.max(4.2, detailsFontSize * 0.58)}px; color: ${subtextColor}; line-height: 1.15; text-align: center; width: 100%; padding: 2px 4px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1);">VSA property.<br>Return: Shaheed Gunj Sgr.</div>`;
+        }
+        return `<div style="font-size: ${Math.max(4.5, detailsFontSize * 0.65)}px; color: ${subtextColor}; line-height: 1.2; padding: 3px 6px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">1. Card is VSA property, display on duty.<br>2. Return to Shaheed Gunj Srinagar 190001.</div>`;
+    };
+
+    // =========================================================================
+    // HORIZONTAL LAYOUTS
+    // =========================================================================
     if (template.layout === 'horizontal') {
+        if (cardTheme === 'organic-wave') {
+            return `
+            <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div class="id-card-horizontal visual-id-card-render theme-organic-wave" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#046a52'}; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative;">
+                    <!-- SVG Fluid Waves Top -->
+                    <svg viewBox="0 0 500 115" preserveAspectRatio="none" style="position: absolute; top: 0; left: 0; width: 100%; height: 115px; pointer-events: none; z-index: 1;">
+                        <path d="M0,0 L500,0 L500,68 C410,105 320,60 230,95 C140,120 70,80 0,100 Z" fill="${template.accentColor || '#dfba5f'}" opacity="0.35"/>
+                        <path d="M0,0 L500,0 L500,55 C390,92 290,52 200,85 C110,112 40,75 0,90 Z" fill="${template.headerBgColor || '#046a52'}"/>
+                    </svg>
+                    <!-- Background Watermark Curves -->
+                    <svg viewBox="0 0 500 320" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.04;">
+                        <path d="M-40,200 C80,140 200,280 350,210 C440,170 480,260 550,230" fill="none" stroke="${textColor}" stroke-width="2"/>
+                        <path d="M-40,235 C100,175 220,305 370,240 C460,200 500,285 570,255" fill="none" stroke="${textColor}" stroke-width="2"/>
+                    </svg>
+
+                    <!-- Top Wave Brand Header -->
+                    <div class="id-portrait-header" style="height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 16px; box-sizing: border-box; z-index: 2; position: relative; flex-shrink: 0;">
+                        <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                            ${logoHtml}
+                        </div>
+                        <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                            <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                            <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.95;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Body Content Split -->
+                    <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 4px 16px 12px 16px; z-index: 2; position: relative;">
+                        <!-- Column 1: Photo & Left Element -->
+                        <div style="width: 110px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-top: -8px; margin-bottom: 4px;">${photoHtml}</div>` : ''}
+                            ${barcodePosition === 'bottom-left' ? `
+                                <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto;">
+                                    ${getBarcodeHtml('105px', '18px')}
+                                </div>
+                            ` : `
+                                <div style="margin-top: auto; width: 100%;">
+                                    ${getSigHtml('105px', '28px')}
+                                </div>
+                            `}
+                        </div>
+
+                        <!-- Column 2: Name, Designation, Details Table -->
+                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.18); padding-right: 12px;">
+                            <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.18); padding-bottom: 3px;">
+                                ${nameBlockHtml}
+                                ${showDesignation ? `
+                                <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#046a52'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    ${cleanTextVal(emp.designation)}
+                                </h3>` : ''}
+                            </div>
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                                ${detailsTableRowsHtml}
+                            </table>
+                            ${barcodePosition === 'bottom-center' ? `
+                                <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(128,128,128,0.15);">
+                                    ${getBarcodeHtml('140px', '18px')}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Column 3: QR Code, Notice, and Right Element -->
+                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${getQrHtml(qrSize)}
+                            ${getNoticeHtml(true)}
+                            ${barcodePosition === 'bottom-left' ? `
+                                <div style="margin-top: auto; width: 100%;">
+                                    ${getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                                </div>
+                            ` : barcodePosition === 'bottom-right' ? `
+                                <div style="margin-top: auto; width: 100%; display: flex; justify-content: center;">
+                                    ${getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px')}
+                                </div>
+                            ` : `
+                                <div style="margin-top: auto; width: 100%;">
+                                    ${getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        if (cardTheme === 'geometric-tech') {
+            return `
+            <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div class="id-card-horizontal visual-id-card-render theme-geometric-tech" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#2563eb'}; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative;">
+                    <!-- Geometric Angular Header -->
+                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 0, 100% 0, 100% 75%, 70% 100%, 0 75%); border-bottom: 2px solid ${template.accentColor || '#2563eb'}; height: ${headerHeight}px; display: flex; align-items: center; gap: 12px; padding: 0 16px; margin: -15px -15px 4px -15px; box-sizing: border-box; flex-shrink: 0;">
+                        <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                            ${logoHtml}
+                        </div>
+                        <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0;">
+                            <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; letter-spacing: 0.5px;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                            <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Body Content Split -->
+                    <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 4px 10px 4px 10px;">
+                        <!-- Column 1: Photo & Sig -->
+                        <div style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 4px;">${photoHtml}</div>` : ''}
+                            ${barcodePosition === 'bottom-left' ? getBarcodeHtml(`${photoWidth}px`, '18px') : getSigHtml(`${photoWidth}px`, '28px')}
+                        </div>
+
+                        <!-- Column 2: Name Banner, Designation, Table -->
+                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.18); padding-right: 10px;">
+                            <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.18); padding-bottom: 2px;">
+                                ${nameBlockHtml}
+                                ${showDesignation ? `<h3 class="id-portrait-designation" style="color: ${template.accentColor || '#2563eb'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${cleanTextVal(emp.designation)}</h3>` : ''}
+                            </div>
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                                ${detailsTableRowsHtml}
+                            </table>
+                            ${barcodePosition === 'bottom-center' ? `
+                                <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(128,128,128,0.15);">
+                                    ${getBarcodeHtml('140px', '18px')}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Column 3: QR Code, Notice, Right Item -->
+                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${getQrHtml(qrSize)}
+                            ${getNoticeHtml(true)}
+                            ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                        </div>
+                    </div>
+
+                    <!-- Bottom Geometric Accent Bar -->
+                    <div style="background: ${template.headerBgColor || '#0c2340'}; height: 8px; clip-path: polygon(0 0, 30% 100%, 100% 100%, 100% 0); margin: auto -15px -15px -15px;"></div>
+                </div>
+            </div>`;
+        }
+
+        if (cardTheme === 'modern-pill') {
+            return `
+            <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div class="id-card-horizontal visual-id-card-render theme-modern-pill" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; border-radius: 16px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative;">
+                    <!-- Floating Pill Header -->
+                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-radius: 9999px; margin: 10px 14px 6px 14px; padding: 6px 16px; color: ${headerTextColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 12px; z-index: 2; flex-shrink: 0;">
+                        <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                            ${logoHtml}
+                        </div>
+                        <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0;">
+                            <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.1;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                            <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 1px 0 0 0; text-transform: uppercase;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Body Content Split -->
+                    <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 4px 14px 10px 14px; z-index: 2;">
+                        <!-- Column 1: Squircle Photo & Left Item -->
+                        <div style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${showPhoto ? `<div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 4px;">${photoHtml}</div>` : ''}
+                            ${barcodePosition === 'bottom-left' ? getBarcodeHtml(`${photoWidth}px`, '18px') : getSigHtml(`${photoWidth}px`, '28px')}
+                        </div>
+
+                        <!-- Column 2: Name, Designation, Details Table -->
+                        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.15); padding-right: 10px;">
+                            <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
+                                ${nameBlockHtml}
+                                ${showDesignation ? `<h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${cleanTextVal(emp.designation)}</h3>` : ''}
+                            </div>
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                                ${detailsTableRowsHtml}
+                            </table>
+                            ${barcodePosition === 'bottom-center' ? `
+                                <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(128,128,128,0.15);">
+                                    ${getBarcodeHtml('140px', '18px')}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Column 3: QR Code, Notice, Right Item -->
+                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${getQrHtml(qrSize)}
+                            ${getNoticeHtml(true)}
+                            ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // Classic & Creative Fallback (Horizontal)
         return `
         <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
             <!-- SINGLE-SIDED HORIZONTAL ID CARD -->
@@ -2956,34 +3230,20 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
 
                 <!-- Body Content Split -->
                 <div class="id-horizontal-body" style="display: flex; gap: 15px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 8px;">
-                    
-                    <!-- Column 1: Photo and Signature -->
+                    <!-- Column 1: Photo and Left Element -->
                     <div class="id-horizontal-left" style="width: ${photoWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                        <!-- Photo -->
                         ${showPhoto ? `
-                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 5px;">
                             ${photoHtml}
                         </div>
                         ` : ''}
-                        
-                        <!-- Signature (always visible) -->
-                        <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
-                            <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                ${sigHtml}
-                            </div>
-                            <span style="font-size: 6px; color: ${subtextColor}; text-transform: uppercase; font-weight: bold; margin-top: 2px; text-align: center; white-space: nowrap; width: 100%;">Authority Sig</span>
-                        </div>
+                        ${barcodePosition === 'bottom-left' ? getBarcodeHtml(`${photoWidth}px`, '18px') : getSigHtml(`${photoWidth}px`, '28px')}
                     </div>
                     
                     <!-- Column 2: Name, Designation, and Details Table -->
                     <div class="id-horizontal-right" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid rgba(128,128,128,0.15); padding-right: 10px;">
-                        <!-- Name & Designation -->
                         <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 2px;">
-                            ${showName ? `
-                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
-                                ${cleanTextVal(emp.name)}
-                            </h2>
-                            ` : ''}
+                            ${nameBlockHtml}
                             ${showDesignation ? `
                             <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 1px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word; letter-spacing: 0.5px;">
                                 ${cleanTextVal(emp.designation)}
@@ -2991,39 +3251,212 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                             ` : ''}
                         </div>
                         
-                        <!-- Details Table -->
                         <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
                             ${detailsTableRowsHtml}
                         </table>
+                        ${barcodePosition === 'bottom-center' ? `
+                            <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(128,128,128,0.15);">
+                                ${getBarcodeHtml('140px', '18px')}
+                            </div>
+                        ` : ''}
                     </div>
                     
                     <!-- Column 3: QR Code, Barcode, and terms -->
                     <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                        <!-- QR Code -->
-                        ${showQrCode ? `
-                        <div class="id-portrait-qr" style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 5px;">
-                            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
-                        </div>
-                        ` : ''}
-                        
-                        <!-- Instructions -->
-                        <div style="font-size: ${Math.max(4.2, detailsFontSize * 0.6)}px; color: ${subtextColor}; line-height: 1.2; text-align: center; width: 100%; padding: 3px; border-radius: 3px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); margin-bottom: 5px;">
-                            VSA property.<br>Return: Shaheed Gunj Srinagar.
-                        </div>
-                        
-                        <!-- Barcode -->
-                        ${showBarcode ? `
-                        <div style="width: 100%; display: flex; justify-content: center; align-items: center; height: 20px; flex-shrink: 0; margin-top: auto;">
-                            <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: ${Math.max(85, qrSize + 15)}px; height: 18px;"></canvas>
-                        </div>
-                        ` : ''}
+                        ${getQrHtml(qrSize)}
+                        ${getNoticeHtml(true)}
+                        ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
                     </div>
                 </div>
             </div>
         </div>
         `;
     } else {
-        // VERTICAL LAYOUT
+        // =====================================================================
+        // VERTICAL LAYOUTS
+        // =====================================================================
+        if (cardTheme === 'organic-wave') {
+            return `
+            <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div class="id-card-portrait visual-id-card-render theme-organic-wave" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#046a52'}; display: flex; flex-direction: column; justify-content: flex-start; height: 500px; width: 320px; box-sizing: border-box; overflow: hidden; position: relative;">
+                    <!-- SVG Fluid Waves Top -->
+                    <svg viewBox="0 0 320 145" preserveAspectRatio="none" style="position: absolute; top: 0; left: 0; width: 100%; height: 145px; pointer-events: none; z-index: 1;">
+                        <path d="M0,0 L320,0 L320,85 C250,130 180,80 110,120 C50,145 15,115 0,130 Z" fill="${template.accentColor || '#dfba5f'}" opacity="0.35"/>
+                        <path d="M0,0 L320,0 L320,72 C230,118 150,72 90,108 C40,128 10,105 0,118 Z" fill="${template.headerBgColor || '#046a52'}"/>
+                    </svg>
+                    <!-- Background Watermark Curves -->
+                    <svg viewBox="0 0 320 500" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: 0.04;">
+                        <path d="M-20,240 C60,180 140,320 240,250 C290,210 320,300 360,270" fill="none" stroke="${textColor}" stroke-width="2"/>
+                        <path d="M-20,275 C80,215 160,355 260,285 C310,245 340,335 380,305" fill="none" stroke="${textColor}" stroke-width="2"/>
+                    </svg>
+
+                    <!-- Top Wave Brand Header -->
+                    <div class="id-portrait-header" style="height: 65px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 12px; box-sizing: border-box; z-index: 2; position: relative; flex-shrink: 0;">
+                        <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                            ${logoHtml}
+                        </div>
+                        <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                            <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                            <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.2; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.95;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Photo Cutout (overlapping the wave) -->
+                    ${showPhoto ? `
+                    <div style="display: flex; justify-content: center; width: 100%; z-index: 3; position: relative; margin-top: 4px; margin-bottom: 4px;">
+                        <div class="id-portrait-photo-box" style="${photoContainerStyle}">
+                            ${photoHtml}
+                        </div>
+                    </div>` : ''}
+
+                    <!-- Name & Designation Centered -->
+                    <div style="text-align: center; width: 100%; z-index: 2; position: relative; margin-bottom: 4px; padding: 0 10px; box-sizing: border-box;">
+                        ${nameBlockHtml}
+                        ${showDesignation ? `
+                        <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#046a52'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ${cleanTextVal(emp.designation)}
+                        </h3>` : ''}
+                    </div>
+
+                    <!-- Details Table -->
+                    <div style="padding: 0 12px; width: 100%; box-sizing: border-box; z-index: 2; position: relative; flex-grow: 1; display: flex; flex-direction: column;">
+                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                            ${detailsTableRowsHtml}
+                        </table>
+                    </div>
+
+                    <!-- Bottom Section: QR, Signature, Barcode -->
+                    <div style="padding: 2px 12px 6px 12px; width: 100%; box-sizing: border-box; z-index: 2; position: relative; margin-top: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
+                            ${getQrHtml(60)}
+                            <div style="flex-grow: 1; padding: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                ${getNoticeHtml(true)}
+                            </div>
+                            ${getSigHtml('85px', '28px')}
+                        </div>
+                        ${showBarcode ? `
+                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 3px; margin-top: 2px;">
+                            ${getBarcodeHtml('150px', '20px')}
+                        </div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        if (cardTheme === 'geometric-tech') {
+            return `
+            <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div class="id-card-portrait visual-id-card-render theme-geometric-tech" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#2563eb'}; display: flex; flex-direction: column; justify-content: flex-start; height: 500px; width: 320px; box-sizing: border-box; overflow: hidden; position: relative;">
+                    <!-- Angular Geometric Chevron Header -->
+                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%); border-bottom: 2px solid ${template.accentColor || '#2563eb'}; height: ${headerHeight}px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 12px 14px 12px; margin: -15px -15px 4px -15px; box-sizing: border-box; z-index: 2; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                ${logoHtml}
+                            </div>
+                            <div>
+                                <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                                <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Centered Photo -->
+                    ${showPhoto ? `
+                    <div style="display: flex; justify-content: center; width: 100%; margin: 4px 0 2px 0; z-index: 2;">
+                        <div class="id-portrait-photo-box" style="${photoContainerStyle}">
+                            ${photoHtml}
+                        </div>
+                    </div>` : ''}
+
+                    <!-- Name Banner & Designation -->
+                    <div style="text-align: center; width: 100%; z-index: 2; margin-bottom: 4px; padding: 0 10px; box-sizing: border-box;">
+                        ${nameBlockHtml}
+                        ${showDesignation ? `
+                        <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#2563eb'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.8px;">
+                            ${cleanTextVal(emp.designation)}
+                        </h3>` : ''}
+                    </div>
+
+                    <!-- Details Table -->
+                    <div style="padding: 0 12px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1;">
+                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                            ${detailsTableRowsHtml}
+                        </table>
+                    </div>
+
+                    <!-- Bottom Chevron Footer -->
+                    <div style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 18%, 50% 0, 100% 18%, 100% 100%, 0 100%); padding: 12px 14px 6px 14px; margin: auto -15px -15px -15px; display: flex; flex-direction: column; align-items: center; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
+                            ${getQrHtml(52)}
+                            ${getSigHtml('90px', '26px')}
+                        </div>
+                        ${showBarcode ? `
+                        <div style="width: 100%; display: flex; justify-content: center; background: #ffffff; padding: 2px; border-radius: 4px; margin-top: 2px;">
+                            ${getBarcodeHtml('160px', '18px')}
+                        </div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        if (cardTheme === 'modern-pill') {
+            return `
+            <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
+                <div class="id-card-portrait visual-id-card-render theme-modern-pill" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#dfba5f'}; border-radius: 16px; display: flex; flex-direction: column; justify-content: flex-start; height: 500px; width: 320px; box-sizing: border-box; overflow: hidden; position: relative;">
+                    <!-- Floating Pill Header -->
+                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#0e3e2b'}; border-radius: 9999px; margin: 10px 14px 6px 14px; padding: 6px 16px; color: ${headerTextColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 10px; z-index: 2; flex-shrink: 0;">
+                        <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                            ${logoHtml}
+                        </div>
+                        <div class="id-portrait-brand" style="flex-grow: 1; min-width: 0;">
+                            <h1 class="id-portrait-title" style="color: ${headerTextColor}; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.1;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                            <p class="id-portrait-subtitle" style="color: ${headerSubtextColor}; font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 1px 0 0 0; text-transform: uppercase;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Squircle Photo -->
+                    ${showPhoto ? `
+                    <div style="display: flex; justify-content: center; width: 100%; margin: 4px 0 2px 0; z-index: 2;">
+                        <div class="id-portrait-photo-box" style="${photoContainerStyle}">
+                            ${photoHtml}
+                        </div>
+                    </div>` : ''}
+
+                    <!-- Name & Designation -->
+                    <div style="text-align: center; width: 100%; z-index: 2; margin-bottom: 4px; padding: 0 10px; box-sizing: border-box;">
+                        ${nameBlockHtml}
+                        ${showDesignation ? `
+                        <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ${cleanTextVal(emp.designation)}
+                        </h3>` : ''}
+                    </div>
+
+                    <!-- Details Table -->
+                    <div style="padding: 0 12px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1;">
+                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
+                            ${detailsTableRowsHtml}
+                        </table>
+                    </div>
+
+                    <!-- Bottom Section -->
+                    <div style="padding: 2px 12px 6px 12px; width: 100%; box-sizing: border-box; z-index: 2; margin-top: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
+                            ${getQrHtml(60)}
+                            <div style="flex-grow: 1; padding: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                ${getNoticeHtml(true)}
+                            </div>
+                            ${getSigHtml('85px', '28px')}
+                        </div>
+                        ${showBarcode ? `
+                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 3px; margin-top: 2px;">
+                            ${getBarcodeHtml('150px', '20px')}
+                        </div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // Classic & Creative Fallback (Vertical)
         return `
         <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
             <!-- SINGLE-SIDED VERTICAL ID CARD -->
@@ -3041,24 +3474,20 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
 
                 <!-- Body Content Split -->
                 <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0; align-items: stretch; margin-top: 5px;">
-                    
                     <!-- Left column: Photo, QR Code, Signature -->
                     <div style="width: ${Math.max(85, photoWidth, qrSize)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                        <!-- Photo -->
                         ${showPhoto ? `
-                        <div class="id-portrait-photo-box" style="border: 2px solid ${template.accentColor || '#dfba5f'}; width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.15); flex-shrink: 0; background: #eaeaea; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div class="id-portrait-photo-box" style="${photoContainerStyle} margin-bottom: 5px;">
                             ${photoHtml}
                         </div>
                         ` : ''}
                         
-                        <!-- QR Code -->
                         ${showQrCode ? `
                         <div class="id-portrait-qr" style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
                             <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
                         </div>
                         ` : ''}
                         
-                        <!-- Signature (always visible) -->
                         <div style="width: ${Math.max(85, photoWidth)}px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: auto;">
                             <div style="height: 30px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 ${sigHtml}
@@ -3069,13 +3498,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                     
                     <!-- Right column: Name, Designation, Details Table -->
                     <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; padding-left: 5px;">
-                        <!-- Name & Designation -->
                         <div style="margin-bottom: 6px; border-bottom: 1px solid rgba(128,128,128,0.15); padding-bottom: 4px;">
-                            ${showName ? `
-                            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
-                                ${cleanTextVal(emp.name)}
-                            </h2>
-                            ` : ''}
+                            ${nameBlockHtml}
                             ${showDesignation ? `
                             <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#dfba5f'}; font-size: ${designationFontSize}px; font-weight: 700; margin: 2px 0 0 0; white-space: normal; line-height: 1.1; word-break: break-word; letter-spacing: 0.5px;">
                                 ${cleanTextVal(emp.designation)}
@@ -3083,12 +3507,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                             ` : ''}
                         </div>
                         
-                        <!-- Details Table -->
                         <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
                             ${detailsTableRowsHtml}
                         </table>
                         
-                        <!-- Instructions/Footer -->
                         <div style="font-size: ${Math.max(4.5, detailsFontSize * 0.65)}px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">
                             1. Card is VSA property, display on duty.<br>2. Return to Shaheed Gunj Srinagar 190001.
                         </div>
@@ -3097,7 +3519,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
                 
                 <!-- Barcode at the bottom -->
                 ${showBarcode ? `
-                <div style="width: 100%; display: flex; justify-content: center; align-items: center; height: 26px; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 4px; margin-top: 5px; flex-shrink: 0; box-sizing: border-box;">
+                <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; height: 26px; border-top: 1px solid rgba(128,128,128,0.15); padding-top: 4px; margin-top: 5px; flex-shrink: 0; box-sizing: border-box;">
                     <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: 130px; height: 20px;"></canvas>
                 </div>
                 ` : ''}
@@ -6599,6 +7021,18 @@ function loadTemplateInStudio(id) {
     document.getElementById('tpl-name').value = tpl.name || '';
     document.getElementById('tpl-layout').value = tpl.layout || 'vertical';
     document.getElementById('tpl-font').value = tpl.font || "'Plus Jakarta Sans', sans-serif";
+    if (document.getElementById('tpl-card-theme')) {
+        document.getElementById('tpl-card-theme').value = tpl.cardTheme || 'classic';
+    }
+    if (document.getElementById('tpl-photo-shape')) {
+        document.getElementById('tpl-photo-shape').value = tpl.photoShape || 'standard';
+    }
+    if (document.getElementById('tpl-name-style')) {
+        document.getElementById('tpl-name-style').value = tpl.nameStyle || 'clean';
+    }
+    if (document.getElementById('tpl-barcode-pos')) {
+        document.getElementById('tpl-barcode-pos').value = tpl.barcodePosition || 'bottom-right';
+    }
     document.getElementById('tpl-bg-color').value = tpl.backgroundColor || '#ffffff';
     document.getElementById('tpl-header-bg').value = tpl.headerBgColor || '#0e3e2b';
     document.getElementById('tpl-accent-color').value = tpl.accentColor || '#c8102e';
@@ -6759,6 +7193,10 @@ function getActiveTemplateFromForm() {
     const id = document.getElementById('tpl-id').value;
     const name = document.getElementById('tpl-name').value.trim() || 'Standard Guard Card';
     const layout = document.getElementById('tpl-layout').value;
+    const cardTheme = document.getElementById('tpl-card-theme') ? document.getElementById('tpl-card-theme').value : 'classic';
+    const photoShape = document.getElementById('tpl-photo-shape') ? document.getElementById('tpl-photo-shape').value : 'standard';
+    const nameStyle = document.getElementById('tpl-name-style') ? document.getElementById('tpl-name-style').value : 'clean';
+    const barcodePosition = document.getElementById('tpl-barcode-pos') ? document.getElementById('tpl-barcode-pos').value : 'bottom-right';
     const font = document.getElementById('tpl-font').value;
     const backgroundColor = document.getElementById('tpl-bg-color').value;
     const headerBgColor = document.getElementById('tpl-header-bg').value;
@@ -6822,6 +7260,10 @@ function getActiveTemplateFromForm() {
         id,
         name,
         layout,
+        cardTheme,
+        photoShape,
+        nameStyle,
+        barcodePosition,
         font,
         backgroundColor,
         headerBgColor,
@@ -6950,6 +7392,10 @@ function resetTemplateForm() {
     document.getElementById('tpl-name').value = '';
     document.getElementById('tpl-layout').value = 'vertical';
     document.getElementById('tpl-font').value = "'Plus Jakarta Sans', sans-serif";
+    if (document.getElementById('tpl-card-theme')) document.getElementById('tpl-card-theme').value = 'classic';
+    if (document.getElementById('tpl-photo-shape')) document.getElementById('tpl-photo-shape').value = 'standard';
+    if (document.getElementById('tpl-name-style')) document.getElementById('tpl-name-style').value = 'clean';
+    if (document.getElementById('tpl-barcode-pos')) document.getElementById('tpl-barcode-pos').value = 'bottom-right';
     document.getElementById('tpl-bg-color').value = '#ffffff';
     document.getElementById('tpl-header-bg').value = '#0e3e2b';
     document.getElementById('tpl-accent-color').value = '#c8102e';
@@ -7047,7 +7493,7 @@ function setupTemplatesManager() {
         if (el) el.addEventListener('input', updateLivePreview);
     });
 
-    const selects = ['tpl-layout', 'tpl-font', 'tpl-preview-emp-select'];
+    const selects = ['tpl-layout', 'tpl-font', 'tpl-preview-emp-select', 'tpl-card-theme', 'tpl-photo-shape', 'tpl-name-style', 'tpl-barcode-pos'];
     selects.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', updateLivePreview);
@@ -7232,6 +7678,10 @@ function setupTemplatesManager() {
                 // Populate form fields
                 if (data.name) document.getElementById('tpl-name').value = data.name;
                 if (data.layout) document.getElementById('tpl-layout').value = data.layout;
+                if (data.cardTheme && document.getElementById('tpl-card-theme')) document.getElementById('tpl-card-theme').value = data.cardTheme;
+                if (data.photoShape && document.getElementById('tpl-photo-shape')) document.getElementById('tpl-photo-shape').value = data.photoShape;
+                if (data.nameStyle && document.getElementById('tpl-name-style')) document.getElementById('tpl-name-style').value = data.nameStyle;
+                if (data.barcodePosition && document.getElementById('tpl-barcode-pos')) document.getElementById('tpl-barcode-pos').value = data.barcodePosition;
                 if (data.font) document.getElementById('tpl-font').value = data.font;
                 if (data.backgroundColor) document.getElementById('tpl-bg-color').value = data.backgroundColor;
                 if (data.headerBgColor) document.getElementById('tpl-header-bg').value = data.headerBgColor;

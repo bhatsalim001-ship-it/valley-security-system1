@@ -1390,7 +1390,7 @@ async function initDatabase() {
         id: 'tpl-nift',
         name: 'NIFT Srinagar Template',
         layout: 'vertical',
-        font: "'Outfit', sans-serif",
+        font: "'Plus Jakarta Sans', sans-serif",
         backgroundColor: '#ffffff',
         headerBgColor: '#0c2340', // Navy blue
         accentColor: '#dfba5f',   // Gold
@@ -2911,17 +2911,23 @@ app.post('/api/templates/generate-ai', authenticateToken, async (req, res) => {
       }
     }
 
-    const systemPrompt = `You are a professional graphic designer. Generate an ID card layout configuration matching the user prompt (and copy the visual style of the attached reference image if provided). 
-Return a raw JSON object matching the exact schema below. If any color is not specified, use a matching harmonious option. Return ONLY the JSON object, do not include markdown or code block formatting tags.
+    const systemPrompt = `You are an elite graphic designer and ID badge visual architect.
+Generate a professional, aesthetically stunning, and print-ready ID card layout configuration matching the user's prompt (and faithfully replicating the visual style and composition of the attached reference image if provided).
+
+Return a raw JSON object matching the exact schema below. If any color is not specified, use a matching harmonious option. Return ONLY the JSON object, do not include markdown, code blocks, or comments.
 
 JSON Schema:
 {
   "name": "A short descriptive name for this template",
   "layout": "vertical" or "horizontal",
-  "font": "'Outfit', sans-serif" or "'Inter', sans-serif" or "'Plus Jakarta Sans', sans-serif",
-  "backgroundColor": "Hex color code for background",
-  "headerBgColor": "Hex color code for header bar",
-  "accentColor": "Hex color code for borders/accents",
+  "cardTheme": "organic-wave" or "geometric-tech" or "modern-pill" or "creative-social" or "classic",
+  "photoShape": "circle" or "squircle" or "standard",
+  "nameStyle": "clean" or "banner" or "boxed",
+  "barcodePosition": "bottom-right" or "bottom-left" or "bottom-center",
+  "font": "'Plus Jakarta Sans', sans-serif" or "'JetBrains Mono', monospace" or "'Inter', sans-serif" or "'Poppins', sans-serif",
+  "backgroundColor": "Hex color code for background body",
+  "headerBgColor": "Hex color code for header bar / wave",
+  "accentColor": "Hex color code for borders/accents/rings",
   "headerText": "Main title text at top",
   "subheaderText": "Sub-title text under logo",
   "logoSize": integer (30 to 100),
@@ -2956,7 +2962,22 @@ JSON Schema:
     "barcode": boolean,
     "validity": boolean
   }
-}`;
+}
+
+CRITICAL DESIGN ARCHETYPES & CONTRAST RULES:
+1. THEME IDENTIFICATION FROM REFERENCE IMAGES:
+   - "organic-wave": Fluid curved waves, wave ribbons, watermark curves in background, circular photo cutout overlapping the wave boundary with a concentric ring border. (e.g. Hanover Elementary, Medical, Educational style).
+   - "geometric-tech": Modern angular chevrons, diagonal corner accents, high-tech badges, circular or squircle photo with accent rings, solid color name pill banner. (e.g. Borcelle Tech, Security, Cyber style).
+   - "modern-pill": Floating pill badge header, squircle photo, clean structured grid, barcode on bottom-left, decorative corner stripes/dots. (e.g. Salford & Co, Modern Corporate).
+   - "creative-social": Artistic pattern waves, framed portrait photo with drop shadow, clean display typography.
+   - "classic": Traditional structured rectangular enterprise security card.
+
+2. CONTRAST & READABILITY DISCIPLINE (NEVER PRODUCE UNREADABLE CARDS):
+   - High contrast is mandatory. NEVER use dark text on dark backgrounds or light text on light backgrounds.
+   - If header is deep/dark (e.g. #046A52, #0E3E2B, #0F172A, #1E3A8A), header text is automatically white.
+   - For "organic-wave" and "modern-pill": The main card body backgroundColor MUST BE light/clean (#FFFFFF, #F8FAFC, #F1F5F9) so employee details, QR code, and barcode are razor-sharp. Do NOT flood the entire card with dark green or dark blue!
+   - When backgroundColor is light, set labelColor to a crisp slate (#475569 or #64748B) and valueColor to a deep dark charcoal/black (#0F172A or #1E293B).
+   - If backgroundColor is intentionally dark (#0B0F19, #0F172A), labelColor must be light muted (#94A3B8) and valueColor must be bright white (#FFFFFF).`;
 
     contents.push(prompt + "\n\n" + systemPrompt);
 
