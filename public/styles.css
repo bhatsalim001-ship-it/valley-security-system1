@@ -8245,3 +8245,44 @@ html, body {
 .format-hint {
     letter-spacing: 0.02em;
 }
+
+/* ========================================================================
+   TEMPLATE STUDIO 1-CLICK EXACT MASTER CLONE BUTTONS
+   ======================================================================== */
+.studio-clones-card {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.studio-clones-card:hover {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.studio-clones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.btn-clone-preset {
+    min-height: 44px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.btn-clone-preset:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn-clone-preset:active {
+    transform: translateY(0);
+}
+
+.btn-clone-preset:focus-visible {
+    outline: 2px solid var(--theme-accent, #cfa15c);
+    outline-offset: 2px;
+}

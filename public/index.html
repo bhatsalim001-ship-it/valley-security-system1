@@ -1190,6 +1190,39 @@
                                         </div>
                                     </div>
 
+                                    <!-- Instant 1-Click Master Design Clones -->
+                                    <div class="studio-clones-card" style="margin-bottom: 20px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 14px;">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+                                            <span style="font-size: 13px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px;">
+                                                <i data-lucide="copy-check" style="color: var(--theme-accent, #cfa15c); width: 16px; height: 16px;"></i>
+                                                Instant 1-Click Exact Design Clones
+                                            </span>
+                                            <span class="badge badge-accent" style="font-size: 10px; padding: 2px 8px;">100% Pixel-Perfect Copy</span>
+                                        </div>
+                                        <div class="studio-clones-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+                                            <button type="button" class="btn btn-outline btn-clone-preset" data-clone="hanover-wave" style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 8px 10px; border-color: rgba(13, 148, 136, 0.5); text-align: left; justify-content: flex-start; background: rgba(13, 148, 136, 0.08); color: #2dd4bf;">
+                                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #0d9488; display: inline-block; flex-shrink: 0; box-shadow: 0 0 6px #0d9488;"></span>
+                                                <span><strong>Teal Wave</strong><br><small style="color: #94a3b8;">Hanover 100%</small></span>
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-clone-preset" data-clone="borcelle-tech" style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 8px 10px; border-color: rgba(37, 99, 235, 0.5); text-align: left; justify-content: flex-start; background: rgba(37, 99, 235, 0.08); color: #60a5fa;">
+                                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #2563eb; display: inline-block; flex-shrink: 0; box-shadow: 0 0 6px #2563eb;"></span>
+                                                <span><strong>Blue Tech</strong><br><small style="color: #94a3b8;">Borcelle 100%</small></span>
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-clone-preset" data-clone="salford-pill" style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 8px 10px; border-color: rgba(0, 96, 57, 0.5); text-align: left; justify-content: flex-start; background: rgba(0, 96, 57, 0.08); color: #4ade80;">
+                                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #006039; display: inline-block; flex-shrink: 0; box-shadow: 0 0 6px #006039;"></span>
+                                                <span><strong>Green Pill</strong><br><small style="color: #94a3b8;">Salford 100%</small></span>
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-clone-preset" data-clone="indira-wave" style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 8px 10px; border-color: rgba(180, 83, 9, 0.5); text-align: left; justify-content: flex-start; background: rgba(180, 83, 9, 0.08); color: #fbbf24;">
+                                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #b45309; display: inline-block; flex-shrink: 0; box-shadow: 0 0 6px #b45309;"></span>
+                                                <span><strong>Indira Wave</strong><br><small style="color: #94a3b8;">Creative Art</small></span>
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-clone-preset" data-clone="valley-classic" style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 8px 10px; border-color: rgba(207, 161, 92, 0.5); text-align: left; justify-content: flex-start; background: rgba(207, 161, 92, 0.08); color: #fcd34d;">
+                                                <span style="width: 10px; height: 10px; border-radius: 50%; background: #0e3e2b; display: inline-block; flex-shrink: 0; box-shadow: 0 0 6px #dfba5f;"></span>
+                                                <span><strong>Valley Elite</strong><br><small style="color: #94a3b8;">Classic Gold</small></span>
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <form id="simple-tpl-form" class="luxury-form" onsubmit="event.preventDefault();">
                                         <input type="hidden" id="tpl-id">
                                         
@@ -1208,6 +1241,10 @@
                                         </div>
 
                                         <div class="form-row col-2">
+                                            <div class="form-group">
+                                                <label for="tpl-card-title"><i data-lucide="tag"></i> Badge Display Title (Header)</label>
+                                                <input type="text" id="tpl-card-title" class="form-control" placeholder="e.g. SECURITY ID CARD, STUDENT ID CARD" value="SECURITY ID CARD">
+                                            </div>
                                             <div class="form-group">
                                                 <label for="tpl-card-theme"><i data-lucide="palette"></i> Design Theme / Archetype</label>
                                                 <select id="tpl-card-theme" class="form-control">

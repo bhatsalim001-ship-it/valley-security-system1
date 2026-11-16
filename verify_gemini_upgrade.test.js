@@ -59,7 +59,7 @@ test('/api/employees/ocr invokes generateWithGemini', () => {
 test('/api/templates/generate-ai invokes generateWithGemini', () => {
     const tplIdx = serverJs.indexOf("app.post('/api/templates/generate-ai'");
     assert(tplIdx !== -1, 'Cannot find /api/templates/generate-ai route');
-    const tplSlice = serverJs.slice(tplIdx, tplIdx + 3500);
+    const tplSlice = serverJs.slice(tplIdx, tplIdx + 7000);
     assert(tplSlice.includes('generateWithGemini(apiKey, contents)'), 'Template route not using generateWithGemini');
     assert(!tplSlice.includes("model: 'gemini-2.5-flash'"), 'Template route still has hardcoded legacy model');
 });

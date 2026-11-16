@@ -2912,7 +2912,7 @@ app.post('/api/templates/generate-ai', authenticateToken, async (req, res) => {
     }
 
     const systemPrompt = `You are an elite graphic designer and ID badge visual architect.
-Generate a professional, aesthetically stunning, and print-ready ID card layout configuration matching the user's prompt (and faithfully replicating the visual style and composition of the attached reference image if provided).
+Your mission is to generate a print-ready, pixel-perfect ID card layout configuration that FAITHFULLY AND EXACTLY REPLICATES the visual style, geometric shapes, colors, and layout of the user's reference image (or detailed prompt).
 
 Return a raw JSON object matching the exact schema below. If any color is not specified, use a matching harmonious option. Return ONLY the JSON object, do not include markdown, code blocks, or comments.
 
@@ -2921,6 +2921,7 @@ JSON Schema:
   "name": "A short descriptive name for this template",
   "layout": "vertical" or "horizontal",
   "cardTheme": "organic-wave" or "geometric-tech" or "modern-pill" or "creative-social" or "classic",
+  "cardTitle": "Large display heading in header, e.g. 'SECURITY ID CARD', 'STUDENT ID CARD', 'IDENTITY CARD', 'STAFF PASS'",
   "photoShape": "circle" or "squircle" or "standard",
   "nameStyle": "clean" or "banner" or "boxed",
   "barcodePosition": "bottom-right" or "bottom-left" or "bottom-center",
@@ -2928,15 +2929,15 @@ JSON Schema:
   "backgroundColor": "Hex color code for background body",
   "headerBgColor": "Hex color code for header bar / wave",
   "accentColor": "Hex color code for borders/accents/rings",
-  "headerText": "Main title text at top",
-  "subheaderText": "Sub-title text under logo",
+  "headerText": "Agency brand name (default: 'VALLEY SECURITY AGENCY')",
+  "subheaderText": "Sub-title text under agency logo (default: 'SHAHIDGUNJ SRINAGAR KASHMIR')",
   "logoSize": integer (30 to 100),
   "headerHeight": integer (60 to 150),
   "headerFontSize": integer (10 to 24),
   "photoWidth": integer (60 to 130),
   "photoHeight": integer (70 to 165),
   "qrSize": integer (50 to 150),
-  "detailsFontSize": integer (6 to 12),
+  "detailsFontSize": integer (6 to 13),
   "nameFontSize": integer (8 to 22),
   "designationFontSize": integer (6 to 18),
   "labelColor": "Hex color code for field names",
@@ -2964,19 +2965,26 @@ JSON Schema:
   }
 }
 
-CRITICAL DESIGN ARCHETYPES & CONTRAST RULES:
-1. THEME IDENTIFICATION FROM REFERENCE IMAGES:
-   - "organic-wave": Fluid curved waves, wave ribbons, watermark curves in background, circular photo cutout overlapping the wave boundary with a concentric ring border. (e.g. Hanover Elementary, Medical, Educational style).
-   - "geometric-tech": Modern angular chevrons, diagonal corner accents, high-tech badges, circular or squircle photo with accent rings, solid color name pill banner. (e.g. Borcelle Tech, Security, Cyber style).
-   - "modern-pill": Floating pill badge header, squircle photo, clean structured grid, barcode on bottom-left, decorative corner stripes/dots. (e.g. Salford & Co, Modern Corporate).
-   - "creative-social": Artistic pattern waves, framed portrait photo with drop shadow, clean display typography.
+CRITICAL DESIGN ARCHETYPES & CONTRAST RULES (EXACT VISUAL REPLICATION):
+1. THEME IDENTIFICATION FROM REFERENCE IMAGES (100% VISUAL CLONING):
+   - "organic-wave" (Hanover & Tyke Wave Style):
+     * Visual traits: Sweeping fluid dual-tone curved wave header, subtle background guilloche wave curves, circular photo cutout on the left overlapping the wave curve with a thick accent-colored outer ring, barcode positioned directly under the photo on the bottom-left, matching curved bottom wave accent, large two-line display title (e.g. 'STUDENT ID CARD' or 'SECURITY ID CARD') on the right of the top wave.
+     * Settings: layout: "horizontal", cardTheme: "organic-wave", photoShape: "circle", barcodePosition: "bottom-left", nameStyle: "clean", backgroundColor: "#ffffff", headerBgColor: "#0d7a6e", accentColor: "#009688", labelColor: "#1e293b", valueColor: "#0f172a".
+   - "geometric-tech" (Borcelle Tech Chevron Style):
+     * Visual traits: Modern multi-layer angular chevrons (polygon clip-paths) at top and bottom, circular or squircle photo with bold accent ring, solid color rectangular name banner pill, centered barcode with 'ID.' label, high-tech security aesthetic.
+     * Settings: layout: "vertical", cardTheme: "geometric-tech", photoShape: "circle", barcodePosition: "bottom-center", nameStyle: "banner", backgroundColor: "#ffffff", headerBgColor: "#0c2340", accentColor: "#2563eb", labelColor: "#475569", valueColor: "#0f172a".
+   - "modern-pill" (Salford & Co. Corporate Green Pill Style):
+     * Visual traits: Deep forest green rounded pill container on top-left displaying 'SECURITY ID CARD', squircle photo on left with barcode underneath, clean colon-aligned details table, striped geometric tech accent bar with green dots at bottom.
+     * Settings: layout: "horizontal", cardTheme: "modern-pill", photoShape: "squircle", barcodePosition: "bottom-left", nameStyle: "clean", backgroundColor: "#ffffff", headerBgColor: "#006039", accentColor: "#006039", labelColor: "#1e293b", valueColor: "#0f172a".
+   - "creative-social" (Indira Seruni Wave Style):
+     * Visual traits: Japanese seigaiha wave pattern background, framed portrait card with handle, QR code on right, bottom barcode pill.
+     * Settings: layout: "vertical", cardTheme: "creative-social", photoShape: "squircle", barcodePosition: "bottom-left", nameStyle: "boxed", backgroundColor: "#f8fafc", headerBgColor: "#78350f", accentColor: "#b45309".
    - "classic": Traditional structured rectangular enterprise security card.
 
 2. CONTRAST & READABILITY DISCIPLINE (NEVER PRODUCE UNREADABLE CARDS):
    - High contrast is mandatory. NEVER use dark text on dark backgrounds or light text on light backgrounds.
-   - If header is deep/dark (e.g. #046A52, #0E3E2B, #0F172A, #1E3A8A), header text is automatically white.
-   - For "organic-wave" and "modern-pill": The main card body backgroundColor MUST BE light/clean (#FFFFFF, #F8FAFC, #F1F5F9) so employee details, QR code, and barcode are razor-sharp. Do NOT flood the entire card with dark green or dark blue!
-   - When backgroundColor is light, set labelColor to a crisp slate (#475569 or #64748B) and valueColor to a deep dark charcoal/black (#0F172A or #1E293B).
+   - For "organic-wave", "modern-pill", and "geometric-tech": The main card body backgroundColor MUST BE light/clean (#FFFFFF, #F8FAFC) so employee details, QR code, and barcode are razor-sharp. Do NOT flood the entire card with dark green or dark blue!
+   - When backgroundColor is light, set labelColor to crisp slate (#1E293B or #475569) and valueColor to deep charcoal/black (#0F172A).
    - If backgroundColor is intentionally dark (#0B0F19, #0F172A), labelColor must be light muted (#94A3B8) and valueColor must be bright white (#FFFFFF).`;
 
     contents.push(prompt + "\n\n" + systemPrompt);
