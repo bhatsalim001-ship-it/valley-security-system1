@@ -9648,6 +9648,109 @@ html, body {
 }
 
 
+/* ==========================================================================
+   PHASE 9: ENTERPRISE ANTI-COUNTERFEIT & SECURITY OVERLAYS
+   ========================================================================== */
 
+/* 1. Guilloche Security Wave Pattern */
+.uice-guilloche-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    shape-rendering: geometricPrecision;
+}
 
+/* 2. Holographic Diffraction Foil Badge */
+.uice-hologram-badge {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    user-select: none;
+}
+
+.uice-hologram-silver {
+    background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 24%, #ffffff 48%, #94a3b8 72%, #f1f5f9 100%);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), inset 0 0 0 1px #64748b;
+}
+
+.uice-hologram-gold {
+    background: linear-gradient(135deg, #fef08a 0%, #eab308 25%, #fef9c3 48%, #ca8a04 72%, #fde047 100%);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), inset 0 0 0 1px #a16207;
+}
+
+.uice-hologram-prismatic {
+    background: linear-gradient(135deg, #f43f5e 0%, #fb923c 18%, #facc15 36%, #4ade80 54%, #38bdf8 72%, #a855f7 100%);
+    box-shadow: 0 3px 12px rgba(244, 63, 94, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.uice-hologram-emerald {
+    background: linear-gradient(135deg, #a7f3d0 0%, #10b981 28%, #ecfdf5 50%, #047857 75%, #34d399 100%);
+    box-shadow: 0 3px 10px rgba(4, 120, 87, 0.4), inset 0 0 0 1px #065f46;
+}
+
+.uice-hologram-shimmer {
+    animation: uiceHoloShimmer 3.5s infinite linear;
+    pointer-events: none;
+}
+
+@keyframes uiceHoloShimmer {
+    0% {
+        transform: translateX(-160%) rotate(25deg);
+    }
+    50% {
+        transform: translateX(160%) rotate(25deg);
+    }
+    100% {
+        transform: translateX(160%) rotate(25deg);
+    }
+}
+
+/* 3. Microtext Security Rule Line */
+.uice-microtext-rule {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+}
+
+.uice-microtext-rule span {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1;
+    display: inline-block;
+}
+
+/* 4. Security Watermark Crest */
+.uice-watermark-overlay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* 5. Dual-Surface Single Card View Toggles */
+.single-card-surface-toggle {
+    display: inline-flex;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.single-card-surface-toggle .btn {
+    border-radius: 4px;
+    font-size: 11px;
+    padding: 2px 10px;
+    font-weight: 600;
+}
 

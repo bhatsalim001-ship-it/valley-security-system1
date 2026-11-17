@@ -2601,7 +2601,7 @@ function ensureFontLoaded(fontFamilyStr) {
     document.head.appendChild(link);
 }
 
-function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) {
+function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, side = 'front') {
     if (template && template.font) {
         ensureFontLoaded(template.font);
     }
@@ -2612,7 +2612,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null) 
     if (template && template.layouts && typeof generateUiceCardHtml === 'function') {
         const orient = template.layout || 'horizontal';
         if (template.layouts[orient] && Array.isArray(template.layouts[orient].elements) && template.layouts[orient].elements.length > 0) {
-            return generateUiceCardHtml(emp, template.layouts[orient], template, validityYears, issueDate);
+            return generateUiceCardHtml(emp, template.layouts[orient], template, validityYears, issueDate, side);
         }
     }
 
@@ -4067,7 +4067,8 @@ function loadIdCardDetails(empId) {
     const validityYears = parseInt(document.getElementById('id-validity-years').value) || 3;
     const issueDateVal = document.getElementById('id-card-issue-date')?.value || null;
 
-    container.innerHTML = generateIdCardHtml(emp, template, validityYears, issueDateVal);
+    const activeSurface = VSA_STATE.singleCardPreviewSurface || 'front';
+    container.innerHTML = generateIdCardHtml(emp, template, validityYears, issueDateVal, activeSurface);
     renderQrsInContainer(container);
 }
 
@@ -8727,13 +8728,9 @@ function initUiceWithTemplate(tplSource) {
         ).join('');
     }
 
-    // Populate preview guard select
-    const previewEmpSel = document.getElementById('uice-preview-emp-select');
-    if (previewEmpSel) {
-        previewEmpSel.innerHTML = (VSA_STATE.employees || []).map(e =>
-            `<option value="${e.id}" ${e.id === UICE_STATE.previewEmp.id ? 'selected' : ''}>${e.name} (${e.id})</option>`
-        ).join('');
-    }
+    // Populate preview guard select with all database employees
+    populateUicePreviewEmpSelect();
+    setupSingleCardSurfaceToggle();
 
     // Sync orientation dropdown
     const orientSel = document.getElementById('uice-orientation-sel');
@@ -8945,9 +8942,283 @@ function renderUiceStage() {
 }
 
 /**
+ * ==========================================================================
+ * PHASE 9: DYNAMIC TOKEN BINDING & SECURITY OVERLAY ENGINES
+ * ==========================================================================
+ */
+
+/**
+ * Resolves dynamic curly variable tokens against live employee records.
+ * Supports: {{name}}, {{empId}}, {{id}}, {{designation}}, {{role}}, {{department}},
+ * {{fatherName}}, {{father}}, {{bloodGroup}}, {{phone}}, {{mobile}}, {{address}},
+ * {{policeStation}}, {{aadhaarLast4}}, {{joiningDate}}, {{validUntil}}, {{issueDate}},
+ * {{dob}}, {{site}}, {{rank}}, {{zone}}, etc.
+ */
+function resolveUiceTokens(text, emp = {}, validityYears = 3, issueDate = null) {
+    if (!text || typeof text !== 'string') return text || '';
+
+    const now = new Date();
+    const issue = issueDate ? new Date(issueDate) : (emp.cardIssueDate ? new Date(emp.cardIssueDate) : now);
+    const validIssue = isNaN(issue.getTime()) ? now : issue;
+    const validUntil = new Date(validIssue);
+    const years = parseInt(validityYears) || (parseInt(emp.cardValidity) || 3);
+    validUntil.setFullYear(validUntil.getFullYear() + years);
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const formatDate = (d) => {
+        if (!d || isNaN(d.getTime())) return '-';
+        return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+    };
+
+    const formatAnyDate = (val) => {
+        if (!val) return '-';
+        if (typeof val === 'string' && val.includes('-') && val.length === 10) return val;
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return String(val);
+        return formatDate(d);
+    };
+
+    const aadhaarVal = () => {
+        if (emp.aadhaarLast4) return `XXXX-XXXX-${emp.aadhaarLast4}`;
+        if (emp.aadhaar) {
+            const clean = String(emp.aadhaar).replace(/\D/g, '');
+            if (clean.length >= 4) return `XXXX-XXXX-${clean.slice(-4)}`;
+            return String(emp.aadhaar);
+        }
+        return 'XXXX-XXXX-1234';
+    };
+
+    const tokenMap = {
+        '{{name}}': emp.name || emp.fullName || 'Rajesh Kumar',
+        '{{empName}}': emp.name || emp.fullName || 'Rajesh Kumar',
+        '{{id}}': emp.id || emp.employeeId || 'VSA-0042',
+        '{{empId}}': emp.id || emp.employeeId || 'VSA-0042',
+        '{{designation}}': emp.designation || emp.role || 'Armed Security Officer',
+        '{{role}}': emp.designation || emp.role || 'Armed Security Officer',
+        '{{department}}': emp.department || emp.dept || 'Security Operations',
+        '{{dept}}': emp.department || emp.dept || 'Security Operations',
+        '{{fatherName}}': emp.fatherName || emp.father || '-',
+        '{{father}}': emp.fatherName || emp.father || '-',
+        '{{bloodGroup}}': emp.bloodGroup || emp.blood || 'O+',
+        '{{blood}}': emp.bloodGroup || emp.blood || 'O+',
+        '{{phone}}': emp.phone || emp.mobile || '-',
+        '{{mobile}}': emp.phone || emp.mobile || '-',
+        '{{address}}': emp.currentAddress || emp.address || emp.permanentAddress || 'Srinagar, J&K',
+        '{{policeStation}}': emp.policeStation || emp.ps || 'Shahidgunj',
+        '{{ps}}': emp.policeStation || emp.ps || 'Shahidgunj',
+        '{{aadhaarLast4}}': aadhaarVal(),
+        '{{aadhaar}}': aadhaarVal(),
+        '{{joiningDate}}': formatAnyDate(emp.joiningDate || emp.doj || '2024-01-01'),
+        '{{doj}}': formatAnyDate(emp.joiningDate || emp.doj || '2024-01-01'),
+        '{{dob}}': formatAnyDate(emp.dob || emp.dateOfBirth),
+        '{{site}}': emp.deployedSite || emp.site || 'Main Headquarters',
+        '{{deployedSite}}': emp.deployedSite || emp.site || 'Main Headquarters',
+        '{{issueDate}}': formatDate(validIssue),
+        '{{validUntil}}': formatDate(validUntil),
+        '{{validity}}': formatDate(validUntil),
+        '{{rank}}': emp.rank || emp.designation || 'Officer',
+        '{{zone}}': emp.zone || 'North Zone'
+    };
+
+    let result = text;
+    for (const [token, value] of Object.entries(tokenMap)) {
+        const escapedToken = token.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
+        result = result.replace(new RegExp(escapedToken, 'gi'), value);
+    }
+    return result;
+}
+
+function getVsaSecurityCrestSvg(color = '#009688', opacity = 1) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style="opacity: ${opacity};">
+        <path d="M50 5 L88 20 C88 55 68 85 50 95 C32 85 12 55 12 20 Z" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M50 12 L81 24 C81 53 64 78 50 87 C36 78 19 53 19 24 Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <path d="M35 34 L50 68 L65 34" fill="none" stroke="${color}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M42 48 C42 42 58 42 58 48 C58 55 42 55 42 62 C42 68 58 68 58 62" fill="none" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/>
+        <polygon points="50,17 52,22 57,22 53,25 55,30 50,27 45,30 47,25 43,22 48,22" fill="${color}"/>
+        <polygon points="32,23 33.5,27 38,27 34.5,29.5 36,34 32,31.5 28,34 29.5,29.5 26,27 30.5,27" fill="${color}" opacity="0.85"/>
+        <polygon points="68,23 69.5,27 74,27 70.5,29.5 72,34 68,31.5 64,34 65.5,29.5 62,27 66.5,27" fill="${color}" opacity="0.85"/>
+    </svg>`;
+}
+
+function getSecurityEagleSvg(color = '#009688', opacity = 1) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style="opacity: ${opacity};">
+        <path d="M50 10 L58 26 L76 28 L62 40 L66 58 L50 48 L34 58 L38 40 L24 28 L42 26 Z" fill="none" stroke="${color}" stroke-width="2.5"/>
+        <path d="M15 45 Q50 30 85 45 Q50 65 15 45 Z" fill="none" stroke="${color}" stroke-width="2"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <circle cx="50" cy="50" r="44" fill="none" stroke="${color}" stroke-width="1"/>
+    </svg>`;
+}
+
+function getShieldVerifiedSvg(color = '#009688', opacity = 1) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style="opacity: ${opacity};">
+        <path d="M50 6 L88 22 C88 60 65 88 50 96 C35 88 12 60 12 22 Z" fill="none" stroke="${color}" stroke-width="3"/>
+        <path d="M30 48 L44 62 L70 34" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+}
+
+/**
+ * Generates mathematical vector spirograph anti-copy harmonic curves in SVG.
+ */
+function generateGuillocheSvg(width, height, properties = {}) {
+    const w = Math.max(40, width);
+    const h = Math.max(20, height);
+    const stroke = properties.strokeColor || '#009688';
+    const strokeWidth = properties.strokeWidth || 0.75;
+    const waveCount = Math.max(2, Math.min(24, properties.waveCount || 8));
+    const freq = properties.frequency || 4;
+    const amp = Math.min(h / 2, properties.amplitude || 12);
+    const style = properties.style || 'harmonic';
+    const opacity = properties.opacity !== undefined ? properties.opacity : 0.25;
+
+    let paths = '';
+    const midY = h / 2;
+    const step = 4;
+
+    for (let i = 0; i < waveCount; i++) {
+        const phase = (i / waveCount) * Math.PI * 2;
+        const currentAmp = amp * (0.6 + 0.4 * Math.sin(phase));
+        let d = '';
+
+        for (let x = 0; x <= w; x += step) {
+            let y;
+            if (style === 'spirograph') {
+                const t = (x / w) * Math.PI * freq * 2;
+                y = midY + Math.sin(t + phase) * currentAmp * Math.cos(t * 0.5 + phase * 0.5);
+            } else if (style === 'sinusoidal') {
+                const t = (x / w) * Math.PI * freq * 2;
+                y = midY + Math.sin(t + phase) * currentAmp;
+            } else {
+                const t = (x / w) * Math.PI * freq * 2;
+                y = midY + (Math.sin(t + phase) * 0.7 + Math.cos(t * 2 + phase) * 0.3) * currentAmp;
+            }
+            d += (x === 0 ? `M ${x.toFixed(1)} ${y.toFixed(1)}` : ` L ${x.toFixed(1)} ${y.toFixed(1)}`);
+        }
+        paths += `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" opacity="${(0.5 + 0.5 * Math.sin(phase)).toFixed(2)}" />`;
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="opacity: ${opacity}; display: block; pointer-events: none;">${paths}</svg>`;
+}
+
+/**
+ * Generates an iridescent diffraction holographic foil badge with 3D reflection.
+ */
+function generateHologramFoilHtml(el, properties = {}) {
+    const p = properties || {};
+    const foil = p.foilStyle || 'silver';
+    const shape = p.badgeShape || 'circle';
+    const crest = p.crest || 'vsa-crest';
+    const label = p.label || 'SECURE';
+
+    let borderRadius = '50%';
+    let clipPath = 'none';
+    if (shape === 'shield') {
+        clipPath = 'polygon(50% 0%, 100% 18%, 100% 68%, 50% 100%, 0% 68%, 0% 18%)';
+        borderRadius = '0px';
+    } else if (shape === 'rectangle') {
+        borderRadius = '8px';
+    }
+
+    let foilGrad = '';
+    let accentBorder = '';
+    let crestColor = '#ffffff';
+
+    if (foil === 'gold') {
+        foilGrad = 'linear-gradient(135deg, #fef08a 0%, #eab308 25%, #fef9c3 48%, #ca8a04 72%, #fde047 100%)';
+        accentBorder = '#a16207';
+        crestColor = '#78350f';
+    } else if (foil === 'prismatic') {
+        foilGrad = 'linear-gradient(135deg, #f43f5e 0%, #fb923c 18%, #facc15 36%, #4ade80 54%, #38bdf8 72%, #a855f7 100%)';
+        accentBorder = 'rgba(255,255,255,0.7)';
+        crestColor = '#ffffff';
+    } else if (foil === 'emerald') {
+        foilGrad = 'linear-gradient(135deg, #a7f3d0 0%, #10b981 28%, #ecfdf5 50%, #047857 75%, #34d399 100%)';
+        accentBorder = '#065f46';
+        crestColor = '#064e3b';
+    } else {
+        foilGrad = 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 24%, #ffffff 48%, #94a3b8 72%, #f1f5f9 100%)';
+        accentBorder = '#64748b';
+        crestColor = '#1e293b';
+    }
+
+    let iconSvg = '';
+    if (crest === 'eagle') {
+        iconSvg = getSecurityEagleSvg(crestColor, 0.9);
+    } else if (crest === 'star') {
+        iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="60%" height="60%" fill="${crestColor}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    } else {
+        iconSvg = getVsaSecurityCrestSvg(crestColor, 0.9);
+    }
+
+    return `
+        <div class="uice-hologram-badge uice-hologram-${foil} uice-hologram-${shape}" style="width: 100%; height: 100%; background: ${foilGrad}; border-radius: ${borderRadius}; clip-path: ${clipPath}; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 0 0 1px ${accentBorder}; pointer-events: none;">
+            <div style="position: absolute; inset: 2px; border-radius: inherit; border: 1px dashed rgba(255,255,255,0.7); pointer-events: none; opacity: 0.7;"></div>
+            <div class="uice-hologram-shimmer" style="position: absolute; inset: -50%; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.85) 48%, rgba(255,255,255,0.95) 52%, transparent 65%); transform: rotate(25deg); pointer-events: none;"></div>
+            <div style="width: 58%; height: 58%; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));">
+                ${iconSvg}
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 5px; font-weight: 800; color: ${crestColor}; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 1px; position: relative; z-index: 2; opacity: 0.9; text-shadow: 0 0 2px rgba(255,255,255,0.8);">
+                ${escapeHtml(label)}
+            </div>
+        </div>`;
+}
+
+/**
+ * Generates sub-millimeter anti-copy microtext line rule with token resolution.
+ */
+function generateMicrotextLineHtml(el, properties = {}, emp = {}, validityYears = 3, issueDate = null) {
+    const p = properties || {};
+    const rawText = p.text || 'VALLEY SECURITY AGENCY • OFFICIAL CREDENTIAL • AUTHENTIC IDENTIFICATION • PSARA COMPLIANT • SECURE ACCESS • ';
+    const resolvedText = resolveUiceTokens(rawText, emp, validityYears, issueDate);
+    const fontSize = p.fontSize || 4.5;
+    const color = p.color || '#475569';
+    const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 1.2;
+    const repeatCount = p.repeatCount || 6;
+    const opacity = p.opacity !== undefined ? p.opacity : 0.85;
+
+    let fullLine = '';
+    for (let i = 0; i < repeatCount; i++) {
+        fullLine += resolvedText + ' ';
+    }
+
+    return `
+        <div class="uice-microtext-rule" style="width: 100%; height: 100%; display: flex; align-items: center; overflow: hidden; pointer-events: none; opacity: ${opacity};">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: ${fontSize}px; font-weight: 800; color: ${color}; text-transform: uppercase; letter-spacing: ${letterSpacing}px; white-space: nowrap; line-height: 1; user-select: none; -webkit-font-smoothing: antialiased;">
+                ${escapeHtml(fullLine)}
+            </span>
+        </div>`;
+}
+
+/**
+ * Generates security watermark crest overlay in background.
+ */
+function generateSecurityWatermarkHtml(el, properties = {}) {
+    const p = properties || {};
+    const preset = p.preset || 'vsa-crest';
+    const opacity = p.opacity !== undefined ? p.opacity : 0.10;
+    const rotation = p.rotation || 0;
+    const grayscale = p.grayscale !== false;
+
+    let svg = '';
+    if (preset === 'emblem-eagle') {
+        svg = getSecurityEagleSvg('#0f172a', 1);
+    } else if (preset === 'shield-verified') {
+        svg = getShieldVerifiedSvg('#0f172a', 1);
+    } else {
+        svg = getVsaSecurityCrestSvg('#0f172a', 1);
+    }
+
+    const filter = grayscale ? 'grayscale(100%)' : 'none';
+
+    return `
+        <div class="uice-watermark-overlay" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: ${opacity}; transform: rotate(${rotation}deg); filter: ${filter}; pointer-events: none;">
+            ${svg}
+        </div>`;
+}
+
+/**
  * Builds the inner HTML for an element node inside the artboard.
  */
-function renderUiceElementHtml(el, emp) {
+function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null) {
     const p = el.properties || {};
 
     switch (el.type) {
@@ -8957,8 +9228,10 @@ function renderUiceElementHtml(el, emp) {
             const availW = Math.max(20, el.width - logoSize - 12);
             const allowWrap = !!p.wrap;
             const autoFit = p.autoFit !== false;
-            const title = p.title || 'VALLEY SECURITY AGENCY';
-            const subtitle = p.subtitle || 'SHAHIDGUNJ SRINAGAR';
+            const rawTitle = p.title || 'VALLEY SECURITY AGENCY';
+            const rawSub = p.subtitle || 'SHAHIDGUNJ SRINAGAR';
+            const title = resolveUiceTokens(rawTitle, emp, validityYears, issueDate);
+            const subtitle = resolveUiceTokens(rawSub, emp, validityYears, issueDate);
             const lineHeight = p.lineHeight || 1.15;
             const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.4;
 
@@ -9109,9 +9382,11 @@ function renderUiceElementHtml(el, emp) {
         }
 
         case 'badge-pill': {
+            const rawText = p.text || 'SECURITY ID CARD';
+            const resolvedText = resolveUiceTokens(rawText, emp, validityYears, issueDate);
             return `
                 <div style="width: 100%; height: 100%; background: ${p.background || '#009688'}; color: ${p.color || '#ffffff'}; border-radius: ${p.borderRadius !== undefined ? p.borderRadius : 6}px; display: flex; align-items: center; justify-content: center; font-family: 'Plus Jakarta Sans', sans-serif; font-size: ${p.fontSize || 11}px; font-weight: ${p.fontWeight || 800}; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); pointer-events: none;">
-                    ${p.text || 'SECURITY ID CARD'}
+                    ${escapeHtml(resolvedText)}
                 </div>`;
         }
 
@@ -9124,15 +9399,23 @@ function renderUiceElementHtml(el, emp) {
             const addressWrap = p.addressWrap !== false;
             const autoFit = p.autoFit !== false;
 
+            const validityCalculated = resolveUiceTokens('{{validUntil}}', emp, validityYears, issueDate);
+
             const rows = [
                 { label: 'Staff ID:', value: emp.id || 'VSA-0042' },
                 { label: 'Father:', value: emp.fatherName || 'Ghulam Ahmad' },
                 { label: 'Dept:', value: emp.department || 'Operations' },
                 { label: 'Blood Group:', value: emp.bloodGroup || 'O+' },
-                { label: 'Validity:', value: '31-12-2028' },
+                { label: 'Validity:', value: validityCalculated || '31-12-2028' },
                 { label: 'Address:', value: emp.currentAddress || emp.permanentAddress || 'Srinagar, Kashmir', isAddress: true },
                 { label: 'Mobile:', value: emp.mobile || '+91 9419000000' }
             ];
+
+            rows.forEach(r => {
+                if (typeof r.value === 'string' && r.value.includes('{{')) {
+                    r.value = resolveUiceTokens(r.value, emp, validityYears, issueDate);
+                }
+            });
 
             if (autoFit && el.height) {
                 const rowCount = rows.length;
@@ -9207,12 +9490,31 @@ function renderUiceElementHtml(el, emp) {
         }
 
         case 'custom-text': {
+            const rawText = p.text || 'Custom Text';
+            const resolvedText = resolveUiceTokens(rawText, emp, validityYears, issueDate);
             return `
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; pointer-events: none;">
                     <div style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${p.fontSize || 12}px; font-weight: ${p.fontWeight || 600}; color: ${p.color || '#0f172a'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'none'}; line-height: 1.2; width: 100%;">
-                        ${p.text || 'Custom Text'}
+                        ${resolvedText}
                     </div>
                 </div>`;
+        }
+
+        case 'guilloche-pattern': {
+            const svg = generateGuillocheSvg(el.width, el.height, p);
+            return `<div class="uice-guilloche-container" style="width: 100%; height: 100%; pointer-events: none;">${svg}</div>`;
+        }
+
+        case 'hologram-overlay': {
+            return generateHologramFoilHtml(el, p);
+        }
+
+        case 'microtext-line': {
+            return generateMicrotextLineHtml(el, p, emp, validityYears, issueDate);
+        }
+
+        case 'security-watermark': {
+            return generateSecurityWatermarkHtml(el, p);
         }
 
         default:
@@ -9616,6 +9918,87 @@ function addUiceElement(type) {
                 height: 40,
                 zIndex: 1,
                 properties: { fill: '#009688', borderWidth: 0, borderRadius: 8, opacity: 1 }
+            };
+            break;
+
+        case 'guilloche-pattern':
+            newEl = {
+                id,
+                type: 'guilloche-pattern',
+                name: 'Guilloche Wave Pattern',
+                x: 10,
+                y: 10,
+                width: layout.width - 20,
+                height: Math.min(80, Math.round(layout.height * 0.3)),
+                zIndex: 1,
+                properties: {
+                    style: 'harmonic',
+                    strokeColor: '#009688',
+                    frequency: 4,
+                    waveCount: 8,
+                    amplitude: 12,
+                    strokeWidth: 0.75,
+                    opacity: 0.25
+                }
+            };
+            break;
+
+        case 'hologram-overlay':
+            newEl = {
+                id,
+                type: 'hologram-overlay',
+                name: 'Holographic Foil Badge',
+                x: layout.width - 64,
+                y: layout.height - 64,
+                width: 48,
+                height: 48,
+                zIndex: elements.length + 1,
+                properties: {
+                    foilStyle: 'silver',
+                    badgeShape: 'circle',
+                    crest: 'vsa-crest',
+                    label: 'SECURE'
+                }
+            };
+            break;
+
+        case 'microtext-line':
+            newEl = {
+                id,
+                type: 'microtext-line',
+                name: 'Microtext Security Line',
+                x: 15,
+                y: centerY,
+                width: layout.width - 30,
+                height: 8,
+                zIndex: elements.length + 1,
+                properties: {
+                    text: 'VALLEY SECURITY AGENCY • OFFICIAL CREDENTIAL • AUTHENTIC IDENTIFICATION • PSARA COMPLIANT • SECURE ACCESS • ',
+                    fontSize: 4.5,
+                    letterSpacing: 1.2,
+                    color: '#475569',
+                    repeatCount: 6,
+                    opacity: 0.85
+                }
+            };
+            break;
+
+        case 'security-watermark':
+            newEl = {
+                id,
+                type: 'security-watermark',
+                name: 'Security Watermark',
+                x: Math.round((layout.width - 120) / 2),
+                y: Math.round((layout.height - 120) / 2),
+                width: 120,
+                height: 120,
+                zIndex: 1,
+                properties: {
+                    preset: 'vsa-crest',
+                    rotation: 0,
+                    opacity: 0.10,
+                    grayscale: true
+                }
             };
             break;
     }
@@ -10425,6 +10808,11 @@ function updateUicePropertyInspector(el) {
     const secTable = document.getElementById('prop-sec-table');
     const secSig = document.getElementById('prop-sec-signature');
     const secShape = document.getElementById('prop-sec-shape');
+    const secGuilloche = document.getElementById('prop-sec-guilloche');
+    const secHologram = document.getElementById('prop-sec-hologram');
+    const secMicrotext = document.getElementById('prop-sec-microtext');
+    const secWatermark = document.getElementById('prop-sec-watermark');
+    const groupTextContent = document.getElementById('group-uice-text-content');
 
     const isAgency = el.type === 'agency-brand';
     const hasTypo = ['employee-name', 'designation', 'custom-text', 'badge-pill'].includes(el.type);
@@ -10436,6 +10824,11 @@ function updateUicePropertyInspector(el) {
     if (secTable) secTable.style.display = el.type === 'details-table' ? 'flex' : 'none';
     if (secSig) secSig.style.display = el.type === 'signature' ? 'flex' : 'none';
     if (secShape) secShape.style.display = el.type === 'shape' ? 'flex' : 'none';
+    if (secGuilloche) secGuilloche.style.display = el.type === 'guilloche-pattern' ? 'flex' : 'none';
+    if (secHologram) secHologram.style.display = el.type === 'hologram-overlay' ? 'flex' : 'none';
+    if (secMicrotext) secMicrotext.style.display = el.type === 'microtext-line' ? 'flex' : 'none';
+    if (secWatermark) secWatermark.style.display = el.type === 'security-watermark' ? 'flex' : 'none';
+    if (groupTextContent) groupTextContent.style.display = ['custom-text', 'badge-pill'].includes(el.type) ? 'block' : 'none';
 
     const p = el.properties || {};
     const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
@@ -10463,6 +10856,11 @@ function updateUicePropertyInspector(el) {
         if (textTransformSel) textTransformSel.value = p.textTransform || 'none';
         if (autofitCb) autofitCb.checked = p.autoFit !== false;
         if (wrapCb) wrapCb.checked = p.wrap === true;
+
+        const textContentInp = document.getElementById('prop-uice-text-content');
+        if (textContentInp && ['custom-text', 'badge-pill'].includes(el.type)) {
+            textContentInp.value = p.text || '';
+        }
 
         const typoDiag = validateTypographyFit(el, emp);
         const typoSentinelBadge = document.getElementById('uice-typo-sentinel');
@@ -10846,6 +11244,62 @@ function updateUicePropertyInspector(el) {
         if (borderCInp) borderCInp.value = p.borderColor || '#000000';
         if (borderWInp) borderWInp.value = p.borderWidth || 0;
         if (radiusInp) radiusInp.value = p.borderRadius || 0;
+    }
+
+    // Guilloche bindings
+    if (el.type === 'guilloche-pattern') {
+        const styleSel = document.getElementById('prop-uice-guilloche-style');
+        const strokeInp = document.getElementById('prop-uice-guilloche-stroke');
+        const freqInp = document.getElementById('prop-uice-guilloche-freq');
+        const countInp = document.getElementById('prop-uice-guilloche-count');
+        const ampInp = document.getElementById('prop-uice-guilloche-amp');
+        const widthInp = document.getElementById('prop-uice-guilloche-width');
+
+        if (styleSel) styleSel.value = p.style || 'harmonic';
+        if (strokeInp) strokeInp.value = p.strokeColor || '#009688';
+        if (freqInp) freqInp.value = p.frequency || 4;
+        if (countInp) countInp.value = p.waveCount || 8;
+        if (ampInp) ampInp.value = p.amplitude || 12;
+        if (widthInp) widthInp.value = p.strokeWidth || 0.75;
+    }
+
+    // Hologram bindings
+    if (el.type === 'hologram-overlay') {
+        const foilSel = document.getElementById('prop-uice-hologram-foil');
+        const shapeSel = document.getElementById('prop-uice-hologram-shape');
+        const crestSel = document.getElementById('prop-uice-hologram-crest');
+        const labelInp = document.getElementById('prop-uice-hologram-label');
+
+        if (foilSel) foilSel.value = p.foilStyle || 'silver';
+        if (shapeSel) shapeSel.value = p.badgeShape || 'circle';
+        if (crestSel) crestSel.value = p.crest || 'vsa-crest';
+        if (labelInp) labelInp.value = p.label || 'SECURE';
+    }
+
+    // Microtext bindings
+    if (el.type === 'microtext-line') {
+        const textInp = document.getElementById('prop-uice-microtext-text');
+        const sizeInp = document.getElementById('prop-uice-microtext-size');
+        const spacingInp = document.getElementById('prop-uice-microtext-spacing');
+        const colorInp = document.getElementById('prop-uice-microtext-color');
+        const repeatInp = document.getElementById('prop-uice-microtext-repeat');
+
+        if (textInp) textInp.value = p.text || '';
+        if (sizeInp) sizeInp.value = p.fontSize || 4.5;
+        if (spacingInp) spacingInp.value = p.letterSpacing || 1.2;
+        if (colorInp) colorInp.value = p.color || '#475569';
+        if (repeatInp) repeatInp.value = p.repeatCount || 6;
+    }
+
+    // Watermark bindings
+    if (el.type === 'security-watermark') {
+        const presetSel = document.getElementById('prop-uice-watermark-preset');
+        const rotInp = document.getElementById('prop-uice-watermark-rot');
+        const grayCb = document.getElementById('prop-uice-watermark-gray');
+
+        if (presetSel) presetSel.value = p.preset || 'vsa-crest';
+        if (rotInp) rotInp.value = p.rotation || 0;
+        if (grayCb) grayCb.checked = p.grayscale !== false;
     }
 }
 
@@ -11979,6 +12433,35 @@ function bindUiceInspectorInputs() {
     bindVal('prop-uice-shape-border', 'borderColor', true);
     bindNum('prop-uice-shape-border-w', 'borderWidth', true);
     bindNum('prop-uice-shape-radius', 'borderRadius', true);
+
+    // Text Content (for custom-text and badge-pill)
+    bindVal('prop-uice-text-content', 'text', true);
+
+    // Guilloche
+    bindVal('prop-uice-guilloche-style', 'style', true);
+    bindVal('prop-uice-guilloche-stroke', 'strokeColor', true);
+    bindNum('prop-uice-guilloche-freq', 'frequency', true);
+    bindNum('prop-uice-guilloche-count', 'waveCount', true);
+    bindNum('prop-uice-guilloche-amp', 'amplitude', true);
+    bindNum('prop-uice-guilloche-width', 'strokeWidth', true);
+
+    // Hologram
+    bindVal('prop-uice-hologram-foil', 'foilStyle', true);
+    bindVal('prop-uice-hologram-shape', 'badgeShape', true);
+    bindVal('prop-uice-hologram-crest', 'crest', true);
+    bindVal('prop-uice-hologram-label', 'label', true);
+
+    // Microtext
+    bindVal('prop-uice-microtext-text', 'text', true);
+    bindNum('prop-uice-microtext-size', 'fontSize', true);
+    bindNum('prop-uice-microtext-spacing', 'letterSpacing', true);
+    bindVal('prop-uice-microtext-color', 'color', true);
+    bindNum('prop-uice-microtext-repeat', 'repeatCount', true);
+
+    // Watermark
+    bindVal('prop-uice-watermark-preset', 'preset', true);
+    bindNum('prop-uice-watermark-rot', 'rotation', true);
+    bindVal('prop-uice-watermark-gray', 'grayscale', true);
 
     // Advanced Progressive Disclosure Bindings
     const propNameInp = document.getElementById('prop-uice-name');
@@ -13748,6 +14231,80 @@ if (typeof window !== 'undefined') {
     window.handleUiceBatchSubmit = handleUiceBatchSubmit;
     window.startUiceBatchExport = startUiceBatchExport;
 
+
+/**
+ * Populates UICE Studio guard selector with all authentic database guards.
+ */
+function populateUicePreviewEmpSelect() {
+    const previewEmpSel = document.getElementById('uice-preview-emp-select');
+    if (!previewEmpSel) return;
+    const emps = VSA_STATE.employees || [];
+    if (emps.length === 0) return;
+
+    const currentId = (UICE_STATE.previewEmp && UICE_STATE.previewEmp.id) || emps[0].id;
+    previewEmpSel.innerHTML = emps.map(e =>
+        `<option value="${e.id}" ${e.id == currentId ? 'selected' : ''}>${e.name || e.fullName || 'Guard'} (${e.id})</option>`
+    ).join('');
+
+    if (!UICE_STATE.previewEmp || !emps.some(e => e.id == UICE_STATE.previewEmp.id)) {
+        UICE_STATE.previewEmp = emps[0];
+    }
+}
+
+/**
+ * Toggles single-card preview stage surface: front, back, or duplex.
+ */
+function setSingleCardPreviewSurface(surface) {
+    VSA_STATE.singleCardPreviewSurface = surface;
+    const btnFront = document.getElementById('btn-single-preview-front');
+    const btnBack = document.getElementById('btn-single-preview-back');
+    const btnDuplex = document.getElementById('btn-single-preview-duplex');
+
+    if (btnFront) {
+        btnFront.className = surface === 'front' ? 'btn btn-primary' : 'btn btn-outline';
+    }
+    if (btnBack) {
+        btnBack.className = surface === 'back' ? 'btn btn-primary' : 'btn btn-outline';
+    }
+    if (btnDuplex) {
+        btnDuplex.className = surface === 'duplex' ? 'btn btn-primary' : 'btn btn-outline';
+    }
+
+    const selectedEmpId = document.getElementById('id-select-employee')?.value;
+    if (selectedEmpId) {
+        loadIdCardDetails(selectedEmpId);
+    }
+}
+
+function setupSingleCardSurfaceToggle() {
+    const btnFront = document.getElementById('btn-single-preview-front');
+    const btnBack = document.getElementById('btn-single-preview-back');
+    const btnDuplex = document.getElementById('btn-single-preview-duplex');
+
+    if (btnFront && !btnFront._bound) {
+        btnFront._bound = true;
+        btnFront.addEventListener('click', () => setSingleCardPreviewSurface('front'));
+    }
+    if (btnBack && !btnBack._bound) {
+        btnBack._bound = true;
+        btnBack.addEventListener('click', () => setSingleCardPreviewSurface('back'));
+    }
+    if (btnDuplex && !btnDuplex._bound) {
+        btnDuplex._bound = true;
+        btnDuplex.addEventListener('click', () => setSingleCardPreviewSurface('duplex'));
+    }
+}
+
+    // Phase 9 Security Overlays & Token Binding Exports
+    window.resolveUiceTokens = resolveUiceTokens;
+    window.generateGuillocheSvg = generateGuillocheSvg;
+    window.generateHologramFoilHtml = generateHologramFoilHtml;
+    window.generateMicrotextLineHtml = generateMicrotextLineHtml;
+    window.generateSecurityWatermarkHtml = generateSecurityWatermarkHtml;
+    window.populateUicePreviewEmpSelect = populateUicePreviewEmpSelect;
+    window.setSingleCardPreviewSurface = setSingleCardPreviewSurface;
+    window.setupSingleCardSurfaceToggle = setupSingleCardSurfaceToggle;
+
     // Phase 8 Dual-Sided Engine & Archetype Presets Exports
     window.setUiceSurface = setUiceSurface;
     window.flipUiceCard = flipUiceCard;
@@ -13812,6 +14369,22 @@ async function saveUiceTemplate() {
 function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDate = null, side = 'front') {
     if (!emp || !layout) return '';
 
+    if (side === 'duplex') {
+        const frontHtml = generateUiceCardHtml(emp, layout, template, validityYears, issueDate, 'front');
+        const backHtml = generateUiceCardHtml(emp, layout, template, validityYears, issueDate, 'back');
+        return `
+            <div class="visual-id-card-render-wrapper uice-duplex-wrapper" style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: flex-start; width: 100%;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <span class="badge badge-secondary" style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Front Face</span>
+                    ${frontHtml}
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <span class="badge badge-secondary" style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Reverse Face</span>
+                    ${backHtml}
+                </div>
+            </div>`;
+    }
+
     const width = layout.width || 500;
     const height = layout.height || 320;
     const isHoriz = width >= height;
@@ -13825,7 +14398,7 @@ function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDat
         : (layout.elements || []);
 
     const elementsHtml = activeList.filter(el => el.visible !== false).map(el => {
-        const innerContent = renderUiceElementHtml(el, emp);
+        const innerContent = renderUiceElementHtml(el, emp, validityYears, issueDate);
         return `
             <div style="position: absolute; left: ${el.x}px; top: ${el.y}px; width: ${el.width}px; height: ${el.height}px; transform: rotate(${el.rotation || 0}deg); z-index: ${el.zIndex || 1}; box-sizing: border-box; overflow: hidden;">
                 ${innerContent}

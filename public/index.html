@@ -1043,10 +1043,15 @@
 
                         <!-- Right Panel: Single-Sided ID Card Preview Stage -->
                         <div class="dashboard-card col-5 studio-canvas-card id-card-preview-container" style="position: sticky; top: 80px; align-self: flex-start;">
-                            <div class="card-header studio-canvas-header">
+                            <div class="card-header studio-canvas-header" style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="studio-canvas-title">
                                     <i data-lucide="credit-card"></i>
                                     <h3>ID Card Preview (Print Size)</h3>
+                                </div>
+                                <div class="single-card-surface-toggle" id="single-card-surface-toggle">
+                                    <button type="button" class="btn btn-primary" id="btn-single-preview-front" data-surface="front">Front</button>
+                                    <button type="button" class="btn btn-outline" id="btn-single-preview-back" data-surface="back">Back</button>
+                                    <button type="button" class="btn btn-outline" id="btn-single-preview-duplex" data-surface="duplex">Both</button>
                                 </div>
                             </div>
                             <div class="card-body studio-canvas-stage">
@@ -1361,6 +1366,29 @@
                                                     </button>
                                                 </div>
                                             </div>
+
+                                            <!-- Category 6: Enterprise Security Overlays & Anti-Counterfeit -->
+                                            <div class="uice-palette-category">
+                                                <div class="uice-category-title"><i data-lucide="shield-alert"></i> Security Overlays & Anti-Counterfeit</div>
+                                                <div class="uice-elements-grid">
+                                                    <button type="button" class="uice-element-add-btn" id="btn-add-guilloche" data-add-type="guilloche-pattern" title="Add Guilloche Security Wave Pattern">
+                                                        <i data-lucide="activity"></i>
+                                                        <span>Guilloche Waves</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" id="btn-add-hologram" data-add-type="hologram-overlay" title="Add Holographic Foil Badge">
+                                                        <i data-lucide="sparkles"></i>
+                                                        <span>Hologram Foil</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" id="btn-add-microtext" data-add-type="microtext-line" title="Add Microtext Security Line">
+                                                        <i data-lucide="minus"></i>
+                                                        <span>Microtext Line</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" id="btn-add-watermark" data-add-type="security-watermark" title="Add Security Watermark Crest">
+                                                        <i data-lucide="shield-check"></i>
+                                                        <span>Security Watermark</span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Subview 2: Layers Manager List -->
@@ -1526,6 +1554,10 @@
                                             <!-- Typography Section -->
                                             <div class="uice-section-card" id="prop-sec-typography" style="display: none;">
                                                 <h4 class="uice-section-title">Typography & Text</h4>
+                                                <div class="uice-input-group" id="group-uice-text-content">
+                                                    <label class="uice-input-label">Text Content (Supports Tokens: {{name}}, {{empId}}, etc.)</label>
+                                                    <input type="text" id="prop-uice-text-content" class="form-control" style="font-size: 12px; padding: 5px;" placeholder="e.g. {{name}} or Custom Text">
+                                                </div>
                                                 <div class="uice-input-group">
                                                     <label class="uice-input-label">Font Family</label>
                                                     <select id="prop-uice-font" class="form-control" style="font-size: 12px; padding: 5px;">
@@ -1937,6 +1969,139 @@
                                                         <label class="uice-input-label">Corner Radius (px)</label>
                                                         <input type="number" id="prop-uice-shape-radius" class="uice-num-input" min="0" max="100">
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Guilloche Security Pattern Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-guilloche" style="display: none;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Guilloche Security Pattern</h4>
+                                                    <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Anti-Copy</span>
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Wave Pattern Style</label>
+                                                        <select id="prop-uice-guilloche-style" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="harmonic">Harmonic Dual Sine/Cosine</option>
+                                                            <option value="spirograph">Spirograph Geometric</option>
+                                                            <option value="sinusoidal">Sinusoidal Parallel Wave</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Stroke Color</label>
+                                                        <input type="color" id="prop-uice-guilloche-stroke" class="studio-color-input" style="width: 100%; height: 32px;" value="#009688">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Wave Frequency (cycles)</label>
+                                                        <input type="number" id="prop-uice-guilloche-freq" class="uice-num-input" min="1" max="12" value="4">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Wave Count (density)</label>
+                                                        <input type="number" id="prop-uice-guilloche-count" class="uice-num-input" min="2" max="24" value="8">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Amplitude (px)</label>
+                                                        <input type="number" id="prop-uice-guilloche-amp" class="uice-num-input" min="2" max="50" value="12">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Stroke Width (px)</label>
+                                                        <input type="number" id="prop-uice-guilloche-width" class="uice-num-input" min="0.2" max="3" step="0.1" value="0.75">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Holographic Foil Badge Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-hologram" style="display: none;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Holographic Security Foil</h4>
+                                                    <span class="badge badge-accent" style="font-size: 10px; padding: 2px 6px;">Diffraction</span>
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Foil Luster Preset</label>
+                                                        <select id="prop-uice-hologram-foil" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="silver">Silver Prismatic Sheen</option>
+                                                            <option value="gold">24K Gold Luster Foil</option>
+                                                            <option value="prismatic">Full-Spectrum Rainbow</option>
+                                                            <option value="emerald">Emerald Security Foil</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Badge Shape</label>
+                                                        <select id="prop-uice-hologram-shape" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="circle">Circular Security Seal</option>
+                                                            <option value="shield">Shield Crest Profile</option>
+                                                            <option value="rectangle">Rounded Security Ribbon</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Center Security Crest</label>
+                                                        <select id="prop-uice-hologram-crest" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="vsa-crest">VSA Sovereign Monogram Shield</option>
+                                                            <option value="eagle">Security Eagle Silhouette</option>
+                                                            <option value="star">Sovereign Five-Star Emblem</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Security Label Text</label>
+                                                        <input type="text" id="prop-uice-hologram-label" class="form-control" style="font-size: 11px; padding: 4px 6px;" value="SECURE">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Microtext Security Line Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-microtext" style="display: none;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Microtext Anti-Copy Line</h4>
+                                                    <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Sub-mm</span>
+                                                </div>
+                                                <div class="uice-input-group">
+                                                    <label class="uice-input-label">Microtext String (Supports Tokens: {{name}}, {{empId}})</label>
+                                                    <input type="text" id="prop-uice-microtext-text" class="form-control" style="font-size: 11px; padding: 5px;" value="VALLEY SECURITY AGENCY • OFFICIAL CREDENTIAL • AUTHENTIC IDENTIFICATION • PSARA COMPLIANT • SECURE ACCESS • ">
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Font Size (px, 3-8)</label>
+                                                        <input type="number" id="prop-uice-microtext-size" class="uice-num-input" min="3" max="8" step="0.5" value="4.5">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Letter Spacing (px)</label>
+                                                        <input type="number" id="prop-uice-microtext-spacing" class="uice-num-input" min="0.5" max="4" step="0.1" value="1.2">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Text Color</label>
+                                                        <input type="color" id="prop-uice-microtext-color" class="studio-color-input" style="width: 100%; height: 32px;" value="#475569">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Repeat Count</label>
+                                                        <input type="number" id="prop-uice-microtext-repeat" class="uice-num-input" min="1" max="20" value="6">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Security Watermark Specific Properties -->
+                                            <div class="uice-section-card" id="prop-sec-watermark" style="display: none;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Security Watermark</h4>
+                                                    <span class="badge badge-secondary" style="font-size: 10px; padding: 2px 6px;">Subtle Layer</span>
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Crest Preset</label>
+                                                        <select id="prop-uice-watermark-preset" class="form-control" style="font-size: 12px; padding: 5px;">
+                                                            <option value="vsa-crest">VSA Official Shield Crest</option>
+                                                            <option value="emblem-eagle">Security Eagle Silhouette</option>
+                                                            <option value="shield-verified">PSARA Verified Security Shield</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Watermark Angle (°)</label>
+                                                        <input type="number" id="prop-uice-watermark-rot" class="uice-num-input" min="-180" max="180" value="0">
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+                                                    <label for="prop-uice-watermark-gray" style="font-size: 11px; font-weight: 600; color: #cbd5e1; margin: 0;">Monochrome / Grayscale</label>
+                                                    <input type="checkbox" id="prop-uice-watermark-gray" checked>
                                                 </div>
                                             </div>
                                         </div>
