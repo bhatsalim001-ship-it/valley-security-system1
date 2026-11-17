@@ -9015,3 +9015,16 @@ html, body {
     font-weight: 700;
 }
 
+/* Phase 4: Intelligent Optical Scannability & Sentinel Previews */
+.uice-sentinel-preview-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+}
+
+.uice-sentinel-preview-card canvas {
+    image-rendering: pixelated;
+}
+

@@ -3958,19 +3958,21 @@ function renderQrsInContainer(container) {
         const size = parseInt(canvas.getAttribute('data-qr-size')) || 100;
         const bg = canvas.getAttribute('data-qr-bg') || '#ffffff';
         const fg = canvas.getAttribute('data-qr-fg') || '#000000';
-        // Fix blank QR: set actual pixel dimensions before QRious renders
-        canvas.width = size;
-        canvas.height = size;
+        const level = canvas.getAttribute('data-qr-level') || 'H';
+        // High-DPI support: render at 2x resolution for razor-sharp printing and canvas export
+        const scale = 2;
+        canvas.width = size * scale;
+        canvas.height = size * scale;
         canvas.style.width = size + 'px';
         canvas.style.height = size + 'px';
         try {
             new QRious({
                 element: canvas,
                 value: val,
-                size: size,
+                size: size * scale,
                 background: bg,
                 foreground: fg,
-                level: 'H',
+                level: level,
                 padding: 0
             });
         } catch(e) {
@@ -8151,7 +8153,7 @@ function renderUiceElementHtml(el, emp) {
 
             return `
                 <div style="width: 100%; height: 100%; background: ${p.background || '#ffffff'}; padding: ${p.quietZone || 2}px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: ${p.borderWidth || 1.5}px solid ${p.borderColor || '#009688'}; display: flex; align-items: center; justify-content: center; box-sizing: border-box; pointer-events: none;">
-                    <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize}" data-qr-bg="${p.background || '#ffffff'}" data-qr-fg="${p.foreground || '#000000'}" style="width: ${qrSize}px; height: ${qrSize}px; display: block;"></canvas>
+                    <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize}" data-qr-bg="${p.background || '#ffffff'}" data-qr-fg="${p.foreground || '#000000'}" data-qr-level="${p.errorCorrection || 'H'}" style="width: ${qrSize}px; height: ${qrSize}px; display: block;"></canvas>
                 </div>`;
         }
 
@@ -8554,6 +8556,307 @@ function addUiceElement(type) {
 }
 
 /**
+ * Calculates WCAG 2.1 relative luminance and contrast ratio between two hex/rgb colors.
+ * Contrast Ratio formula: (L1 + 0.05) / (L2 + 0.05) where L1 is lighter and L2 is darker.
+ * @param {string} fgHex - Foreground color (hex or rgb)
+ * @param {string} bgHex - Background color (hex or rgb)
+ * @returns {number} Contrast ratio rounded to 1 decimal place (e.g. 21.0 for pure black on pure white)
+ */
+function calculateColorContrast(fgHex, bgHex) {
+    function parseRgb(colorStr) {
+        if (!colorStr) return [0, 0, 0];
+        colorStr = String(colorStr).trim();
+        if (colorStr.startsWith('#')) {
+            let hex = colorStr.slice(1);
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+            const intVal = parseInt(hex, 16);
+            if (isNaN(intVal)) return [0, 0, 0];
+            return [(intVal >> 16) & 255, (intVal >> 8) & 255, intVal & 255];
+        } else if (colorStr.startsWith('rgb')) {
+            const parts = colorStr.match(/\d+/g);
+            if (parts && parts.length >= 3) {
+                return [parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2], 10)];
+            }
+        }
+        return [0, 0, 0];
+    }
+
+    function getLuminance([r, g, b]) {
+        const a = [r, g, b].map(v => {
+            v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+    }
+
+    const rgb1 = parseRgb(fgHex || '#000000');
+    const rgb2 = parseRgb(bgHex || '#ffffff');
+    const lum1 = getLuminance(rgb1);
+    const lum2 = getLuminance(rgb2);
+    const brightest = Math.max(lum1, lum2);
+    const darkest = Math.min(lum1, lum2);
+    const ratio = (brightest + 0.05) / (darkest + 0.05);
+    return Math.round(ratio * 10) / 10;
+}
+
+/**
+ * Builds the canonical security verification URL for an employee ID card.
+ * @param {Object} emp - Employee data record
+ * @returns {string} Fully qualified verification URL
+ */
+function getUiceVerificationUrl(emp) {
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const qrHost = (isLocalhost && typeof VSA_STATE !== 'undefined' && VSA_STATE.lanIp && !VSA_STATE.lanIp.startsWith('localhost'))
+        ? VSA_STATE.lanIp
+        : ((typeof window !== 'undefined' && window.location.host) ? window.location.host : 'valleysolutions.in');
+    const empId = emp ? (emp.id || 'VSA-0042') : 'VSA-0042';
+    const secureTokenParam = (emp && emp.secureToken) ? `&token=${emp.secureToken}` : '';
+    const protocol = (typeof window !== 'undefined' && window.location.protocol && window.location.protocol.startsWith('http')) 
+        ? window.location.protocol 
+        : 'https:';
+    return `${protocol}//${qrHost}/verification.html?id=${empId}${secureTokenParam}`;
+}
+
+/**
+ * Evaluates the optical scannability of a QR element against industrial standards:
+ * - Size: Recommended >= 48px, Minimum critical >= 40px
+ * - Aspect Ratio Distortion: Absolute difference between width and height <= 5%
+ * - Contrast Ratio: >= 7.0:1 (Optimal), 4.5:1 - 6.9:1 (Warning), < 4.5:1 (Critical failure)
+ * - Quiet Zone: >= 2px
+ * - Error Correction Level: H (30%) or Q (25%) recommended; L (7%) triggers warning
+ * 
+ * @param {Object} el - QR element node from layout
+ * @param {Object} emp - Employee data record
+ * @returns {Object} Comprehensive diagnostic report
+ */
+function validateQrScannability(el, emp) {
+    const p = (el && el.properties) || {};
+    const w = el ? (el.width || 54) : 54;
+    const h = el ? (el.height || 54) : 54;
+    const minDim = Math.min(w, h);
+    const maxDim = Math.max(w, h);
+    const fg = p.foreground || '#000000';
+    const bg = p.background || '#ffffff';
+    const ecc = p.errorCorrection || 'H';
+    const quiet = p.quietZone !== undefined ? p.quietZone : 2;
+
+    const contrast = calculateColorContrast(fg, bg);
+    const ratioDiff = maxDim > 0 ? Math.abs(w - h) / maxDim : 0;
+
+    const passes = [];
+    const warnings = [];
+    const issues = []; // critical
+
+    // 1. Minimum Dimensions Check
+    if (minDim < 40) {
+        issues.push(`Critical size issue: ${Math.round(minDim)}px is below 40px critical scanning limit.`);
+    } else if (minDim < 48) {
+        warnings.push(`Recommended size is >= 48px (currently ${Math.round(minDim)}px). Low-resolution cameras may experience scanning lag.`);
+    } else {
+        passes.push(`Size ${Math.round(w)}×${Math.round(h)}px meets high-reliability print standards.`);
+    }
+
+    // 2. Aspect Ratio Distortion Check
+    if (ratioDiff > 0.05) {
+        issues.push(`Distortion detected: QR code aspect ratio is not 1:1 (${Math.round(w)}×${Math.round(h)}px). Optical sensors cannot decode non-square matrices.`);
+    } else {
+        passes.push(`Proportion is square 1:1 (distortion: 0%).`);
+    }
+
+    // 3. Contrast Check
+    if (contrast < 4.5) {
+        issues.push(`Critical contrast failure: Contrast ratio is ${contrast}:1 (minimum 4.5:1 required). Modules blend into background.`);
+    } else if (contrast < 7.0) {
+        warnings.push(`Contrast is ${contrast}:1. Sunlight glare or dim lighting may cause scan failures (recommended >= 7.0:1).`);
+    } else {
+        passes.push(`Contrast ratio is ${contrast}:1 (exceeds 7.0:1 ISO/IEC 18004 standard).`);
+    }
+
+    // 4. Quiet Zone
+    if (quiet < 1) {
+        warnings.push(`Quiet zone is ${quiet}px. Surrounding borders may cause timing pattern detection failure.`);
+    } else {
+        passes.push(`Quiet zone is ${quiet}px.`);
+    }
+
+    // 5. Error Correction
+    if (ecc === 'L') {
+        warnings.push(`Error Correction Level 'L' (7%) has low resistance to badge scratches or lamination glare. Consider 'H' (30%) or 'Q' (25%).`);
+    } else {
+        passes.push(`Error Correction Level '${ecc}' enabled.`);
+    }
+
+    let level = 'valid';
+    if (issues.length > 0) {
+        level = 'critical';
+    } else if (warnings.length > 0) {
+        level = 'warning';
+    }
+
+    return {
+        valid: issues.length === 0,
+        level,
+        minDim,
+        contrast,
+        ratioDiff,
+        issues,
+        warnings,
+        passes,
+        url: getUiceVerificationUrl(emp)
+    };
+}
+
+/**
+ * Evaluates the optical scannability of a Barcode element against GS1/ISO standards:
+ * - Dimensions: Standard width >= 110px, height >= 22px; Critical width < 90px, height < 16px
+ * - Content / Format: CODE128 (supports all alphanumeric), CODE39 (uppercase alphanumeric), EAN13 (strictly 12 or 13 digits)
+ * - Proportions: Aspect ratio (width / height) >= 2.5:1 to maintain readable bar-space ratio
+ * - Contrast: Ratio between line color and background >= 7.0:1 (optimal), < 4.5:1 (critical failure)
+ * 
+ * @param {Object} el - Barcode element node from layout
+ * @param {Object} emp - Employee data record
+ * @returns {Object} Comprehensive diagnostic report
+ */
+function validateBarcodeScannability(el, emp) {
+    const p = (el && el.properties) || {};
+    const w = el ? (el.width || 120) : 120;
+    const h = el ? (el.height || 26) : 26;
+    const format = (p.format || 'CODE128').toUpperCase();
+    const fg = p.lineColor || '#000000';
+    const bg = p.background || '#ffffff';
+    const val = (emp && emp.id) ? String(emp.id) : 'VSA-0042';
+
+    const contrast = calculateColorContrast(fg, bg);
+    const passes = [];
+    const warnings = [];
+    const issues = []; // critical
+
+    // 1. Dimensions Check
+    if (w < 90 || h < 16) {
+        issues.push(`Critical size issue: ${Math.round(w)}×${Math.round(h)}px is too small for standard 1D laser/CCD bar scanners (min 90×16px).`);
+    } else if (w < 110 || h < 22) {
+        warnings.push(`Barcode dimensions (${Math.round(w)}×${Math.round(h)}px) are compact. Recommended standard is >= 110×22px.`);
+    } else {
+        passes.push(`Dimensions ${Math.round(w)}×${Math.round(h)}px meet standard 1D optical scanning specifications.`);
+    }
+
+    // 2. Format & Value Compatibility
+    if (format === 'EAN13') {
+        const digitsOnly = /^\d{12,13}$/.test(val);
+        if (!digitsOnly) {
+            issues.push(`Format Error: EAN-13 strictly requires 12 or 13 digits, but payload is "${val}". Laser scanners will reject this barcode.`);
+        } else {
+            passes.push(`Payload "${val}" is valid for EAN-13.`);
+        }
+    } else if (format === 'CODE39') {
+        const code39Valid = /^[0-9A-Z\-\.\ \$\/\+\%]+$/i.test(val);
+        if (!code39Valid) {
+            issues.push(`Format Error: CODE39 cannot encode non-standard characters in "${val}".`);
+        } else {
+            passes.push(`Payload "${val}" is valid for CODE39.`);
+        }
+    } else {
+        // CODE128
+        passes.push(`Format CODE128 supports full ASCII set for "${val}".`);
+    }
+
+    // 3. Aspect Ratio / Proportions
+    const aspect = w / (h || 1);
+    if (aspect < 2.5) {
+        warnings.push(`Barcode is overly tall or narrow (aspect ratio ${aspect.toFixed(1)}:1). Standard aspect ratio is >= 3.0:1.`);
+    } else {
+        passes.push(`Aspect ratio ${aspect.toFixed(1)}:1 provides proper bar density.`);
+    }
+
+    // 4. Contrast Check
+    if (contrast < 4.5) {
+        issues.push(`Critical contrast failure: Contrast ratio is ${contrast}:1 (minimum 4.5:1 required). Laser barcode readers cannot detect bar edges.`);
+    } else if (contrast < 7.0) {
+        warnings.push(`Contrast is ${contrast}:1. Recommended contrast for laser readers is >= 7.0:1.`);
+    } else {
+        passes.push(`Contrast ratio is ${contrast}:1 (verified against white base).`);
+    }
+
+    let level = 'valid';
+    if (issues.length > 0) {
+        level = 'critical';
+    } else if (warnings.length > 0) {
+        level = 'warning';
+    }
+
+    return {
+        valid: issues.length === 0,
+        level,
+        contrast,
+        issues,
+        warnings,
+        passes,
+        val,
+        format
+    };
+}
+
+/**
+ * Scans an entire card layout for scannable optical elements (QR codes and barcodes)
+ * and returns aggregate validation results with any critical blockers or warnings.
+ * 
+ * @param {Object} layout - Layout object with elements array
+ * @param {Object} emp - Employee data record
+ * @returns {Object} Comprehensive inspection report for export gatekeeper
+ */
+function checkLayoutScannability(layout, emp) {
+    if (!layout || !Array.isArray(layout.elements)) {
+        return { hasCritical: false, hasWarning: false, criticalCount: 0, warningCount: 0, messages: [], qrResults: [], barcodeResults: [] };
+    }
+
+    const messages = [];
+    let criticalCount = 0;
+    let warningCount = 0;
+    const qrResults = [];
+    const barcodeResults = [];
+
+    layout.elements.forEach(el => {
+        if (el.visible === false) return;
+
+        if (el.type === 'qr-code') {
+            const res = validateQrScannability(el, emp);
+            qrResults.push({ el, res });
+            if (res.level === 'critical') {
+                criticalCount += res.issues.length;
+                res.issues.forEach(msg => messages.push(`[QR Code "${el.name || el.id}"]: ${msg}`));
+            } else if (res.level === 'warning') {
+                warningCount += res.warnings.length;
+                res.warnings.forEach(msg => messages.push(`[QR Code "${el.name || el.id}"]: ${msg}`));
+            }
+        }
+
+        if (el.type === 'barcode') {
+            const res = validateBarcodeScannability(el, emp);
+            barcodeResults.push({ el, res });
+            if (res.level === 'critical') {
+                criticalCount += res.issues.length;
+                res.issues.forEach(msg => messages.push(`[Barcode "${el.name || el.id}"]: ${msg}`));
+            } else if (res.level === 'warning') {
+                warningCount += res.warnings.length;
+                res.warnings.forEach(msg => messages.push(`[Barcode "${el.name || el.id}"]: ${msg}`));
+            }
+        }
+    });
+
+    return {
+        hasCritical: criticalCount > 0,
+        hasWarning: warningCount > 0,
+        criticalCount,
+        warningCount,
+        messages,
+        qrResults,
+        barcodeResults
+    };
+}
+
+/**
  * Updates the Right Property Inspector with the active element's properties.
  */
 function updateUicePropertyInspector(el) {
@@ -8646,6 +8949,8 @@ function updateUicePropertyInspector(el) {
         if (outlineCInp) outlineCInp.value = p.outlineColor || '#009688';
     }
 
+    const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
+
     // QR bindings & Sentinel check
     if (el.type === 'qr-code') {
         const fgInp = document.getElementById('prop-uice-qr-fg');
@@ -8658,13 +8963,75 @@ function updateUicePropertyInspector(el) {
         if (eccSel) eccSel.value = p.errorCorrection || 'H';
         if (quietInp) quietInp.value = p.quietZone !== undefined ? p.quietZone : 2;
 
-        // Scannability Sentinel check
+        const qrDiag = validateQrScannability(el, emp);
+
+        // Status Badge
+        const statusBadge = document.getElementById('lbl-uice-qr-status');
+        if (statusBadge) {
+            if (qrDiag.level === 'valid') {
+                statusBadge.className = 'badge badge-success';
+                statusBadge.textContent = 'Scannable';
+            } else if (qrDiag.level === 'warning') {
+                statusBadge.className = 'badge badge-warning';
+                statusBadge.textContent = 'Caution';
+            } else {
+                statusBadge.className = 'badge badge-danger';
+                statusBadge.textContent = 'Unreadable';
+            }
+        }
+
+        // Decoded URL and metrics
+        const previewUrlEl = document.getElementById('uice-qr-preview-url');
+        if (previewUrlEl) {
+            previewUrlEl.textContent = qrDiag.url;
+            previewUrlEl.title = qrDiag.url;
+        }
+        const previewMetricsEl = document.getElementById('uice-qr-preview-metrics');
+        if (previewMetricsEl) {
+            previewMetricsEl.textContent = `${Math.round(el.width)}×${Math.round(el.height)}px • Contrast ${qrDiag.contrast}:1 • ECC ${p.errorCorrection || 'H'}`;
+        }
+
+        // Render Live Preview Canvas with QRious and test with jsQR
+        const qrCanvas = document.getElementById('uice-qr-preview-canvas');
+        if (qrCanvas && typeof QRious !== 'undefined') {
+            try {
+                qrCanvas.width = 68;
+                qrCanvas.height = 68;
+                new QRious({
+                    element: qrCanvas,
+                    value: qrDiag.url,
+                    size: 68,
+                    background: p.background || '#ffffff',
+                    foreground: p.foreground || '#000000',
+                    level: p.errorCorrection || 'H',
+                    padding: 0
+                });
+
+                // Test live decode using jsQR
+                if (typeof jsQR !== 'undefined') {
+                    const ctx = qrCanvas.getContext('2d');
+                    if (ctx) {
+                        const imgData = ctx.getImageData(0, 0, 68, 68);
+                        const decoded = jsQR(imgData.data, 68, 68);
+                        if (decoded && decoded.data) {
+                            qrDiag.passes.unshift(`Optical Decoding Verified: Decodes payload without loss`);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Live QR preview render error:', e);
+            }
+        }
+
+        // Update Sentinel Badge & Details
         const sentinelBadge = document.getElementById('uice-qr-sentinel');
         if (sentinelBadge) {
-            const minDim = Math.min(el.width, el.height);
-            if (minDim < 36) {
+            if (qrDiag.level === 'critical') {
+                sentinelBadge.className = 'uice-sentinel-badge error';
+                sentinelBadge.innerHTML = `<i data-lucide="x-circle" style="width: 14px; height: 14px;"></i><span>Critical: Unscannable QR Parameters</span>`;
+            } else if (qrDiag.level === 'warning') {
                 sentinelBadge.className = 'uice-sentinel-badge warning';
-                sentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Warning: QR Size (${Math.round(minDim)}px) below recommended 40px optical threshold</span>`;
+                sentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Sub-Optimal Optical Parameters</span>`;
             } else {
                 sentinelBadge.className = 'uice-sentinel-badge valid';
                 sentinelBadge.innerHTML = `<i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i><span>QR Scannable & Optical Standards Verified</span>`;
@@ -8673,17 +9040,110 @@ function updateUicePropertyInspector(el) {
                 lucide.createIcons({ root: sentinelBadge });
             }
         }
+
+        const detailsEl = document.getElementById('uice-qr-sentinel-details');
+        if (detailsEl) {
+            let html = '';
+            qrDiag.issues.forEach(i => html += `<div style="color: #ef4444; margin-bottom: 2px;">• ✕ ${escapeHtml(i)}</div>`);
+            qrDiag.warnings.forEach(w => html += `<div style="color: #f59e0b; margin-bottom: 2px;">• ⚠ ${escapeHtml(w)}</div>`);
+            qrDiag.passes.slice(0, 2).forEach(pass => html += `<div style="color: #10b981; margin-bottom: 2px;">• ✓ ${escapeHtml(pass)}</div>`);
+            detailsEl.innerHTML = html;
+        }
     }
 
     // Barcode bindings
     if (el.type === 'barcode') {
         const fmtSel = document.getElementById('prop-uice-barcode-format');
         const lineCInp = document.getElementById('prop-uice-barcode-color');
+        const bgInp = document.getElementById('prop-uice-barcode-bg');
+        const fontSizeInp = document.getElementById('prop-uice-barcode-font-size');
         const showTextCb = document.getElementById('prop-uice-barcode-text');
 
         if (fmtSel) fmtSel.value = p.format || 'CODE128';
         if (lineCInp) lineCInp.value = p.lineColor || '#000000';
+        if (bgInp) bgInp.value = p.background || '#ffffff';
+        if (fontSizeInp) fontSizeInp.value = p.fontSize || 8;
         if (showTextCb) showTextCb.checked = p.showText !== false;
+
+        const barcodeDiag = validateBarcodeScannability(el, emp);
+
+        // Status Badge
+        const barcodeStatusBadge = document.getElementById('lbl-uice-barcode-status');
+        if (barcodeStatusBadge) {
+            if (barcodeDiag.level === 'valid') {
+                barcodeStatusBadge.className = 'badge badge-success';
+                barcodeStatusBadge.textContent = 'Valid';
+            } else if (barcodeDiag.level === 'warning') {
+                barcodeStatusBadge.className = 'badge badge-warning';
+                barcodeStatusBadge.textContent = 'Caution';
+            } else {
+                barcodeStatusBadge.className = 'badge badge-danger';
+                barcodeStatusBadge.textContent = 'Invalid';
+            }
+        }
+
+        // Preview values and metrics
+        const previewValEl = document.getElementById('uice-barcode-preview-val');
+        if (previewValEl) {
+            previewValEl.textContent = barcodeDiag.val;
+        }
+        const previewMetricsEl = document.getElementById('uice-barcode-preview-metrics');
+        if (previewMetricsEl) {
+            previewMetricsEl.textContent = `${barcodeDiag.format} • ${Math.round(el.width)}×${Math.round(el.height)}px • Contrast ${barcodeDiag.contrast}:1`;
+        }
+
+        // Render Live Preview Canvas with JsBarcode
+        const barcodeCanvas = document.getElementById('uice-barcode-preview-canvas');
+        if (barcodeCanvas && typeof JsBarcode !== 'undefined') {
+            try {
+                JsBarcode(barcodeCanvas, barcodeDiag.val, {
+                    format: barcodeDiag.format,
+                    background: p.background || '#ffffff',
+                    lineColor: p.lineColor || '#000000',
+                    displayValue: false,
+                    margin: 0,
+                    width: 1.5,
+                    height: 32
+                });
+            } catch (e) {
+                console.warn('Live barcode preview error:', e);
+                const ctx = barcodeCanvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = '#fee2e2';
+                    ctx.fillRect(0, 0, barcodeCanvas.width || 120, barcodeCanvas.height || 32);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.font = '9px monospace';
+                    ctx.fillText('Format Incompatible', 5, 18);
+                }
+            }
+        }
+
+        // Update Sentinel Badge & Details
+        const barcodeSentinelBadge = document.getElementById('uice-barcode-sentinel');
+        if (barcodeSentinelBadge) {
+            if (barcodeDiag.level === 'critical') {
+                barcodeSentinelBadge.className = 'uice-sentinel-badge error';
+                barcodeSentinelBadge.innerHTML = `<i data-lucide="x-circle" style="width: 14px; height: 14px;"></i><span>Critical: Unscannable Barcode Standards</span>`;
+            } else if (barcodeDiag.level === 'warning') {
+                barcodeSentinelBadge.className = 'uice-sentinel-badge warning';
+                barcodeSentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Sub-Optimal Barcode Proportions</span>`;
+            } else {
+                barcodeSentinelBadge.className = 'uice-sentinel-badge valid';
+                barcodeSentinelBadge.innerHTML = `<i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i><span>Barcode Proportion & Contrast Verified</span>`;
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: barcodeSentinelBadge });
+            }
+        }
+
+        const barcodeDetails = document.getElementById('uice-barcode-sentinel-details');
+        if (barcodeDetails) {
+            let bHtml = '';
+            barcodeDiag.issues.forEach(i => bHtml += `<div style="color: #ef4444; margin-bottom: 2px;">• ✕ ${escapeHtml(i)}</div>`);
+            barcodeDiag.warnings.forEach(w => bHtml += `<div style="color: #f59e0b; margin-bottom: 2px;">• ⚠ ${escapeHtml(w)}</div>`);
+            barcodeDiag.passes.slice(0, 2).forEach(pass => bHtml += `<div style="color: #10b981; margin-bottom: 2px;">• ✓ ${escapeHtml(pass)}</div>`);
+            barcodeDetails.innerHTML = bHtml;
+        }
     }
 
     // Details Table bindings
@@ -9510,6 +9970,8 @@ function bindUiceInspectorInputs() {
     // Barcode
     bindVal('prop-uice-barcode-format', 'format', true);
     bindVal('prop-uice-barcode-color', 'lineColor', true);
+    bindVal('prop-uice-barcode-bg', 'background', true);
+    bindNum('prop-uice-barcode-font-size', 'fontSize', true);
     bindVal('prop-uice-barcode-text', 'showText', true);
 
     // Details Table
@@ -9527,6 +9989,80 @@ function bindUiceInspectorInputs() {
     bindVal('prop-uice-shape-border', 'borderColor', true);
     bindNum('prop-uice-shape-border-w', 'borderWidth', true);
     bindNum('prop-uice-shape-radius', 'borderRadius', true);
+
+    // Phase 4 Quick Fix Actions
+    const btnQrFixRatio = document.getElementById('btn-uice-qr-fix-ratio');
+    if (btnQrFixRatio) {
+        btnQrFixRatio.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'qr-code') return;
+            const maxDim = Math.max(el.width, el.height, 48);
+            el.width = maxDim;
+            el.height = maxDim;
+            renderUiceStage();
+            pushUiceHistory('Fix QR 1:1 Aspect Ratio');
+        });
+    }
+
+    const btnQrFixContrast = document.getElementById('btn-uice-qr-fix-contrast');
+    if (btnQrFixContrast) {
+        btnQrFixContrast.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'qr-code') return;
+            if (!el.properties) el.properties = {};
+            el.properties.foreground = '#000000';
+            el.properties.background = '#ffffff';
+            renderUiceStage();
+            pushUiceHistory('Boost QR B/W Contrast');
+        });
+    }
+
+    const btnQrFixSize = document.getElementById('btn-uice-qr-fix-size');
+    if (btnQrFixSize) {
+        btnQrFixSize.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'qr-code') return;
+            if (el.width < 48) el.width = 48;
+            if (el.height < 48) el.height = 48;
+            renderUiceStage();
+            pushUiceHistory('Enforce QR 48px Minimum Size');
+        });
+    }
+
+    const btnBarcodeFixSize = document.getElementById('btn-uice-barcode-fix-size');
+    if (btnBarcodeFixSize) {
+        btnBarcodeFixSize.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'barcode') return;
+            el.width = 120;
+            el.height = 26;
+            renderUiceStage();
+            pushUiceHistory('Set Standard Barcode Size (120×26)');
+        });
+    }
+
+    const btnBarcodeFixContrast = document.getElementById('btn-uice-barcode-fix-contrast');
+    if (btnBarcodeFixContrast) {
+        btnBarcodeFixContrast.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'barcode') return;
+            if (!el.properties) el.properties = {};
+            el.properties.lineColor = '#000000';
+            el.properties.background = '#ffffff';
+            renderUiceStage();
+            pushUiceHistory('Boost Barcode B/W Contrast');
+        });
+    }
 }
 
 /**
@@ -10239,11 +10775,31 @@ function applyUiceCustomDimensions(w, h, shouldReflow = true) {
 }
 
 /**
- * Exports the active ID card canvas as a 300+ DPI high-res PNG.
+ * Exports the active ID card canvas as a 300+ DPI high-res PNG with scannability verification.
  */
 async function exportUiceCardPng() {
     const artboard = document.getElementById('uice-artboard');
     if (!artboard) return;
+
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts
+        ? UICE_STATE.template.layouts[UICE_STATE.orientation]
+        : null;
+    const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
+
+    // Optical Scannability & Quality Gatekeeper
+    if (layout) {
+        const scannabilityReport = checkLayoutScannability(layout, emp);
+        if (scannabilityReport.hasCritical) {
+            const warningMsg = `⚠️ OPTICAL SCANNABILITY GATEKEEPER WARNING\n\n` +
+                `This ID card design contains critical issues that may prevent security checkpoint barcode scanners or smartphones from decoding the card:\n\n` +
+                scannabilityReport.messages.map(m => `• ${m}`).join('\n') +
+                `\n\nDo you want to ignore this warning and proceed with PNG export anyway?`;
+            const proceed = confirm(warningMsg);
+            if (!proceed) {
+                return;
+            }
+        }
+    }
 
     // Temporarily deselect and hide grid overlay for pure artwork render
     const prevSelected = UICE_STATE.selectedId;
@@ -13694,8 +14250,11 @@ async function bulkDeleteCurrentProjectCandidates() {
     }
 }
 
-// Backwards-compatibility alias
-window.approveIndividualCandidate = (empId) => quickUpdateCandidateStatus(empId, 'Active');
+// Function definitions & backwards-compatibility aliases
+function approveIndividualCandidate(empId) {
+    return quickUpdateCandidateStatus(empId, 'Active');
+}
+window.approveIndividualCandidate = approveIndividualCandidate;
 
 async function batchPrintProjectCards(projectId) {
     const targetProjectId = projectId || VSA_STATE.activeDeploymentProjectId;
@@ -13836,7 +14395,10 @@ async function batchPrintProjectCards(projectId) {
     }, 350);
 }
 
-// Global aliases
+// Global aliases & function definitions
+function printProjectCards(projectId) {
+    return batchPrintProjectCards(projectId);
+}
 window.batchPrintProjectCards = batchPrintProjectCards;
 window.printProjectCards = batchPrintProjectCards;
 

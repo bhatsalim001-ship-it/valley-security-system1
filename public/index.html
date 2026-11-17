@@ -77,6 +77,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- JsBarcode Generator -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- jsQR Optical QR Code Decoder & Validator -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <!-- Cropper.js for image sizing & cropping -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
@@ -1481,7 +1483,27 @@
 
                                             <!-- QR Code Specific Properties & Sentinel -->
                                             <div class="uice-section-card" id="prop-sec-qr" style="display: none;">
-                                                <h4 class="uice-section-title">QR Code & Verification</h4>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">QR Code & Verification</h4>
+                                                    <span id="lbl-uice-qr-status" class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Scannable</span>
+                                                </div>
+
+                                                <!-- Live QR Preview & Decodability Card -->
+                                                <div class="uice-sentinel-preview-card" style="display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                                                    <div style="width: 76px; height: 76px; background: #ffffff; border-radius: 6px; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                                                        <canvas id="uice-qr-preview-canvas" width="68" height="68" style="display: block; width: 68px; height: 68px;"></canvas>
+                                                    </div>
+                                                    <div style="flex: 1; min-width: 0;">
+                                                        <div style="font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px;">Decoded Payload</div>
+                                                        <div id="uice-qr-preview-url" style="font-size: 11px; font-family: monospace; color: #60a5fa; word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2;" title="Verification URL">
+                                                            /verification.html
+                                                        </div>
+                                                        <div id="uice-qr-preview-metrics" style="font-size: 10px; color: #cbd5e1; margin-top: 4px;">
+                                                            48×48px • Contrast 21:1 • ECC H
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                                 <div class="uice-field-grid">
                                                     <div class="uice-input-group">
                                                         <label class="uice-input-label">Foreground</label>
@@ -1494,44 +1516,99 @@
                                                     <div class="uice-input-group">
                                                         <label class="uice-input-label">Error Correction</label>
                                                         <select id="prop-uice-qr-ecc" class="form-control" style="font-size: 12px; padding: 5px;">
-                                                            <option value="H">High (30% recovery)</option>
+                                                            <option value="H">High (30% recovery - Recommended)</option>
                                                             <option value="Q">Quartile (25%)</option>
                                                             <option value="M">Medium (15%)</option>
                                                             <option value="L">Low (7%)</option>
                                                         </select>
                                                     </div>
                                                     <div class="uice-input-group">
-                                                        <label class="uice-input-label">Quiet Zone (px)</label>
-                                                        <input type="number" id="prop-uice-qr-quiet" class="uice-num-input" min="0" max="10">
+                                                        <label class="uice-input-label">Quiet Zone (modules)</label>
+                                                        <input type="number" id="prop-uice-qr-quiet" class="uice-num-input" min="0" max="10" value="2">
                                                     </div>
                                                 </div>
-                                                <!-- Scannability Sentinel Live Validator -->
-                                                <div id="uice-qr-sentinel" class="uice-sentinel-badge valid">
+
+                                                <!-- Scannability Sentinel Live Validator Badge & Details -->
+                                                <div id="uice-qr-sentinel" class="uice-sentinel-badge valid" style="margin-top: 10px;">
                                                     <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
                                                     <span>QR Scannable & Optical Standards Verified</span>
+                                                </div>
+                                                <div id="uice-qr-sentinel-details" style="font-size: 10px; color: #94a3b8; margin-top: 4px; padding-left: 2px;"></div>
+
+                                                <!-- Quick Fix Actions -->
+                                                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                                                    <button type="button" class="btn btn-outline" id="btn-uice-qr-fix-ratio" style="font-size: 10px; padding: 3px 8px; flex: 1;">
+                                                        <i data-lucide="square"></i> Fix 1:1 Square
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline" id="btn-uice-qr-fix-contrast" style="font-size: 10px; padding: 3px 8px; flex: 1;">
+                                                        <i data-lucide="contrast"></i> B/W Contrast
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline" id="btn-uice-qr-fix-size" style="font-size: 10px; padding: 3px 8px; flex: 1;">
+                                                        <i data-lucide="maximize"></i> 48px Minimum
+                                                    </button>
                                                 </div>
                                             </div>
 
                                             <!-- Barcode Specific Properties -->
                                             <div class="uice-section-card" id="prop-sec-barcode" style="display: none;">
-                                                <h4 class="uice-section-title">Barcode Settings</h4>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Barcode & Scannability</h4>
+                                                    <span id="lbl-uice-barcode-status" class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Valid</span>
+                                                </div>
+
+                                                <!-- Live Barcode Preview -->
+                                                <div class="uice-sentinel-preview-card" style="display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+                                                    <div style="width: 100%; height: 42px; background: #ffffff; border-radius: 6px; padding: 4px 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3); overflow: hidden;">
+                                                        <canvas id="uice-barcode-preview-canvas" style="display: block; max-width: 100%; height: 34px;"></canvas>
+                                                    </div>
+                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <span id="uice-barcode-preview-val" style="font-size: 11px; font-family: monospace; color: #60a5fa; font-weight: 700;">EMP-ID</span>
+                                                        <span id="uice-barcode-preview-metrics" style="font-size: 10px; color: #cbd5e1;">CODE128 • 120×26px</span>
+                                                    </div>
+                                                </div>
+
                                                 <div class="uice-field-grid">
                                                     <div class="uice-input-group">
                                                         <label class="uice-input-label">Barcode Format</label>
                                                         <select id="prop-uice-barcode-format" class="form-control" style="font-size: 12px; padding: 5px;">
-                                                            <option value="CODE128">Code 128 (Standard)</option>
+                                                            <option value="CODE128">Code 128 (Standard Alpha-Numeric)</option>
                                                             <option value="CODE39">Code 39</option>
-                                                            <option value="EAN13">EAN-13</option>
+                                                            <option value="EAN13">EAN-13 (Numeric Only)</option>
                                                         </select>
                                                     </div>
                                                     <div class="uice-input-group">
                                                         <label class="uice-input-label">Line Color</label>
                                                         <input type="color" id="prop-uice-barcode-color" class="studio-color-input" style="width: 100%; height: 32px;">
                                                     </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Background</label>
+                                                        <input type="color" id="prop-uice-barcode-bg" class="studio-color-input" style="width: 100%; height: 32px;" value="#ffffff">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Font Size (px)</label>
+                                                        <input type="number" id="prop-uice-barcode-font-size" class="uice-num-input" min="6" max="16" value="8">
+                                                    </div>
                                                 </div>
-                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                                                    <label for="prop-uice-barcode-text" style="font-size: 11px; font-weight: 600; color: #cbd5e1; margin: 0;">Show Employee ID Text</label>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+                                                    <label for="prop-uice-barcode-text" style="font-size: 11px; font-weight: 600; color: #cbd5e1; margin: 0;">Show Human-Readable ID Text</label>
                                                     <input type="checkbox" id="prop-uice-barcode-text" checked>
+                                                </div>
+
+                                                <!-- Barcode Sentinel Live Validator Badge & Details -->
+                                                <div id="uice-barcode-sentinel" class="uice-sentinel-badge valid" style="margin-top: 10px;">
+                                                    <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
+                                                    <span>Barcode Proportion & Contrast Standards Verified</span>
+                                                </div>
+                                                <div id="uice-barcode-sentinel-details" style="font-size: 10px; color: #94a3b8; margin-top: 4px; padding-left: 2px;"></div>
+
+                                                <!-- Quick Fix Actions -->
+                                                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                                                    <button type="button" class="btn btn-outline" id="btn-uice-barcode-fix-size" style="font-size: 10px; padding: 3px 8px; flex: 1;">
+                                                        <i data-lucide="maximize"></i> Standard 120×26
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline" id="btn-uice-barcode-fix-contrast" style="font-size: 10px; padding: 3px 8px; flex: 1;">
+                                                        <i data-lucide="contrast"></i> B/W Contrast
+                                                    </button>
                                                 </div>
                                             </div>
 

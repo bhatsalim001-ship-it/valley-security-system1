@@ -1710,10 +1710,15 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     let allIds = [];
 
     if (usePostgres && pool) {
-      const dbRes = await pool.query('SELECT id FROM employees');
-      allIds = dbRes.rows.map(r => parseInt(r.id.replace('VSA-', ''))).filter(n => !isNaN(n));
+      const [empRes, photoRes] = await Promise.all([
+        pool.query('SELECT id FROM employees'),
+        pool.query('SELECT employee_id FROM employee_photos')
+      ]);
+      const empIds = empRes.rows.map(r => parseInt(String(r.id).replace(/\D+/g, ''))).filter(n => !isNaN(n));
+      const photoIds = photoRes.rows.map(r => parseInt(String(r.employee_id).replace(/\D+/g, ''))).filter(n => !isNaN(n));
+      allIds = empIds.concat(photoIds);
     } else if (db && Array.isArray(db.employees)) {
-      allIds = db.employees.map(e => parseInt(e.id.replace('VSA-', ''))).filter(n => !isNaN(n));
+      allIds = db.employees.map(e => parseInt(String(e.id).replace(/\D+/g, ''))).filter(n => !isNaN(n));
     }
 
     if (allIds.length > 0) {
@@ -1758,7 +1763,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
     };
 
     if (usePostgres && pool) {
-      await pool.query('INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3)', [empId, compressedPhoto, ""]);
+      await pool.query('INSERT INTO employee_photos (employee_id, photo, signature) VALUES ($1, $2, $3) ON CONFLICT (employee_id) DO UPDATE SET photo = EXCLUDED.photo, signature = COALESCE(NULLIF(EXCLUDED.signature, \'\'), employee_photos.signature), updated_at = NOW()', [empId, compressedPhoto, ""]);
       await pool.query('INSERT INTO employees (id, data) VALUES ($1, $2)', [empId, JSON.stringify(empData)]);
     } else {
       const photosDb = readPhotosDb();
