@@ -1451,6 +1451,111 @@
                                                             <option value="capitalize">Capitalize</option>
                                                         </select>
                                                     </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Line Height</label>
+                                                        <input type="number" id="prop-uice-line-height" class="uice-num-input" step="0.05" min="0.8" max="2.5" value="1.15">
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; gap: 12px; margin: 8px 0; font-size: 11px;">
+                                                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                                        <input type="checkbox" id="prop-uice-text-autofit" checked> Auto-Fit Font Size
+                                                    </label>
+                                                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                                        <input type="checkbox" id="prop-uice-text-wrap"> Multi-Line Wrap
+                                                    </label>
+                                                </div>
+
+                                                <!-- Typography Sentinel -->
+                                                <div class="uice-sentinel-panel" style="margin-top: 10px; background: #0f172a; border-radius: 6px; padding: 10px; border: 1px solid #334155;">
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                                        <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Text Boundary Sentinel</span>
+                                                        <span id="uice-typo-sentinel" class="uice-sentinel-badge valid">
+                                                            <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
+                                                            <span>Fits Within Bounds</span>
+                                                        </span>
+                                                    </div>
+                                                    <div id="uice-typo-sentinel-details" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; line-height: 1.4;">
+                                                        <div style="color: #10b981;">• ✓ Text fits within box geometry</div>
+                                                    </div>
+                                                </div>
+
+                                                <div style="margin-top: 8px;">
+                                                    <button id="btn-uice-typo-autofit" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                        <i data-lucide="sparkles"></i> ⚡ Auto-Fit Font Size
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Agency Branding Specific Properties & Sentinel -->
+                                            <div class="uice-section-card" id="prop-sec-agency" style="display: none;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Agency Branding & Header</h4>
+                                                    <span id="lbl-uice-agency-status" class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Optimal</span>
+                                                </div>
+                                                <div class="uice-input-group">
+                                                    <label class="uice-input-label">Agency Name (Header Title)</label>
+                                                    <input type="text" id="prop-uice-agency-title" class="form-control" style="font-size: 12px; padding: 5px;" placeholder="VALLEY SECURITY SERVICES">
+                                                </div>
+                                                <div class="uice-input-group">
+                                                    <label class="uice-input-label">Subtitle / Tagline</label>
+                                                    <input type="text" id="prop-uice-agency-subtitle" class="form-control" style="font-size: 12px; padding: 5px;" placeholder="SHAHIDGUNJ SRINAGAR">
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Title Size (px)</label>
+                                                        <input type="number" id="prop-uice-agency-title-size" class="uice-num-input" min="7" max="32">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Subtitle Size (px)</label>
+                                                        <input type="number" id="prop-uice-agency-sub-size" class="uice-num-input" min="5" max="20" step="0.5">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Logo Size (px)</label>
+                                                        <input type="number" id="prop-uice-agency-logo-size" class="uice-num-input" min="16" max="64">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Letter Spacing (px)</label>
+                                                        <input type="number" id="prop-uice-agency-letter-spacing" class="uice-num-input" step="0.1" min="-1" max="5">
+                                                    </div>
+                                                </div>
+                                                <div class="uice-field-grid">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Line Height</label>
+                                                        <input type="number" id="prop-uice-agency-line-height" class="uice-num-input" step="0.05" min="0.8" max="2.0" value="1.15">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Text Color</label>
+                                                        <input type="color" id="prop-uice-agency-color" class="studio-color-input" style="width: 100%; height: 32px;">
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; gap: 12px; margin: 8px 0; font-size: 11px;">
+                                                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                                        <input type="checkbox" id="prop-uice-agency-autofit" checked> Auto-Fit Title & Subtitle
+                                                    </label>
+                                                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                                        <input type="checkbox" id="prop-uice-agency-wrap"> Multi-Line Wrap
+                                                    </label>
+                                                </div>
+
+                                                <!-- Live Agency Typography Sentinel -->
+                                                <div class="uice-sentinel-panel" style="margin-top: 10px; background: #0f172a; border-radius: 6px; padding: 10px; border: 1px solid #334155;">
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                                        <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Agency Header Sentinel</span>
+                                                        <span id="uice-agency-sentinel" class="uice-sentinel-badge valid">
+                                                            <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
+                                                            <span>Header Fits Cleanly</span>
+                                                        </span>
+                                                    </div>
+                                                    <div id="uice-agency-sentinel-details" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; line-height: 1.4;">
+                                                        <div style="color: #10b981;">• ✓ Agency title fits within artboard boundaries</div>
+                                                        <div style="color: #10b981;">• ✓ Zero text clipping detected</div>
+                                                    </div>
+                                                </div>
+
+                                                <div style="margin-top: 8px;">
+                                                    <button id="btn-uice-agency-autofit" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                        <i data-lucide="zap"></i> ⚡ Auto-Fit Header to Artboard
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -1612,13 +1717,20 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Details Table Specific Properties -->
+                                            <!-- Details Table Specific Properties & Sentinel -->
                                             <div class="uice-section-card" id="prop-sec-table" style="display: none;">
-                                                <h4 class="uice-section-title">Details Table Styling</h4>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                                    <h4 class="uice-section-title" style="margin: 0;">Details Table Styling</h4>
+                                                    <span id="lbl-uice-table-status" class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Fits Bounds</span>
+                                                </div>
                                                 <div class="uice-field-grid">
                                                     <div class="uice-input-group">
                                                         <label class="uice-input-label">Row Spacing (px)</label>
                                                         <input type="number" id="prop-uice-table-row-pad" class="uice-num-input" min="1" max="12">
+                                                    </div>
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Font Size (px)</label>
+                                                        <input type="number" id="prop-uice-table-font-size" class="uice-num-input" min="6" max="14" step="0.5">
                                                     </div>
                                                     <div class="uice-input-group">
                                                         <label class="uice-input-label">Label Width (%)</label>
@@ -1632,6 +1744,34 @@
                                                         <label class="uice-input-label">Value Color</label>
                                                         <input type="color" id="prop-uice-table-value-c" class="studio-color-input" style="width: 100%; height: 32px;">
                                                     </div>
+                                                </div>
+                                                <div style="display: flex; gap: 12px; margin: 8px 0; font-size: 11px;">
+                                                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                                        <input type="checkbox" id="prop-uice-table-autofit" checked> Auto-Balance Rows
+                                                    </label>
+                                                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                                        <input type="checkbox" id="prop-uice-table-address-wrap" checked> Wrap Address Lines
+                                                    </label>
+                                                </div>
+
+                                                <!-- Table Height Sentinel -->
+                                                <div class="uice-sentinel-panel" style="margin-top: 10px; background: #0f172a; border-radius: 6px; padding: 10px; border: 1px solid #334155;">
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                                        <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Table Height Sentinel</span>
+                                                        <span id="uice-table-sentinel" class="uice-sentinel-badge valid">
+                                                            <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
+                                                            <span>Table Fits Cleanly</span>
+                                                        </span>
+                                                    </div>
+                                                    <div id="uice-table-sentinel-details" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; line-height: 1.4;">
+                                                        <div style="color: #10b981;">• ✓ All 7 employee record rows fit inside table bounds</div>
+                                                    </div>
+                                                </div>
+
+                                                <div style="margin-top: 8px;">
+                                                    <button id="btn-uice-table-autofit" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                                        <i data-lucide="align-justify"></i> ⚡ Auto-Balance Rows to Height
+                                                    </button>
                                                 </div>
                                             </div>
 

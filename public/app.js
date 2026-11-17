@@ -8044,14 +8044,58 @@ function renderUiceElementHtml(el, emp) {
     switch (el.type) {
         case 'agency-brand': {
             const logoSrc = resolveUiceLogoSrc(p.logoPreset);
+            const logoSize = p.logoSize || 32;
+            const availW = Math.max(20, el.width - logoSize - 12);
+            const allowWrap = !!p.wrap;
+            const autoFit = p.autoFit !== false;
+            const title = p.title || 'VALLEY SECURITY AGENCY';
+            const subtitle = p.subtitle || 'SHAHIDGUNJ SRINAGAR';
+            const lineHeight = p.lineHeight || 1.15;
+            const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.4;
+
+            let titleSize = p.titleFontSize || 12;
+            let subSize = p.subtitleFontSize || 6.5;
+
+            if (autoFit && typeof calculateAutoFitFontSize === 'function') {
+                const fitT = calculateAutoFitFontSize({
+                    text: title,
+                    width: availW,
+                    height: el.height * 0.65,
+                    preferredSize: titleSize,
+                    minSize: 7.5,
+                    lineHeight,
+                    letterSpacing,
+                    allowWrap,
+                    maxLines: allowWrap ? 2 : 1,
+                    fontWeight: '800'
+                });
+                titleSize = fitT.fontSize;
+
+                const fitS = calculateAutoFitFontSize({
+                    text: subtitle,
+                    width: availW,
+                    height: el.height * 0.35,
+                    preferredSize: subSize,
+                    minSize: 5.5,
+                    lineHeight: 1.1,
+                    letterSpacing,
+                    allowWrap: false,
+                    fontWeight: '600'
+                });
+                subSize = fitS.fontSize;
+            }
+
+            const whiteSpaceTitle = allowWrap ? 'normal' : 'nowrap';
+            const wordBreakTitle = allowWrap ? 'break-word' : 'normal';
+
             return `
                 <div style="display: flex; align-items: center; gap: 8px; width: 100%; height: 100%; pointer-events: none;">
-                    <div style="width: ${p.logoSize || 32}px; height: ${p.logoSize || 32}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 6px; padding: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);">
+                    <div style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 6px; padding: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);">
                         ${logoSrc}
                     </div>
-                    <div style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-                        <h1 style="color: ${p.color || '#ffffff'}; font-size: ${p.titleFontSize || 12}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15; font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.title || 'VALLEY SECURITY AGENCY'}</h1>
-                        <p style="color: ${p.color || '#ffffff'}; opacity: 0.9; font-size: ${p.subtitleFontSize || 6.5}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.4px;">${p.subtitle || 'SHAHIDGUNJ SRINAGAR'}</p>
+                    <div style="min-width: 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                        <h1 class="uice-brand-title" style="color: ${p.color || '#ffffff'}; font-size: ${titleSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: ${lineHeight}; font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; letter-spacing: ${letterSpacing}px; overflow: hidden; text-overflow: ellipsis; white-space: ${whiteSpaceTitle}; word-break: ${wordBreakTitle};">${escapeHtml(title)}</h1>
+                        <p class="uice-brand-subtitle" style="color: ${p.color || '#ffffff'}; opacity: 0.9; font-size: ${subSize}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.4px;">${escapeHtml(subtitle)}</p>
                     </div>
                 </div>`;
         }
@@ -8086,19 +8130,71 @@ function renderUiceElementHtml(el, emp) {
         }
 
         case 'employee-name': {
+            const name = emp.name || 'MOHD SALIM';
+            const allowWrap = !!p.wrap;
+            const autoFit = p.autoFit !== false;
+            let fontSize = p.fontSize || 16;
+            const lineHeight = p.lineHeight || 1.15;
+            const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.3;
+
+            if (autoFit && typeof calculateAutoFitFontSize === 'function') {
+                const fit = calculateAutoFitFontSize({
+                    text: name,
+                    width: el.width,
+                    height: el.height,
+                    preferredSize: fontSize,
+                    minSize: 7.5,
+                    lineHeight,
+                    letterSpacing,
+                    allowWrap,
+                    maxLines: allowWrap ? 2 : 1,
+                    fontWeight: p.fontWeight || '800'
+                });
+                fontSize = fit.fontSize;
+            }
+
+            const whiteSpace = allowWrap ? 'normal' : 'nowrap';
+            const wordBreak = allowWrap ? 'break-word' : 'normal';
+
             return `
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; pointer-events: none;">
-                    <h2 style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${p.fontSize || 16}px; font-weight: ${p.fontWeight || 800}; color: ${p.color || '#0f172a'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'uppercase'}; letter-spacing: ${p.letterSpacing || 0.3}px; margin: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.15;">
-                        ${emp.name || 'MOHD SALIM'}
+                    <h2 class="uice-emp-name" style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${fontSize}px; font-weight: ${p.fontWeight || 800}; color: ${p.color || '#0f172a'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'uppercase'}; letter-spacing: ${letterSpacing}px; margin: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: ${whiteSpace}; word-break: ${wordBreak}; line-height: ${lineHeight};">
+                        ${escapeHtml(name)}
                     </h2>
                 </div>`;
         }
 
         case 'designation': {
+            const desig = emp.designation || 'SECURITY GUARD';
+            const allowWrap = !!p.wrap;
+            const autoFit = p.autoFit !== false;
+            let fontSize = p.fontSize || 10;
+            const lineHeight = p.lineHeight || 1.1;
+            const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.5;
+
+            if (autoFit && typeof calculateAutoFitFontSize === 'function') {
+                const fit = calculateAutoFitFontSize({
+                    text: desig,
+                    width: el.width,
+                    height: el.height,
+                    preferredSize: fontSize,
+                    minSize: 6.5,
+                    lineHeight,
+                    letterSpacing,
+                    allowWrap,
+                    maxLines: allowWrap ? 2 : 1,
+                    fontWeight: p.fontWeight || '700'
+                });
+                fontSize = fit.fontSize;
+            }
+
+            const whiteSpace = allowWrap ? 'normal' : 'nowrap';
+            const wordBreak = allowWrap ? 'break-word' : 'normal';
+
             return `
                 <div style="width: 100%; height: 100%; display: flex; align-items: center; pointer-events: none;">
-                    <h3 style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${p.fontSize || 10}px; font-weight: ${p.fontWeight || 700}; color: ${p.color || '#009688'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'uppercase'}; letter-spacing: ${p.letterSpacing || 0.5}px; margin: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.1;">
-                        ${emp.designation || 'SECURITY GUARD'}
+                    <h3 class="uice-emp-designation" style="font-family: ${p.fontFamily || "'Plus Jakarta Sans', sans-serif"}; font-size: ${fontSize}px; font-weight: ${p.fontWeight || 700}; color: ${p.color || '#009688'}; text-align: ${p.textAlign || 'left'}; text-transform: ${p.textTransform || 'uppercase'}; letter-spacing: ${letterSpacing}px; margin: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: ${whiteSpace}; word-break: ${wordBreak}; line-height: ${lineHeight};">
+                        ${escapeHtml(desig)}
                     </h3>
                 </div>`;
         }
@@ -8111,11 +8207,13 @@ function renderUiceElementHtml(el, emp) {
         }
 
         case 'details-table': {
-            const rowPad = p.rowPadding !== undefined ? p.rowPadding : 3;
+            let rowPad = p.rowPadding !== undefined ? p.rowPadding : 3;
             const labelW = p.labelWidth || 38;
             const labelColor = p.labelColor || '#475569';
             const valueColor = p.valueColor || '#0f172a';
-            const fontSize = p.fontSize || 8;
+            let fontSize = p.fontSize || 8;
+            const addressWrap = p.addressWrap !== false;
+            const autoFit = p.autoFit !== false;
 
             const rows = [
                 { label: 'Staff ID:', value: emp.id || 'VSA-0042' },
@@ -8123,16 +8221,32 @@ function renderUiceElementHtml(el, emp) {
                 { label: 'Dept:', value: emp.department || 'Operations' },
                 { label: 'Blood Group:', value: emp.bloodGroup || 'O+' },
                 { label: 'Validity:', value: '31-12-2028' },
-                { label: 'Address:', value: emp.currentAddress || emp.permanentAddress || 'Srinagar, Kashmir' },
+                { label: 'Address:', value: emp.currentAddress || emp.permanentAddress || 'Srinagar, Kashmir', isAddress: true },
                 { label: 'Mobile:', value: emp.mobile || '+91 9419000000' }
             ];
 
-            const rowsHtml = rows.map(r => `
+            if (autoFit && el.height) {
+                const rowCount = rows.length;
+                let estH = (rowCount * (fontSize * 1.25 + rowPad * 2)) + (addressWrap ? (fontSize * 1.2) : 0);
+                if (estH > el.height) {
+                    if (rowPad > 1.5) rowPad = Math.max(1, rowPad - 1.5);
+                    estH = (rowCount * (fontSize * 1.25 + rowPad * 2)) + (addressWrap ? (fontSize * 1.2) : 0);
+                }
+                if (estH > el.height && fontSize > 6.5) {
+                    fontSize = Math.max(6.5, Math.floor((el.height - (rowCount * rowPad * 2)) / (rowCount * 1.25)));
+                }
+            }
+
+            const rowsHtml = rows.map(r => {
+                const whiteSpace = (r.isAddress && addressWrap) ? 'normal' : 'nowrap';
+                const wordBreak = (r.isAddress && addressWrap) ? 'break-word' : 'normal';
+                const lineH = (r.isAddress && addressWrap) ? '1.15' : '1.2';
+                return `
                 <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
-                    <td style="font-size: ${fontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPad}px 0; width: ${labelW}%; text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px;">${r.label}</td>
-                    <td style="font-size: ${fontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPad}px 0; width: ${100 - labelW}%; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;">${r.value}</td>
-                </tr>
-            `).join('');
+                    <td style="font-size: ${fontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPad}px 0; width: ${labelW}%; text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px; vertical-align: top;">${escapeHtml(r.label)}</td>
+                    <td style="font-size: ${fontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPad}px 0; width: ${100 - labelW}%; padding-left: 8px; white-space: ${whiteSpace}; word-break: ${wordBreak}; line-height: ${lineH}; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px; vertical-align: top;">${escapeHtml(r.value)}</td>
+                </tr>`;
+            }).join('');
 
             return `
                 <div style="width: 100%; height: 100%; overflow: hidden; pointer-events: none;">
@@ -8857,6 +8971,438 @@ function checkLayoutScannability(layout, emp) {
 }
 
 /**
+ * Calculates optimal font size and line wrapping for text inside a bounding box.
+ * 
+ * Works deterministically in both Browser (using canvas measureText where possible)
+ * and Node.js testing environments (using calibrated typographical metrics).
+ *
+ * @param {Object} options
+ * @param {string} options.text - Raw text string to fit
+ * @param {number} options.width - Available width in pixels
+ * @param {number} options.height - Available height in pixels
+ * @param {number} options.preferredSize - Desired font size (px)
+ * @param {number} [options.minSize=6.5] - Minimum legible font size threshold
+ * @param {number} [options.lineHeight=1.15] - Line height multiplier
+ * @param {number} [options.letterSpacing=0] - Letter spacing in pixels
+ * @param {boolean} [options.allowWrap=false] - Whether multi-line wrapping is permitted
+ * @param {number} [options.maxLines=3] - Maximum lines if wrapping
+ * @param {string} [options.fontFamily="'Plus Jakarta Sans', sans-serif"] - Font family
+ * @param {string|number} [options.fontWeight='700'] - Font weight
+ * @returns {Object} { fontSize, lines, isOverflowing, wrappedText, requiredWidth, requiredHeight }
+ */
+function calculateAutoFitFontSize(options) {
+    const text = (options.text || '').trim();
+    const width = Math.max(10, options.width || 100);
+    const height = Math.max(10, options.height || 30);
+    const preferredSize = options.preferredSize || 14;
+    const minSize = options.minSize || 6.5;
+    const lineHeight = options.lineHeight || 1.15;
+    const letterSpacing = options.letterSpacing || 0;
+    const allowWrap = !!options.allowWrap;
+    const maxLines = options.maxLines || (allowWrap ? 3 : 1);
+    const fontWeight = options.fontWeight || '700';
+
+    if (!text) {
+        return {
+            fontSize: preferredSize,
+            lines: 1,
+            isOverflowing: false,
+            wrappedText: [''],
+            requiredWidth: 0,
+            requiredHeight: preferredSize * lineHeight
+        };
+    }
+
+    // Helper: measure width of a single line of text at given fontSize
+    function measureLineWidth(lineStr, size) {
+        if (typeof document !== 'undefined' && document.createElement) {
+            try {
+                if (!calculateAutoFitFontSize._canvas) {
+                    calculateAutoFitFontSize._canvas = document.createElement('canvas');
+                }
+                const ctx = calculateAutoFitFontSize._canvas.getContext('2d');
+                if (ctx) {
+                    ctx.font = `${fontWeight} ${size}px ${options.fontFamily || "'Plus Jakarta Sans', sans-serif"}`;
+                    const metrics = ctx.measureText(lineStr);
+                    const spacing = lineStr.length > 1 ? (lineStr.length - 1) * letterSpacing : 0;
+                    return metrics.width + spacing;
+                }
+            } catch (e) {
+                // fallback to math heuristic below
+            }
+        }
+        // Deterministic typographical factor for headless / Node / fallback
+        // Uppercase letters average ~0.65em; mixed case ~0.54em
+        const isUpper = lineStr === lineStr.toUpperCase();
+        const factor = isUpper ? 0.65 : 0.54;
+        const spacing = lineStr.length > 1 ? (lineStr.length - 1) * letterSpacing : 0;
+        return (lineStr.length * size * factor) + spacing;
+    }
+
+    // Helper: break text into lines at given fontSize
+    function wrapTextToLines(str, size, maxW) {
+        const words = str.split(/\s+/);
+        if (words.length <= 1) return [str];
+
+        const lines = [];
+        let curLine = words[0];
+
+        for (let i = 1; i < words.length; i++) {
+            const testLine = curLine + ' ' + words[i];
+            const testW = measureLineWidth(testLine, size);
+            if (testW <= maxW) {
+                curLine = testLine;
+            } else {
+                lines.push(curLine);
+                curLine = words[i];
+            }
+        }
+        lines.push(curLine);
+        return lines;
+    }
+
+    // Iterative fit: Start at preferredSize and step down by 0.5px to minSize
+    let bestSize = minSize;
+    let bestLines = [text];
+    let fits = false;
+
+    for (let testSize = preferredSize; testSize >= minSize; testSize -= 0.5) {
+        let lines;
+        if (allowWrap) {
+            lines = wrapTextToLines(text, testSize, width);
+        } else {
+            lines = [text];
+        }
+
+        const lineCount = lines.length;
+        if (lineCount > maxLines) {
+            continue; // Exceeds line budget
+        }
+
+        const maxLineW = Math.max(...lines.map(l => measureLineWidth(l, testSize)));
+        const totalH = lineCount * testSize * lineHeight;
+
+        if (maxLineW <= width && totalH <= height) {
+            bestSize = testSize;
+            bestLines = lines;
+            fits = true;
+            break;
+        }
+    }
+
+    if (!fits) {
+        // At minSize, does it still exceed bounds?
+        let lines = allowWrap ? wrapTextToLines(text, minSize, width) : [text];
+        const maxLineW = Math.max(...lines.map(l => measureLineWidth(l, minSize)));
+        const totalH = lines.length * minSize * lineHeight;
+        const isOverflowing = maxLineW > width || totalH > height;
+
+        return {
+            fontSize: minSize,
+            lines: lines.length,
+            isOverflowing,
+            wrappedText: lines,
+            requiredWidth: Math.round(maxLineW),
+            requiredHeight: Math.round(totalH)
+        };
+    }
+
+    const finalW = Math.max(...bestLines.map(l => measureLineWidth(l, bestSize)));
+    const finalH = bestLines.length * bestSize * lineHeight;
+
+    return {
+        fontSize: Math.round(bestSize * 10) / 10,
+        lines: bestLines.length,
+        isOverflowing: false,
+        wrappedText: bestLines,
+        requiredWidth: Math.round(finalW),
+        requiredHeight: Math.round(finalH)
+    };
+}
+
+/**
+ * Validates the typographical fit of an element against its bounding geometry,
+ * detecting text truncation, clipping, overflow risks, and legibility threshold.
+ *
+ * @param {Object} el - Element node from layout
+ * @param {Object} [emp] - Employee data record
+ * @returns {Object} Diagnostic report { valid, level, issues, warnings, passes, recommendedFontSize }
+ */
+function validateTypographyFit(el, emp) {
+    if (!el) {
+        return { valid: true, level: 'valid', issues: [], warnings: [], passes: ['Element exists'], recommendedFontSize: 12 };
+    }
+
+    const p = el.properties || {};
+    const empData = emp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || {
+        id: 'VSA-0042',
+        name: 'MOHD SALIM',
+        designation: 'SECURITY GUARD',
+        department: 'Operations',
+        fatherName: 'Ghulam Ahmad',
+        currentAddress: 'Srinagar, Kashmir',
+        bloodGroup: 'O+'
+    };
+
+    const issues = [];
+    const warnings = [];
+    const passes = [];
+    let recommendedFontSize = p.fontSize || 12;
+
+    const w = el.width || 100;
+    const h = el.height || 30;
+
+    switch (el.type) {
+        case 'agency-brand': {
+            const title = p.title || 'VALLEY SECURITY AGENCY';
+            const subtitle = p.subtitle || 'SHAHIDGUNJ SRINAGAR';
+            const logoSize = p.logoSize || 32;
+            const titleSize = p.titleFontSize || 12;
+            const subSize = p.subtitleFontSize || 6.5;
+            const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.4;
+            const allowWrap = !!p.wrap;
+
+            const textAvailW = Math.max(20, w - logoSize - 12);
+            const fitTitle = calculateAutoFitFontSize({
+                text: title,
+                width: textAvailW,
+                height: h * 0.65,
+                preferredSize: titleSize,
+                minSize: 7.5,
+                lineHeight: p.lineHeight || 1.15,
+                letterSpacing,
+                allowWrap,
+                maxLines: allowWrap ? 2 : 1,
+                fontWeight: '800'
+            });
+
+            const fitSub = calculateAutoFitFontSize({
+                text: subtitle,
+                width: textAvailW,
+                height: h * 0.35,
+                preferredSize: subSize,
+                minSize: 5.5,
+                lineHeight: 1.1,
+                letterSpacing,
+                allowWrap: false,
+                fontWeight: '600'
+            });
+
+            recommendedFontSize = fitTitle.fontSize;
+
+            if (fitTitle.isOverflowing) {
+                issues.push(`Agency title exceeds width bounds (${fitTitle.requiredWidth}px > ${Math.round(textAvailW)}px) even at minimum 7.5px font size.`);
+            } else if (fitTitle.fontSize <= titleSize * 0.75 || fitTitle.fontSize <= 8.0) {
+                warnings.push(`Agency title significantly reduced from ${titleSize}px to ${fitTitle.fontSize}px to fit header width.`);
+            } else if (fitTitle.fontSize < titleSize) {
+                passes.push(`Agency title auto-balanced to ${fitTitle.fontSize}px to fit artboard boundaries.`);
+            } else {
+                passes.push(`Agency title (${title.length} chars) fits comfortably at ${titleSize}px.`);
+            }
+
+            if (fitSub.isOverflowing) {
+                warnings.push(`Agency subtitle exceeds width bounds (${fitSub.requiredWidth}px > ${Math.round(textAvailW)}px).`);
+            } else if (fitSub.fontSize < subSize) {
+                passes.push(`Agency subtitle auto-balanced to ${fitSub.fontSize}px.`);
+            } else {
+                passes.push(`Agency subtitle fits within header.`);
+            }
+
+            if (logoSize > h) {
+                warnings.push(`Logo icon (${logoSize}px) is taller than header container (${h}px).`);
+            } else {
+                passes.push(`Logo proportion is balanced with header height.`);
+            }
+            break;
+        }
+
+        case 'employee-name': {
+            const name = empData.name || 'MOHD SALIM';
+            const fontSize = p.fontSize || 16;
+            const allowWrap = !!p.wrap;
+            const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.3;
+
+            const fit = calculateAutoFitFontSize({
+                text: name,
+                width: w,
+                height: h,
+                preferredSize: fontSize,
+                minSize: 7.5,
+                lineHeight: p.lineHeight || 1.15,
+                letterSpacing,
+                allowWrap,
+                maxLines: allowWrap ? 2 : 1,
+                fontWeight: p.fontWeight || '800'
+            });
+
+            recommendedFontSize = fit.fontSize;
+
+            if (fit.isOverflowing) {
+                issues.push(`Employee name "${name}" exceeds bounds (${fit.requiredWidth}×${fit.requiredHeight}px > ${Math.round(w)}×${Math.round(h)}px). Text will clip.`);
+            } else if (fit.fontSize <= fontSize * 0.75 || fit.fontSize <= 8.5) {
+                warnings.push(`Font reduced from ${fontSize}px to ${fit.fontSize}px to fit long name without truncation.`);
+            } else if (fit.fontSize < fontSize) {
+                passes.push(`Employee name auto-fitted to ${fit.fontSize}px to prevent truncation.`);
+            } else {
+                passes.push(`Employee name fits safely at ${fontSize}px with zero overflow.`);
+            }
+
+            if (fit.lines > 1) {
+                warnings.push(`Name is wrapped across ${fit.lines} lines.`);
+            }
+            break;
+        }
+
+        case 'designation': {
+            const desig = empData.designation || 'SECURITY GUARD';
+            const fontSize = p.fontSize || 10;
+            const allowWrap = !!p.wrap;
+            const letterSpacing = p.letterSpacing !== undefined ? p.letterSpacing : 0.5;
+
+            const fit = calculateAutoFitFontSize({
+                text: desig,
+                width: w,
+                height: h,
+                preferredSize: fontSize,
+                minSize: 6.5,
+                lineHeight: p.lineHeight || 1.1,
+                letterSpacing,
+                allowWrap,
+                maxLines: allowWrap ? 2 : 1,
+                fontWeight: p.fontWeight || '700'
+            });
+
+            recommendedFontSize = fit.fontSize;
+
+            if (fit.isOverflowing) {
+                issues.push(`Designation "${desig}" exceeds bounds (${fit.requiredWidth}px > ${Math.round(w)}px).`);
+            } else if (fit.fontSize < fontSize) {
+                warnings.push(`Designation font reduced from ${fontSize}px to ${fit.fontSize}px.`);
+            } else {
+                passes.push(`Designation fits cleanly at ${fontSize}px.`);
+            }
+            break;
+        }
+
+        case 'details-table': {
+            const rowPad = p.rowPadding !== undefined ? p.rowPadding : 3;
+            const fontSize = p.fontSize || 8;
+            const rowCount = 7;
+            const addressWrap = p.addressWrap !== false;
+            
+            const singleRowH = (fontSize * 1.25) + (rowPad * 2);
+            const totalTableH = (rowCount * singleRowH) + (addressWrap ? (fontSize * 1.2) : 0);
+
+            recommendedFontSize = fontSize;
+
+            if (totalTableH > h) {
+                const overflowPx = Math.round(totalTableH - h);
+                issues.push(`Table content height (${Math.round(totalTableH)}px) exceeds box height (${Math.round(h)}px) by ${overflowPx}px. Rows will spill over or clip.`);
+                
+                const availRowH = h / (rowCount + (addressWrap ? 1 : 0));
+                const recPad = Math.max(1, Math.floor((availRowH - 9) / 2));
+                const recFont = Math.max(6.5, Math.min(fontSize, Math.floor(availRowH - (recPad * 2))));
+                recommendedFontSize = recFont;
+            } else if (h - totalTableH < 5) {
+                warnings.push(`Table fits tightly with less than 5px vertical clearance.`);
+                passes.push(`All ${rowCount} employee information rows contained within table.`);
+            } else {
+                passes.push(`All ${rowCount} employee information rows fit within table area with safe margins.`);
+            }
+            break;
+        }
+
+        default: {
+            const text = p.text || el.name || 'TEXT';
+            const fontSize = p.fontSize || 12;
+            const allowWrap = !!p.wrap;
+
+            const fit = calculateAutoFitFontSize({
+                text,
+                width: w,
+                height: h,
+                preferredSize: fontSize,
+                minSize: 6.5,
+                lineHeight: p.lineHeight || 1.15,
+                allowWrap,
+                maxLines: allowWrap ? 3 : 1
+            });
+
+            recommendedFontSize = fit.fontSize;
+
+            if (fit.isOverflowing) {
+                issues.push(`Text exceeds container bounds (${fit.requiredWidth}×${fit.requiredHeight}px > ${Math.round(w)}×${Math.round(h)}px).`);
+            } else if (fit.fontSize < fontSize) {
+                warnings.push(`Text auto-fit scaled font from ${fontSize}px to ${fit.fontSize}px.`);
+            } else {
+                passes.push(`Text fits container dimensions.`);
+            }
+            break;
+        }
+    }
+
+    let level = 'valid';
+    if (issues.length > 0) {
+        level = 'critical';
+    } else if (warnings.length > 0) {
+        level = 'warning';
+    }
+
+    return {
+        valid: issues.length === 0,
+        level,
+        issues,
+        warnings,
+        passes,
+        recommendedFontSize
+    };
+}
+
+/**
+ * Scans an entire card layout for typography overflow, clipping, or minimum size issues
+ * across agency headers, employee name, designation, and details table.
+ * 
+ * @param {Object} layout - Layout object with elements array
+ * @param {Object} emp - Employee data record
+ * @returns {Object} Comprehensive inspection report for export gatekeeper
+ */
+function checkLayoutTypography(layout, emp) {
+    if (!layout || !Array.isArray(layout.elements)) {
+        return { hasCritical: false, hasWarning: false, criticalCount: 0, warningCount: 0, messages: [], results: [] };
+    }
+
+    const messages = [];
+    let criticalCount = 0;
+    let warningCount = 0;
+    const results = [];
+
+    layout.elements.forEach(el => {
+        if (el.visible === false) return;
+
+        if (['agency-brand', 'employee-name', 'designation', 'details-table', 'custom-text'].includes(el.type)) {
+            const res = validateTypographyFit(el, emp);
+            results.push({ el, res });
+            if (res.level === 'critical') {
+                criticalCount += res.issues.length;
+                res.issues.forEach(msg => messages.push(`[${el.name || el.type}]: ${msg}`));
+            } else if (res.level === 'warning') {
+                warningCount += res.warnings.length;
+                res.warnings.forEach(msg => messages.push(`[${el.name || el.type}]: ${msg}`));
+            }
+        }
+    });
+
+    return {
+        hasCritical: criticalCount > 0,
+        hasWarning: warningCount > 0,
+        criticalCount,
+        warningCount,
+        messages,
+        results
+    };
+}
+
+/**
  * Updates the Right Property Inspector with the active element's properties.
  */
 function updateUicePropertyInspector(el) {
@@ -8899,6 +9445,7 @@ function updateUicePropertyInspector(el) {
 
     // Toggle specific sub-sections
     const secTypo = document.getElementById('prop-sec-typography');
+    const secAgency = document.getElementById('prop-sec-agency');
     const secPhoto = document.getElementById('prop-sec-photo');
     const secQr = document.getElementById('prop-sec-qr');
     const secBarcode = document.getElementById('prop-sec-barcode');
@@ -8906,7 +9453,9 @@ function updateUicePropertyInspector(el) {
     const secSig = document.getElementById('prop-sec-signature');
     const secShape = document.getElementById('prop-sec-shape');
 
-    const hasTypo = ['employee-name', 'designation', 'custom-text', 'agency-brand', 'badge-pill'].includes(el.type);
+    const isAgency = el.type === 'agency-brand';
+    const hasTypo = ['employee-name', 'designation', 'custom-text', 'badge-pill'].includes(el.type);
+    if (secAgency) secAgency.style.display = isAgency ? 'flex' : 'none';
     if (secTypo) secTypo.style.display = hasTypo ? 'flex' : 'none';
     if (secPhoto) secPhoto.style.display = el.type === 'employee-photo' ? 'flex' : 'none';
     if (secQr) secQr.style.display = el.type === 'qr-code' ? 'flex' : 'none';
@@ -8916,24 +9465,124 @@ function updateUicePropertyInspector(el) {
     if (secShape) secShape.style.display = el.type === 'shape' ? 'flex' : 'none';
 
     const p = el.properties || {};
+    const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
 
-    // Typography bindings
+    // Typography bindings & Sentinel
     if (hasTypo) {
         const fontSel = document.getElementById('prop-uice-font');
         const fontSizeInp = document.getElementById('prop-uice-font-size');
         const fontWeightSel = document.getElementById('prop-uice-font-weight');
         const colorInp = document.getElementById('prop-uice-color');
         const letterSpacingInp = document.getElementById('prop-uice-letter-spacing');
+        const lineHeightInp = document.getElementById('prop-uice-line-height');
         const textAlignSel = document.getElementById('prop-uice-text-align');
         const textTransformSel = document.getElementById('prop-uice-text-transform');
+        const autofitCb = document.getElementById('prop-uice-text-autofit');
+        const wrapCb = document.getElementById('prop-uice-text-wrap');
 
         if (fontSel) fontSel.value = p.fontFamily || "'Plus Jakarta Sans', sans-serif";
         if (fontSizeInp) fontSizeInp.value = p.fontSize || p.titleFontSize || 14;
         if (fontWeightSel) fontWeightSel.value = p.fontWeight || '700';
         if (colorInp) colorInp.value = p.color || '#0f172a';
         if (letterSpacingInp) letterSpacingInp.value = p.letterSpacing || 0;
+        if (lineHeightInp) lineHeightInp.value = p.lineHeight || 1.15;
         if (textAlignSel) textAlignSel.value = p.textAlign || 'left';
         if (textTransformSel) textTransformSel.value = p.textTransform || 'none';
+        if (autofitCb) autofitCb.checked = p.autoFit !== false;
+        if (wrapCb) wrapCb.checked = p.wrap === true;
+
+        const typoDiag = validateTypographyFit(el, emp);
+        const typoSentinelBadge = document.getElementById('uice-typo-sentinel');
+        if (typoSentinelBadge) {
+            if (typoDiag.level === 'critical') {
+                typoSentinelBadge.className = 'uice-sentinel-badge error';
+                typoSentinelBadge.innerHTML = `<i data-lucide="x-circle" style="width: 14px; height: 14px;"></i><span>Critical: Text Overflow / Clipping</span>`;
+            } else if (typoDiag.level === 'warning') {
+                typoSentinelBadge.className = 'uice-sentinel-badge warning';
+                typoSentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Caution: Auto-Scaled / Wrapped</span>`;
+            } else {
+                typoSentinelBadge.className = 'uice-sentinel-badge valid';
+                typoSentinelBadge.innerHTML = `<i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i><span>Text Fits Within Bounds</span>`;
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: typoSentinelBadge });
+            }
+        }
+
+        const typoDetailsEl = document.getElementById('uice-typo-sentinel-details');
+        if (typoDetailsEl) {
+            let html = '';
+            typoDiag.issues.forEach(i => html += `<div style="color: #ef4444; margin-bottom: 2px;">• ✕ ${escapeHtml(i)}</div>`);
+            typoDiag.warnings.forEach(w => html += `<div style="color: #f59e0b; margin-bottom: 2px;">• ⚠ ${escapeHtml(w)}</div>`);
+            typoDiag.passes.forEach(pass => html += `<div style="color: #10b981; margin-bottom: 2px;">• ✓ ${escapeHtml(pass)}</div>`);
+            typoDetailsEl.innerHTML = html;
+        }
+    }
+
+    // Agency Header bindings & Sentinel
+    if (isAgency) {
+        const agencyTitleInp = document.getElementById('prop-uice-agency-title');
+        const agencySubInp = document.getElementById('prop-uice-agency-subtitle');
+        const agencyTitleSizeInp = document.getElementById('prop-uice-agency-title-size');
+        const agencySubSizeInp = document.getElementById('prop-uice-agency-sub-size');
+        const agencyLogoSizeInp = document.getElementById('prop-uice-agency-logo-size');
+        const agencyLetterSpacingInp = document.getElementById('prop-uice-agency-letter-spacing');
+        const agencyLineHeightInp = document.getElementById('prop-uice-agency-line-height');
+        const agencyColorInp = document.getElementById('prop-uice-agency-color');
+        const agencyAutofitCb = document.getElementById('prop-uice-agency-autofit');
+        const agencyWrapCb = document.getElementById('prop-uice-agency-wrap');
+
+        if (agencyTitleInp) agencyTitleInp.value = p.title || 'VALLEY SECURITY AGENCY';
+        if (agencySubInp) agencySubInp.value = p.subtitle || 'SHAHIDGUNJ SRINAGAR';
+        if (agencyTitleSizeInp) agencyTitleSizeInp.value = p.titleFontSize || 12;
+        if (agencySubSizeInp) agencySubSizeInp.value = p.subtitleFontSize || 6.5;
+        if (agencyLogoSizeInp) agencyLogoSizeInp.value = p.logoSize || 32;
+        if (agencyLetterSpacingInp) agencyLetterSpacingInp.value = p.letterSpacing !== undefined ? p.letterSpacing : 0.4;
+        if (agencyLineHeightInp) agencyLineHeightInp.value = p.lineHeight || 1.15;
+        if (agencyColorInp) agencyColorInp.value = p.color || '#ffffff';
+        if (agencyAutofitCb) agencyAutofitCb.checked = p.autoFit !== false;
+        if (agencyWrapCb) agencyWrapCb.checked = p.wrap === true;
+
+        const agencyDiag = validateTypographyFit(el, emp);
+        const agencyStatusBadge = document.getElementById('lbl-uice-agency-status');
+        if (agencyStatusBadge) {
+            if (agencyDiag.level === 'valid') {
+                agencyStatusBadge.className = 'badge badge-success';
+                agencyStatusBadge.textContent = 'Optimal';
+            } else if (agencyDiag.level === 'warning') {
+                agencyStatusBadge.className = 'badge badge-warning';
+                agencyStatusBadge.textContent = 'Caution';
+            } else {
+                agencyStatusBadge.className = 'badge badge-danger';
+                agencyStatusBadge.textContent = 'Clipping';
+            }
+        }
+
+        const agencySentinelBadge = document.getElementById('uice-agency-sentinel');
+        if (agencySentinelBadge) {
+            if (agencyDiag.level === 'critical') {
+                agencySentinelBadge.className = 'uice-sentinel-badge error';
+                agencySentinelBadge.innerHTML = `<i data-lucide="x-circle" style="width: 14px; height: 14px;"></i><span>Critical: Header Text Overflow</span>`;
+            } else if (agencyDiag.level === 'warning') {
+                agencySentinelBadge.className = 'uice-sentinel-badge warning';
+                agencySentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Sub-Optimal Header Space</span>`;
+            } else {
+                agencySentinelBadge.className = 'uice-sentinel-badge valid';
+                agencySentinelBadge.innerHTML = `<i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i><span>Header Fits Cleanly</span>`;
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: agencySentinelBadge });
+            }
+        }
+
+        const agencyDetailsEl = document.getElementById('uice-agency-sentinel-details');
+        if (agencyDetailsEl) {
+            let html = '';
+            agencyDiag.issues.forEach(i => html += `<div style="color: #ef4444; margin-bottom: 2px;">• ✕ ${escapeHtml(i)}</div>`);
+            agencyDiag.warnings.forEach(w => html += `<div style="color: #f59e0b; margin-bottom: 2px;">• ⚠ ${escapeHtml(w)}</div>`);
+            agencyDiag.passes.forEach(pass => html += `<div style="color: #10b981; margin-bottom: 2px;">• ✓ ${escapeHtml(pass)}</div>`);
+            agencyDetailsEl.innerHTML = html;
+        }
     }
 
     // Photo bindings
@@ -9146,17 +9795,64 @@ function updateUicePropertyInspector(el) {
         }
     }
 
-    // Details Table bindings
+    // Details Table bindings & Sentinel
     if (el.type === 'details-table') {
         const rowPadInp = document.getElementById('prop-uice-table-row-pad');
+        const fontSizeInp = document.getElementById('prop-uice-table-font-size');
         const labelWInp = document.getElementById('prop-uice-table-label-w');
         const labelCInp = document.getElementById('prop-uice-table-label-c');
         const valueCInp = document.getElementById('prop-uice-table-value-c');
+        const autofitCb = document.getElementById('prop-uice-table-autofit');
+        const addressWrapCb = document.getElementById('prop-uice-table-address-wrap');
 
         if (rowPadInp) rowPadInp.value = p.rowPadding !== undefined ? p.rowPadding : 3;
+        if (fontSizeInp) fontSizeInp.value = p.fontSize || 8;
         if (labelWInp) labelWInp.value = p.labelWidth || 38;
         if (labelCInp) labelCInp.value = p.labelColor || '#475569';
         if (valueCInp) valueCInp.value = p.valueColor || '#0f172a';
+        if (autofitCb) autofitCb.checked = p.autoFit !== false;
+        if (addressWrapCb) addressWrapCb.checked = p.addressWrap !== false;
+
+        const tableDiag = validateTypographyFit(el, emp);
+        const tableStatusBadge = document.getElementById('lbl-uice-table-status');
+        if (tableStatusBadge) {
+            if (tableDiag.level === 'valid') {
+                tableStatusBadge.className = 'badge badge-success';
+                tableStatusBadge.textContent = 'Fits Bounds';
+            } else if (tableDiag.level === 'warning') {
+                tableStatusBadge.className = 'badge badge-warning';
+                tableStatusBadge.textContent = 'Tight Fit';
+            } else {
+                tableStatusBadge.className = 'badge badge-danger';
+                tableStatusBadge.textContent = 'Overflowing';
+            }
+        }
+
+        const tableSentinelBadge = document.getElementById('uice-table-sentinel');
+        if (tableSentinelBadge) {
+            if (tableDiag.level === 'critical') {
+                tableSentinelBadge.className = 'uice-sentinel-badge error';
+                tableSentinelBadge.innerHTML = `<i data-lucide="x-circle" style="width: 14px; height: 14px;"></i><span>Critical: Table Height Exceeded</span>`;
+            } else if (tableDiag.level === 'warning') {
+                tableSentinelBadge.className = 'uice-sentinel-badge warning';
+                tableSentinelBadge.innerHTML = `<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i><span>Tight Vertical Clearance</span>`;
+            } else {
+                tableSentinelBadge.className = 'uice-sentinel-badge valid';
+                tableSentinelBadge.innerHTML = `<i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i><span>Table Fits Cleanly</span>`;
+            }
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: tableSentinelBadge });
+            }
+        }
+
+        const tableDetailsEl = document.getElementById('uice-table-sentinel-details');
+        if (tableDetailsEl) {
+            let html = '';
+            tableDiag.issues.forEach(i => html += `<div style="color: #ef4444; margin-bottom: 2px;">• ✕ ${escapeHtml(i)}</div>`);
+            tableDiag.warnings.forEach(w => html += `<div style="color: #f59e0b; margin-bottom: 2px;">• ⚠ ${escapeHtml(w)}</div>`);
+            tableDiag.passes.forEach(pass => html += `<div style="color: #10b981; margin-bottom: 2px;">• ✓ ${escapeHtml(pass)}</div>`);
+            tableDetailsEl.innerHTML = html;
+        }
     }
 
     // Signature bindings
@@ -9952,8 +10648,23 @@ function bindUiceInspectorInputs() {
     bindVal('prop-uice-font-weight', 'fontWeight', true);
     bindVal('prop-uice-color', 'color', true);
     bindNum('prop-uice-letter-spacing', 'letterSpacing', true);
+    bindNum('prop-uice-line-height', 'lineHeight', true);
     bindVal('prop-uice-text-align', 'textAlign', true);
     bindVal('prop-uice-text-transform', 'textTransform', true);
+    bindVal('prop-uice-text-autofit', 'autoFit', true);
+    bindVal('prop-uice-text-wrap', 'wrap', true);
+
+    // Agency Header
+    bindVal('prop-uice-agency-title', 'title', true);
+    bindVal('prop-uice-agency-subtitle', 'subtitle', true);
+    bindNum('prop-uice-agency-title-size', 'titleFontSize', true);
+    bindNum('prop-uice-agency-sub-size', 'subtitleFontSize', true);
+    bindNum('prop-uice-agency-logo-size', 'logoSize', true);
+    bindNum('prop-uice-agency-letter-spacing', 'letterSpacing', true);
+    bindNum('prop-uice-agency-line-height', 'lineHeight', true);
+    bindVal('prop-uice-agency-color', 'color', true);
+    bindVal('prop-uice-agency-autofit', 'autoFit', true);
+    bindVal('prop-uice-agency-wrap', 'wrap', true);
 
     // Photo
     bindVal('prop-uice-photo-shape', 'shape', true);
@@ -9976,9 +10687,12 @@ function bindUiceInspectorInputs() {
 
     // Details Table
     bindNum('prop-uice-table-row-pad', 'rowPadding', true);
+    bindNum('prop-uice-table-font-size', 'fontSize', true);
     bindNum('prop-uice-table-label-w', 'labelWidth', true);
     bindVal('prop-uice-table-label-c', 'labelColor', true);
     bindVal('prop-uice-table-value-c', 'valueColor', true);
+    bindVal('prop-uice-table-autofit', 'autoFit', true);
+    bindVal('prop-uice-table-address-wrap', 'addressWrap', true);
 
     // Signature
     bindVal('prop-uice-sig-preset', 'preset', true);
@@ -10061,6 +10775,80 @@ function bindUiceInspectorInputs() {
             el.properties.background = '#ffffff';
             renderUiceStage();
             pushUiceHistory('Boost Barcode B/W Contrast');
+        });
+    }
+
+    // Phase 5 Quick Action Buttons
+    const btnTypoFixAutoFit = document.getElementById('btn-uice-typo-autofit');
+    if (btnTypoFixAutoFit) {
+        btnTypoFixAutoFit.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el) return;
+            if (!el.properties) el.properties = {};
+            const diag = validateTypographyFit(el, UICE_STATE.previewEmp);
+            if (diag.recommendedFontSize) {
+                el.properties.fontSize = diag.recommendedFontSize;
+                renderUiceStage();
+                pushUiceHistory(`Auto-Fit Font Size: ${el.name || el.type}`);
+            }
+        });
+    }
+
+    const btnAgencyFixAutoFit = document.getElementById('btn-uice-agency-autofit');
+    if (btnAgencyFixAutoFit) {
+        btnAgencyFixAutoFit.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'agency-brand') return;
+            if (!el.properties) el.properties = {};
+            const availW = Math.max(20, el.width - (el.properties.logoSize || 32) - 12);
+            const fitT = calculateAutoFitFontSize({
+                text: el.properties.title || 'VALLEY SECURITY AGENCY',
+                width: availW,
+                height: el.height * 0.65,
+                preferredSize: 12,
+                minSize: 7.5,
+                lineHeight: el.properties.lineHeight || 1.15,
+                letterSpacing: el.properties.letterSpacing !== undefined ? el.properties.letterSpacing : 0.4,
+                allowWrap: !!el.properties.wrap,
+                fontWeight: '800'
+            });
+            const fitS = calculateAutoFitFontSize({
+                text: el.properties.subtitle || 'SHAHIDGUNJ SRINAGAR',
+                width: availW,
+                height: el.height * 0.35,
+                preferredSize: 6.5,
+                minSize: 5.5,
+                lineHeight: 1.1,
+                letterSpacing: 0.4,
+                allowWrap: false,
+                fontWeight: '600'
+            });
+            el.properties.titleFontSize = fitT.fontSize;
+            el.properties.subtitleFontSize = fitS.fontSize;
+            renderUiceStage();
+            pushUiceHistory('Auto-Fit Agency Header to Artboard');
+        });
+    }
+
+    const btnTableFixAutoFit = document.getElementById('btn-uice-table-autofit');
+    if (btnTableFixAutoFit) {
+        btnTableFixAutoFit.addEventListener('click', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.type !== 'details-table') return;
+            if (!el.properties) el.properties = {};
+            const diag = validateTypographyFit(el, UICE_STATE.previewEmp);
+            if (diag.recommendedFontSize) {
+                el.properties.fontSize = diag.recommendedFontSize;
+                if (el.properties.rowPadding > 2) el.properties.rowPadding = 2;
+                renderUiceStage();
+                pushUiceHistory('Auto-Balance Table Rows');
+            }
         });
     }
 }
@@ -10786,13 +11574,19 @@ async function exportUiceCardPng() {
         : null;
     const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
 
-    // Optical Scannability & Quality Gatekeeper
+    // Optical Scannability & Typography Gatekeeper
     if (layout) {
         const scannabilityReport = checkLayoutScannability(layout, emp);
-        if (scannabilityReport.hasCritical) {
+        const typographyReport = checkLayoutTypography(layout, emp);
+        const allCriticalIssues = [
+            ...scannabilityReport.messages,
+            ...(typographyReport.hasCritical ? typographyReport.messages : [])
+        ];
+
+        if (scannabilityReport.hasCritical || typographyReport.hasCritical) {
             const warningMsg = `⚠️ OPTICAL SCANNABILITY GATEKEEPER WARNING\n\n` +
-                `This ID card design contains critical issues that may prevent security checkpoint barcode scanners or smartphones from decoding the card:\n\n` +
-                scannabilityReport.messages.map(m => `• ${m}`).join('\n') +
+                `This ID card design contains critical issues (scannability or text clipping/overflow):\n\n` +
+                allCriticalIssues.map(m => `• ${m}`).join('\n') +
                 `\n\nDo you want to ignore this warning and proceed with PNG export anyway?`;
             const proceed = confirm(warningMsg);
             if (!proceed) {
