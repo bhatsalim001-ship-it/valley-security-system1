@@ -7305,6 +7305,7 @@ const UICE_STATE = {
     showSafeMargins: false,
     showBleedArea: false,
     showElementOutlines: false,
+    showPrintProofing: false,
     history: [],
     historyIndex: -1,
     previewEmp: null,
@@ -7990,6 +7991,9 @@ function renderUiceStage() {
 
     // Element Boundaries Outlines toggle
     container.classList.toggle('uice-show-element-outlines', !!UICE_STATE.showElementOutlines);
+
+    // Dye-Sublimation / CMYK Print Proofing Gamut Simulation
+    artboard.classList.toggle('uice-soft-proofing', !!UICE_STATE.showPrintProofing);
 
     // Clear and re-populate elements
     container.innerHTML = '';
@@ -10680,6 +10684,14 @@ function setupUiceListeners() {
         });
     }
 
+    // Phase 7: Print Proofing (CMYK / Dye-Sub Gamut Simulation)
+    const btnPrintProof = document.getElementById('btn-uice-print-proof');
+    if (btnPrintProof) {
+        btnPrintProof.addEventListener('click', function() {
+            toggleUicePrintProofing();
+        });
+    }
+
     // Zoom Controls
     const btnZoomIn = document.getElementById('btn-uice-zoom-in');
     const btnZoomOut = document.getElementById('btn-uice-zoom-out');
@@ -10818,10 +10830,22 @@ function setupUiceListeners() {
         });
     }
 
-    // Export PNG
+    // Export PNG / High-DPI Exporter
     const btnExportPng = document.getElementById('btn-uice-export-png');
     if (btnExportPng) {
-        btnExportPng.addEventListener('click', exportUiceCardPng);
+        btnExportPng.addEventListener('click', openUiceExportModal);
+    }
+
+    // Phase 7: A4 Multi-Up Print Sheet
+    const btnPrintSheet = document.getElementById('btn-uice-print-sheet');
+    if (btnPrintSheet) {
+        btnPrintSheet.addEventListener('click', openUiceSheetModal);
+    }
+
+    // Phase 7: Industrial Batch Export Pipeline
+    const btnBatchExport = document.getElementById('btn-uice-batch-export');
+    if (btnBatchExport) {
+        btnBatchExport.addEventListener('click', openUiceBatchModal);
     }
 
     // Save Layout
@@ -11942,20 +11966,137 @@ function applyUiceCustomDimensions(w, h, shouldReflow = true) {
     pushUiceHistory(`Custom Dimensions (${w}×${h})`);
 }
 
+// ============================================================================
+// PROJECT OMEGA PHASE 7: INDUSTRIAL EXPORT, PRINT PIPELINE & BATCH ENGINE
+// ============================================================================
+
 /**
- * Exports the active ID card canvas as a 300+ DPI high-res PNG with scannability verification.
+ * Toggles dye-sublimation / CMYK gamut compression soft proofing simulation.
  */
-async function exportUiceCardPng() {
+function toggleUicePrintProofing(forceState) {
+    if (typeof forceState === 'boolean') {
+        UICE_STATE.showPrintProofing = forceState;
+    } else {
+        UICE_STATE.showPrintProofing = !UICE_STATE.showPrintProofing;
+    }
+
+    const btn = document.getElementById('btn-uice-print-proof');
+    if (btn) btn.classList.toggle('active', UICE_STATE.showPrintProofing);
+
     const artboard = document.getElementById('uice-artboard');
-    if (!artboard) return;
+    if (artboard) artboard.classList.toggle('uice-soft-proofing', UICE_STATE.showPrintProofing);
+
+    return UICE_STATE.showPrintProofing;
+}
+
+/**
+ * Opens Single Card High-DPI Export Modal.
+ */
+function openUiceExportModal() {
+    const modal = document.getElementById('uice-export-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        updateUiceExportPreviewInfo();
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+/**
+ * Closes Single Card High-DPI Export Modal.
+ */
+function closeUiceExportModal() {
+    const modal = document.getElementById('uice-export-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Updates dimensions label in High-DPI Export Modal.
+ */
+function updateUiceExportPreviewInfo() {
+    const dpiSel = document.getElementById('uice-export-dpi')?.value || '300dpi';
+    const infoEl = document.getElementById('uice-export-dimensions-info');
+    if (!infoEl) return;
+
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts
+        ? UICE_STATE.template.layouts[UICE_STATE.orientation]
+        : { width: 500, height: 320 };
+    const isHoriz = (layout.width || 500) >= (layout.height || 320);
+
+    let dimsText = '';
+    switch (dpiSel) {
+        case '300dpi':
+            dimsText = isHoriz
+                ? 'Target Render: 1011 × 638 px @ 300 DPI (ISO/IEC 7810 CR80 PVC Standard)'
+                : 'Target Render: 638 × 1011 px @ 300 DPI (ISO/IEC 7810 CR80 PVC Standard)';
+            break;
+        case '600dpi':
+            dimsText = isHoriz
+                ? 'Target Render: 2000 × 1280 px @ 600 DPI (Ultra Master Archival Spec)'
+                : 'Target Render: 1280 × 2000 px @ 600 DPI (Ultra Master Archival Spec)';
+            break;
+        case '2x':
+            dimsText = isHoriz
+                ? 'Target Render: 1000 × 640 px @ 192 DPI (Retina Crisp Screen/Digital Pass)'
+                : 'Target Render: 640 × 1000 px @ 192 DPI (Retina Crisp Screen/Digital Pass)';
+            break;
+        case '1x':
+        default:
+            dimsText = isHoriz
+                ? 'Target Render: 500 × 320 px @ 96 DPI (Standard Web Preview)'
+                : 'Target Render: 320 × 500 px @ 96 DPI (Standard Web Preview)';
+            break;
+    }
+    infoEl.textContent = dimsText;
+}
+
+/**
+ * Handles submission of High-DPI Export Modal form.
+ */
+async function handleUiceExportSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const dpi = document.getElementById('uice-export-dpi')?.value || '300dpi';
+    const format = document.getElementById('uice-export-format')?.value || 'png';
+    const side = document.getElementById('uice-export-side')?.value || 'front';
+    const includeBleed = !!document.getElementById('uice-export-bleed')?.checked;
+    const simulateProof = !!document.getElementById('uice-export-cmyk-proof')?.checked;
+    const gatekeeperEl = document.getElementById('uice-export-gatekeeper');
+    const enforceGatekeeper = gatekeeperEl ? gatekeeperEl.checked : true;
+
+    closeUiceExportModal();
+    return await exportUiceCardWithResolution({
+        dpi,
+        format,
+        side,
+        includeBleed,
+        simulateProof,
+        enforceGatekeeper
+    });
+}
+
+/**
+ * Exports active or target ID card at precise specified DPI with optical scannability verification.
+ */
+async function exportUiceCardWithResolution(options = {}) {
+    const {
+        dpi = '300dpi',
+        format = 'png',
+        side = 'front',
+        includeBleed = false,
+        simulateProof = false,
+        enforceGatekeeper = true,
+        targetEmp = null
+    } = options;
+
+    const artboard = document.getElementById('uice-artboard');
+    if (!artboard) return { success: false, error: 'Artboard not found' };
 
     const layout = UICE_STATE.template && UICE_STATE.template.layouts
         ? UICE_STATE.template.layouts[UICE_STATE.orientation]
         : null;
-    const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
+    const emp = targetEmp || UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
 
     // Optical Scannability & Typography Gatekeeper
-    if (layout) {
+    if (layout && enforceGatekeeper) {
         const scannabilityReport = checkLayoutScannability(layout, emp);
         const typographyReport = checkLayoutTypography(layout, emp);
         const allCriticalIssues = [
@@ -11967,22 +12108,41 @@ async function exportUiceCardPng() {
             const warningMsg = `⚠️ OPTICAL SCANNABILITY GATEKEEPER WARNING\n\n` +
                 `This ID card design contains critical issues (scannability or text clipping/overflow):\n\n` +
                 allCriticalIssues.map(m => `• ${m}`).join('\n') +
-                `\n\nDo you want to ignore this warning and proceed with PNG export anyway?`;
+                `\n\nDo you want to ignore this warning and proceed with export anyway?`;
             const proceed = confirm(warningMsg);
-            if (!proceed) {
-                return;
-            }
+            if (!proceed) return { success: false, cancelled: true };
         }
     }
 
-    // Temporarily deselect and hide grid overlay for pure artwork render
+    // Determine scale factor for html2canvas
+    const baseW = layout ? (layout.width || 500) : 500;
+    const baseH = layout ? (layout.height || 320) : 320;
+    let targetScale = 2.022; // default 300 DPI for 500px CR80
+    if (dpi === '300dpi') {
+        targetScale = baseW >= baseH ? (1011 / baseW) : (638 / baseW);
+    } else if (dpi === '600dpi') {
+        targetScale = 4.0;
+    } else if (dpi === '2x') {
+        targetScale = 2.0;
+    } else if (dpi === '1x') {
+        targetScale = 1.0;
+    }
+
     const prevSelected = UICE_STATE.selectedId;
+    const prevProof = UICE_STATE.showPrintProofing;
     UICE_STATE.selectedId = null;
+    if (simulateProof) {
+        artboard.classList.add('uice-soft-proofing');
+    }
     renderUiceStage();
 
     try {
+        if (typeof html2canvas === 'undefined') {
+            throw new Error('html2canvas library is not loaded');
+        }
+
         const canvas = await html2canvas(artboard, {
-            scale: 4,
+            scale: Math.max(1, targetScale * 1.5),
             useCORS: true,
             allowTaint: false,
             backgroundColor: null,
@@ -11990,19 +12150,676 @@ async function exportUiceCardPng() {
             letterRendering: true
         });
 
-        const empId = UICE_STATE.previewEmp ? UICE_STATE.previewEmp.id : 'GUARD';
+        // Compute final output canvas with exact dimensions
+        let finalCanvas = canvas;
+        if (dpi === '300dpi') {
+            const targetW = baseW >= baseH ? 1011 : 638;
+            const targetH = baseW >= baseH ? 638 : 1011;
+            const bleedPad = includeBleed ? 35 : 0; // 3mm at 300 DPI = ~35px
+
+            const resampledCanvas = document.createElement('canvas');
+            resampledCanvas.width = targetW + (bleedPad * 2);
+            resampledCanvas.height = targetH + (bleedPad * 2);
+            const ctx = resampledCanvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Fill background color if bleed included
+            if (includeBleed) {
+                const bg = (layout && layout.background && layout.background.color) ? layout.background.color : '#ffffff';
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, resampledCanvas.width, resampledCanvas.height);
+            }
+
+            ctx.drawImage(canvas, bleedPad, bleedPad, targetW, targetH);
+
+            // If bleed included, draw cut tick marks on canvas perimeter
+            if (includeBleed) {
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                // TL marks
+                ctx.moveTo(bleedPad, 0); ctx.lineTo(bleedPad, bleedPad / 2);
+                ctx.moveTo(0, bleedPad); ctx.lineTo(bleedPad / 2, bleedPad);
+                // TR marks
+                ctx.moveTo(targetW + bleedPad, 0); ctx.lineTo(targetW + bleedPad, bleedPad / 2);
+                ctx.moveTo(resampledCanvas.width, bleedPad); ctx.lineTo(resampledCanvas.width - bleedPad / 2, bleedPad);
+                // BL marks
+                ctx.moveTo(bleedPad, resampledCanvas.height); ctx.lineTo(bleedPad, resampledCanvas.height - bleedPad / 2);
+                ctx.moveTo(0, targetH + bleedPad); ctx.lineTo(bleedPad / 2, targetH + bleedPad);
+                // BR marks
+                ctx.moveTo(targetW + bleedPad, resampledCanvas.height); ctx.lineTo(targetW + bleedPad, resampledCanvas.height - bleedPad / 2);
+                ctx.moveTo(resampledCanvas.width, targetH + bleedPad); ctx.lineTo(resampledCanvas.width - bleedPad / 2, targetH + bleedPad);
+                ctx.stroke();
+            }
+
+            finalCanvas = resampledCanvas;
+        }
+
+        const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+        const ext = format === 'jpeg' ? 'jpg' : 'png';
+        const empId = emp ? (emp.id || emp.employeeId || 'GUARD') : 'GUARD';
         const tplName = (UICE_STATE.template ? UICE_STATE.template.name : 'Card').replace(/\s+/g, '_');
+        const filename = `VSA_Card_${empId}_${side.toUpperCase()}_${dpi}_${tplName}.${ext}`;
+
         const link = document.createElement('a');
-        link.download = `VSA_Card_${empId}_${tplName}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.download = filename;
+        link.href = finalCanvas.toDataURL(mime, 0.95);
         link.click();
+
+        return { success: true, filename, width: finalCanvas.width, height: finalCanvas.height };
     } catch (err) {
-        console.error('PNG Export failed:', err);
-        alert('PNG Export failed: ' + err.message);
+        console.error('High-DPI Export failed:', err);
+        alert('Card export failed: ' + err.message);
+        return { success: false, error: err.message };
     } finally {
         UICE_STATE.selectedId = prevSelected;
+        if (!prevProof) {
+            artboard.classList.remove('uice-soft-proofing');
+        }
         renderUiceStage();
     }
+}
+
+/**
+ * Backward compatibility alias for single card PNG export.
+ */
+async function exportUiceCardPng() {
+    return await exportUiceCardWithResolution({ dpi: '300dpi', format: 'png' });
+}
+
+/**
+ * Calculates grid slot positions for multi-up card sheet printing with duplex long-edge mirroring.
+ * On duplex flip along the long edge, horizontal columns mirror:
+ * Column `c` becomes `(cols - 1 - c)`.
+ */
+function calculateDuplexGridPositions(cards, cols, rows, isBackPage = false) {
+    if (!Array.isArray(cards) || cols <= 0 || rows <= 0) return [];
+    const slots = [];
+    const pageSize = cols * rows;
+    const numPages = Math.ceil(cards.length / pageSize) || 1;
+
+    for (let p = 0; p < numPages; p++) {
+        const pageCards = cards.slice(p * pageSize, (p + 1) * pageSize);
+        const pageSlots = new Array(pageSize).fill(null);
+
+        pageCards.forEach((card, idx) => {
+            const row = Math.floor(idx / cols);
+            const col = idx % cols;
+            const targetCol = isBackPage ? ((cols - 1) - col) : col;
+            const targetIndex = row * cols + targetCol;
+            pageSlots[targetIndex] = card;
+        });
+
+        slots.push(pageSlots);
+    }
+    return slots;
+}
+
+/**
+ * Generates SVG HTML for physical cutting crop marks.
+ */
+function getCropMarksSvgHtml() {
+    return `
+        <div class="uice-crop-mark uice-crop-tl"></div>
+        <div class="uice-crop-mark uice-crop-tr"></div>
+        <div class="uice-crop-mark uice-crop-bl"></div>
+        <div class="uice-crop-mark uice-crop-br"></div>
+    `;
+}
+
+/**
+ * Generates SVG HTML for alignment registration crosshairs (⊕).
+ */
+function getRegistrationCrosshairsSvgHtml() {
+    const crosshairSvg = `<svg viewBox="-12 -12 24 24" style="width: 100%; height: 100%;">
+        <circle cx="0" cy="0" r="8" fill="none" stroke="#000000" stroke-width="0.8"/>
+        <line x1="-12" y1="0" x2="12" y2="0" stroke="#000000" stroke-width="0.8"/>
+        <line x1="0" y1="-12" x2="0" y2="12" stroke="#000000" stroke-width="0.8"/>
+    </svg>`;
+    return `
+        <div class="uice-reg-mark uice-reg-top">${crosshairSvg}</div>
+        <div class="uice-reg-mark uice-reg-bottom">${crosshairSvg}</div>
+        <div class="uice-reg-mark uice-reg-left">${crosshairSvg}</div>
+        <div class="uice-reg-mark uice-reg-right">${crosshairSvg}</div>
+    `;
+}
+
+/**
+ * Opens A4 Multi-Up Print Sheet Modal.
+ */
+function openUiceSheetModal() {
+    const modal = document.getElementById('uice-sheet-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+/**
+ * Closes A4 Multi-Up Print Sheet Modal.
+ */
+function closeUiceSheetModal() {
+    const modal = document.getElementById('uice-sheet-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Handles submission of A4 Print Sheet Modal form.
+ */
+function handleUiceSheetSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const layout = document.getElementById('uice-sheet-layout')?.value || '8up';
+    const duplex = document.getElementById('uice-sheet-duplex')?.value || 'duplex-mirrored';
+    const source = document.getElementById('uice-sheet-source')?.value || 'preview';
+    const cropMarks = !!document.getElementById('uice-sheet-crop-marks')?.checked;
+    const crosshairs = !!document.getElementById('uice-sheet-crosshairs')?.checked;
+    const holePunch = !!document.getElementById('uice-sheet-hole-punch')?.checked;
+
+    closeUiceSheetModal();
+    printUiceSheet({
+        layoutType: layout,
+        duplexMode: duplex,
+        source,
+        cropMarks,
+        crosshairs,
+        holePunch
+    });
+}
+
+/**
+ * Generates printable A4 multi-up card sheet HTML and launches browser print preview.
+ */
+function printUiceSheet(options = {}) {
+    const {
+        layoutType = '8up',
+        duplexMode = 'duplex-mirrored',
+        source = 'preview',
+        cropMarks = true,
+        crosshairs = true,
+        holePunch = false,
+        candidates = null
+    } = options;
+
+    const sheetContainer = document.getElementById('printable-uice-sheet');
+    if (!sheetContainer) {
+        alert("Printable container (#printable-uice-sheet) not found.");
+        return;
+    }
+
+    // Resolve target guard candidates
+    let guards = [];
+    if (candidates && candidates.length > 0) {
+        guards = candidates;
+    } else if (source === 'project') {
+        guards = VSA_STATE.activeProjectCandidates || [];
+        if (guards.length === 0 && VSA_STATE.deploymentProjects) {
+            const activeProj = VSA_STATE.deploymentProjects.find(p => p.id === VSA_STATE.activeDeploymentProjectId);
+            if (activeProj) {
+                guards = (VSA_STATE.employees || []).filter(e => e.projectSlug === activeProj.slug || e.projectId === activeProj.id);
+            }
+        }
+    } else if (source === 'all-approved') {
+        guards = (VSA_STATE.employees || []).filter(e => e.status === 'Active' || e.status === 'Approved');
+    }
+
+    // Fallback: fill full sheet with current preview employee or mock guard
+    if (guards.length === 0) {
+        const previewGuard = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042', name: 'Rajesh Kumar' };
+        const capacity = layoutType === '10up' ? 10 : (layoutType === '9up' ? 9 : 8);
+        guards = Array.from({ length: capacity }, () => ({ ...previewGuard }));
+    }
+
+    const tpl = UICE_STATE.template || { font: "'Plus Jakarta Sans', sans-serif" };
+    const orientation = (layoutType === '9up') ? 'vertical' : 'horizontal';
+    const cardLayout = (tpl.layouts && tpl.layouts[orientation]) || (tpl.layouts && (tpl.layouts.horizontal || tpl.layouts.vertical)) || { width: 500, height: 320, elements: [] };
+
+    const gridClass = `uice-sheet-grid-${layoutType}`;
+    let cols = 2, rows = 4;
+    if (layoutType === '10up') { cols = 2; rows = 5; }
+    else if (layoutType === '9up') { cols = 3; rows = 3; }
+
+    let sheetHtml = '';
+
+    // Generate Front Pages
+    if (duplexMode === 'front-only' || duplexMode === 'duplex-mirrored') {
+        const frontPages = calculateDuplexGridPositions(guards, cols, rows, false);
+        frontPages.forEach((pageSlots, pageIdx) => {
+            sheetHtml += `<div class="uice-print-sheet-page">`;
+            if (crosshairs) sheetHtml += getRegistrationCrosshairsSvgHtml();
+            sheetHtml += `<div class="${gridClass}">`;
+
+            pageSlots.forEach(guard => {
+                if (!guard) {
+                    sheetHtml += `<div class="uice-sheet-card-cell"></div>`;
+                } else {
+                    const cardHtml = generateUiceCardHtml(guard, cardLayout, tpl);
+                    sheetHtml += `
+                        <div class="uice-sheet-card-cell">
+                            ${cropMarks ? getCropMarksSvgHtml() : ''}
+                            ${holePunch ? '<div class="uice-hole-punch-guide"></div>' : ''}
+                            ${cardHtml}
+                        </div>
+                    `;
+                }
+            });
+
+            sheetHtml += `</div></div>`;
+
+            // If duplex-mirrored, generate corresponding Back Page with geometrically mirrored columns
+            if (duplexMode === 'duplex-mirrored') {
+                const backPageCards = guards.slice(pageIdx * (cols * rows), (pageIdx + 1) * (cols * rows));
+                const backPageSlots = calculateDuplexGridPositions(backPageCards, cols, rows, true)[0] || [];
+                sheetHtml += `<div class="uice-print-sheet-page">`;
+                if (crosshairs) sheetHtml += getRegistrationCrosshairsSvgHtml();
+                sheetHtml += `<div class="${gridClass}">`;
+
+                backPageSlots.forEach(guard => {
+                    if (!guard) {
+                        sheetHtml += `<div class="uice-sheet-card-cell"></div>`;
+                    } else {
+                        const backCardHtml = generateUiceCardHtml(guard, cardLayout, tpl);
+                        sheetHtml += `
+                            <div class="uice-sheet-card-cell">
+                                ${cropMarks ? getCropMarksSvgHtml() : ''}
+                                ${holePunch ? '<div class="uice-hole-punch-guide"></div>' : ''}
+                                ${backCardHtml}
+                            </div>
+                        `;
+                    }
+                });
+
+                sheetHtml += `</div></div>`;
+            }
+        });
+    } else if (duplexMode === 'back-only') {
+        const backPages = calculateDuplexGridPositions(guards, cols, rows, true);
+        backPages.forEach(pageSlots => {
+            sheetHtml += `<div class="uice-print-sheet-page">`;
+            if (crosshairs) sheetHtml += getRegistrationCrosshairsSvgHtml();
+            sheetHtml += `<div class="${gridClass}">`;
+
+            pageSlots.forEach(guard => {
+                if (!guard) {
+                    sheetHtml += `<div class="uice-sheet-card-cell"></div>`;
+                } else {
+                    const cardHtml = generateUiceCardHtml(guard, cardLayout, tpl);
+                    sheetHtml += `
+                        <div class="uice-sheet-card-cell">
+                            ${cropMarks ? getCropMarksSvgHtml() : ''}
+                            ${holePunch ? '<div class="uice-hole-punch-guide"></div>' : ''}
+                            ${cardHtml}
+                        </div>
+                    `;
+                }
+            });
+
+            sheetHtml += `</div></div>`;
+        });
+    }
+
+    sheetContainer.innerHTML = sheetHtml;
+
+    // Render QR codes if present in DOM
+    if (typeof renderQrsInContainer === 'function') {
+        renderQrsInContainer(sheetContainer);
+    }
+
+    // Activate print mode
+    sheetContainer.classList.remove('hidden');
+    document.body.classList.add('uice-sheet-print-active');
+
+    // Launch print dialog after brief rendering delay
+    setTimeout(() => {
+        window.print();
+        window.addEventListener('afterprint', () => {
+            document.body.classList.remove('uice-sheet-print-active');
+            sheetContainer.classList.add('hidden');
+        }, { once: true });
+    }, 400);
+
+    return { totalGuards: guards.length, layoutType, duplexMode };
+}
+
+/**
+ * Opens Industrial Batch Export Modal.
+ */
+function openUiceBatchModal() {
+    const modal = document.getElementById('uice-batch-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        refreshUiceBatchPreflight();
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+/**
+ * Closes Industrial Batch Export Modal.
+ */
+function closeUiceBatchModal() {
+    const modal = document.getElementById('uice-batch-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Executes optical scannability and typography pre-flight checks across an entire employee roster.
+ */
+function runUicePreFlightValidation(layout, employees = []) {
+    const results = {
+        total: employees.length,
+        passed: [],
+        warnings: [],
+        critical: [],
+        summary: {
+            total: employees.length,
+            passCount: 0,
+            warnCount: 0,
+            critCount: 0
+        }
+    };
+
+    if (!layout) return results;
+
+    employees.forEach(emp => {
+        const scannability = (typeof checkLayoutScannability === 'function')
+            ? checkLayoutScannability(layout, emp)
+            : { hasCritical: false, messages: [] };
+
+        const typography = (typeof checkLayoutTypography === 'function')
+            ? checkLayoutTypography(layout, emp)
+            : { hasCritical: false, messages: [] };
+
+        const hasCrit = scannability.hasCritical || typography.hasCritical;
+        const allMessages = [
+            ...scannability.messages,
+            ...typography.messages
+        ];
+
+        if (hasCrit) {
+            results.critical.push({
+                emp,
+                messages: allMessages
+            });
+        } else if (allMessages.length > 0) {
+            results.warnings.push({
+                emp,
+                messages: allMessages
+            });
+        } else {
+            results.passed.push(emp);
+        }
+    });
+
+    results.summary.passCount = results.passed.length;
+    results.summary.warnCount = results.warnings.length;
+    results.summary.critCount = results.critical.length;
+
+    return results;
+}
+
+/**
+ * Refreshes pre-flight report in batch modal.
+ */
+function refreshUiceBatchPreflight() {
+    const targetSel = document.getElementById('uice-batch-target')?.value || 'project';
+    let targetGuards = [];
+
+    if (targetSel === 'project') {
+        targetGuards = VSA_STATE.activeProjectCandidates || [];
+        if (targetGuards.length === 0 && VSA_STATE.deploymentProjects) {
+            const activeProj = VSA_STATE.deploymentProjects.find(p => p.id === VSA_STATE.activeDeploymentProjectId);
+            if (activeProj) {
+                targetGuards = (VSA_STATE.employees || []).filter(e => e.projectSlug === activeProj.slug || e.projectId === activeProj.id);
+            }
+        }
+    } else if (targetSel === 'selected') {
+        const ids = VSA_STATE.idSelectedEmployeeIds || VSA_STATE.selectedEmployeeIds || [];
+        targetGuards = (VSA_STATE.employees || []).filter(e => ids.includes(e.id || e.employeeId));
+    } else {
+        targetGuards = (VSA_STATE.employees || []).filter(e => e.status === 'Active' || e.status === 'Approved');
+    }
+
+    if (targetGuards.length === 0) {
+        targetGuards = (VSA_STATE.employees || []).slice(0, 10);
+    }
+
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts
+        ? UICE_STATE.template.layouts[UICE_STATE.orientation]
+        : null;
+
+    const report = runUicePreFlightValidation(layout, targetGuards);
+
+    const summaryEl = document.getElementById('uice-batch-preflight-summary');
+    if (summaryEl) {
+        summaryEl.innerHTML = `
+            <div class="uice-preflight-stat-box stat-passed">
+                <div class="stat-val" style="color: #10b981;">${report.summary.passCount}</div>
+                <div class="stat-lbl">100% Validated</div>
+            </div>
+            <div class="uice-preflight-stat-box stat-warn">
+                <div class="stat-val" style="color: #f59e0b;">${report.summary.warnCount}</div>
+                <div class="stat-lbl">Typography Warnings</div>
+            </div>
+            <div class="uice-preflight-stat-box stat-crit">
+                <div class="stat-val" style="color: #ef4444;">${report.summary.critCount}</div>
+                <div class="stat-lbl">Optical Failures</div>
+            </div>
+        `;
+    }
+
+    const issuesEl = document.getElementById('uice-batch-issues-list');
+    if (issuesEl) {
+        if (report.critical.length === 0 && report.warnings.length === 0) {
+            issuesEl.innerHTML = `<span style="color: #10b981;">✅ Pre-flight quality verification passed! All ${report.total} guard cards conform to ISO/IEC CR80 optical scannability and typography safety boundaries.</span>`;
+        } else {
+            let listHtml = '';
+            report.critical.forEach(item => {
+                listHtml += `<div style="color: #ef4444; margin-bottom: 4px;">❌ [CRITICAL] ${item.emp.name || item.emp.id}: ${item.messages.join('; ')}</div>`;
+            });
+            report.warnings.forEach(item => {
+                listHtml += `<div style="color: #f59e0b; margin-bottom: 4px;">⚠️ [WARNING] ${item.emp.name || item.emp.id}: ${item.messages.join('; ')}</div>`;
+            });
+            issuesEl.innerHTML = listHtml;
+        }
+    }
+
+    return report;
+}
+
+/**
+ * Handles batch generation submission.
+ */
+async function handleUiceBatchSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const target = document.getElementById('uice-batch-target')?.value || 'project';
+    const format = document.getElementById('uice-batch-format')?.value || 'zip-300dpi';
+
+    return await startUiceBatchExport({ target, format });
+}
+
+/**
+ * Executes stream batch generation with non-blocking async yielding and ZIP compression.
+ */
+async function startUiceBatchExport(options = {}) {
+    const { target = 'project', format = 'zip-300dpi' } = options;
+
+    let targetGuards = [];
+    if (target === 'project') {
+        targetGuards = VSA_STATE.activeProjectCandidates || [];
+        if (targetGuards.length === 0 && VSA_STATE.deploymentProjects) {
+            const activeProj = VSA_STATE.deploymentProjects.find(p => p.id === VSA_STATE.activeDeploymentProjectId);
+            if (activeProj) {
+                targetGuards = (VSA_STATE.employees || []).filter(e => e.projectSlug === activeProj.slug || e.projectId === activeProj.id);
+            }
+        }
+    } else if (target === 'selected') {
+        const ids = VSA_STATE.idSelectedEmployeeIds || VSA_STATE.selectedEmployeeIds || [];
+        targetGuards = (VSA_STATE.employees || []).filter(e => ids.includes(e.id || e.employeeId));
+    } else {
+        targetGuards = (VSA_STATE.employees || []).filter(e => e.status === 'Active' || e.status === 'Approved');
+    }
+
+    if (targetGuards.length === 0) {
+        targetGuards = (VSA_STATE.employees || []).slice(0, 10);
+    }
+
+    if (targetGuards.length === 0) {
+        alert("No employee records found to batch export.");
+        return { success: false, error: 'No guards found' };
+    }
+
+    // Format: A4 Sheet
+    if (format === 'a4-sheet') {
+        closeUiceBatchModal();
+        return printUiceSheet({
+            layoutType: '8up',
+            duplexMode: 'duplex-mirrored',
+            candidates: targetGuards
+        });
+    }
+
+    // Progress bar setup
+    const progressContainer = document.getElementById('uice-batch-progress-container');
+    const progressBar = document.getElementById('uice-batch-progress-bar');
+    const progressPercent = document.getElementById('uice-batch-progress-percent');
+    const progressEmp = document.getElementById('uice-batch-current-emp');
+    const startBtn = document.getElementById('btn-start-uice-batch');
+
+    if (progressContainer) progressContainer.classList.remove('hidden');
+    if (startBtn) startBtn.disabled = true;
+
+    const zip = (typeof JSZip !== 'undefined') ? new JSZip() : null;
+    const dpi = format === 'zip-300dpi' ? '300dpi' : '2x';
+    const total = targetGuards.length;
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts
+        ? UICE_STATE.template.layouts[UICE_STATE.orientation]
+        : { width: 500, height: 320 };
+
+    const baseW = layout.width || 500;
+    const baseH = layout.height || 320;
+    const isHoriz = baseW >= baseH;
+    const targetScale = dpi === '300dpi' ? (isHoriz ? 1011 / baseW : 638 / baseW) : 2.0;
+
+    // Temporary offscreen render container for memory-safe generation
+    const offscreen = document.createElement('div');
+    offscreen.style.position = 'fixed';
+    offscreen.style.left = '-9999px';
+    offscreen.style.top = '-9999px';
+    offscreen.style.width = baseW + 'px';
+    offscreen.style.height = baseH + 'px';
+    document.body.appendChild(offscreen);
+
+    try {
+        for (let i = 0; i < total; i++) {
+            const emp = targetGuards[i];
+            const pct = Math.round(((i + 1) / total) * 100);
+
+            if (progressBar) progressBar.style.width = pct + '%';
+            if (progressPercent) progressPercent.textContent = pct + '%';
+            if (progressEmp) progressEmp.textContent = `Rendering card ${i + 1} of ${total}: ${emp.name || emp.id}...`;
+
+            // Render single card DOM
+            offscreen.innerHTML = generateUiceCardHtml(emp, layout, UICE_STATE.template || {});
+            const cardEl = offscreen.querySelector('.visual-id-card-render') || offscreen;
+
+            // Render QRs in offscreen card
+            if (typeof renderQrsInContainer === 'function') {
+                renderQrsInContainer(offscreen);
+            }
+
+            // High-DPI canvas capture
+            const canvas = await html2canvas(cardEl, {
+                scale: Math.max(1, targetScale * 1.5),
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false
+            });
+
+            // Standardize exact CR80 size if 300dpi
+            let outCanvas = canvas;
+            if (dpi === '300dpi') {
+                const targetW = isHoriz ? 1011 : 638;
+                const targetH = isHoriz ? 638 : 1011;
+                const resampled = document.createElement('canvas');
+                resampled.width = targetW;
+                resampled.height = targetH;
+                const ctx = resampled.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(canvas, 0, 0, targetW, targetH);
+                outCanvas = resampled;
+            }
+
+            const dataUrl = outCanvas.toDataURL('image/png');
+            const cleanEmpName = (emp.name || 'Guard').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const empId = emp.id || emp.employeeId || `VSA-${i + 1}`;
+            const filename = `${empId}_${cleanEmpName}_CR80_${dpi}.png`;
+
+            if (zip) {
+                const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '');
+                zip.file(filename, base64Data, { base64: true });
+            } else {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = dataUrl;
+                link.click();
+            }
+
+            // Non-blocking async yield to release browser thread & garbage collect canvas
+            await new Promise(resolve => setTimeout(resolve, 25));
+        }
+
+        // Generate and download ZIP archive
+        if (zip) {
+            if (progressEmp) progressEmp.textContent = "Compressing ZIP archive package...";
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            const zipUrl = URL.createObjectURL(zipBlob);
+            const downloadLink = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            downloadLink.download = `VSA_ID_Cards_Batch_${dpi}_${timestamp}.zip`;
+            downloadLink.href = zipUrl;
+            downloadLink.click();
+            setTimeout(() => URL.revokeObjectURL(zipUrl), 10000);
+        }
+
+        if (progressEmp) progressEmp.textContent = `✅ Batch generation complete! ${total} cards exported successfully.`;
+        alert(`Successfully generated batch package containing ${total} high-DPI ID cards!`);
+        return { success: true, count: total };
+    } catch (err) {
+        console.error("Batch card generation error:", err);
+        alert("Batch generation encountered an issue: " + err.message);
+        return { success: false, error: err.message };
+    } finally {
+        if (offscreen && offscreen.parentNode) {
+            offscreen.parentNode.removeChild(offscreen);
+        }
+        if (startBtn) startBtn.disabled = false;
+    }
+}
+
+// Global Window Exports
+if (typeof window !== 'undefined') {
+    window.toggleUicePrintProofing = toggleUicePrintProofing;
+    window.openUiceExportModal = openUiceExportModal;
+    window.closeUiceExportModal = closeUiceExportModal;
+    window.updateUiceExportPreviewInfo = updateUiceExportPreviewInfo;
+    window.handleUiceExportSubmit = handleUiceExportSubmit;
+    window.exportUiceCardWithResolution = exportUiceCardWithResolution;
+    window.exportUiceCardPng = exportUiceCardPng;
+    window.calculateDuplexGridPositions = calculateDuplexGridPositions;
+    window.getCropMarksSvgHtml = getCropMarksSvgHtml;
+    window.getRegistrationCrosshairsSvgHtml = getRegistrationCrosshairsSvgHtml;
+    window.openUiceSheetModal = openUiceSheetModal;
+    window.closeUiceSheetModal = closeUiceSheetModal;
+    window.handleUiceSheetSubmit = handleUiceSheetSubmit;
+    window.printUiceSheet = printUiceSheet;
+    window.openUiceBatchModal = openUiceBatchModal;
+    window.closeUiceBatchModal = closeUiceBatchModal;
+    window.runUicePreFlightValidation = runUicePreFlightValidation;
+    window.refreshUiceBatchPreflight = refreshUiceBatchPreflight;
+    window.handleUiceBatchSubmit = handleUiceBatchSubmit;
+    window.startUiceBatchExport = startUiceBatchExport;
 }
 
 /**

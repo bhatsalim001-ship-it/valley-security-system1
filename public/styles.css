@@ -9215,5 +9215,280 @@ html, body {
     user-select: none !important;
 }
 
+/* ============================================================================
+   PROJECT OMEGA PHASE 7: INDUSTRIAL EXPORT, PRINT PIPELINE & BATCH ENGINE
+   ============================================================================ */
+
+/* 1. Dye-Sublimation / CMYK Print Proofing Gamut Simulation */
+.uice-artboard-card.uice-soft-proofing {
+    filter: saturate(0.88) contrast(1.04) brightness(0.98) sepia(0.04) !important;
+    box-shadow: 0 0 0 2px #f59e0b, 0 10px 25px rgba(245, 158, 11, 0.25) !important;
+    position: relative;
+}
+
+.uice-artboard-card.uice-soft-proofing::after {
+    content: 'PROOFING: CMYK SIMULATION';
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    background: #f59e0b;
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* 2. Batch Pre-Flight Audit Badges */
+.uice-preflight-stat-box {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+}
+.uice-preflight-stat-box.stat-passed {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.06);
+}
+.uice-preflight-stat-box.stat-warn {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.06);
+}
+.uice-preflight-stat-box.stat-crit {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.06);
+}
+.uice-preflight-stat-box .stat-val {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.uice-preflight-stat-box .stat-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 3. A4 Multi-Up Printable Sheet Architecture */
+#printable-uice-sheet {
+    display: none;
+}
+
+@media screen {
+    .uice-sheet-preview-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        background: #0f172a;
+    }
+}
+
+/* 4. High-Fidelity Print Engine Media Queries */
+@media print {
+    body.uice-sheet-print-active {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    body.uice-sheet-print-active * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box !important;
+    }
+
+    body.uice-sheet-print-active > *:not(#printable-uice-sheet),
+    body.uice-sheet-print-active .app-container,
+    body.uice-sheet-print-active .modal-overlay,
+    body.uice-sheet-print-active #toast-container {
+        display: none !important;
+    }
+
+    body.uice-sheet-print-active #printable-uice-sheet {
+        display: block !important;
+        visibility: visible !important;
+        width: 210mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .uice-print-sheet-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 8-Up Grid: 2 columns x 4 rows (Landscape CR80 Cards) */
+    .uice-sheet-grid-8up {
+        display: grid !important;
+        grid-template-columns: repeat(2, 85.6mm) !important;
+        grid-template-rows: repeat(4, 54mm) !important;
+        gap: 8mm 10mm !important;
+        justify-content: center !important;
+        align-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* 10-Up Grid: 2 columns x 5 rows (Landscape CR80 Cards) */
+    .uice-sheet-grid-10up {
+        display: grid !important;
+        grid-template-columns: repeat(2, 85.6mm) !important;
+        grid-template-rows: repeat(5, 54mm) !important;
+        gap: 4mm 10mm !important;
+        justify-content: center !important;
+        align-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* 9-Up Grid: 3 columns x 3 rows (Portrait CR80 Cards) */
+    .uice-sheet-grid-9up {
+        display: grid !important;
+        grid-template-columns: repeat(3, 54mm) !important;
+        grid-template-rows: repeat(3, 85.6mm) !important;
+        gap: 6mm 8mm !important;
+        justify-content: center !important;
+        align-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .uice-sheet-card-cell {
+        position: relative !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* Exact physical dimensions for rendered cards on paper */
+    .uice-sheet-card-cell .visual-id-card-render {
+        box-shadow: none !important;
+        border: 0.25mm solid #000000 !important;
+    }
+
+    .uice-sheet-card-cell .visual-id-card-render.id-card-horizontal {
+        width: 85.6mm !important;
+        height: 54.0mm !important;
+        border-radius: 3.18mm !important;
+        transform-origin: top left !important;
+    }
+
+    .uice-sheet-card-cell .visual-id-card-render.id-card-vertical {
+        width: 54.0mm !important;
+        height: 85.6mm !important;
+        border-radius: 3.18mm !important;
+        transform-origin: top left !important;
+    }
+
+    /* Precision Guillotine Crop Marks */
+    .uice-crop-mark {
+        position: absolute !important;
+        pointer-events: none !important;
+        border-color: #000000 !important;
+        border-style: solid !important;
+        z-index: 50 !important;
+    }
+    .uice-crop-tl {
+        top: -3.5mm !important;
+        left: -3.5mm !important;
+        width: 3.5mm !important;
+        height: 3.5mm !important;
+        border-width: 0.4pt 0 0 0.4pt !important;
+    }
+    .uice-crop-tr {
+        top: -3.5mm !important;
+        right: -3.5mm !important;
+        width: 3.5mm !important;
+        height: 3.5mm !important;
+        border-width: 0.4pt 0.4pt 0 0 !important;
+    }
+    .uice-crop-bl {
+        bottom: -3.5mm !important;
+        left: -3.5mm !important;
+        width: 3.5mm !important;
+        height: 3.5mm !important;
+        border-width: 0 0 0.4pt 0.4pt !important;
+    }
+    .uice-crop-br {
+        bottom: -3.5mm !important;
+        right: -3.5mm !important;
+        width: 3.5mm !important;
+        height: 3.5mm !important;
+        border-width: 0 0.4pt 0.4pt 0 !important;
+    }
+
+    /* Precision Registration Crosshairs (⊕) */
+    .uice-reg-mark {
+        position: absolute !important;
+        width: 6mm !important;
+        height: 6mm !important;
+        pointer-events: none !important;
+        z-index: 50 !important;
+    }
+    .uice-reg-top {
+        top: 3.5mm !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+    .uice-reg-bottom {
+        bottom: 3.5mm !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+    .uice-reg-left {
+        left: 3.5mm !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+    }
+    .uice-reg-right {
+        right: 3.5mm !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+    }
+
+    /* Optional Lanyard Punch Hole Indicator */
+    .uice-hole-punch-guide {
+        position: absolute !important;
+        top: 3mm !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 5mm !important;
+        height: 5mm !important;
+        border-radius: 50% !important;
+        border: 0.3pt dashed #000000 !important;
+        background: transparent !important;
+        z-index: 45 !important;
+        pointer-events: none !important;
+    }
+}
+
+
 
 

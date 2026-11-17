@@ -1201,6 +1201,9 @@
                                     <button type="button" class="uice-tool-btn" id="btn-uice-show-outlines" title="Toggle Element Boundary Outlines">
                                         <i data-lucide="box-select"></i> Outlines
                                     </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-print-proof" title="Toggle Print Proofing (CMYK Gamut Simulation)">
+                                        <i data-lucide="eye"></i> Proofing
+                                    </button>
                                     <div class="uice-divider"></div>
                                     <button type="button" class="uice-tool-btn" id="btn-uice-zoom-out" title="Zoom Out">
                                         <i data-lucide="minus"></i>
@@ -1220,8 +1223,14 @@
                                 <div class="uice-cmd-group">
                                     <label for="uice-preview-emp-select" style="font-size: 11px; font-weight: 700; color: #94a3b8; margin: 0;">Preview Guard:</label>
                                     <select id="uice-preview-emp-select" class="form-control" style="font-size: 11px; padding: 4px 8px; width: 160px;"></select>
-                                    <button type="button" class="btn btn-outline" id="btn-uice-export-png" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
-                                        <i data-lucide="download"></i> Export PNG
+                                    <button type="button" class="btn btn-outline" id="btn-uice-export-png" title="Export High-Resolution Card (PNG/300 DPI)" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
+                                        <i data-lucide="download"></i> Export High-DPI
+                                    </button>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-print-sheet" title="Generate A4 Multi-Up Print Sheet with Crop Marks" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
+                                        <i data-lucide="printer"></i> A4 Sheet
+                                    </button>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-batch-export" title="Industrial Batch Card Generation Pipeline" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
+                                        <i data-lucide="copy"></i> Batch Export
                                     </button>
                                     <button type="button" class="btn btn-success" id="btn-uice-save-template" style="font-size: 11px; padding: 5px 14px; gap: 6px;">
                                         <i data-lucide="save"></i> Save Layout
@@ -3724,6 +3733,227 @@
             </div>
         </div>
     </div>
+
+    <!-- UICE SINGLE CARD HIGH-DPI EXPORT MODAL -->
+    <div id="uice-export-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uice-export-modal-title">
+        <div class="modal-container" style="max-width: 520px; width: 92%;">
+            <div class="modal-header">
+                <h2 id="uice-export-modal-title" style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--vs-text-primary);">
+                    <i data-lucide="download" style="width: 20px; height: 20px; color: #10b981;"></i>
+                    High-DPI Master Card Exporter
+                </h2>
+                <button type="button" class="modal-close" onclick="closeUiceExportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-uice-export" onsubmit="handleUiceExportSubmit(event)">
+                    <!-- Resolution & DPI Select -->
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="uice-export-dpi" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">
+                            Render Resolution & Target DPI
+                        </label>
+                        <select id="uice-export-dpi" class="form-control" style="font-size: 13px; font-weight: 600;" onchange="updateUiceExportPreviewInfo()">
+                            <option value="300dpi" selected>300 DPI — CR80 Industrial PVC Print (1011 × 638 px)</option>
+                            <option value="600dpi">600 DPI — Ultra Master Archival (2000 × 1280 px)</option>
+                            <option value="2x">2x (192 DPI) — High-Res Retina (1000 × 640 px)</option>
+                            <option value="1x">1x (96 DPI) — Standard Screen Web (500 × 320 px)</option>
+                        </select>
+                        <div id="uice-export-dimensions-info" style="font-size: 11px; color: #10b981; margin-top: 6px; font-weight: 600;">
+                            Target Render: 1011 × 638 px @ 300 DPI (ISO/IEC 7810 CR80 Standard)
+                        </div>
+                    </div>
+
+                    <!-- Format & Color Proofing -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="uice-export-format" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">File Format</label>
+                            <select id="uice-export-format" class="form-control" style="font-size: 12px;">
+                                <option value="png" selected>PNG (Lossless 24-bit + Alpha)</option>
+                                <option value="jpeg">JPEG (High Quality 95%)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="uice-export-side" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">Card Surface</label>
+                            <select id="uice-export-side" class="form-control" style="font-size: 12px;">
+                                <option value="front" selected>Front Side</option>
+                                <option value="back">Back Side</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bleed & Proofing Options -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                            <input type="checkbox" id="uice-export-bleed" style="width: 16px; height: 16px; accent-color: #10b981;">
+                            Include 3mm Outer Bleed Margin (for edge-to-edge dye-sub printers)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                            <input type="checkbox" id="uice-export-cmyk-proof" style="width: 16px; height: 16px; accent-color: #10b981;">
+                            Simulate Dye-Sublimation Ribbon / CMYK Gamut Compression
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                            <input type="checkbox" id="uice-export-gatekeeper" checked style="width: 16px; height: 16px; accent-color: #10b981;">
+                            Enforce Optical Scannability & Typography Pre-Flight Check
+                        </label>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 0;">
+                        <button type="button" class="btn btn-outline" onclick="closeUiceExportModal()">Cancel</button>
+                        <button type="submit" class="btn btn-success" id="btn-submit-uice-export" style="gap: 6px;">
+                            <i data-lucide="download"></i> Download Master Card
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- UICE A4 MULTI-UP PRINT SHEET MODAL -->
+    <div id="uice-sheet-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uice-sheet-modal-title">
+        <div class="modal-container" style="max-width: 600px; width: 94%;">
+            <div class="modal-header">
+                <h2 id="uice-sheet-modal-title" style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--vs-text-primary);">
+                    <i data-lucide="printer" style="width: 20px; height: 20px; color: #3b82f6;"></i>
+                    A4 Multi-Up Physical Print Sheet Generator
+                </h2>
+                <button type="button" class="modal-close" onclick="closeUiceSheetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-uice-sheet" onsubmit="handleUiceSheetSubmit(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="uice-sheet-layout" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">Sheet Grid Layout</label>
+                            <select id="uice-sheet-layout" class="form-control" style="font-size: 12px;">
+                                <option value="8up" selected>8-Up (2 cols × 4 rows — CR80 Landscape)</option>
+                                <option value="10up">10-Up (2 cols × 5 rows — High Density CR80)</option>
+                                <option value="9up">9-Up (3 cols × 3 rows — CR80 Portrait)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="uice-sheet-duplex" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">Duplex Alignment Mode</label>
+                            <select id="uice-sheet-duplex" class="form-control" style="font-size: 12px;">
+                                <option value="front-only">Front Side Only</option>
+                                <option value="duplex-mirrored" selected>Duplex (Long-Edge Mirrored Backs)</option>
+                                <option value="back-only">Back Side Only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="uice-sheet-source" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">Card Candidate Source</label>
+                        <select id="uice-sheet-source" class="form-control" style="font-size: 12px;">
+                            <option value="preview" selected>Current Preview Guard (Repeat to fill sheet)</option>
+                            <option value="project">Active Deployment Project Candidates</option>
+                            <option value="all-approved">All Approved Guards in System</option>
+                        </select>
+                    </div>
+
+                    <!-- Precision Finishing Marks -->
+                    <div style="background: rgba(255, 255, 255, 0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;">
+                        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Physical Print & Finishing Guides</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                                <input type="checkbox" id="uice-sheet-crop-marks" checked style="width: 16px; height: 16px; accent-color: #3b82f6;">
+                                Guillotine Corner Crop Marks
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                                <input type="checkbox" id="uice-sheet-crosshairs" checked style="width: 16px; height: 16px; accent-color: #3b82f6;">
+                                Registration Crosshairs (⊕)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                                <input type="checkbox" id="uice-sheet-hole-punch" style="width: 16px; height: 16px; accent-color: #3b82f6;">
+                                Lanyard Hole Punch Guide (5mm)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer;">
+                                <input type="checkbox" id="uice-sheet-bleed-clip" checked style="width: 16px; height: 16px; accent-color: #3b82f6;">
+                                Clip to Standard ISO/IEC CR80 Size
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 0;">
+                        <button type="button" class="btn btn-outline" onclick="closeUiceSheetModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-print-uice-sheet-now" style="gap: 6px;">
+                            <i data-lucide="printer"></i> Launch Interactive Print Preview
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- UICE INDUSTRIAL BATCH EXPORT & PRE-FLIGHT GATEKEEPER MODAL -->
+    <div id="uice-batch-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uice-batch-modal-title">
+        <div class="modal-container" style="max-width: 650px; width: 94%;">
+            <div class="modal-header">
+                <h2 id="uice-batch-modal-title" style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--vs-text-primary);">
+                    <i data-lucide="copy" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
+                    Industrial Batch ID Card Generation Pipeline
+                </h2>
+                <button type="button" class="modal-close" onclick="closeUiceBatchModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: Pre-Flight Audit Report -->
+                <div id="uice-batch-preflight-section" style="margin-bottom: 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #cbd5e1;">Pre-Flight Quality Gatekeeper Audit</span>
+                        <button type="button" class="btn btn-outline" style="font-size: 11px; padding: 3px 8px; gap: 4px;" onclick="refreshUiceBatchPreflight()">
+                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Re-Audit
+                        </button>
+                    </div>
+                    <div id="uice-batch-preflight-summary" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
+                        <!-- Stat boxes populated dynamically -->
+                    </div>
+                    <div id="uice-batch-issues-list" style="max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: 6px; padding: 8px 12px; font-size: 11px; font-family: monospace; border: 1px solid rgba(255,255,255,0.06);">
+                        <!-- Details populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Step 2: Batch Config Form -->
+                <form id="form-uice-batch" onsubmit="handleUiceBatchSubmit(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="uice-batch-target" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">Target Roster</label>
+                            <select id="uice-batch-target" class="form-control" style="font-size: 12px;" onchange="refreshUiceBatchPreflight()">
+                                <option value="project" selected>Active Deployment Project Candidates</option>
+                                <option value="all-approved">All Active / Approved Guards</option>
+                                <option value="selected">Selected Guards Only</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="uice-batch-format" style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px; display: block;">Output Package</label>
+                            <select id="uice-batch-format" class="form-control" style="font-size: 12px;">
+                                <option value="zip-300dpi" selected>High-DPI PNG Archive (.ZIP @ 300 DPI)</option>
+                                <option value="a4-sheet">A4 Multi-Up Print Sheet</option>
+                                <option value="zip-2x">2x Retina PNG Archive (.ZIP @ 192 DPI)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Progress Container (Hidden until batch runs) -->
+                    <div id="uice-batch-progress-container" class="hidden" style="margin-bottom: 18px; background: rgba(139, 92, 246, 0.08); padding: 14px; border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.25);">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 8px;">
+                            <span id="uice-batch-progress-label">Generating Batch ID Cards...</span>
+                            <span id="uice-batch-progress-percent">0%</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+                            <div id="uice-batch-progress-bar" style="width: 0%; height: 100%; background: #8b5cf6; transition: width 0.15s ease;"></div>
+                        </div>
+                        <div id="uice-batch-current-emp" style="font-size: 11px; color: #94a3b8; font-family: monospace;">Waiting to start...</div>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 0;">
+                        <button type="button" class="btn btn-outline" id="btn-uice-batch-cancel" onclick="closeUiceBatchModal()">Close</button>
+                        <button type="submit" class="btn btn-primary" id="btn-start-uice-batch" style="gap: 6px; background: #8b5cf6; border-color: #8b5cf6;">
+                            <i data-lucide="play"></i> Start Batch Generation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 7: Dedicated Printable A4 Sheet Container for UICE Cards -->
+    <div id="printable-uice-sheet" class="hidden"></div>
 
     <!-- Bulk Printable Container -->
     <div id="printable-id-bulk" class="hidden"></div>
