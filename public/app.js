@@ -2973,11 +2973,15 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     // Helper to generate clean aligned rows without harsh black cell borders (matches Hanover & Salford cards)
     const makeAlignedRow = (label, val, isImportant = false) => {
         if (!val || val === '-') return '';
+        const isHoriz = template.layout === 'horizontal';
+        const lblW = isHoriz ? '88px' : '33%';
+        const maxLblW = isHoriz ? '88px' : '36%';
+        const borderBtm = isHoriz ? 'none' : '1px dashed rgba(15, 23, 42, 0.07)';
         return `
-        <tr style="border-bottom: none !important;">
-            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: 88px; max-width: 88px; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; border-bottom: none !important;">${label}</td>
-            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 14px; text-align: center; padding: ${rowPadding}px 0; border-bottom: none !important;">:</td>
-            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; border-bottom: none !important;">${val}</td>
+        <tr style="border-bottom: ${borderBtm} !important;">
+            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"};">${label}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPadding}px 0;">:</td>
+            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto;">${val}</td>
         </tr>`;
     };
 
@@ -3018,13 +3022,18 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
     // 1. Photo Container Style (Circle, Squircle, Standard)
     let photoContainerStyle = '';
+    const isHorizLayout = template.layout === 'horizontal';
     if (photoShape === 'circle') {
-        const dim = Math.min(photoWidth, photoHeight, 135);
+        const dim = Math.min(photoWidth, photoHeight, isHorizLayout ? 135 : 98);
         photoContainerStyle = `width: ${dim}px; height: ${dim}px; border-radius: 50%; overflow: hidden; border: 3.5px solid #ffffff; outline: 3.5px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 14px rgba(0,0,0,0.22); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     } else if (photoShape === 'squircle') {
-        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 18px; overflow: hidden; border: 3px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 12px rgba(0,0,0,0.18); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+        const sqW = isHorizLayout ? photoWidth : Math.min(photoWidth, 95);
+        const sqH = isHorizLayout ? photoHeight : Math.min(photoHeight, 105);
+        photoContainerStyle = `width: ${sqW}px; height: ${sqH}px; border-radius: 18px; overflow: hidden; border: 3px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 4px 12px rgba(0,0,0,0.18); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     } else {
-        photoContainerStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 6px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
+        const stW = isHorizLayout ? photoWidth : Math.min(photoWidth, 90);
+        const stH = isHorizLayout ? photoHeight : Math.min(photoHeight, 105);
+        photoContainerStyle = `width: ${stW}px; height: ${stH}px; border-radius: 6px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     }
 
     // 2. Name Block Style (Banner, Boxed, Clean)
@@ -3489,17 +3498,19 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
                     <!-- Top Wave Brand Header -->
                     <div class="id-portrait-header" style="height: 65px; display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; box-sizing: border-box; z-index: 2; position: relative; flex-shrink: 0;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; margin-right: 6px;">
+                            <div class="id-portrait-logo" style="width: ${Math.min(logoSize, 38)}px; height: ${Math.min(logoSize, 38)}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));">
                                 ${logoHtml}
                             </div>
-                            <div class="id-portrait-brand" style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-                                <h1 class="id-portrait-title" style="color: #ffffff; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
-                                <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.92); font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.95;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                            <div class="id-portrait-brand" style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                                <h1 class="id-portrait-title" style="color: #ffffff; font-size: ${Math.min(headerFontSize, 12)}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                                <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.92); font-size: ${Math.max(6, Math.min(headerFontSize * 0.55, 8))}px; margin: 2px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.95;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                             </div>
                         </div>
-                        <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 14px; font-weight: 800; color: #ffffff; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,0.3); text-align: right; line-height: 1.05;">
-                            ${titleLine1}${titleLine2 ? `<br><span style="font-size: 12px; font-weight: 700;">${titleLine2}</span>` : ''}
+                        <div class="id-portrait-type-wrapper" style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; line-height: 1.05;">
+                            <span class="id-portrait-type-badge" style="background: rgba(255,255,255,0.22); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.45); color: #ffffff; padding: 2px 7px; border-radius: 4px; font-size: 8px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.18); font-family: 'Playfair Display', Georgia, serif; display: inline-block;">
+                                ${titleLine1}${titleLine2 ? ` ${titleLine2}` : ''}
+                            </span>
                         </div>
                     </div>
 
@@ -3522,23 +3533,27 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
                     <!-- Details Table -->
                     <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; position: relative; flex-grow: 1; display: flex; flex-direction: column;">
-                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
-                            ${cleanDetailsRowsHtml}
-                        </table>
+                        <div style="background: rgba(15, 23, 42, 0.025); border: 1px solid rgba(15, 23, 42, 0.07); border-radius: 8px; padding: 4px 10px; width: 100%; box-sizing: border-box; margin-bottom: auto;">
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                                ${cleanDetailsRowsHtml}
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Bottom Section: QR, Signature, Barcode -->
                     <div style="padding: 2px 14px 6px 14px; width: 100%; box-sizing: border-box; z-index: 2; position: relative; margin-top: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(56)}
-                            <div style="flex-grow: 1; padding: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            ${getQrHtml(48)}
+                            <div style="flex-grow: 1; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                 ${getNoticeHtml(true)}
                             </div>
-                            ${getSigHtml('85px', '28px')}
+                            ${getSigHtml('80px', '25px')}
                         </div>
                         ${showBarcode ? `
-                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; padding-top: 2px; margin-top: 2px;">
-                            ${getBarcodeHtml('160px', '20px')}
+                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; margin: 3px 0 4px 0;">
+                            <div style="background: #ffffff; padding: 2px 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.08); display: inline-flex; align-items: center; justify-content: center;">
+                                ${getBarcodeHtml('145px', '18px')}
+                            </div>
                         </div>` : ''}
                     </div>
                 </div>
@@ -3580,21 +3595,23 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     </div>
 
                     <!-- Details Table -->
-                    <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1;">
-                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
-                            ${cleanDetailsRowsHtml}
-                        </table>
+                    <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div style="background: rgba(12, 35, 64, 0.025); border: 1px solid rgba(12, 35, 64, 0.07); border-radius: 8px; padding: 4px 10px; width: 100%; box-sizing: border-box; margin-bottom: auto;">
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                                ${cleanDetailsRowsHtml}
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Bottom Chevron Footer with Centered Barcode -->
                     <div style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 18%, 50% 0, 100% 18%, 100% 100%, 0 100%); padding: 12px 14px 6px 14px; margin: auto -15px -15px -15px; display: flex; flex-direction: column; align-items: center; z-index: 2;">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(52)}
-                            ${getSigHtml('90px', '26px')}
+                            ${getQrHtml(48)}
+                            ${getSigHtml('85px', '25px')}
                         </div>
                         ${showBarcode ? `
-                        <div style="width: 100%; display: flex; justify-content: center; background: #ffffff; padding: 3px; border-radius: 4px; margin-top: 2px;">
-                            ${getBarcodeHtml('160px', '20px')}
+                        <div style="width: 100%; display: flex; justify-content: center; background: #ffffff; padding: 2px 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.15); margin: 2px 0 4px 0;">
+                            ${getBarcodeHtml('145px', '18px')}
                         </div>` : ''}
                     </div>
                 </div>
@@ -3634,24 +3651,28 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     </div>
 
                     <!-- Details Table -->
-                    <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1;">
-                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
-                            ${cleanDetailsRowsHtml}
-                        </table>
+                    <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div style="background: rgba(0, 96, 57, 0.025); border: 1px solid rgba(0, 96, 57, 0.07); border-radius: 8px; padding: 4px 10px; width: 100%; box-sizing: border-box; margin-bottom: auto;">
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                                ${cleanDetailsRowsHtml}
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Bottom Section -->
                     <div style="padding: 2px 14px 6px 14px; width: 100%; box-sizing: border-box; z-index: 2; margin-top: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(56)}
-                            <div style="flex-grow: 1; padding: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            ${getQrHtml(48)}
+                            <div style="flex-grow: 1; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                 ${getNoticeHtml(true)}
                             </div>
-                            ${getSigHtml('85px', '28px')}
+                            ${getSigHtml('80px', '25px')}
                         </div>
                         ${showBarcode ? `
-                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; padding-top: 2px; margin-top: 2px;">
-                            ${getBarcodeHtml('160px', '20px')}
+                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; margin: 3px 0 4px 0;">
+                            <div style="background: #ffffff; padding: 2px 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.08); display: inline-flex; align-items: center; justify-content: center;">
+                                ${getBarcodeHtml('145px', '18px')}
+                            </div>
                         </div>` : ''}
                     </div>
                 </div>
@@ -3673,18 +3694,20 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     </svg>
 
                     <!-- Header -->
-                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#78350f'}; border-bottom: 2px solid ${template.accentColor || '#b45309'}; color: #ffffff; height: 65px; display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; z-index: 2; flex-shrink: 0;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="id-portrait-logo" style="width: ${logoSize}px; height: ${logoSize}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                    <div class="id-portrait-header" style="background: ${template.headerBgColor || '#78350f'}; border-bottom: 2px solid ${template.accentColor || '#b45309'}; color: #ffffff; height: 65px; display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; box-sizing: border-box; z-index: 2; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; margin-right: 6px;">
+                            <div class="id-portrait-logo" style="width: ${Math.min(logoSize, 38)}px; height: ${Math.min(logoSize, 38)}px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                                 ${logoHtml}
                             </div>
-                            <div>
-                                <h1 class="id-portrait-title" style="color: #ffffff; font-size: ${headerFontSize}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
-                                <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.85); font-size: ${Math.max(6, headerFontSize * 0.58)}px; margin: 1px 0 0 0; text-transform: uppercase;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                            <div class="id-portrait-brand" style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                                <h1 class="id-portrait-title" style="color: #ffffff; font-size: ${Math.min(headerFontSize, 12)}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15; font-family: ${template.font || "'Playfair Display', Georgia, serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
+                                <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.85); font-size: ${Math.max(6, Math.min(headerFontSize * 0.55, 8))}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${template.font || "'Playfair Display', Georgia, serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                             </div>
                         </div>
-                        <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 13px; font-weight: 700; color: #fde68a; text-transform: uppercase; letter-spacing: 0.6px; text-align: right;">
-                            ${rawCardTitle}
+                        <div class="id-portrait-type-wrapper" style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; line-height: 1.05;">
+                            <span class="id-portrait-type-badge" style="background: rgba(253, 230, 138, 0.15); border: 1px solid rgba(253, 230, 138, 0.4); font-family: 'Playfair Display', Georgia, serif; font-size: 8px; font-weight: 700; color: #fde68a; text-transform: uppercase; letter-spacing: 0.6px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; display: inline-block;">
+                                ${rawCardTitle}
+                            </span>
                         </div>
                     </div>
 
@@ -3706,24 +3729,28 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     </div>
 
                     <!-- Details Table -->
-                    <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1;">
-                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
-                            ${cleanDetailsRowsHtml}
-                        </table>
+                    <div style="padding: 0 14px; width: 100%; box-sizing: border-box; z-index: 2; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div style="background: rgba(120, 53, 15, 0.03); border: 1px solid rgba(120, 53, 15, 0.08); border-radius: 8px; padding: 4px 10px; width: 100%; box-sizing: border-box; margin-bottom: auto;">
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                                ${cleanDetailsRowsHtml}
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Bottom Section -->
                     <div style="padding: 2px 14px 6px 14px; width: 100%; box-sizing: border-box; z-index: 2; margin-top: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(54)}
-                            <div style="flex-grow: 1; padding: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            ${getQrHtml(48)}
+                            <div style="flex-grow: 1; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                 ${getNoticeHtml(true)}
                             </div>
-                            ${getSigHtml('85px', '28px')}
+                            ${getSigHtml('80px', '25px')}
                         </div>
                         ${showBarcode ? `
-                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; padding-top: 2px; margin-top: 2px;">
-                            ${getBarcodeHtml('160px', '20px')}
+                        <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; margin: 3px 0 4px 0;">
+                            <div style="background: #ffffff; padding: 2px 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.08); display: inline-flex; align-items: center; justify-content: center;">
+                                ${getBarcodeHtml('145px', '18px')}
+                            </div>
                         </div>` : ''}
                     </div>
                 </div>
@@ -3781,9 +3808,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                             ` : ''}
                         </div>
                         
-                        <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px;">
-                            ${cleanDetailsRowsHtml}
-                        </table>
+                        <div style="background: rgba(15, 23, 42, 0.025); border: 1px solid rgba(15, 23, 42, 0.07); border-radius: 8px; padding: 4px 8px; width: 100%; box-sizing: border-box; margin-bottom: 5px;">
+                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                                ${cleanDetailsRowsHtml}
+                            </table>
+                        </div>
                         
                         <div style="font-size: ${Math.max(4.5, detailsFontSize * 0.65)}px; color: ${subtextColor}; line-height: 1.2; margin-top: auto; padding: 4px; border-radius: 4px; background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.1); word-break: break-word;">
                             1. Card is VSA property, display on duty.<br>2. Return to Shaheed Gunj Srinagar 190001.
@@ -3793,8 +3822,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                 
                 <!-- Barcode at the bottom -->
                 ${showBarcode ? `
-                <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; height: 26px; padding-top: 4px; margin-top: 5px; flex-shrink: 0; box-sizing: border-box;">
-                    <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: 130px; height: 20px;"></canvas>
+                <div style="width: 100%; display: flex; justify-content: ${barcodePosition === 'bottom-left' ? 'flex-start' : barcodePosition === 'bottom-right' ? 'flex-end' : 'center'}; align-items: center; height: 26px; padding: 0 10px; margin-top: 3px; margin-bottom: 5px; flex-shrink: 0; box-sizing: border-box;">
+                    <div style="background: #ffffff; padding: 2px 6px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.06); display: inline-flex; align-items: center; justify-content: center;">
+                        <canvas class="barcode-canvas-rendered" data-barcode-val="${emp.id}" data-barcode-type="CODE128" style="width: 130px; height: 18px;"></canvas>
+                    </div>
                 </div>
                 ` : ''}
             </div>
@@ -3811,13 +3842,14 @@ function adjustCardTextSizes(container) {
         // 1. Fit Header Brand Title and Subtitle
         const titleEl = card.querySelector('.id-portrait-title');
         const subtitleEl = card.querySelector('.id-portrait-subtitle');
+        const brandParent = titleEl ? titleEl.closest('.id-portrait-brand') : null;
         if (titleEl) {
             let originalSize = parseFloat(window.getComputedStyle(titleEl).fontSize) || 14;
             if (!titleEl.dataset.originalSize) {
                 titleEl.dataset.originalSize = originalSize;
             }
             let size = originalSize;
-            const targetWidth = titleEl.clientWidth || (isHorizontal ? 400 : 230);
+            const targetWidth = (brandParent && brandParent.clientWidth > 30) ? brandParent.clientWidth : (titleEl.clientWidth || (isHorizontal ? 400 : 160));
             const origWhiteSpace = titleEl.style.whiteSpace;
             titleEl.style.whiteSpace = 'nowrap';
             while (titleEl.scrollWidth > targetWidth + 2 && size > 7.5) {
@@ -3834,7 +3866,7 @@ function adjustCardTextSizes(container) {
                 subtitleEl.dataset.originalSize = originalSize;
             }
             let size = originalSize;
-            const targetWidth = subtitleEl.clientWidth || (isHorizontal ? 400 : 230);
+            const targetWidth = (brandParent && brandParent.clientWidth > 30) ? brandParent.clientWidth : (subtitleEl.clientWidth || (isHorizontal ? 400 : 160));
             const origWhiteSpace = subtitleEl.style.whiteSpace;
             subtitleEl.style.whiteSpace = 'nowrap';
             while (subtitleEl.scrollWidth > targetWidth + 2 && size > 6.0) {
@@ -3843,6 +3875,22 @@ function adjustCardTextSizes(container) {
             }
             if (origWhiteSpace) {
                 subtitleEl.style.whiteSpace = origWhiteSpace;
+            }
+        }
+
+        // Fit Type Badge (SECURITY ID CARD / STAFF IDENTITY CARD)
+        const typeBadgeEl = card.querySelector('.id-portrait-type-badge');
+        if (typeBadgeEl) {
+            let originalSize = parseFloat(window.getComputedStyle(typeBadgeEl).fontSize) || 8;
+            if (!typeBadgeEl.dataset.originalSize) {
+                typeBadgeEl.dataset.originalSize = originalSize;
+            }
+            let size = originalSize;
+            const badgeWrapper = typeBadgeEl.parentElement;
+            const maxBadgeWidth = (badgeWrapper && badgeWrapper.clientWidth > 20) ? badgeWrapper.clientWidth : 110;
+            while (typeBadgeEl.scrollWidth > maxBadgeWidth + 2 && size > 6.0) {
+                size -= 0.5;
+                typeBadgeEl.style.fontSize = size + 'px';
             }
         }
 
@@ -14728,6 +14776,9 @@ function updateLivePreview() {
     
     container.innerHTML = generateIdCardHtml(previewEmp, activeTpl);
     renderQrsInContainer(container);
+    requestAnimationFrame(() => {
+        adjustCardTextSizes(container);
+    });
 }
 
 async function deleteTemplate(id) {
