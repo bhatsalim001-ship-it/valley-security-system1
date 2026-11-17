@@ -7294,6 +7294,7 @@ function renderReorderableFieldsList() {
 const UICE_STATE = {
     template: null,
     orientation: 'horizontal', // 'horizontal' | 'vertical' | 'custom'
+    surface: 'front', // 'front' | 'back'
     initialSnapshots: null,
     selectedId: null,
     hoveredId: null,
@@ -7792,6 +7793,853 @@ function getUiceDefaultElements(orientation, tpl = {}) {
     }
 }
 
+
+/**
+ * Returns default UICE back-of-card element nodes for horizontal or vertical orientation.
+ */
+function getUiceDefaultBackElements(orientation, tpl = {}) {
+    const isHoriz = orientation === 'horizontal';
+    const headerBg = tpl.headerBgColor || '#0e3e2b';
+    const accent = tpl.accentColor || '#009688';
+
+    if (isHoriz) {
+        return [
+            {
+                id: 'uice-back-top-bar',
+                type: 'shape',
+                name: 'Back Top Bar',
+                x: 0,
+                y: 0,
+                width: 500,
+                height: 38,
+                rotation: 0,
+                zIndex: 1,
+                locked: true,
+                visible: true,
+                properties: {
+                    fill: headerBg,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                    opacity: 1
+                }
+            },
+            {
+                id: 'uice-back-title',
+                type: 'custom-text',
+                name: 'Back Title',
+                x: 16,
+                y: 9,
+                width: 468,
+                height: 20,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'TERMS OF ISSUE & CARDHOLDER INSTRUCTIONS',
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5
+                }
+            },
+            {
+                id: 'uice-back-terms',
+                type: 'custom-text',
+                name: 'Terms & Conditions',
+                x: 16,
+                y: 46,
+                width: 468,
+                height: 72,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: '1. This credential remains the property of issuing authority and is non-transferable.<br>2. Loss must be reported immediately to Security Control Room (+91-194-2452000).<br>3. Card must be visibly displayed at all times on assigned duty premises.<br>4. Unauthorized replication or alteration is strictly punishable under law.<br>5. Surrender card upon transfer, suspension, or termination of engagement.',
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    fontSize: 8.5,
+                    fontWeight: 500,
+                    color: '#334155',
+                    textAlign: 'left',
+                    lineHeight: 1.3
+                }
+            },
+            {
+                id: 'uice-back-return-box',
+                type: 'shape',
+                name: 'Return Notice Box',
+                x: 16,
+                y: 124,
+                width: 468,
+                height: 38,
+                rotation: 0,
+                zIndex: 1,
+                locked: false,
+                visible: true,
+                properties: {
+                    fill: '#f8fafc',
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    borderRadius: 6,
+                    opacity: 1
+                }
+            },
+            {
+                id: 'uice-back-return-text',
+                type: 'custom-text',
+                name: 'Return Address Text',
+                x: 24,
+                y: 128,
+                width: 452,
+                height: 30,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'IF FOUND, PLEASE DROP IN ANY POST BOX OR RETURN TO:<br><strong>VALLEY SECURITY AGENCY — HQ, SHAHIDGUNJ, SRINAGAR, J&K - 190001</strong>',
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    fontSize: 7.5,
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    textAlign: 'center',
+                    lineHeight: 1.25
+                }
+            },
+            {
+                id: 'uice-back-emergency',
+                type: 'badge-pill',
+                name: 'Emergency Helpline',
+                x: 16,
+                y: 172,
+                width: 230,
+                height: 26,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'EMERGENCY: 112 / +91-194-2452000',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#dc2626',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    borderRadius: 4
+                }
+            },
+            {
+                id: 'uice-back-medical',
+                type: 'badge-pill',
+                name: 'Medical & Police Helpline',
+                x: 254,
+                y: 172,
+                width: 230,
+                height: 26,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'MEDICAL: 104 | POLICE: 100',
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    color: '#2563eb',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    borderRadius: 4
+                }
+            },
+            {
+                id: 'uice-back-signature',
+                type: 'signature',
+                name: 'Issuing Authority Stamp & Signature',
+                x: 24,
+                y: 216,
+                width: 190,
+                height: 56,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    preset: tpl.signature || 'preset-vsa-sig',
+                    color: '#000000',
+                    label: 'ISSUING AUTHORITY STAMP & SIGNATURE'
+                }
+            },
+            {
+                id: 'uice-back-barcode',
+                type: 'barcode',
+                name: 'Card Serial Barcode',
+                x: 260,
+                y: 224,
+                width: 215,
+                height: 48,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    format: 'CODE128',
+                    lineColor: '#000000',
+                    background: '#ffffff',
+                    showText: true,
+                    fontSize: 8.5
+                }
+            },
+            {
+                id: 'uice-back-bottom-bar',
+                type: 'shape',
+                name: 'Bottom Accent Bar',
+                x: 0,
+                y: 312,
+                width: 500,
+                height: 8,
+                rotation: 0,
+                zIndex: 1,
+                locked: true,
+                visible: true,
+                properties: {
+                    fill: accent,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                    opacity: 1
+                }
+            }
+        ];
+    } else {
+        return [
+            {
+                id: 'uice-back-top-bar-v',
+                type: 'shape',
+                name: 'Back Top Bar',
+                x: 0,
+                y: 0,
+                width: 320,
+                height: 38,
+                rotation: 0,
+                zIndex: 1,
+                locked: true,
+                visible: true,
+                properties: {
+                    fill: headerBg,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                    opacity: 1
+                }
+            },
+            {
+                id: 'uice-back-title-v',
+                type: 'custom-text',
+                name: 'Back Title',
+                x: 10,
+                y: 9,
+                width: 300,
+                height: 20,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'INSTRUCTIONS & CONDITIONS',
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5
+                }
+            },
+            {
+                id: 'uice-back-terms-v',
+                type: 'custom-text',
+                name: 'Terms & Conditions',
+                x: 12,
+                y: 48,
+                width: 296,
+                height: 105,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: '1. This credential remains property of issuing authority.<br>2. Non-transferable; must be visibly worn on duty.<br>3. Loss must be reported immediately to Control (+91-194-2452000).<br>4. Replication or misuse is punishable by law.<br>5. Return upon cessation of engagement.',
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    fontSize: 8.5,
+                    fontWeight: 500,
+                    color: '#334155',
+                    textAlign: 'left',
+                    lineHeight: 1.3
+                }
+            },
+            {
+                id: 'uice-back-return-box-v',
+                type: 'shape',
+                name: 'Return Notice Box',
+                x: 12,
+                y: 162,
+                width: 296,
+                height: 48,
+                rotation: 0,
+                zIndex: 1,
+                locked: false,
+                visible: true,
+                properties: {
+                    fill: '#f8fafc',
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    borderRadius: 6,
+                    opacity: 1
+                }
+            },
+            {
+                id: 'uice-back-return-text-v',
+                type: 'custom-text',
+                name: 'Return Address Text',
+                x: 16,
+                y: 166,
+                width: 288,
+                height: 40,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'IF FOUND, PLEASE DROP IN ANY POST BOX OR RETURN TO:<br><strong>VALLEY SECURITY AGENCY — HQ, SHAHIDGUNJ, SRINAGAR, J&K - 190001</strong>',
+                    fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                    fontSize: 7.5,
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    textAlign: 'center',
+                    lineHeight: 1.25
+                }
+            },
+            {
+                id: 'uice-back-emergency-v',
+                type: 'badge-pill',
+                name: 'Emergency Helpline',
+                x: 12,
+                y: 222,
+                width: 296,
+                height: 26,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'EMERGENCY: 112 / +91-194-2452000',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#dc2626',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    borderRadius: 4
+                }
+            },
+            {
+                id: 'uice-back-medical-v',
+                type: 'badge-pill',
+                name: 'Medical & Police Helpline',
+                x: 12,
+                y: 254,
+                width: 296,
+                height: 26,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    text: 'MEDICAL: 104 | J&K POLICE: 100',
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    color: '#2563eb',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    borderRadius: 4
+                }
+            },
+            {
+                id: 'uice-back-signature-v',
+                type: 'signature',
+                name: 'Issuing Authority Stamp & Signature',
+                x: 60,
+                y: 296,
+                width: 200,
+                height: 60,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    preset: tpl.signature || 'preset-vsa-sig',
+                    color: '#000000',
+                    label: 'ISSUING AUTHORITY STAMP & SIGNATURE'
+                }
+            },
+            {
+                id: 'uice-back-barcode-v',
+                type: 'barcode',
+                name: 'Card Serial Barcode',
+                x: 45,
+                y: 380,
+                width: 230,
+                height: 50,
+                rotation: 0,
+                zIndex: 2,
+                locked: false,
+                visible: true,
+                properties: {
+                    format: 'CODE128',
+                    lineColor: '#000000',
+                    background: '#ffffff',
+                    showText: true,
+                    fontSize: 8.5
+                }
+            },
+            {
+                id: 'uice-back-bottom-bar-v',
+                type: 'shape',
+                name: 'Bottom Accent Bar',
+                x: 0,
+                y: 490,
+                width: 320,
+                height: 10,
+                rotation: 0,
+                zIndex: 1,
+                locked: true,
+                visible: true,
+                properties: {
+                    fill: accent,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                    opacity: 1
+                }
+            }
+        ];
+    }
+}
+
+/**
+ * Returns the active element array for the currently selected surface ('front' or 'back').
+ */
+function getUiceActiveElements(layout = null) {
+    if (!layout) {
+        if (!UICE_STATE.template || !UICE_STATE.template.layouts) return [];
+        layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+    }
+    if (!layout) return [];
+    if (UICE_STATE.surface === 'back') {
+        if (!Array.isArray(layout.backElements) || layout.backElements.length === 0) {
+            layout.backElements = getUiceDefaultBackElements(UICE_STATE.orientation, UICE_STATE.template);
+        }
+        return layout.backElements;
+    }
+    if (!Array.isArray(layout.elements) || layout.elements.length === 0) {
+        layout.elements = getUiceDefaultElements(UICE_STATE.orientation, UICE_STATE.template);
+    }
+    return layout.elements;
+}
+
+/**
+ * Generates dual-orientation and dual-surface layouts for an archetype preset.
+ */
+function createArchetypeLayouts(config) {
+    const tplMock = {
+        headerBgColor: config.primary,
+        accentColor: config.accent,
+        backgroundColor: config.bg || '#ffffff',
+        font: config.font || "'Plus Jakarta Sans', sans-serif",
+        headerText: config.headerText || 'VALLEY SECURITY AGENCY',
+        cardTitle: config.cardTitle || 'OFFICIAL CREDENTIAL',
+        subheaderText: config.subheaderText || 'COMMAND & CONTROL',
+        logo: config.logo || 'preset-vsa-logo',
+        signature: config.signature || 'preset-vsa-sig'
+    };
+    return {
+        horizontal: {
+            width: 500,
+            height: 320,
+            background: {
+                color: tplMock.backgroundColor,
+                headerBg: tplMock.headerBgColor,
+                accent: tplMock.accentColor,
+                borderWidth: config.borderWidth || 2,
+                borderRadius: config.borderRadius !== undefined ? config.borderRadius : 14
+            },
+            elements: getUiceDefaultElements('horizontal', tplMock),
+            backElements: getUiceDefaultBackElements('horizontal', tplMock)
+        },
+        vertical: {
+            width: 320,
+            height: 500,
+            background: {
+                color: tplMock.backgroundColor,
+                headerBg: tplMock.headerBgColor,
+                accent: tplMock.accentColor,
+                borderWidth: config.borderWidth || 2,
+                borderRadius: config.borderRadius !== undefined ? config.borderRadius : 14
+            },
+            elements: getUiceDefaultElements('vertical', tplMock),
+            backElements: getUiceDefaultBackElements('vertical', tplMock)
+        }
+    };
+}
+
+/**
+ * Master Archetype Preset Library Definitions (Phase 8)
+ */
+const UICE_ARCHETYPES = [
+    {
+        id: 'archetype-paramilitary-gold',
+        name: 'Paramilitary & Defense Force',
+        badge: 'MIL-SPEC DEFENSE',
+        category: 'Defense & Armed Units',
+        icon: 'shield-alert',
+        cardTitle: 'ARMED SECURITY PASS',
+        headerText: 'VALLEY TACTICAL RESPONSE',
+        subheaderText: 'MIL-SPEC DEFENSE CORPS',
+        description: 'High-durability gold and emerald command layout designed for armed security personnel, quick reaction forces, and perimeter control officers.',
+        colors: {
+            primary: '#0e3e2b',
+            accent: '#d97706',
+            bg: '#ffffff',
+            previewGradient: 'linear-gradient(135deg, #0e3e2b 0%, #1e5a40 50%, #d97706 100%)'
+        },
+        getLayouts: function() {
+            return createArchetypeLayouts({
+                primary: '#0e3e2b',
+                accent: '#d97706',
+                bg: '#ffffff',
+                cardTitle: 'ARMED SECURITY PASS',
+                headerText: 'VALLEY TACTICAL RESPONSE',
+                subheaderText: 'MIL-SPEC DEFENSE CORPS'
+            });
+        }
+    },
+    {
+        id: 'archetype-cyber-obsidian',
+        name: 'Modern Corporate & Cyber Tech',
+        badge: 'CYBER / ENTERPRISE',
+        category: 'Enterprise Tech',
+        icon: 'cpu',
+        cardTitle: 'CYBER ACCESS BADGE',
+        headerText: 'VALLEY TECH MATRIX',
+        subheaderText: 'CYBERSECURITY OPERATIONS',
+        description: 'Obsidian dark-tone header with electric cyan accents, optimized for cybersecurity teams, server room access, and corporate executives.',
+        colors: {
+            primary: '#0f172a',
+            accent: '#06b6d4',
+            bg: '#ffffff',
+            previewGradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #06b6d4 100%)'
+        },
+        getLayouts: function() {
+            return createArchetypeLayouts({
+                primary: '#0f172a',
+                accent: '#06b6d4',
+                bg: '#ffffff',
+                cardTitle: 'CYBER ACCESS BADGE',
+                headerText: 'VALLEY TECH MATRIX',
+                subheaderText: 'CYBERSECURITY OPERATIONS'
+            });
+        }
+    },
+    {
+        id: 'archetype-healthcare-teal',
+        name: 'Healthcare & Hospital Manpower',
+        badge: 'MEDICAL / CLINICAL',
+        category: 'Healthcare & EMS',
+        icon: 'activity',
+        cardTitle: 'HOSPITAL MANPOWER PASS',
+        headerText: 'VALLEY HEALTHCARE ALLIANCE',
+        subheaderText: 'CLINICAL SUPPORT SERVICES',
+        description: 'Clinical teal and pure white high-contrast visual hierarchy engineered for patient care attendants, hospital ward boys, and trauma center medics.',
+        colors: {
+            primary: '#0f766e',
+            accent: '#14b8a6',
+            bg: '#ffffff',
+            previewGradient: 'linear-gradient(135deg, #0f766e 0%, #115e59 50%, #14b8a6 100%)'
+        },
+        getLayouts: function() {
+            return createArchetypeLayouts({
+                primary: '#0f766e',
+                accent: '#14b8a6',
+                bg: '#ffffff',
+                cardTitle: 'HOSPITAL MANPOWER PASS',
+                headerText: 'VALLEY HEALTHCARE ALLIANCE',
+                subheaderText: 'CLINICAL SUPPORT SERVICES'
+            });
+        }
+    },
+    {
+        id: 'archetype-executive-platinum',
+        name: 'Executive VIP & Law Enforcement',
+        badge: 'SPECIAL OPERATIONS',
+        category: 'Executive VIP',
+        icon: 'award',
+        cardTitle: 'SPECIAL INVESTIGATOR',
+        headerText: 'VALLEY INVESTIGATIONS',
+        subheaderText: 'SPECIAL OPERATIONS DIVISION',
+        description: 'Sleek deep onyx with platinum-slate borders and refined authority seal for VIP protection officers, investigators, and agency leadership.',
+        colors: {
+            primary: '#18181b',
+            accent: '#94a3b8',
+            bg: '#ffffff',
+            previewGradient: 'linear-gradient(135deg, #18181b 0%, #27272a 60%, #94a3b8 100%)'
+        },
+        getLayouts: function() {
+            return createArchetypeLayouts({
+                primary: '#18181b',
+                accent: '#94a3b8',
+                bg: '#ffffff',
+                cardTitle: 'SPECIAL INVESTIGATOR',
+                headerText: 'VALLEY INVESTIGATIONS',
+                subheaderText: 'SPECIAL OPERATIONS DIVISION'
+            });
+        }
+    },
+    {
+        id: 'archetype-event-amber',
+        name: 'Event & Rapid Access Pass',
+        badge: 'RAPID ACCESS',
+        category: 'Event & Temporary',
+        icon: 'ticket',
+        cardTitle: 'RAPID EVENT PASS',
+        headerText: 'VALLEY EVENT MARSHALS',
+        subheaderText: 'TEMPORARY ACCESS CONTROL',
+        description: 'High-visibility amber and charcoal layout featuring jumbo QR scannability and bold shift expiry callouts for rapid event marshals and contractors.',
+        colors: {
+            primary: '#27272a',
+            accent: '#f59e0b',
+            bg: '#ffffff',
+            previewGradient: 'linear-gradient(135deg, #27272a 0%, #3f3f46 50%, #f59e0b 100%)'
+        },
+        getLayouts: function() {
+            return createArchetypeLayouts({
+                primary: '#27272a',
+                accent: '#f59e0b',
+                bg: '#ffffff',
+                cardTitle: 'RAPID EVENT PASS',
+                headerText: 'VALLEY EVENT MARSHALS',
+                subheaderText: 'TEMPORARY ACCESS CONTROL'
+            });
+        }
+    },
+    {
+        id: 'archetype-govt-navy',
+        name: 'Public Sector & Govt Standard',
+        badge: 'GOVT / PSU STANDARD',
+        category: 'Public Sector',
+        icon: 'landmark',
+        cardTitle: 'GOVERNMENT CONTRACTOR',
+        headerText: 'VALLEY MANPOWER SERVICES',
+        subheaderText: 'GOVERNMENT e-MARKETPLACE (GeM)',
+        description: 'Institutional navy blue with tricolor accent bar matching central PSU and public department identification standards.',
+        colors: {
+            primary: '#1e3a8a',
+            accent: '#f97316',
+            bg: '#ffffff',
+            previewGradient: 'linear-gradient(135deg, #1e3a8a 0%, #172554 60%, #f97316 100%)'
+        },
+        getLayouts: function() {
+            return createArchetypeLayouts({
+                primary: '#1e3a8a',
+                accent: '#f97316',
+                bg: '#ffffff',
+                cardTitle: 'GOVERNMENT CONTRACTOR',
+                headerText: 'VALLEY MANPOWER SERVICES',
+                subheaderText: 'GOVERNMENT e-MARKETPLACE (GeM)'
+            });
+        }
+    }
+];
+
+/**
+ * Surface Switching & 3D Card Flip Functions (Phase 8)
+ */
+function setUiceSurface(surface) {
+    if (surface !== 'front' && surface !== 'back') return;
+    UICE_STATE.surface = surface;
+    UICE_STATE.selectedId = null;
+
+    const btnFront = document.getElementById('btn-uice-surface-front');
+    const btnBack = document.getElementById('btn-uice-surface-back');
+    if (btnFront) btnFront.classList.toggle('active', surface === 'front');
+    if (btnBack) btnBack.classList.toggle('active', surface === 'back');
+
+    renderUiceStage();
+}
+
+function flipUiceCard() {
+    const artboard = document.getElementById('uice-artboard');
+    if (artboard) {
+        artboard.classList.remove('uice-flip-anim');
+        void artboard.offsetWidth; // force reflow
+        artboard.classList.add('uice-flip-anim');
+        setTimeout(() => {
+            if (artboard) artboard.classList.remove('uice-flip-anim');
+        }, 500);
+    }
+    const newSurface = (UICE_STATE.surface === 'back') ? 'front' : 'back';
+    setUiceSurface(newSurface);
+}
+
+/**
+ * Master Archetype Modal Controls (Phase 8)
+ */
+function openUiceArchetypesModal() {
+    const modal = document.getElementById('uice-archetypes-modal');
+    const list = document.getElementById('uice-archetypes-list');
+    if (!modal || !list) return;
+
+    list.innerHTML = UICE_ARCHETYPES.map(a => `
+        <div class="uice-archetype-card" onclick="loadUiceArchetype('${a.id}')">
+            <div class="uice-archetype-thumb" style="background: ${a.colors.previewGradient};">
+                <span class="uice-archetype-badge">${a.badge}</span>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.6);">
+                    <i data-lucide="${a.icon || 'shield'}" style="width: 32px; height: 32px; margin-bottom: 4px;"></i>
+                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">${a.category}</span>
+                </div>
+            </div>
+            <h4 class="uice-archetype-title">${a.name}</h4>
+            <p class="uice-archetype-desc">${a.description}</p>
+            <button type="button" class="uice-archetype-load-btn" onclick="event.stopPropagation(); loadUiceArchetype('${a.id}');">
+                <i data-lucide="check" style="width: 14px; height: 14px;"></i> Instantiate Layout
+            </button>
+        </div>
+    `).join('');
+
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons({ root: list });
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeUiceArchetypesModal() {
+    const modal = document.getElementById('uice-archetypes-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function loadUiceArchetype(archetypeId) {
+    const arch = UICE_ARCHETYPES.find(a => a.id === archetypeId);
+    if (!arch) return;
+
+    const layouts = arch.getLayouts ? arch.getLayouts() : arch.layouts;
+    const newTpl = {
+        id: 'tpl-' + Date.now(),
+        name: arch.name,
+        cardTitle: arch.cardTitle || 'SECURITY ID CARD',
+        layout: UICE_STATE.orientation || 'horizontal',
+        font: arch.font || "'Plus Jakarta Sans', sans-serif",
+        headerBgColor: arch.colors.primary,
+        accentColor: arch.colors.accent,
+        backgroundColor: arch.colors.bg || '#ffffff',
+        layouts: JSON.parse(JSON.stringify(layouts))
+    };
+
+    convertLegacyTemplateToUice(newTpl);
+
+    if (typeof VSA_STATE !== 'undefined' && VSA_STATE.templates) {
+        VSA_STATE.templates.push(newTpl);
+        if (typeof renderTemplatesList === 'function') renderTemplatesList();
+        if (typeof populateSelectors === 'function') populateSelectors();
+    }
+
+    initUiceWithTemplate(newTpl);
+    closeUiceArchetypesModal();
+}
+
+/**
+ * Portable Template Asset System (JSON Export / Import / Clone - Phase 8)
+ */
+function exportUiceTemplateJson() {
+    if (!UICE_STATE.template) {
+        alert('No active template to export.');
+        return;
+    }
+    const tpl = JSON.parse(JSON.stringify(UICE_STATE.template));
+    const exportData = {
+        generator: "Valley Security Studio — Project Omega UICE 2.0",
+        version: "2.0.0",
+        exportedAt: new Date().toISOString(),
+        template: tpl
+    };
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (tpl.name || 'id_template').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    a.href = url;
+    a.download = `${safeName}.uice.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importUiceTemplateJson(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            const tplData = parsed.template || parsed;
+            if (!tplData || typeof tplData !== 'object') {
+                throw new Error('Invalid template JSON structure.');
+            }
+            if (!tplData.id) {
+                tplData.id = 'tpl-imported-' + Date.now();
+            }
+            if (!tplData.name) {
+                tplData.name = file.name.replace(/\.(uice\.)?json$/i, '');
+            }
+            convertLegacyTemplateToUice(tplData);
+
+            if (typeof VSA_STATE !== 'undefined' && VSA_STATE.templates) {
+                const idx = VSA_STATE.templates.findIndex(t => t.id === tplData.id);
+                if (idx !== -1) {
+                    VSA_STATE.templates[idx] = tplData;
+                } else {
+                    VSA_STATE.templates.push(tplData);
+                }
+                if (typeof renderTemplatesList === 'function') renderTemplatesList();
+                if (typeof populateSelectors === 'function') populateSelectors();
+            }
+
+            initUiceWithTemplate(tplData);
+            alert(`Template "${tplData.name}" imported successfully!`);
+        } catch (err) {
+            console.error('Import template JSON error:', err);
+            alert('Failed to import template JSON: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function cloneUiceTemplate() {
+    if (!UICE_STATE.template) {
+        alert('No active template to clone.');
+        return;
+    }
+    const clone = JSON.parse(JSON.stringify(UICE_STATE.template));
+    clone.id = 'tpl-clone-' + Date.now();
+    clone.name = `${clone.name || 'Template'} (Copy)`;
+
+    if (typeof VSA_STATE !== 'undefined' && VSA_STATE.templates) {
+        VSA_STATE.templates.push(clone);
+        if (typeof renderTemplatesList === 'function') renderTemplatesList();
+        if (typeof populateSelectors === 'function') populateSelectors();
+    }
+    initUiceWithTemplate(clone);
+    alert(`Cloned template as "${clone.name}".`);
+}
+
 /**
  * Ensures a template object has modern UICE dual-orientation layout nodes.
  */
@@ -7809,8 +8657,16 @@ function convertLegacyTemplateToUice(tpl) {
                 accent: tpl.accentColor || '#009688',
                 borderRadius: 14
             },
-            elements: getUiceDefaultElements('horizontal', tpl)
+            elements: getUiceDefaultElements('horizontal', tpl),
+            backElements: (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('horizontal', tpl) : []
         };
+    } else {
+        if (!Array.isArray(tpl.layouts.horizontal.elements) || tpl.layouts.horizontal.elements.length === 0) {
+            tpl.layouts.horizontal.elements = getUiceDefaultElements('horizontal', tpl);
+        }
+        if (!Array.isArray(tpl.layouts.horizontal.backElements) || tpl.layouts.horizontal.backElements.length === 0) {
+            tpl.layouts.horizontal.backElements = (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('horizontal', tpl) : [];
+        }
     }
     if (!tpl.layouts.vertical) {
         tpl.layouts.vertical = {
@@ -7822,8 +8678,16 @@ function convertLegacyTemplateToUice(tpl) {
                 accent: tpl.accentColor || '#009688',
                 borderRadius: 14
             },
-            elements: getUiceDefaultElements('vertical', tpl)
+            elements: getUiceDefaultElements('vertical', tpl),
+            backElements: (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('vertical', tpl) : []
         };
+    } else {
+        if (!Array.isArray(tpl.layouts.vertical.elements) || tpl.layouts.vertical.elements.length === 0) {
+            tpl.layouts.vertical.elements = getUiceDefaultElements('vertical', tpl);
+        }
+        if (!Array.isArray(tpl.layouts.vertical.backElements) || tpl.layouts.vertical.backElements.length === 0) {
+            tpl.layouts.vertical.backElements = (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('vertical', tpl) : [];
+        }
     }
     return tpl;
 }
@@ -7838,7 +8702,12 @@ function initUiceWithTemplate(tplSource) {
 
     UICE_STATE.template = tpl;
     UICE_STATE.orientation = tpl.layout === 'vertical' ? 'vertical' : 'horizontal';
+    UICE_STATE.surface = 'front';
     UICE_STATE.selectedId = null;
+    const btnSurfFront = document.getElementById('btn-uice-surface-front');
+    const btnSurfBack = document.getElementById('btn-uice-surface-back');
+    if (btnSurfFront) btnSurfFront.classList.add('active');
+    if (btnSurfBack) btnSurfBack.classList.remove('active');
     UICE_STATE.history = [];
     UICE_STATE.historyIndex = -1;
     UICE_STATE.initialSnapshots = JSON.parse(JSON.stringify(tpl.layouts));
@@ -8000,7 +8869,8 @@ function renderUiceStage() {
     const emp = UICE_STATE.previewEmp || MOCK_GUARD;
 
     // Sort elements by zIndex
-    const sorted = [...(layout.elements || [])].sort((a, b) => (a.zIndex || 1) - (b.zIndex || 1));
+    const activeElements = getUiceActiveElements(layout);
+    const sorted = [...activeElements].sort((a, b) => (a.zIndex || 1) - (b.zIndex || 1));
 
     sorted.forEach(el => {
         if (el.visible === false) return;
@@ -8067,7 +8937,7 @@ function renderUiceStage() {
     renderUiceLayersList();
 
     // Update Property Inspector
-    const selectedEl = layout.elements.find(e => e.id === UICE_STATE.selectedId);
+    const selectedEl = getUiceActiveElements(layout).find(e => e.id === UICE_STATE.selectedId);
     updateUicePropertyInspector(selectedEl);
 
     // Draw pixel rulers
@@ -8381,10 +9251,11 @@ function renderUiceLayersList() {
     const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
     if (!layout) return;
 
-    if (countBadge) countBadge.textContent = layout.elements.length;
+    const elements = getUiceActiveElements(layout);
+    if (countBadge) countBadge.textContent = elements.length;
 
     // Sort reversed so highest Z-index is at top
-    const sorted = [...layout.elements].sort((a, b) => (b.zIndex || 1) - (a.zIndex || 1));
+    const sorted = [...elements].sort((a, b) => (b.zIndex || 1) - (a.zIndex || 1));
 
     listContainer.innerHTML = sorted.map(el => {
         const isSelected = el.id === UICE_STATE.selectedId;
@@ -8433,7 +9304,7 @@ function renderUiceLayersList() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const id = this.getAttribute('data-id');
-            const el = layout.elements.find(x => x.id === id);
+            const el = elements.find(x => x.id === id);
             if (el) {
                 el.zIndex = (el.zIndex || 1) + 1;
                 renderUiceStage();
@@ -8447,7 +9318,7 @@ function renderUiceLayersList() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const id = this.getAttribute('data-id');
-            const el = layout.elements.find(x => x.id === id);
+            const el = elements.find(x => x.id === id);
             if (el) {
                 el.zIndex = Math.max(0, (el.zIndex || 1) - 1);
                 renderUiceStage();
@@ -8470,7 +9341,7 @@ function renderUiceLayersList() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const id = this.getAttribute('data-id');
-            const el = layout.elements.find(x => x.id === id);
+            const el = elements.find(x => x.id === id);
             if (el) {
                 el.locked = !el.locked;
                 renderUiceStage();
@@ -8483,7 +9354,7 @@ function renderUiceLayersList() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const id = this.getAttribute('data-id');
-            const el = layout.elements.find(x => x.id === id);
+            const el = elements.find(x => x.id === id);
             if (el) {
                 el.visible = el.visible === false ? true : false;
                 renderUiceStage();
@@ -8520,9 +9391,10 @@ function deleteUiceElement(id) {
     const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
     if (!layout) return;
 
-    const idx = layout.elements.findIndex(x => x.id === id);
+    const elements = getUiceActiveElements(layout);
+    const idx = elements.findIndex(x => x.id === id);
     if (idx !== -1) {
-        const removed = layout.elements.splice(idx, 1)[0];
+        const removed = elements.splice(idx, 1)[0];
         if (UICE_STATE.selectedId === id) {
             UICE_STATE.selectedId = null;
         }
@@ -8538,7 +9410,8 @@ function duplicateUiceElement(id) {
     const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
     if (!layout) return;
 
-    const source = layout.elements.find(x => x.id === id);
+    const elements = getUiceActiveElements(layout);
+    const source = elements.find(x => x.id === id);
     if (!source) return;
 
     const clone = JSON.parse(JSON.stringify(source));
@@ -8549,7 +9422,7 @@ function duplicateUiceElement(id) {
     clone.zIndex = (source.zIndex || 1) + 1;
     clone.locked = false;
 
-    layout.elements.push(clone);
+    elements.push(clone);
     UICE_STATE.selectedId = clone.id;
     renderUiceStage();
     pushUiceHistory(`Duplicate ${source.name || source.type}`);
@@ -8562,6 +9435,7 @@ function addUiceElement(type) {
     const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
     if (!layout) return;
 
+    const elements = getUiceActiveElements(layout);
     const id = 'uice-elem-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
     const centerX = Math.round((layout.width - 120) / 2);
     const centerY = Math.round((layout.height - 40) / 2);
@@ -8578,7 +9452,7 @@ function addUiceElement(type) {
                 y: 12,
                 width: 280,
                 height: 42,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: {
                     title: 'VALLEY SECURITY AGENCY',
                     subtitle: 'SHAHIDGUNJ SRINAGAR',
@@ -8600,7 +9474,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 48,
                 height: 48,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { logoPreset: 'preset-vsa-logo' }
             };
             break;
@@ -8614,7 +9488,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 100,
                 height: 100,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { shape: 'circle', borderWidth: 3, borderColor: '#ffffff', outlineColor: '#009688' }
             };
             break;
@@ -8628,7 +9502,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 200,
                 height: 28,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { fontSize: 16, fontWeight: 800, color: '#0f172a', textAlign: 'center', textTransform: 'uppercase' }
             };
             break;
@@ -8642,7 +9516,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 200,
                 height: 20,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { fontSize: 10.5, fontWeight: 700, color: '#009688', textAlign: 'center', textTransform: 'uppercase' }
             };
             break;
@@ -8656,7 +9530,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: layout.width - 40,
                 height: 100,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { fontSize: 8, labelColor: '#475569', valueColor: '#0f172a', rowPadding: 3, labelWidth: 38 }
             };
             break;
@@ -8670,7 +9544,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 54,
                 height: 54,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { errorCorrection: 'H', foreground: '#000000', background: '#ffffff', quietZone: 2, borderColor: '#009688', borderWidth: 1.5 }
             };
             break;
@@ -8684,7 +9558,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 120,
                 height: 28,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { format: 'CODE128', lineColor: '#000000', background: '#ffffff', showText: true, fontSize: 8.5 }
             };
             break;
@@ -8698,7 +9572,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 100,
                 height: 44,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { preset: 'preset-vsa-sig', label: 'AUTHORITY SIGNATURE' }
             };
             break;
@@ -8712,7 +9586,7 @@ function addUiceElement(type) {
                 y: 14,
                 width: 160,
                 height: 26,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { text: 'SECURITY ID CARD', background: '#009688', color: '#ffffff', fontSize: 11, fontWeight: 800, borderRadius: 6 }
             };
             break;
@@ -8726,7 +9600,7 @@ function addUiceElement(type) {
                 y: centerY,
                 width: 140,
                 height: 24,
-                zIndex: layout.elements.length + 1,
+                zIndex: elements.length + 1,
                 properties: { text: 'Custom Text Label', fontSize: 12, fontWeight: 600, color: '#0f172a' }
             };
             break;
@@ -8747,7 +9621,7 @@ function addUiceElement(type) {
     }
 
     if (newEl) {
-        layout.elements.push(newEl);
+        elements.push(newEl);
         UICE_STATE.selectedId = newEl.id;
         renderUiceStage();
         pushUiceHistory(`Add ${newEl.name}`);
@@ -10174,7 +11048,7 @@ function setupUiceKeyboardShortcuts() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
             if (!layout) return;
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.locked) return;
 
             e.preventDefault();
@@ -10212,7 +11086,7 @@ function setupUiceListeners() {
                 const parentNode = handle.closest('.uice-node');
                 const id = parentNode.getAttribute('data-id');
                 const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-                const el = layout.elements.find(x => x.id === id);
+                const el = getUiceActiveElements(layout).find(x => x.id === id);
                 if (!el || el.locked) return;
 
                 if (handleType === 'rot') {
@@ -10261,7 +11135,7 @@ function setupUiceListeners() {
                 e.preventDefault();
                 const id = node.getAttribute('data-id');
                 const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-                const el = layout.elements.find(x => x.id === id);
+                const el = getUiceActiveElements(layout).find(x => x.id === id);
                 if (!el) return;
 
                 if (UICE_STATE.selectedId !== id) {
@@ -10299,7 +11173,7 @@ function setupUiceListeners() {
         const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
         if (!layout) return;
 
-        const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+        const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
         if (!el || el.locked) return;
 
         const d = UICE_STATE.drag;
@@ -10502,7 +11376,7 @@ function setupUiceListeners() {
         // Arrow Keys: Nudge 1px (or 10px with Shift)
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && UICE_STATE.selectedId) {
             e.preventDefault();
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.locked) return;
 
             const step = e.shiftKey ? 10 : 1;
@@ -10614,6 +11488,51 @@ function setupUiceListeners() {
     const btnResetLayout = document.getElementById('btn-uice-reset-layout');
     if (btnResetLayout) {
         btnResetLayout.addEventListener('click', resetUiceLayout);
+    }
+
+    // Phase 8: Surface Switcher & 3D Card Flip
+    const btnSurfFront = document.getElementById('btn-uice-surface-front');
+    if (btnSurfFront) {
+        btnSurfFront.addEventListener('click', () => setUiceSurface('front'));
+    }
+
+    const btnSurfBack = document.getElementById('btn-uice-surface-back');
+    if (btnSurfBack) {
+        btnSurfBack.addEventListener('click', () => setUiceSurface('back'));
+    }
+
+    const btnFlipCard = document.getElementById('btn-uice-flip-card');
+    if (btnFlipCard) {
+        btnFlipCard.addEventListener('click', flipUiceCard);
+    }
+
+    // Phase 8: Archetype Preset Library Modal
+    const btnArchetypeLib = document.getElementById('btn-uice-archetype-library');
+    if (btnArchetypeLib) {
+        btnArchetypeLib.addEventListener('click', openUiceArchetypesModal);
+    }
+
+    // Phase 8: Portable Template Asset Management
+    const btnExportJson = document.getElementById('btn-uice-export-tpl-json');
+    if (btnExportJson) {
+        btnExportJson.addEventListener('click', exportUiceTemplateJson);
+    }
+
+    const btnImportJson = document.getElementById('btn-uice-import-tpl-json');
+    const fileInput = document.getElementById('uice-tpl-file-input');
+    if (btnImportJson && fileInput) {
+        btnImportJson.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                importUiceTemplateJson(this.files[0]);
+                this.value = '';
+            }
+        });
+    }
+
+    const btnCloneTpl = document.getElementById('btn-uice-clone-tpl');
+    if (btnCloneTpl) {
+        btnCloneTpl.addEventListener('click', cloneUiceTemplate);
     }
 
     // Custom Dimension Preset Buttons
@@ -10860,7 +11779,7 @@ function setupUiceListeners() {
         btnElemLock.addEventListener('click', function() {
             if (UICE_STATE.selectedId) {
                 const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-                const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+                const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
                 if (el) {
                     el.locked = !el.locked;
                     renderUiceStage();
@@ -10889,9 +11808,10 @@ function setupUiceListeners() {
         btnElemFront.addEventListener('click', function() {
             if (UICE_STATE.selectedId) {
                 const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-                const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+                const elements = getUiceActiveElements(layout);
+                const el = elements.find(x => x.id === UICE_STATE.selectedId);
                 if (el) {
-                    const maxZ = Math.max(...layout.elements.map(x => x.zIndex || 1));
+                    const maxZ = Math.max(...elements.map(x => x.zIndex || 1));
                     el.zIndex = maxZ + 1;
                     renderUiceStage();
                     pushUiceHistory(`Bring to Front: ${el.name}`);
@@ -10905,9 +11825,10 @@ function setupUiceListeners() {
         btnElemBack.addEventListener('click', function() {
             if (UICE_STATE.selectedId) {
                 const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-                const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+                const elements = getUiceActiveElements(layout);
+                const el = elements.find(x => x.id === UICE_STATE.selectedId);
                 if (el) {
-                    const minZ = Math.min(...layout.elements.map(x => x.zIndex || 1));
+                    const minZ = Math.min(...elements.map(x => x.zIndex || 1));
                     el.zIndex = Math.max(0, minZ - 1);
                     renderUiceStage();
                     pushUiceHistory(`Send to Back: ${el.name}`);
@@ -10949,7 +11870,7 @@ function bindUiceInspectorInputs() {
         input.addEventListener('input', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el) return;
 
             const val = parseFloat(this.value) || 0;
@@ -10974,7 +11895,7 @@ function bindUiceInspectorInputs() {
         input.addEventListener('input', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el) return;
 
             const val = this.type === 'checkbox' ? this.checked : this.value;
@@ -11065,7 +11986,7 @@ function bindUiceInspectorInputs() {
         propNameInp.addEventListener('input', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el) return;
             el.name = this.value;
             const idBadge = document.getElementById('lbl-uice-elem-id');
@@ -11080,7 +12001,7 @@ function bindUiceInspectorInputs() {
         propOpacityInp.addEventListener('input', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el) return;
             if (!el.properties) el.properties = {};
             const val = parseFloat(this.value) || 1;
@@ -11100,7 +12021,7 @@ function bindUiceInspectorInputs() {
         propLockCb.addEventListener('change', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el) return;
             el.locked = this.checked;
             renderUiceStage();
@@ -11114,7 +12035,7 @@ function bindUiceInspectorInputs() {
         btnQrFixRatio.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'qr-code') return;
             const maxDim = Math.max(el.width, el.height, 48);
             el.width = maxDim;
@@ -11129,7 +12050,7 @@ function bindUiceInspectorInputs() {
         btnQrFixContrast.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'qr-code') return;
             if (!el.properties) el.properties = {};
             el.properties.foreground = '#000000';
@@ -11144,7 +12065,7 @@ function bindUiceInspectorInputs() {
         btnQrFixSize.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'qr-code') return;
             if (el.width < 48) el.width = 48;
             if (el.height < 48) el.height = 48;
@@ -11158,7 +12079,7 @@ function bindUiceInspectorInputs() {
         btnBarcodeFixSize.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'barcode') return;
             el.width = 120;
             el.height = 26;
@@ -11172,7 +12093,7 @@ function bindUiceInspectorInputs() {
         btnBarcodeFixContrast.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'barcode') return;
             if (!el.properties) el.properties = {};
             el.properties.lineColor = '#000000';
@@ -11188,7 +12109,7 @@ function bindUiceInspectorInputs() {
         btnTypoFixAutoFit.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el) return;
             if (!el.properties) el.properties = {};
             const diag = validateTypographyFit(el, UICE_STATE.previewEmp);
@@ -11205,7 +12126,7 @@ function bindUiceInspectorInputs() {
         btnAgencyFixAutoFit.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'agency-brand') return;
             if (!el.properties) el.properties = {};
             const availW = Math.max(20, el.width - (el.properties.logoSize || 32) - 12);
@@ -11243,7 +12164,7 @@ function bindUiceInspectorInputs() {
         btnTableFixAutoFit.addEventListener('click', function() {
             if (!UICE_STATE.selectedId) return;
             const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
             if (!el || el.type !== 'details-table') return;
             if (!el.properties) el.properties = {};
             const diag = validateTypographyFit(el, UICE_STATE.previewEmp);
@@ -11263,7 +12184,7 @@ function bindUiceInspectorInputs() {
 function alignSelectedUiceElement(alignType) {
     if (!UICE_STATE.selectedId) return;
     const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
-    const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+    const el = getUiceActiveElements(layout).find(x => x.id === UICE_STATE.selectedId);
     if (!el || el.locked) return;
 
     switch (alignType) {
@@ -11304,7 +12225,8 @@ function computeUiceAlignmentGuides(activeEl, targetX, targetY, layout) {
     ];
 
     // Check peers
-    layout.elements.forEach(other => {
+    const peerList = (typeof getUiceActiveElements === 'function') ? getUiceActiveElements(layout) : (layout.elements || []);
+    peerList.forEach(other => {
         if (other.id === activeEl.id || other.visible === false) return;
         testX.push({ val: other.x, guide: other.x });
         testX.push({ val: other.x + other.width - activeW, guide: other.x + other.width });
@@ -11875,14 +12797,19 @@ function autoArrangeUiceLayout() {
  * Resets layout to factory archetype defaults.
  */
 function resetUiceLayout() {
-    if (!confirm('Reset current layout to factory defaults?')) return;
+    const surfaceName = UICE_STATE.surface === 'back' ? 'Back' : 'Front';
+    if (!confirm(`Reset current ${surfaceName} layout to factory defaults?`)) return;
     const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
     if (!layout) return;
 
-    layout.elements = getUiceDefaultElements(UICE_STATE.orientation, UICE_STATE.template);
+    if (UICE_STATE.surface === 'back') {
+        layout.backElements = getUiceDefaultBackElements(UICE_STATE.orientation, UICE_STATE.template);
+    } else {
+        layout.elements = getUiceDefaultElements(UICE_STATE.orientation, UICE_STATE.template);
+    }
     renderUiceStage();
-    pushUiceHistory('Reset Layout Defaults');
-    alert('Reset layout to factory defaults.');
+    pushUiceHistory(`Reset ${surfaceName} Layout Defaults`);
+    alert(`Reset ${surfaceName} layout to factory defaults.`);
 }
 
 /**
@@ -12418,7 +13345,7 @@ function printUiceSheet(options = {}) {
                     if (!guard) {
                         sheetHtml += `<div class="uice-sheet-card-cell"></div>`;
                     } else {
-                        const backCardHtml = generateUiceCardHtml(guard, cardLayout, tpl);
+                        const backCardHtml = generateUiceCardHtml(guard, cardLayout, tpl, 3, null, 'back');
                         sheetHtml += `
                             <div class="uice-sheet-card-cell">
                                 ${cropMarks ? getCropMarksSvgHtml() : ''}
@@ -12443,7 +13370,7 @@ function printUiceSheet(options = {}) {
                 if (!guard) {
                     sheetHtml += `<div class="uice-sheet-card-cell"></div>`;
                 } else {
-                    const cardHtml = generateUiceCardHtml(guard, cardLayout, tpl);
+                    const cardHtml = generateUiceCardHtml(guard, cardLayout, tpl, 3, null, 'back');
                     sheetHtml += `
                         <div class="uice-sheet-card-cell">
                             ${cropMarks ? getCropMarksSvgHtml() : ''}
@@ -12820,6 +13747,19 @@ if (typeof window !== 'undefined') {
     window.refreshUiceBatchPreflight = refreshUiceBatchPreflight;
     window.handleUiceBatchSubmit = handleUiceBatchSubmit;
     window.startUiceBatchExport = startUiceBatchExport;
+
+    // Phase 8 Dual-Sided Engine & Archetype Presets Exports
+    window.setUiceSurface = setUiceSurface;
+    window.flipUiceCard = flipUiceCard;
+    window.getUiceDefaultBackElements = getUiceDefaultBackElements;
+    window.getUiceActiveElements = getUiceActiveElements;
+    window.UICE_ARCHETYPES = UICE_ARCHETYPES;
+    window.openUiceArchetypesModal = openUiceArchetypesModal;
+    window.closeUiceArchetypesModal = closeUiceArchetypesModal;
+    window.loadUiceArchetype = loadUiceArchetype;
+    window.exportUiceTemplateJson = exportUiceTemplateJson;
+    window.importUiceTemplateJson = importUiceTemplateJson;
+    window.cloneUiceTemplate = cloneUiceTemplate;
 }
 
 /**
@@ -12869,7 +13809,7 @@ async function saveUiceTemplate() {
 /**
  * Generates card HTML from modern UICE layout nodes for batch printing and modals.
  */
-function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDate = null) {
+function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDate = null, side = 'front') {
     if (!emp || !layout) return '';
 
     const width = layout.width || 500;
@@ -12878,7 +13818,13 @@ function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDat
     const bg = layout.background || {};
     const borderRadius = bg.borderRadius !== undefined ? bg.borderRadius : 14;
 
-    const elementsHtml = (layout.elements || []).filter(el => el.visible !== false).map(el => {
+    const activeList = (side === 'back')
+        ? (Array.isArray(layout.backElements) && layout.backElements.length > 0
+            ? layout.backElements
+            : getUiceDefaultBackElements(isHoriz ? 'horizontal' : 'vertical', template))
+        : (layout.elements || []);
+
+    const elementsHtml = activeList.filter(el => el.visible !== false).map(el => {
         const innerContent = renderUiceElementHtml(el, emp);
         return `
             <div style="position: absolute; left: ${el.x}px; top: ${el.y}px; width: ${el.width}px; height: ${el.height}px; transform: rotate(${el.rotation || 0}deg); z-index: ${el.zIndex || 1}; box-sizing: border-box; overflow: hidden;">

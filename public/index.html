@@ -1180,6 +1180,15 @@
                                     <button type="button" class="uice-tool-btn" id="btn-uice-reset-layout" title="Reset to Archetype Defaults">
                                         <i data-lucide="rotate-ccw"></i> Reset
                                     </button>
+                                    <div class="uice-divider"></div>
+                                    <!-- Phase 8: Duplex Surface Switcher & 3D Flip -->
+                                    <div class="uice-surface-segmented" role="radiogroup" aria-label="Card Surface">
+                                        <button type="button" class="uice-surface-pill active" id="btn-uice-surface-front" title="Design Front Surface">Front</button>
+                                        <button type="button" class="uice-surface-pill" id="btn-uice-surface-back" title="Design Back Surface">Back</button>
+                                    </div>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-flip-card" title="Flip Card Surface (3D Animation)">
+                                        <i data-lucide="flip-horizontal-2"></i> Flip
+                                    </button>
                                 </div>
 
                                 <div class="uice-cmd-group">
@@ -1223,6 +1232,9 @@
                                 <div class="uice-cmd-group">
                                     <label for="uice-preview-emp-select" style="font-size: 11px; font-weight: 700; color: #94a3b8; margin: 0;">Preview Guard:</label>
                                     <select id="uice-preview-emp-select" class="form-control" style="font-size: 11px; padding: 4px 8px; width: 160px;"></select>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-archetype-library" title="Master Archetype Preset Library" style="font-size: 11px; padding: 5px 12px; gap: 6px; border-color: rgba(245, 158, 11, 0.4); color: #f59e0b;">
+                                        <i data-lucide="sparkles"></i> Presets
+                                    </button>
                                     <button type="button" class="btn btn-outline" id="btn-uice-export-png" title="Export High-Resolution Card (PNG/300 DPI)" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
                                         <i data-lucide="download"></i> Export High-DPI
                                     </button>
@@ -1232,6 +1244,16 @@
                                     <button type="button" class="btn btn-outline" id="btn-uice-batch-export" title="Industrial Batch Card Generation Pipeline" style="font-size: 11px; padding: 5px 12px; gap: 6px;">
                                         <i data-lucide="copy"></i> Batch Export
                                     </button>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-export-tpl-json" title="Export Template as JSON File" style="font-size: 11px; padding: 5px 8px; gap: 4px;">
+                                        <i data-lucide="file-code"></i> JSON
+                                    </button>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-import-tpl-json" title="Import Template from JSON File" style="font-size: 11px; padding: 5px 8px; gap: 4px;">
+                                        <i data-lucide="upload"></i> Import
+                                    </button>
+                                    <button type="button" class="btn btn-outline" id="btn-uice-clone-tpl" title="Clone / Duplicate Current Template" style="font-size: 11px; padding: 5px 8px; gap: 4px;">
+                                        <i data-lucide="copy-plus"></i> Clone
+                                    </button>
+                                    <input type="file" id="uice-tpl-file-input" accept=".json,.uice.json" style="display: none;">
                                     <button type="button" class="btn btn-success" id="btn-uice-save-template" style="font-size: 11px; padding: 5px 14px; gap: 6px;">
                                         <i data-lucide="save"></i> Save Layout
                                     </button>
@@ -3948,6 +3970,30 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHASE 8: MASTER ARCHETYPE PRESET LIBRARY MODAL -->
+    <div id="uice-archetypes-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uice-archetypes-title">
+        <div class="modal-container" style="max-width: 860px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="uice-archetypes-title" style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--vs-text-primary);">
+                    <i data-lucide="sparkles" style="width: 20px; height: 20px; color: #f59e0b;"></i>
+                    Master Archetype Preset Library
+                </h2>
+                <button type="button" class="modal-close" onclick="closeUiceArchetypesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
+                    Select an art-directed archetype to immediately instantiate high-security layouts with pre-configured dual-surface (Front & Back) typography and vector styling.
+                </p>
+                <div class="uice-archetypes-grid" id="uice-archetypes-list">
+                    <!-- Populated dynamically with 6 curated master archetypes -->
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 12px 0 0;">
+                <button type="button" class="btn btn-outline" onclick="closeUiceArchetypesModal()">Cancel</button>
             </div>
         </div>
     </div>

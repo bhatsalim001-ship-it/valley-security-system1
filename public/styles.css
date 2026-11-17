@@ -9489,6 +9489,165 @@ html, body {
     }
 }
 
+/* ============================================================================
+   PROJECT OMEGA PHASE 8: DUPLEX SURFACE ENGINE & ARCHETYPE PRESET LIBRARY
+   ============================================================================ */
+
+/* 1. Surface Switcher Segmented Control */
+.uice-surface-segmented {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.uice-surface-pill {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.uice-surface-pill:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.uice-surface-pill.active {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+}
+
+/* 2. 3D Card Flip Animation */
+.uice-artboard-card {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.uice-artboard-card.uice-flip-anim {
+    animation: uice3DCardFlip 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes uice3DCardFlip {
+    0% {
+        transform: scale(var(--uice-zoom-scale, 1)) rotateY(0deg);
+    }
+    50% {
+        transform: scale(var(--uice-zoom-scale, 1)) rotateY(90deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(var(--uice-zoom-scale, 1)) rotateY(0deg);
+        opacity: 1;
+    }
+}
+
+/* 3. Archetype Presets Gallery Grid & Cards */
+.uice-archetypes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.uice-archetype-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.uice-archetype-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(245, 158, 11, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.uice-archetype-thumb {
+    width: 100%;
+    height: 110px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.uice-archetype-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.uice-archetype-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.uice-archetype-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+}
+
+.uice-archetype-load-btn {
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.uice-archetype-card:hover .uice-archetype-load-btn {
+    background: #f59e0b;
+    color: #000000;
+}
+
+
 
 
 
