@@ -7302,9 +7302,19 @@ const UICE_STATE = {
     gridSize: 10,
     showGuides: true,
     showGrid: true,
+    showSafeMargins: false,
+    showBleedArea: false,
+    showElementOutlines: false,
     history: [],
     historyIndex: -1,
     previewEmp: null,
+    pan: {
+        isPanning: false,
+        startX: 0,
+        startY: 0,
+        scrollLeft: 0,
+        scrollTop: 0
+    },
     drag: {
         isDragging: false,
         isResizing: false,
@@ -7966,6 +7976,21 @@ function renderUiceStage() {
         }
     }
 
+    // Safe Margins Guide Overlay toggle (ISO/IEC CR80 5mm / ~14px boundary)
+    const safeMarginsEl = document.getElementById('uice-safe-margins-overlay');
+    if (safeMarginsEl) {
+        safeMarginsEl.style.display = UICE_STATE.showSafeMargins ? 'block' : 'none';
+    }
+
+    // Bleed Area Guide Overlay toggle (3mm / ~10px outer cut boundary)
+    const bleedAreaEl = document.getElementById('uice-bleed-area-overlay');
+    if (bleedAreaEl) {
+        bleedAreaEl.style.display = UICE_STATE.showBleedArea ? 'block' : 'none';
+    }
+
+    // Element Boundaries Outlines toggle
+    container.classList.toggle('uice-show-element-outlines', !!UICE_STATE.showElementOutlines);
+
     // Clear and re-populate elements
     container.innerHTML = '';
     const emp = UICE_STATE.previewEmp || MOCK_GUARD;
@@ -7986,6 +8011,16 @@ function renderUiceStage() {
         node.style.height = el.height + 'px';
         node.style.transform = `rotate(${el.rotation || 0}deg)`;
         node.style.zIndex = el.zIndex || 1;
+
+        // Apply Opacity & Shadow effects
+        if (el.properties) {
+            if (el.properties.opacity !== undefined) {
+                node.style.opacity = el.properties.opacity;
+            }
+            if (el.properties.shadow && el.properties.shadow !== 'none') {
+                node.classList.add(`uice-shadow-${el.properties.shadow}`);
+            }
+        }
 
         // Render inner HTML based on element type
         node.innerHTML = renderUiceElementHtml(el, emp);
@@ -8358,6 +8393,15 @@ function renderUiceLayersList() {
                     ${el.name || el.type}
                 </div>
                 <div class="uice-layer-actions">
+                    <button type="button" class="uice-layer-btn btn-layer-up" data-id="${el.id}" title="Bring Forward">
+                        <i data-lucide="chevron-up" style="width: 12px; height: 12px;"></i>
+                    </button>
+                    <button type="button" class="uice-layer-btn btn-layer-down" data-id="${el.id}" title="Send Backward">
+                        <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
+                    </button>
+                    <button type="button" class="uice-layer-btn btn-layer-dup" data-id="${el.id}" title="Duplicate Layer">
+                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
+                    </button>
                     <button type="button" class="uice-layer-btn btn-layer-lock ${el.locked ? 'active' : ''}" data-id="${el.id}" title="${el.locked ? 'Unlock' : 'Lock'}">
                         <i data-lucide="${el.locked ? 'lock' : 'unlock'}" style="width: 12px; height: 12px;"></i>
                     </button>
@@ -8380,7 +8424,44 @@ function renderUiceLayersList() {
         });
     });
 
-    // Layer action buttons
+    // Layer action buttons: Reorder Up
+    listContainer.querySelectorAll('.btn-layer-up').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            const el = layout.elements.find(x => x.id === id);
+            if (el) {
+                el.zIndex = (el.zIndex || 1) + 1;
+                renderUiceStage();
+                pushUiceHistory(`Bring Forward ${el.name || el.type}`);
+            }
+        });
+    });
+
+    // Layer action buttons: Reorder Down
+    listContainer.querySelectorAll('.btn-layer-down').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            const el = layout.elements.find(x => x.id === id);
+            if (el) {
+                el.zIndex = Math.max(0, (el.zIndex || 1) - 1);
+                renderUiceStage();
+                pushUiceHistory(`Send Backward ${el.name || el.type}`);
+            }
+        });
+    });
+
+    // Layer action buttons: Duplicate
+    listContainer.querySelectorAll('.btn-layer-dup').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.getAttribute('data-id');
+            duplicateUiceElement(id);
+        });
+    });
+
+    // Layer action buttons: Lock
     listContainer.querySelectorAll('.btn-layer-lock').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -9443,6 +9524,20 @@ function updateUicePropertyInspector(el) {
     if (propRot) propRot.value = Math.round(el.rotation || 0);
     if (propZ) propZ.value = el.zIndex || 1;
 
+    // Advanced Progressive Disclosure fields
+    const propName = document.getElementById('prop-uice-name');
+    const propOpacity = document.getElementById('prop-uice-opacity');
+    const lblOpacity = document.getElementById('lbl-uice-opacity-val');
+    const propShadow = document.getElementById('prop-uice-shadow');
+    const propLock = document.getElementById('prop-uice-lock');
+
+    if (propName) propName.value = el.name || el.type;
+    const curOpacity = (el.properties && el.properties.opacity !== undefined) ? el.properties.opacity : 1;
+    if (propOpacity) propOpacity.value = curOpacity;
+    if (lblOpacity) lblOpacity.textContent = Math.round(curOpacity * 100) + '%';
+    if (propShadow) propShadow.value = (el.properties && el.properties.shadow) || 'none';
+    if (propLock) propLock.checked = !!el.locked;
+
     // Toggle specific sub-sections
     const secTypo = document.getElementById('prop-sec-typography');
     const secAgency = document.getElementById('prop-sec-agency');
@@ -9597,8 +9692,6 @@ function updateUicePropertyInspector(el) {
         if (borderCInp) borderCInp.value = p.borderColor || '#ffffff';
         if (outlineCInp) outlineCInp.value = p.outlineColor || '#009688';
     }
-
-    const emp = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042' };
 
     // QR bindings & Sentinel check
     if (el.type === 'qr-code') {
@@ -9943,6 +10036,154 @@ function drawUiceRulers() {
             ctxLeft.restore();
         }
     }
+}
+
+/**
+ * Sets the UICE canvas zoom level and updates the zoom percentage indicator.
+ * @param {number} zoomVal - Scale multiplier (e.g. 1.0 for 100%)
+ */
+function setUiceZoom(zoomVal) {
+    UICE_STATE.zoom = Math.max(0.35, Math.min(2.5, Math.round(zoomVal * 100) / 100));
+    const lblZoom = document.getElementById('lbl-uice-zoom');
+    if (lblZoom) lblZoom.textContent = Math.round(UICE_STATE.zoom * 100) + '%';
+    renderUiceStage();
+}
+
+/**
+ * Calculates optimal proportional viewport scaling for the current artboard card.
+ * Centers card within available viewport dimensions with standard margins.
+ * @returns {number} Clamped zoom scale
+ */
+function fitUiceToScreen() {
+    const viewport = document.getElementById('uice-viewport');
+    const layout = UICE_STATE.template && UICE_STATE.template.layouts && UICE_STATE.template.layouts[UICE_STATE.orientation];
+    if (!viewport || !layout) {
+        setUiceZoom(1.0);
+        return 1.0;
+    }
+
+    const padding = 120; // 60px padding on each side
+    const vpW = Math.max(200, (viewport.clientWidth || 800) - padding);
+    const vpH = Math.max(200, (viewport.clientHeight || 600) - padding);
+
+    const scaleX = vpW / layout.width;
+    const scaleY = vpH / layout.height;
+    const targetScale = Math.min(scaleX, scaleY);
+
+    const clamped = Math.max(0.4, Math.min(2.0, Math.round(targetScale * 100) / 100));
+    setUiceZoom(clamped);
+    return clamped;
+}
+
+/**
+ * Sets up global keyboard shortcuts for the UICE visual editor.
+ * Hotkeys:
+ * - Ctrl+Z / Cmd+Z: Undo
+ * - Ctrl+Y / Cmd+Y or Ctrl+Shift+Z: Redo
+ * - Ctrl+D / Cmd+D: Duplicate active element
+ * - Delete / Backspace: Delete active element
+ * - Escape: Deselect active element
+ * - Ctrl+0: Fit to screen
+ * - Ctrl+1: Actual size 100%
+ * - Arrow keys: Nudge 1px (or 10px with Shift)
+ */
+function setupUiceKeyboardShortcuts() {
+    if (typeof window === 'undefined') return;
+    if (window._uiceKeyShortcutsAttached) return;
+    window._uiceKeyShortcutsAttached = true;
+
+    window.addEventListener('keydown', function(e) {
+        // Only trigger if UICE visual workspace is currently visible
+        const visualWs = document.getElementById('uice-visual-workspace');
+        if (!visualWs || visualWs.offsetParent === null) return;
+
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+        const isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable);
+
+        // Escape key: blur input or deselect
+        if (e.key === 'Escape') {
+            if (isInput) {
+                e.target.blur();
+                return;
+            }
+            if (UICE_STATE.selectedId) {
+                e.preventDefault();
+                selectUiceElement(null);
+            }
+            return;
+        }
+
+        // Do not intercept hotkeys if typing in text inputs
+        if (isInput) return;
+
+        const isMac = (typeof navigator !== 'undefined' && navigator.platform && navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+        const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+        // Undo: Ctrl+Z / Cmd+Z (without Shift)
+        if (cmdOrCtrl && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+            e.preventDefault();
+            undoUice();
+            return;
+        }
+
+        // Redo: Ctrl+Y / Cmd+Y or Ctrl+Shift+Z
+        if ((cmdOrCtrl && (e.key === 'y' || e.key === 'Y')) || (cmdOrCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) {
+            e.preventDefault();
+            redoUice();
+            return;
+        }
+
+        // Duplicate: Ctrl+D / Cmd+D
+        if (cmdOrCtrl && (e.key === 'd' || e.key === 'D')) {
+            e.preventDefault();
+            if (UICE_STATE.selectedId) {
+                duplicateUiceElement(UICE_STATE.selectedId);
+            }
+            return;
+        }
+
+        // Fit to Screen: Ctrl+0 / Cmd+0
+        if (cmdOrCtrl && e.key === '0') {
+            e.preventDefault();
+            fitUiceToScreen();
+            return;
+        }
+
+        // Actual Size 100%: Ctrl+1 / Cmd+1
+        if (cmdOrCtrl && e.key === '1') {
+            e.preventDefault();
+            setUiceZoom(1.0);
+            return;
+        }
+
+        // Delete: Delete or Backspace
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (UICE_STATE.selectedId) {
+                e.preventDefault();
+                deleteUiceElement(UICE_STATE.selectedId);
+            }
+            return;
+        }
+
+        // Arrow nudges
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template ? UICE_STATE.template.layouts[UICE_STATE.orientation] : null;
+            if (!layout) return;
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el || el.locked) return;
+
+            e.preventDefault();
+            const step = e.shiftKey ? 10 : 1;
+            if (e.key === 'ArrowLeft') el.x = Math.max(0, el.x - step);
+            if (e.key === 'ArrowRight') el.x = Math.min(layout.width - el.width, el.x + step);
+            if (e.key === 'ArrowUp') el.y = Math.max(0, el.y - step);
+            if (e.key === 'ArrowDown') el.y = Math.min(layout.height - el.height, el.y + step);
+
+            renderUiceStage();
+            pushUiceHistory(`Nudge ${el.name || el.type}`);
+        }
+    });
 }
 
 /**
@@ -10305,7 +10546,7 @@ function setupUiceListeners() {
         tabElem.addEventListener('click', function() {
             tabElem.classList.add('active');
             tabLayer.classList.remove('active');
-            if (viewElem) viewElem.style.display = 'grid';
+            if (viewElem) viewElem.style.display = 'flex';
             if (viewLayer) viewLayer.style.display = 'none';
         });
 
@@ -10411,35 +10652,125 @@ function setupUiceListeners() {
         });
     }
 
+    // Phase 6 Viewport Overlays: Safe Margins, Bleed Area, Outlines
+    const btnSafeMargins = document.getElementById('btn-uice-safe-margins');
+    if (btnSafeMargins) {
+        btnSafeMargins.addEventListener('click', function() {
+            UICE_STATE.showSafeMargins = !UICE_STATE.showSafeMargins;
+            this.classList.toggle('active', UICE_STATE.showSafeMargins);
+            renderUiceStage();
+        });
+    }
+
+    const btnBleedArea = document.getElementById('btn-uice-bleed-area');
+    if (btnBleedArea) {
+        btnBleedArea.addEventListener('click', function() {
+            UICE_STATE.showBleedArea = !UICE_STATE.showBleedArea;
+            this.classList.toggle('active', UICE_STATE.showBleedArea);
+            renderUiceStage();
+        });
+    }
+
+    const btnShowOutlines = document.getElementById('btn-uice-show-outlines');
+    if (btnShowOutlines) {
+        btnShowOutlines.addEventListener('click', function() {
+            UICE_STATE.showElementOutlines = !UICE_STATE.showElementOutlines;
+            this.classList.toggle('active', UICE_STATE.showElementOutlines);
+            renderUiceStage();
+        });
+    }
+
     // Zoom Controls
     const btnZoomIn = document.getElementById('btn-uice-zoom-in');
     const btnZoomOut = document.getElementById('btn-uice-zoom-out');
     const btnZoomFit = document.getElementById('btn-uice-zoom-fit');
-    const lblZoom = document.getElementById('lbl-uice-zoom');
+    const btnZoomActual = document.getElementById('btn-uice-zoom-actual');
 
     if (btnZoomIn) {
         btnZoomIn.addEventListener('click', function() {
-            UICE_STATE.zoom = Math.min(2.0, UICE_STATE.zoom + 0.15);
-            if (lblZoom) lblZoom.textContent = Math.round(UICE_STATE.zoom * 100) + '%';
-            renderUiceStage();
+            setUiceZoom(UICE_STATE.zoom + 0.15);
         });
     }
 
     if (btnZoomOut) {
         btnZoomOut.addEventListener('click', function() {
-            UICE_STATE.zoom = Math.max(0.5, UICE_STATE.zoom - 0.15);
-            if (lblZoom) lblZoom.textContent = Math.round(UICE_STATE.zoom * 100) + '%';
-            renderUiceStage();
+            setUiceZoom(UICE_STATE.zoom - 0.15);
+        });
+    }
+
+    if (btnZoomActual) {
+        btnZoomActual.addEventListener('click', function() {
+            setUiceZoom(1.0);
         });
     }
 
     if (btnZoomFit) {
         btnZoomFit.addEventListener('click', function() {
-            UICE_STATE.zoom = 1.0;
-            if (lblZoom) lblZoom.textContent = '100%';
-            renderUiceStage();
+            fitUiceToScreen();
         });
     }
+
+    // Smooth Canvas Pan / Hand Drag Controls
+    const viewport = document.getElementById('uice-viewport');
+    let isSpacePressed = false;
+
+    window.addEventListener('keydown', function(e) {
+        if (e.code === 'Space') {
+            const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            const isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable);
+            if (!isInput && !isSpacePressed) {
+                isSpacePressed = true;
+                if (viewport) viewport.classList.add('uice-panning-active');
+            }
+        }
+    });
+
+    window.addEventListener('keyup', function(e) {
+        if (e.code === 'Space') {
+            isSpacePressed = false;
+            if (viewport) {
+                viewport.classList.remove('uice-panning-active');
+                viewport.classList.remove('uice-is-panning');
+            }
+            if (UICE_STATE.pan) UICE_STATE.pan.isPanning = false;
+        }
+    });
+
+    if (viewport) {
+        viewport.addEventListener('mousedown', function(e) {
+            if (e.button === 1 || (isSpacePressed && e.button === 0)) {
+                e.preventDefault();
+                UICE_STATE.pan = {
+                    isPanning: true,
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    scrollLeft: viewport.scrollLeft,
+                    scrollTop: viewport.scrollTop
+                };
+                viewport.classList.add('uice-is-panning');
+            }
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (UICE_STATE.pan && UICE_STATE.pan.isPanning) {
+                e.preventDefault();
+                const dx = e.clientX - UICE_STATE.pan.startX;
+                const dy = e.clientY - UICE_STATE.pan.startY;
+                viewport.scrollLeft = UICE_STATE.pan.scrollLeft - dx;
+                viewport.scrollTop = UICE_STATE.pan.scrollTop - dy;
+            }
+        });
+
+        window.addEventListener('mouseup', function(e) {
+            if (UICE_STATE.pan && UICE_STATE.pan.isPanning) {
+                UICE_STATE.pan.isPanning = false;
+                if (viewport) viewport.classList.remove('uice-is-panning');
+            }
+        });
+    }
+
+    // Global Canvas Keyboard Shortcuts
+    setupUiceKeyboardShortcuts();
 
     // Preview guard select
     const previewEmpSel = document.getElementById('uice-preview-emp-select');
@@ -10703,6 +11034,55 @@ function bindUiceInspectorInputs() {
     bindVal('prop-uice-shape-border', 'borderColor', true);
     bindNum('prop-uice-shape-border-w', 'borderWidth', true);
     bindNum('prop-uice-shape-radius', 'borderRadius', true);
+
+    // Advanced Progressive Disclosure Bindings
+    const propNameInp = document.getElementById('prop-uice-name');
+    if (propNameInp) {
+        propNameInp.addEventListener('input', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el) return;
+            el.name = this.value;
+            const idBadge = document.getElementById('lbl-uice-elem-id');
+            if (idBadge) idBadge.textContent = el.name;
+            renderUiceLayersList();
+        });
+        propNameInp.addEventListener('change', () => pushUiceHistory('Rename Element'));
+    }
+
+    const propOpacityInp = document.getElementById('prop-uice-opacity');
+    if (propOpacityInp) {
+        propOpacityInp.addEventListener('input', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el) return;
+            if (!el.properties) el.properties = {};
+            const val = parseFloat(this.value) || 1;
+            el.properties.opacity = val;
+            const lbl = document.getElementById('lbl-uice-opacity-val');
+            if (lbl) lbl.textContent = Math.round(val * 100) + '%';
+            const node = document.querySelector(`.uice-node[data-id="${el.id}"]`);
+            if (node) node.style.opacity = val;
+        });
+        propOpacityInp.addEventListener('change', () => pushUiceHistory('Change Opacity'));
+    }
+
+    bindVal('prop-uice-shadow', 'shadow', true);
+
+    const propLockCb = document.getElementById('prop-uice-lock');
+    if (propLockCb) {
+        propLockCb.addEventListener('change', function() {
+            if (!UICE_STATE.selectedId) return;
+            const layout = UICE_STATE.template.layouts[UICE_STATE.orientation];
+            const el = layout.elements.find(x => x.id === UICE_STATE.selectedId);
+            if (!el) return;
+            el.locked = this.checked;
+            renderUiceStage();
+            pushUiceHistory(`${el.locked ? 'Lock' : 'Unlock'} ${el.name || el.type}`);
+        });
+    }
 
     // Phase 4 Quick Fix Actions
     const btnQrFixRatio = document.getElementById('btn-uice-qr-fix-ratio');

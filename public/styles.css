@@ -9061,4 +9061,159 @@ html, body {
     margin-top: 10px;
 }
 
+/* ==========================================================================
+   PHASE 6: ADVANCED DESIGNER INTERFACE STYLES
+   ========================================================================== */
+
+/* 1. Categorized Elements Palette */
+.uice-palette-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+}
+
+.uice-palette-category {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.uice-category-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 2px;
+}
+
+.uice-category-title svg {
+    width: 12px;
+    height: 12px;
+    color: #3b82f6;
+}
+
+/* 2. Viewport Overlays: Safe Margins & Bleed Area */
+.uice-safe-margins-overlay {
+    position: absolute;
+    inset: 14px; /* ISO/IEC CR80 5mm inner safe boundary */
+    border: 1.5px dashed rgba(16, 185, 129, 0.85);
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 9996;
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15);
+}
+
+.uice-bleed-area-overlay {
+    position: absolute;
+    top: -10px; /* 3mm outer bleed boundary */
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border: 1.5px dashed rgba(244, 63, 94, 0.85);
+    border-radius: 18px;
+    pointer-events: none;
+    z-index: 9995;
+    box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.15);
+}
+
+.uice-overlay-tag {
+    position: absolute;
+    font-size: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.uice-overlay-tag.bleed-tag {
+    top: 2px;
+    left: 8px;
+    background: rgba(244, 63, 94, 0.9);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.uice-overlay-tag.safe-tag {
+    bottom: 3px;
+    right: 8px;
+    background: rgba(16, 185, 129, 0.9);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Element Boundaries / Outlines Toggle */
+.uice-show-element-outlines .uice-node {
+    outline: 1px dashed rgba(56, 189, 248, 0.6) !important;
+    outline-offset: 1px;
+}
+
+/* 3. Progressive Disclosure Accordion */
+.uice-accordion-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+}
+
+.uice-accordion-header {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+    user-select: none;
+}
+
+.uice-accordion-header::-webkit-details-marker {
+    display: none;
+}
+
+.uice-accordion-card[open] {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* 4. Shadow Presets */
+.uice-shadow-none {
+    box-shadow: none !important;
+}
+
+.uice-shadow-subtle {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+}
+
+.uice-shadow-medium {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+.uice-shadow-prominent {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55) !important;
+}
+
+.uice-shadow-glow {
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.65) !important;
+}
+
+/* 5. Smooth Hand Pan Controls */
+.uice-viewport-wrapper.uice-panning-active,
+.uice-viewport-wrapper.uice-panning-active * {
+    cursor: grab !important;
+}
+
+.uice-viewport-wrapper.uice-is-panning,
+.uice-viewport-wrapper.uice-is-panning * {
+    cursor: grabbing !important;
+    user-select: none !important;
+}
+
+
 

@@ -1192,6 +1192,15 @@
                                     <button type="button" class="uice-tool-btn active" id="btn-uice-guides-toggle" title="Toggle Alignment Guides">
                                         <i data-lucide="ruler"></i> Guides
                                     </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-safe-margins" title="Toggle Safe Print Margins Guide (5mm)">
+                                        <i data-lucide="shield-check"></i> Margins
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-bleed-area" title="Toggle Bleed Area Guide (3mm)">
+                                        <i data-lucide="crop"></i> Bleed
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-show-outlines" title="Toggle Element Boundary Outlines">
+                                        <i data-lucide="box-select"></i> Outlines
+                                    </button>
                                     <div class="uice-divider"></div>
                                     <button type="button" class="uice-tool-btn" id="btn-uice-zoom-out" title="Zoom Out">
                                         <i data-lucide="minus"></i>
@@ -1200,7 +1209,10 @@
                                     <button type="button" class="uice-tool-btn" id="btn-uice-zoom-in" title="Zoom In">
                                         <i data-lucide="plus"></i>
                                     </button>
-                                    <button type="button" class="uice-tool-btn" id="btn-uice-zoom-fit" title="Fit to Screen">
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-zoom-actual" title="Actual Size 100% (Ctrl+1)">
+                                        <i data-lucide="target"></i> 100%
+                                    </button>
+                                    <button type="button" class="uice-tool-btn" id="btn-uice-zoom-fit" title="Fit to Screen (Ctrl+0)">
                                         <i data-lucide="maximize-2"></i> Fit
                                     </button>
                                 </div>
@@ -1234,56 +1246,90 @@
                                     </div>
                                     
                                     <div class="uice-palette-body">
-                                        <!-- Subview 1: Add Elements Palette -->
-                                        <div id="uice-view-elements" class="uice-elements-grid">
-                                            <button type="button" class="uice-element-add-btn" data-add-type="agency-brand">
-                                                <i data-lucide="building"></i>
-                                                <span>Agency Header</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="agency-logo">
-                                                <i data-lucide="shield"></i>
-                                                <span>Agency Logo</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="employee-photo">
-                                                <i data-lucide="user-square-2"></i>
-                                                <span>Employee Photo</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="employee-name">
-                                                <i data-lucide="type"></i>
-                                                <span>Employee Name</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="designation">
-                                                <i data-lucide="briefcase"></i>
-                                                <span>Designation</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="details-table">
-                                                <i data-lucide="table"></i>
-                                                <span>Details Table</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="qr-code">
-                                                <i data-lucide="qr-code"></i>
-                                                <span>QR Code</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="barcode">
-                                                <i data-lucide="barcode"></i>
-                                                <span>Barcode</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="signature">
-                                                <i data-lucide="pen-tool"></i>
-                                                <span>Signature</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="badge-pill">
-                                                <i data-lucide="tag"></i>
-                                                <span>Title Badge</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="custom-text">
-                                                <i data-lucide="file-text"></i>
-                                                <span>Custom Text</span>
-                                            </button>
-                                            <button type="button" class="uice-element-add-btn" data-add-type="shape">
-                                                <i data-lucide="shapes"></i>
-                                                <span>Accent Shape</span>
-                                            </button>
+                                        <!-- Subview 1: Add Elements Palette (Categorized) -->
+                                        <div id="uice-view-elements" class="uice-palette-categories">
+                                            <!-- Category 1: Header & Agency -->
+                                            <div class="uice-palette-category">
+                                                <div class="uice-category-title"><i data-lucide="building"></i> Header & Branding</div>
+                                                <div class="uice-elements-grid">
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="agency-brand" title="Add Agency Header">
+                                                        <i data-lucide="building"></i>
+                                                        <span>Agency Header</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="agency-logo" title="Add Agency Logo">
+                                                        <i data-lucide="shield"></i>
+                                                        <span>Agency Logo</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="badge-pill" title="Add Title Badge">
+                                                        <i data-lucide="tag"></i>
+                                                        <span>Title Badge</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Category 2: Employee Information -->
+                                            <div class="uice-palette-category">
+                                                <div class="uice-category-title"><i data-lucide="user-check"></i> Employee Information</div>
+                                                <div class="uice-elements-grid">
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="employee-name" title="Add Employee Name">
+                                                        <i data-lucide="type"></i>
+                                                        <span>Employee Name</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="designation" title="Add Designation">
+                                                        <i data-lucide="briefcase"></i>
+                                                        <span>Designation</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="details-table" title="Add Details Table">
+                                                        <i data-lucide="table"></i>
+                                                        <span>Details Table</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Category 3: Photographs & Media -->
+                                            <div class="uice-palette-category">
+                                                <div class="uice-category-title"><i data-lucide="camera"></i> Photographs & Media</div>
+                                                <div class="uice-elements-grid">
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="employee-photo" title="Add Employee Photo">
+                                                        <i data-lucide="user-square-2"></i>
+                                                        <span>Employee Photo</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="signature" title="Add Authority Signature">
+                                                        <i data-lucide="pen-tool"></i>
+                                                        <span>Signature</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Category 4: Security Codes -->
+                                            <div class="uice-palette-category">
+                                                <div class="uice-category-title"><i data-lucide="shield-check"></i> Security Codes</div>
+                                                <div class="uice-elements-grid">
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="qr-code" title="Add QR Code">
+                                                        <i data-lucide="qr-code"></i>
+                                                        <span>QR Code</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="barcode" title="Add Barcode">
+                                                        <i data-lucide="barcode"></i>
+                                                        <span>Barcode</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Category 5: Shapes & Accents -->
+                                            <div class="uice-palette-category">
+                                                <div class="uice-category-title"><i data-lucide="shapes"></i> Shapes & Accents</div>
+                                                <div class="uice-elements-grid">
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="custom-text" title="Add Custom Text">
+                                                        <i data-lucide="file-text"></i>
+                                                        <span>Custom Text</span>
+                                                    </button>
+                                                    <button type="button" class="uice-element-add-btn" data-add-type="shape" title="Add Accent Shape">
+                                                        <i data-lucide="shapes"></i>
+                                                        <span>Accent Shape</span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Subview 2: Layers Manager List -->
@@ -1314,6 +1360,16 @@
                                                     
                                                     <!-- Grid Overlay -->
                                                     <div id="uice-grid-overlay" class="uice-grid-overlay visible"></div>
+
+                                                    <!-- Outer Bleed Area Overlay (3mm / ~10px outer cutting line) -->
+                                                    <div id="uice-bleed-area-overlay" class="uice-bleed-area-overlay" style="display: none;">
+                                                        <span class="uice-overlay-tag bleed-tag">BLEED 3mm</span>
+                                                    </div>
+
+                                                    <!-- Inner Safe Margins Overlay (5mm / ~14px inner safety boundary) -->
+                                                    <div id="uice-safe-margins-overlay" class="uice-safe-margins-overlay" style="display: none;">
+                                                        <span class="uice-overlay-tag safe-tag">SAFE PRINT 5mm</span>
+                                                    </div>
 
                                                     <!-- Smart Alignment Guidelines -->
                                                     <div id="uice-guides-container" style="position: absolute; inset: 0; pointer-events: none; z-index: 9998;"></div>
@@ -1397,6 +1453,44 @@
                                                     <button type="button" class="uice-align-btn" id="btn-align-bottom" title="Align Bottom"><i data-lucide="align-vertical-justify-end" style="width: 14px; height: 14px;"></i></button>
                                                 </div>
                                             </div>
+
+                                            <!-- Progressive Disclosure: Advanced Settings Accordion -->
+                                            <details class="uice-section-card uice-accordion-card" id="prop-sec-advanced" open>
+                                                <summary class="uice-accordion-header">
+                                                    <span class="uice-section-title" style="margin: 0; display: inline-flex; align-items: center; gap: 6px;">
+                                                        <i data-lucide="sliders-horizontal" style="width: 13px; height: 13px;"></i> Advanced Settings
+                                                    </span>
+                                                    <span class="badge badge-secondary" style="font-size: 9px; padding: 1px 6px;">Effects</span>
+                                                </summary>
+                                                <div class="uice-accordion-content" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                                    <div class="uice-input-group">
+                                                        <label class="uice-input-label">Element Label / Name</label>
+                                                        <input type="text" id="prop-uice-name" class="form-control" style="font-size: 11px; padding: 4px 8px;">
+                                                    </div>
+                                                    <div class="uice-field-grid">
+                                                        <div class="uice-input-group">
+                                                            <label class="uice-input-label">Opacity: <span id="lbl-uice-opacity-val">100%</span></label>
+                                                            <input type="range" id="prop-uice-opacity" min="0.1" max="1" step="0.05" value="1" style="width: 100%;">
+                                                        </div>
+                                                        <div class="uice-input-group">
+                                                            <label class="uice-input-label">Shadow Preset</label>
+                                                            <select id="prop-uice-shadow" class="form-control" style="font-size: 11px; padding: 4px 6px;">
+                                                                <option value="none">None</option>
+                                                                <option value="subtle">Subtle Elevation</option>
+                                                                <option value="medium">Medium Shadow</option>
+                                                                <option value="prominent">Prominent</option>
+                                                                <option value="glow">Security Glow</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06);">
+                                                        <label for="prop-uice-lock" style="font-size: 11px; font-weight: 600; color: #cbd5e1; margin: 0; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                                            <i data-lucide="lock" style="width: 12px; height: 12px;"></i> Lock Element Position
+                                                        </label>
+                                                        <input type="checkbox" id="prop-uice-lock">
+                                                    </div>
+                                                </div>
+                                            </details>
 
                                             <!-- Typography Section -->
                                             <div class="uice-section-card" id="prop-sec-typography" style="display: none;">
