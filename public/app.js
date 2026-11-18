@@ -2616,6 +2616,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     }
 
     if (!emp) return '';
+    
+    // Synchronize visual layout element properties to template root
+    if (template && template.layouts && typeof syncVisualPropertiesToRoot === 'function') {
+        syncVisualPropertiesToRoot(template);
+    }
 
     // If template has modern UICE layout nodes, render with UICE canvas engine
     if (template && template.layouts && typeof generateUiceCardHtml === 'function') {
@@ -2985,12 +2990,12 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         const isHoriz = template.layout === 'horizontal';
         const lblW = isHoriz ? '88px' : '33%';
         const maxLblW = isHoriz ? '88px' : '36%';
-        const borderBtm = isHoriz ? 'none' : '1px dashed rgba(15, 23, 42, 0.07)';
+        const borderBtm = '0.5px solid rgba(128, 128, 128, 0.15)';
         return `
         <tr style="border-bottom: ${borderBtm} !important;">
-            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"};">${label}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px;">${label}</td>
             <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPadding}px 0;">:</td>
-            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto;">${val}</td>
+            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${val}</td>
         </tr>`;
     };
 
@@ -3121,7 +3126,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
             const leftColWidth = Math.max(130, Math.min(150, (photoShape === 'circle' ? pDim : photoWidth) + 12));
             const qrBoxDim = qrSize || 48;
             const qrCanvasDim = Math.max(24, qrBoxDim - 8);
-            const isQrUnderPhoto = template.barcodePosition === 'bottom-center' || template.qrPosition === 'bottom-left' || (template.name && template.name.toLowerCase().includes('office')) || template.id === 'tpl-office';
+            const isQrUnderPhoto = template.barcodePosition === 'bottom-center' || template.qrPosition === 'bottom-left' || (template.name && (template.name.toLowerCase().includes('office') || template.name.toLowerCase().includes('visual'))) || template.id === 'tpl-office' || (template.layouts && template.layouts.horizontal && template.layouts.horizontal.elements && template.layouts.horizontal.elements.some(e => e.type === 'qr-code' && e.y >= 160 && e.x < 150));
 
             return `
             <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
@@ -3132,7 +3137,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                             <linearGradient id="hanoverWaveGradH" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stop-color="${template.headerBgColor || '#0d7a6e'}" />
                                 <stop offset="60%" stop-color="${template.accentColor || '#009688'}" />
-                                <stop offset="100%" stop-color="#00b4d8" />
+                                <stop offset="100%" stop-color="${template.accentColor || '#009688'}" />
                             </linearGradient>
                         </defs>
                         <path d="M0,0 L500,0 L500,60 C420,54 330,50 205,58 C135,66 50,112 0,106 Z" fill="${template.accentColor || '#009688'}" opacity="0.32"/>
@@ -3163,12 +3168,12 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                             </div>
                             <div class="id-portrait-brand" style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
                                 <h1 class="id-portrait-title" style="color: #ffffff; font-size: ${Math.min(headerFontSize, 11.5)}px; font-weight: 800; text-transform: uppercase; margin: 0; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.35);">${template.headerText || 'VALLEY SECURITY AGENCY'}</h1>
-                                <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.92); font-size: ${Math.max(6, headerFontSize * 0.52)}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.4px;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
+                                <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.92); font-size: ${Math.max(6, headerFontSize * 0.52)}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.4px;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR 7889311608'}</p>
                             </div>
                         </div>
                         <!-- Right: High-Impact Display Serif Card Title (SECURITY ID CARD / STUDENT ID CARD / ADMIN) -->
                         <div style="text-align: right; line-height: 1.05; padding-right: 2px;">
-                            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: 0 1px 4px rgba(0,0,0,0.4);">
+                            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: ${rawCardTitle.length <= 6 ? '22px' : '18px'}; font-style: ${rawCardTitle.length <= 6 ? 'italic' : 'normal'}; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: 0 1px 4px rgba(0,0,0,0.4);">
                                 ${titleLine1}${titleLine2 ? `<br><span style="font-size: 15px; font-weight: 700; opacity: 0.95;">${titleLine2}</span>` : ''}
                             </div>
                         </div>
@@ -3197,11 +3202,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                         <!-- Column 2 (Right Area): 100% On Clean White Background, Zero Dark Wave Overlap -->
                         <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding-left: 4px; padding-top: 4px; z-index: 2;">
                             <div style="margin-bottom: 3px;">
-                                <h2 class="id-portrait-name" style="color: #0f172a; font-size: ${nameFontSize || 17}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; letter-spacing: 0.4px; text-transform: uppercase;">
+                                <h2 class="id-portrait-name" style="font-family: ${template.nameFont || template.font || "'Playfair Display', Georgia, serif"}; color: #0f172a; font-size: ${nameFontSize || 17}px; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; letter-spacing: 0.6px; text-transform: uppercase;">
                                     ${cleanTextVal(emp.name)}
                                 </h2>
                                 ${showDesignation ? `
-                                <h3 class="id-portrait-designation" style="color: ${template.accentColor || '#009688'}; font-size: ${designationFontSize || 10.5}px; font-weight: 700; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1.1;">
+                                <h3 class="id-portrait-designation" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; color: ${template.accentColor || '#dc2626'}; font-size: ${designationFontSize || 10.5}px; font-weight: 800; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1.1;">
                                     ${cleanTextVal(emp.designation)}
                                 </h3>` : ''}
                             </div>
@@ -3213,18 +3218,18 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                             </div>
 
                             ${isQrUnderPhoto ? `
-                            <!-- Bottom Security Verification Lockup: Barcode (Left) + Signature (Right) -->
+                            <!-- Bottom Security Verification Lockup: Signature (Left) + Barcode (Right) -->
                             <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 4px; padding-bottom: 2px;">
+                                ${showSignature ? `
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 100px; padding-left: 2px;">
+                                    <div style="height: 26px; width: 90px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+                                    <div style="font-size: 6px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 95px; text-align: center; white-space: nowrap;">AUTHORITY SIGNATURE</div>
+                                </div>` : '<div></div>'}
                                 ${showBarcode ? `
-                                <div style="display: flex; flex-direction: column; align-items: flex-start; padding-left: 2px;">
+                                <div style="display: flex; flex-direction: column; align-items: center; padding-right: 2px;">
                                     ${getBarcodeHtml(template.barcodeWidth ? template.barcodeWidth + 'px' : '116px', template.barcodeHeight ? template.barcodeHeight + 'px' : '24px')}
                                     <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 800; color: #334155; letter-spacing: 0.8px; margin-top: 1px;">${cleanTextVal(emp.id, false)}</span>
                                 </div>` : '<div></div>'}
-                                ${showSignature ? `
-                                <div style="display: flex; flex-direction: column; align-items: center; width: 100px; padding-right: 2px;">
-                                    <div style="height: 26px; width: 90px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
-                                    <div style="font-size: 6px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 95px; text-align: center; white-space: nowrap;">AUTHORITY SIGNATURE</div>
-                                </div>` : ''}
                             </div>
                             ` : `
                             <!-- Bottom Security Verification Lockup: Signature (Left) + QR Code (Right) -->
@@ -3525,7 +3530,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                             <linearGradient id="hanoverWaveGradV" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stop-color="${template.headerBgColor || '#0d7a6e'}" />
                                 <stop offset="60%" stop-color="${template.accentColor || '#009688'}" />
-                                <stop offset="100%" stop-color="#00b4d8" />
+                                <stop offset="100%" stop-color="${template.accentColor || '#009688'}" />
                             </linearGradient>
                         </defs>
                         <path d="M0,0 L320,0 L320,85 C250,130 180,80 110,120 C50,145 15,115 0,130 Z" fill="${template.accentColor || '#009688'}" opacity="0.32"/>
@@ -9379,12 +9384,97 @@ function convertLegacyTemplateToUice(tpl) {
 }
 
 /**
+ * Synchronizes element properties from UICE visual layouts back to top-level template properties.
+ * Ensures Classic Studio form controls and Classic ID Card renderer match the visual designer 1:1.
+ */
+function syncVisualPropertiesToRoot(tpl) {
+    if (!tpl || !tpl.layouts) return tpl;
+    const orient = tpl.layout === 'vertical' ? 'vertical' : 'horizontal';
+    const layout = tpl.layouts[orient] || tpl.layouts.horizontal || tpl.layouts.vertical;
+    if (!layout || !Array.isArray(layout.elements) || layout.elements.length === 0) return tpl;
+
+    const elements = layout.elements;
+    
+    // 1. Badge / Card Title
+    const badgeEl = elements.find(e => e.type === 'badge-pill' && e.visible !== false);
+    if (badgeEl && badgeEl.properties && badgeEl.properties.text) {
+        tpl.cardTitle = badgeEl.properties.text;
+    }
+
+    // 2. Agency Header & Subheader
+    const brandEl = elements.find(e => e.type === 'agency-brand' && e.visible !== false);
+    if (brandEl && brandEl.properties) {
+        if (brandEl.properties.title) tpl.headerText = brandEl.properties.title;
+        if (brandEl.properties.subtitle) tpl.subheaderText = brandEl.properties.subtitle;
+        if (brandEl.properties.titleFontSize) tpl.headerFontSize = brandEl.properties.titleFontSize;
+        if (brandEl.properties.logoSize) tpl.logoSize = brandEl.properties.logoSize;
+    }
+
+    // 3. Header Background & Accent Colors (from waves or background)
+    const waveTopEl = elements.find(e => e.type === 'svg-wave-top');
+    if (waveTopEl && waveTopEl.properties) {
+        if (waveTopEl.properties.headerBgColor) tpl.headerBgColor = waveTopEl.properties.headerBgColor;
+        if (waveTopEl.properties.accentColor) tpl.accentColor = waveTopEl.properties.accentColor;
+    }
+    if (layout.background) {
+        if (layout.background.headerBg && !tpl.headerBgColor) tpl.headerBgColor = layout.background.headerBg;
+        if (layout.background.accent && !tpl.accentColor) tpl.accentColor = layout.background.accent;
+        if (layout.background.color) tpl.backgroundColor = layout.background.color;
+    }
+
+    // 4. Employee Photo (shape, outline, width, height, offset)
+    const photoEl = elements.find(e => e.type === 'employee-photo');
+    if (photoEl) {
+        const pp = photoEl.properties || {};
+        if (pp.shape) tpl.photoShape = pp.shape;
+        if (photoEl.width) tpl.photoWidth = photoEl.width;
+        if (photoEl.height) tpl.photoHeight = photoEl.height;
+        if (photoEl.y !== undefined) tpl.photoTopOffset = Math.max(0, photoEl.y - 95);
+    }
+
+    // 5. Details Table (valueColor, labelColor, fontSize, rowPadding, labelWidth)
+    const detailsEl = elements.find(e => e.type === 'details-table');
+    if (detailsEl && detailsEl.properties) {
+        const dp = detailsEl.properties;
+        if (dp.valueColor) tpl.valueColor = dp.valueColor;
+        if (dp.labelColor) tpl.labelColor = dp.labelColor;
+        if (dp.fontSize) tpl.detailsFontSize = dp.fontSize;
+        if (dp.rowPadding !== undefined) tpl.rowPadding = dp.rowPadding;
+        if (dp.labelWidth !== undefined) tpl.labelWidth = dp.labelWidth;
+    }
+
+    // 6. Employee Name & Designation
+    const nameEl = elements.find(e => e.type === 'employee-name');
+    if (nameEl && nameEl.properties) {
+        if (nameEl.properties.fontSize) tpl.nameFontSize = nameEl.properties.fontSize;
+        if (nameEl.properties.fontFamily) tpl.nameFont = nameEl.properties.fontFamily;
+    }
+    const desigEl = elements.find(e => e.type === 'designation');
+    if (desigEl && desigEl.properties) {
+        if (desigEl.properties.fontSize) tpl.designationFontSize = desigEl.properties.fontSize;
+        if (desigEl.properties.color) tpl.designationColor = desigEl.properties.color;
+    }
+
+    // 7. Spatial Lockup: Detect if QR is placed under the photo
+    const qrEl = elements.find(e => e.type === 'qr-code');
+    if (qrEl && photoEl) {
+        if (qrEl.x < 150 && qrEl.y > photoEl.y) {
+            tpl.barcodePosition = 'bottom-center';
+            tpl.qrPosition = 'bottom-left';
+        }
+    }
+
+    return tpl;
+}
+
+/**
  * Initializes UICE state with a selected template.
  */
 function initUiceWithTemplate(tplSource) {
     if (!tplSource) return;
     const tpl = JSON.parse(JSON.stringify(tplSource));
     convertLegacyTemplateToUice(tpl);
+    syncVisualPropertiesToRoot(tpl);
 
     UICE_STATE.template = tpl;
     UICE_STATE.orientation = tpl.layout === 'vertical' ? 'vertical' : 'horizontal';
@@ -15122,6 +15212,10 @@ async function saveUiceTemplate() {
         tpl.id = 'tpl-' + Date.now();
     }
 
+    if (typeof syncVisualPropertiesToRoot === 'function') {
+        syncVisualPropertiesToRoot(tpl);
+    }
+
     try {
         const response = await fetch('/api/templates', {
             method: 'POST',
@@ -15213,6 +15307,9 @@ function loadTemplateInStudio(id) {
 
     // Deep clone template to avoid direct mutation of state list
     const tpl = JSON.parse(JSON.stringify(tplSource));
+    if (typeof syncVisualPropertiesToRoot === 'function') {
+        syncVisualPropertiesToRoot(tpl);
+    }
 
     document.getElementById('tpl-id').value = tpl.id || '';
     document.getElementById('tpl-name').value = tpl.name || '';
@@ -15233,8 +15330,8 @@ function loadTemplateInStudio(id) {
     if (document.getElementById('tpl-barcode-pos')) {
         document.getElementById('tpl-barcode-pos').value = tpl.barcodePosition || 'bottom-right';
     }
-    document.getElementById('tpl-bg-color').value = tpl.backgroundColor || '#ffffff';
-    document.getElementById('tpl-header-bg').value = tpl.headerBgColor || '#0e3e2b';
+    document.getElementById('tpl-bg-color').value = colorToHex(tpl.backgroundColor || '#ffffff');
+    document.getElementById('tpl-header-bg').value = colorToHex(tpl.headerBgColor || '#0e3e2b');
     document.getElementById('tpl-accent-color').value = tpl.accentColor || '#c8102e';
     const parsedHsl = hexToHsl(tpl.accentColor || '#c8102e');
     updateHslSlidersUI(parsedHsl.h, parsedHsl.s, parsedHsl.l);
@@ -15280,8 +15377,8 @@ function loadTemplateInStudio(id) {
     document.getElementById('lbl-details-font-size').textContent = detailsFontSizeVal;
 
     // New controls: label color, value color, row padding, label width
-    document.getElementById('tpl-label-color').value = tpl.labelColor || '#555555';
-    document.getElementById('tpl-value-color').value = tpl.valueColor || '#111111';
+    document.getElementById('tpl-label-color').value = colorToHex(tpl.labelColor || '#555555');
+    document.getElementById('tpl-value-color').value = colorToHex(tpl.valueColor || '#111111');
     const rowPaddingVal = tpl.rowPadding !== undefined ? tpl.rowPadding : 3;
     document.getElementById('tpl-row-padding').value = rowPaddingVal;
     document.getElementById('lbl-row-padding').textContent = rowPaddingVal;
@@ -15475,7 +15572,7 @@ function getActiveTemplateFromForm() {
         validity: document.getElementById('field-tpl-validity') ? document.getElementById('field-tpl-validity').checked : true
     };
 
-    return {
+    const activeTplObj = {
         id,
         name,
         cardTitle,
@@ -15512,6 +15609,47 @@ function getActiveTemplateFromForm() {
         fieldOrder: VSA_STATE.activeFieldOrder || [...DEFAULT_FIELD_ORDER],
         isVisualTemplate: true
     };
+
+    // Preserve existing visual layouts and sync current form updates into them
+    const existing = (VSA_STATE.templates || []).find(t => t.id === id);
+    if (existing && existing.layouts) {
+        activeTplObj.layouts = JSON.parse(JSON.stringify(existing.layouts));
+        const orient = activeTplObj.layout || 'horizontal';
+        const curLayout = activeTplObj.layouts[orient];
+        if (curLayout && Array.isArray(curLayout.elements)) {
+            curLayout.elements.forEach(el => {
+                if (el.type === 'badge-pill' && el.properties) {
+                    el.properties.text = cardTitle;
+                }
+                if (el.type === 'agency-brand' && el.properties) {
+                    el.properties.title = headerText;
+                    el.properties.subtitle = subheaderText;
+                }
+                if (el.type === 'svg-wave-top' && el.properties) {
+                    el.properties.headerBgColor = headerBgColor;
+                    el.properties.accentColor = accentColor;
+                }
+                if (el.type === 'employee-photo' && el.properties) {
+                    el.properties.shape = photoShape;
+                    el.properties.outlineColor = accentColor;
+                }
+                if (el.type === 'details-table' && el.properties) {
+                    el.properties.valueColor = valueColor;
+                    el.properties.labelColor = labelColor;
+                    el.properties.fontSize = detailsFontSize;
+                    el.properties.rowPadding = rowPadding;
+                    el.properties.labelWidth = labelWidth;
+                }
+            });
+            if (curLayout.background) {
+                curLayout.background.accent = accentColor;
+                curLayout.background.headerBg = headerBgColor;
+                curLayout.background.color = backgroundColor;
+            }
+        }
+    }
+
+    return activeTplObj;
 }
 
 function updateLivePreview() {
@@ -16925,7 +17063,51 @@ function setupMobileSidebar() {
     });
 }
 
-// Color Picker Helpers: Hex to HSL and Slider Updates
+// Color Picker Helpers: Hex to HSL, Color to Hex, and Slider Updates
+function colorToHex(col) {
+    if (!col) return '#111111';
+    if (typeof col !== 'string') return '#111111';
+    col = col.trim();
+    if (col.startsWith('#')) {
+        if (col.length === 4) {
+            return '#' + col[1] + col[1] + col[2] + col[2] + col[3] + col[3];
+        }
+        return col;
+    }
+    if (col.startsWith('hsl')) {
+        const parts = col.match(/[\d.]+/g);
+        if (parts && parts.length >= 3) {
+            let h = parseFloat(parts[0]) / 360;
+            let s = parseFloat(parts[1]) / 100;
+            let l = parseFloat(parts[2]) / 100;
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            const toHex = x => {
+                const hex = Math.round(x * 255).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+    }
+    return col;
+}
+
 function hexToHsl(hex) {
     if (!hex) return { h: 0, s: 100, l: 50 };
     

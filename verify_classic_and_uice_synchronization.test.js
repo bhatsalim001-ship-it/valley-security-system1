@@ -234,6 +234,42 @@ it('server.js preserves office template in GET /api/templates', () => {
     assert(serverJs.includes("Auto-reseeded missing office template into templates collection"), 'server.js missing auto-reseed logic in GET /api/templates');
 });
 
+console.log('\n=== 7. NEW VISUAL CARD SYNCHRONIZATION TO CLASSIC ID CARD ===');
+
+it('syncVisualPropertiesToRoot extracts badge-pill, photo shape, table value color, and wave colors', () => {
+    assert(appJs.includes('function syncVisualPropertiesToRoot(tpl)'), 'Missing syncVisualPropertiesToRoot function');
+    assert(appJs.includes('tpl.cardTitle = badgeEl.properties.text;'), 'Should extract cardTitle from badge-pill');
+    assert(appJs.includes('tpl.valueColor = dp.valueColor;'), 'Should extract valueColor from details-table');
+    assert(appJs.includes('tpl.photoShape = pp.shape;'), 'Should extract photoShape from employee-photo');
+    assert(appJs.includes('tpl.headerBgColor = waveTopEl.properties.headerBgColor;'), 'Should extract headerBgColor from wave-top');
+    assert(appJs.includes('tpl.accentColor = waveTopEl.properties.accentColor;'), 'Should extract accentColor from wave-top');
+});
+
+it('colorToHex converts HSL colors to standard 6-digit hex format for color inputs', () => {
+    assert(appJs.includes('function colorToHex(col)'), 'Missing colorToHex function');
+    const vm = require('vm');
+    const sandbox = {};
+    const code = appJs.slice(appJs.indexOf('function colorToHex(col)'), appJs.indexOf('function hexToHsl(hex)'));
+    vm.runInNewContext(code, sandbox);
+    const hexResult = sandbox.colorToHex('hsl(360, 100%, 47%)');
+    assert(/^#[0-9a-f]{6}$/i.test(hexResult), `Expected valid 6-char hex, got ${hexResult}`);
+});
+
+it('generateIdCardHtml organic-wave wave gradients use accentColor instead of hardcoded cyan #00b4d8', () => {
+    assert(!appJs.includes('id="hanoverWaveGradH" x1="0%" y1="0%" x2="100%" y2="100%">\n                                <stop offset="0%" stop-color="${template.headerBgColor || \'#0d7a6e\'}" />\n                                <stop offset="60%" stop-color="${template.accentColor || \'#009688\'}" />\n                                <stop offset="100%" stop-color="#00b4d8" />'), 'Horizontal wave gradient should not use #00b4d8');
+    assert(!appJs.includes('id="hanoverWaveGradV" x1="0%" y1="0%" x2="100%" y2="100%">\n                                <stop offset="0%" stop-color="${template.headerBgColor || \'#0d7a6e\'}" />\n                                <stop offset="60%" stop-color="${template.accentColor || \'#009688\'}" />\n                                <stop offset="100%" stop-color="#00b4d8" />'), 'Vertical wave gradient should not use #00b4d8');
+});
+
+it('generateIdCardHtml organic-wave places Signature on left and Barcode on right when isQrUnderPhoto is true', () => {
+    assert(appJs.includes('<!-- Bottom Security Verification Lockup: Signature (Left) + Barcode (Right) -->'), 'Missing signature left, barcode right lockup');
+    assert(appJs.includes("template.name.toLowerCase().includes('visual')"), 'isQrUnderPhoto should detect visual templates');
+});
+
+it('getActiveTemplateFromForm preserves layouts and propagates form updates into layout element properties', () => {
+    assert(appJs.includes('activeTplObj.layouts = JSON.parse(JSON.stringify(existing.layouts));'), 'Should preserve layouts in getActiveTemplateFromForm');
+    assert(appJs.includes('el.type === \'details-table\' && el.properties'), 'Should sync details-table properties in getActiveTemplateFromForm');
+});
+
 console.log('\n======================================================');
 console.log(`TEST RESULTS: ${passed} passed, ${failed} failed`);
 console.log('======================================================\n');
