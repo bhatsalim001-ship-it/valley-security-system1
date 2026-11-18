@@ -3068,22 +3068,31 @@ Do not include markdown or code block tags. Return only the raw JSON.`;
     const result = await generateWithGemini(apiKey, [part, prompt]);
     const text = result.response.text().trim();
     
-    let jsonText = text;
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.substring(7);
+    const { parseGeminiJson, normalizeDate, normalizeAadhaar, normalizeMobile } = require('./formProcessor');
+    const data = parseGeminiJson(text);
+    if (data.dob) data.dob = normalizeDate(data.dob);
+    if (data.mobile) data.mobile = normalizeMobile(data.mobile) || data.mobile;
+    if (data.bloodGroup) data.bloodGroup = (data.bloodGroup || '').toUpperCase().trim();
+    if (data.documentNumber) {
+      const adh = normalizeAadhaar(data.documentNumber);
+      if (adh.raw && adh.raw.length === 12) {
+        data.aadhaar = adh.raw;
+        data.aadhaarFormatted = adh.formatted;
+        data.aadhaarLast4 = adh.last4;
+      }
     }
-    if (jsonText.startsWith('```')) {
-      jsonText = jsonText.substring(3);
-    }
-    if (jsonText.endsWith('```')) {
-      jsonText = jsonText.substring(0, jsonText.length - 3);
-    }
-    jsonText = jsonText.trim();
-
-    const data = JSON.parse(jsonText);
     return res.json({ success: true, data });
   } catch (error) {
     console.error('Gemini OCR error:', error);
+    const isQuota = error.message && (
+      error.message.includes('429') ||
+      error.message.includes('quota') ||
+      error.message.includes('Quota exceeded') ||
+      error.message.includes('ResourceExhausted')
+    );
+    if (isQuota) {
+      return res.status(429).json({ error: 'AI quota exceeded or rate limit reached. Please retry in a few moments.' });
+    }
     return res.status(500).json({ error: 'AI processing failed: ' + error.message });
   }
 });
@@ -3106,6 +3115,15 @@ app.post('/api/employees/scan-form', authenticateToken, async (req, res) => {
     return res.json(result);
   } catch (error) {
     console.error('Form Scanner error:', error);
+    const isQuota = error.message && (
+      error.message.includes('429') ||
+      error.message.includes('quota') ||
+      error.message.includes('Quota exceeded') ||
+      error.message.includes('ResourceExhausted')
+    );
+    if (isQuota) {
+      return res.status(429).json({ error: 'AI quota exceeded or rate limit reached. Please retry in a few moments.' });
+    }
     return res.status(500).json({ error: 'Form processing failed: ' + error.message });
   }
 });
@@ -3219,22 +3237,20 @@ CRITICAL DESIGN ARCHETYPES & CONTRAST RULES (EXACT VISUAL REPLICATION):
     const result = await generateWithGemini(apiKey, contents);
     const responseText = result.response.text().trim();
     
-    let jsonText = responseText;
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.substring(7);
-    }
-    if (jsonText.startsWith('```')) {
-      jsonText = jsonText.substring(3);
-    }
-    if (jsonText.endsWith('```')) {
-      jsonText = jsonText.substring(0, jsonText.length - 3);
-    }
-    jsonText = jsonText.trim();
-
-    const data = JSON.parse(jsonText);
+    const { parseGeminiJson } = require('./formProcessor');
+    const data = parseGeminiJson(responseText);
     return res.json({ success: true, data });
   } catch (error) {
     console.error('Gemini Design Generator error:', error);
+    const isQuota = error.message && (
+      error.message.includes('429') ||
+      error.message.includes('quota') ||
+      error.message.includes('Quota exceeded') ||
+      error.message.includes('ResourceExhausted')
+    );
+    if (isQuota) {
+      return res.status(429).json({ error: 'AI quota exceeded or rate limit reached. Please retry in a few moments.' });
+    }
     return res.status(500).json({ error: 'AI design processing failed: ' + error.message });
   }
 });
@@ -3574,13 +3590,8 @@ Format the output strictly as a JSON object matching this schema:
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
     
-    let jsonText = responseText;
-    if (jsonText.startsWith('```json')) jsonText = jsonText.substring(7);
-    if (jsonText.startsWith('```')) jsonText = jsonText.substring(3);
-    if (jsonText.endsWith('```')) jsonText = jsonText.substring(0, jsonText.length - 3);
-    jsonText = jsonText.trim();
-
-    const parsedData = JSON.parse(jsonText);
+    const { parseGeminiJson } = require('./formProcessor');
+    const parsedData = parseGeminiJson(responseText);
     return res.json({ success: true, insights: parsedData.insights || [] });
 
   } catch (err) {
@@ -3818,13 +3829,8 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
     
-    let jsonText = responseText;
-    if (jsonText.startsWith('```json')) jsonText = jsonText.substring(7);
-    if (jsonText.startsWith('```')) jsonText = jsonText.substring(3);
-    if (jsonText.endsWith('```')) jsonText = jsonText.substring(0, jsonText.length - 3);
-    jsonText = jsonText.trim();
-
-    const data = JSON.parse(jsonText);
+    const { parseGeminiJson } = require('./formProcessor');
+    const data = parseGeminiJson(responseText);
     return res.json({ success: true, officialName: data.officialName });
   } catch (error) {
     console.error('Resolve official name error:', error.message);
@@ -3881,13 +3887,8 @@ app.get('/api/audit-departments', authenticateToken, async (req, res) => {
     const result = await Promise.race([generatePromise, timeoutPromise]);
     const responseText = result.response.text().trim();
     
-    let jsonText = responseText;
-    if (jsonText.startsWith('```json')) jsonText = jsonText.substring(7);
-    if (jsonText.startsWith('```')) jsonText = jsonText.substring(3);
-    if (jsonText.endsWith('```')) jsonText = jsonText.substring(0, jsonText.length - 3);
-    jsonText = jsonText.trim();
-
-    const auditMap = JSON.parse(jsonText);
+    const { parseGeminiJson } = require('./formProcessor');
+    const auditMap = parseGeminiJson(responseText);
     return res.json({ success: true, audit: auditMap });
   } catch (error) {
     console.error('Audit departments error:', error.message);
