@@ -7,6 +7,12 @@
     <meta name="description" content="Official Employee Verification Portal of Valley Security Service Agency. Verify security guard credentials and active status instantly via QR code.">
     <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification Portal, QR Code Verify, Active Guards">
     <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#080c14">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VSA Portal">
+    <link rel="apple-touch-icon" href="/favicon.png">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -640,6 +646,13 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+            });
         }
     </script>
 </body>

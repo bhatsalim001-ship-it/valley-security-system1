@@ -288,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCropperControls();
     setupModalA11y();
     setupMobileSidebar();
+    initPwaAndOfflineSentinel();
 
     // Set today's date as default for Card Issue Date input
     const issueDateInput = document.getElementById('id-card-issue-date');
@@ -744,23 +745,37 @@ async function fetchData() {
                 };
             }
         } catch (fetchErr) {
-            const dbRes = await fetch('/api/db');
-            if (dbRes.status === 401) {
-                sessionStorage.removeItem('currentUser');
-                window.location.href = '/login.html';
-                return;
+            try {
+                const dbRes = await fetch('/api/db');
+                if (dbRes.status === 401) {
+                    sessionStorage.removeItem('currentUser');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                if (dbRes.ok) {
+                    const db = await dbRes.json();
+                    emps = db.employees || [];
+                    classifications = {
+                        departments: db.departments || [],
+                        designations: db.designations || [],
+                        manpowerTypes: db.manpowerTypes || []
+                    };
+                }
+            } catch (dbErr) {
+                console.warn('⚡ Offline mode: Loading cached employee roster');
+                try {
+                    const cached = localStorage.getItem('vsa_last_employees_cache');
+                    if (cached) emps = JSON.parse(cached) || [];
+                } catch (e) {}
             }
-            if (!dbRes.ok) throw new Error('API Sync failure');
-            const db = await dbRes.json();
-            emps = db.employees || [];
-            classifications = {
-                departments: db.departments || [],
-                designations: db.designations || [],
-                manpowerTypes: db.manpowerTypes || []
-            };
         }
         
         VSA_STATE.employees = Array.isArray(emps) ? emps : (emps.employees || []);
+        if (Array.isArray(VSA_STATE.employees) && VSA_STATE.employees.length > 0) {
+            try {
+                localStorage.setItem('vsa_last_employees_cache', JSON.stringify(VSA_STATE.employees));
+            } catch (storageErr) {}
+        }
         VSA_STATE.clients = [];
         VSA_STATE.departments = classifications.departments || [];
         VSA_STATE.designations = classifications.designations || [];
@@ -17123,6 +17138,74 @@ function setupMobileSidebar() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', closeSidebar);
     });
+}
+
+// Phase 11: PWA Service Worker & Network Connectivity Sentinel
+function initPwaAndOfflineSentinel() {
+    // 1. Register Service Worker if supported
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then((registration) => {
+                    console.log('⚡ VSA PWA Service Worker registered successfully (scope: ' + registration.scope + ')');
+                })
+                .catch((err) => {
+                    console.warn('⚠️ VSA Service Worker registration note:', err.message);
+                });
+        });
+    }
+
+    // 2. Real-time Network Connectivity Sentinel
+    let toastEl = document.getElementById('vsa-network-status');
+    if (!toastEl) {
+        toastEl = document.createElement('div');
+        toastEl.id = 'vsa-network-status';
+        toastEl.className = 'vsa-network-toast vsa-hidden';
+        toastEl.setAttribute('role', 'status');
+        toastEl.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toastEl);
+    }
+
+    let hideTimeout = null;
+
+    function showNetworkToast(isOnline) {
+        if (!toastEl) return;
+        if (hideTimeout) clearTimeout(hideTimeout);
+
+        if (!isOnline) {
+            toastEl.className = 'vsa-network-toast vsa-offline';
+            toastEl.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                    <path d="M10.71 5.05A16 16 0 0 1 22.56 9"></path>
+                    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                </svg>
+                <span>Working Offline — Cached Data Active</span>
+            `;
+        } else {
+            toastEl.className = 'vsa-network-toast vsa-online';
+            toastEl.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Connection Restored — Synchronized</span>
+            `;
+            hideTimeout = setTimeout(() => {
+                toastEl.className = 'vsa-network-toast vsa-hidden';
+            }, 3500);
+        }
+    }
+
+    window.addEventListener('offline', () => showNetworkToast(false));
+    window.addEventListener('online', () => showNetworkToast(true));
+
+    if (navigator.onLine === false) {
+        showNetworkToast(false);
+    }
 }
 
 // Color Picker Helpers: Hex to HSL, Color to Hex, and Slider Updates

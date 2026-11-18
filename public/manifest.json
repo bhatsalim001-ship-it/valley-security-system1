@@ -1,0 +1,52 @@
+{
+  "name": "Valley Security System - ID Suite",
+  "short_name": "VSA Portal",
+  "description": "Workforce Management & Identity Badging Platform - Valley Security Service Agency",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080c14",
+  "theme_color": "#080c14",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Admin Console",
+      "url": "/index.html",
+      "description": "Open VSA Central Command and Employee Registry",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Candidate Onboarding",
+      "url": "/register.html",
+      "description": "Open Candidate Self-Registration Portal",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Verify Guard",
+      "url": "/verification.html",
+      "description": "Open Public Credential Verification Portal",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ]
+}

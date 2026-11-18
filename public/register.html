@@ -6,6 +6,12 @@
     <title>Employee Self-Registration - Valley Security Service Agency</title>
     <meta name="description" content="Official Employee Onboarding and Self-Registration Portal of Valley Security Service Agency.">
     <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#080c14">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VSA Portal">
+    <link rel="apple-touch-icon" href="/favicon.png">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2525,6 +2531,13 @@
         // Module exports for automated verification in Node environments
         if (typeof module !== 'undefined' && module.exports) {
             module.exports = { analyzeImageQuality, updateQualityHud, toTitleCase };
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+            });
         }
     </script>
 </body>

@@ -1045,7 +1045,7 @@ function protectHtmlPages(req, res, next) {
   const reqPathLower = (req.path || '').toLowerCase();
 
   // Block unauthenticated direct static file downloads of sensitive data
-  if (reqPathLower.endsWith('.vcf') || reqPathLower.endsWith('.csv') || reqPathLower.endsWith('.backup') || reqPathLower.endsWith('.json')) {
+  if (reqPathLower !== '/manifest.json' && (reqPathLower.endsWith('.vcf') || reqPathLower.endsWith('.csv') || reqPathLower.endsWith('.backup') || reqPathLower.endsWith('.json'))) {
     const token = req.cookies.auth_token;
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized file access.' });
@@ -1069,8 +1069,9 @@ function protectHtmlPages(req, res, next) {
   }
 
   const publicPages = [
-    '/login.html', '/register.html', '/upload-photo.html', '/verification.html',
+    '/login.html', '/register.html', '/upload-photo.html', '/verification.html', '/offline.html',
     '/firm-config.js', '/styles.css', '/developer.jpg', '/favicon.png',
+    '/manifest.json', '/sw.js',
     '/robots.txt', '/sitemap.xml'
   ];
   const isGoogleVerification = req.path.match(/^\/google[a-f0-9]+\.html$/);
@@ -1132,7 +1133,13 @@ app.use(express.static(path.join(__dirname, 'public'), {
   lastModified: true,
   setHeaders: function (res, filePath) {
     const ext = path.extname(filePath).toLowerCase();
-    if (ext === '.html') {
+    const basename = path.basename(filePath).toLowerCase();
+    if (basename === 'sw.js') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (basename === 'manifest.json') {
+      res.setHeader('Content-Type', 'application/manifest+json; charset=UTF-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    } else if (ext === '.html') {
       res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     } else if (filePath.includes(path.sep + 'fonts' + path.sep) || filePath.includes(path.sep + 'lib' + path.sep)) {
       res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
