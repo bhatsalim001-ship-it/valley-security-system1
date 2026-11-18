@@ -456,7 +456,7 @@
             const statusIcon = isActive ? 'check-circle-2' : 'alert-octagon';
 
             const fallbackAvatar = getFallbackAvatar(guard.name ? guard.name[0].toUpperCase() : '?');
-            const photoUrl = sanitizeImageUrl(guard.documents?.photo, fallbackAvatar);
+            const photoUrl = sanitizeImageUrl(guard.documents?.photo || guard.photo, fallbackAvatar);
 
             container.innerHTML = `
                 <div class="status-badge-container">

@@ -2146,8 +2146,17 @@
             const hintEl = document.getElementById('mobile-validation-hint');
             if (!mobileInput || !hintEl) return;
 
-            mobileInput.value = mobileInput.value.replace(/\D/g, '');
-            const val = mobileInput.value;
+            let val = mobileInput.value.replace(/\D/g, '');
+            if (val.length === 12 && val.startsWith('91')) {
+                val = val.slice(2);
+            } else if (val.length === 11 && val.startsWith('0')) {
+                val = val.slice(1);
+            }
+            if (val.length > 10) {
+                val = val.slice(0, 10);
+            }
+            mobileInput.value = val;
+
             if (!val) {
                 hintEl.textContent = '';
                 hintEl.className = 'field-hint';
@@ -2280,7 +2289,15 @@
             event.preventDefault();
 
             const btnSubmit = document.getElementById('btn-submit-form');
-            const mobileVal = document.getElementById('guard-mobile').value.trim();
+            let mobileVal = document.getElementById('guard-mobile').value.replace(/\D/g, '');
+            if (mobileVal.length === 12 && mobileVal.startsWith('91')) {
+                mobileVal = mobileVal.slice(2);
+            } else if (mobileVal.length === 11 && mobileVal.startsWith('0')) {
+                mobileVal = mobileVal.slice(1);
+            }
+            if (mobileVal.length > 10) {
+                mobileVal = mobileVal.slice(0, 10);
+            }
 
             if (!/^\d{10}$/.test(mobileVal)) {
                 alert('Please enter a valid 10-digit mobile number.');
