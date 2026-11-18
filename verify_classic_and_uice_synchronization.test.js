@@ -204,6 +204,36 @@ it('getUiceDefaultElements positions QR under photo and barcode under table for 
     assert.strictEqual(table.properties.valueColor, '#c8102e', 'table valueColor should be #c8102e');
 });
 
+console.log('\n=== 6. DUAL-SIDED TEMPLATE CREATION & NAME PROMPTING ===');
+it('public/app.js defines promptAndCreateNewTemplate with name prompting and immediate persistence', () => {
+    assert(appJs.includes('async function promptAndCreateNewTemplate('), 'promptAndCreateNewTemplate function missing');
+    assert(appJs.includes("prompt('What would you like to name your new template?'"), 'promptAndCreateNewTemplate missing name prompt');
+    assert(appJs.includes("method: 'POST'"), 'promptAndCreateNewTemplate should POST to /api/templates');
+    assert(appJs.includes('populateSelectors()'), 'promptAndCreateNewTemplate should call populateSelectors');
+    assert(appJs.includes('loadTemplateInStudio(savedTpl.id)'), 'promptAndCreateNewTemplate should load saved template');
+});
+
+it('Classic and Advance buttons wire to promptAndCreateNewTemplate', () => {
+    assert(appJs.includes("btnNew.addEventListener('click', () => promptAndCreateNewTemplate('classic'))"), 'btnNew not wired to promptAndCreateNewTemplate');
+    assert(appJs.includes("btnNewTop.addEventListener('click', () => promptAndCreateNewTemplate('classic'))"), 'btnNewTop not wired to promptAndCreateNewTemplate');
+    assert(appJs.includes("promptAndCreateNewTemplate('visual')"), 'btnNewTpl in UICE not wired to promptAndCreateNewTemplate');
+});
+
+it('populateSelectors populates uice-top-tpl-select across both sides', () => {
+    assert(appJs.includes("const topTplSel = document.getElementById('uice-top-tpl-select')"), 'populateSelectors should query uice-top-tpl-select');
+    assert(appJs.includes("topTplSel.innerHTML = tplHtml;"), 'populateSelectors should populate topTplSel with tplHtml');
+});
+
+it('cloneUiceTemplate prompts for name and immediately saves to database', () => {
+    assert(appJs.includes("prompt('What would you like to name this cloned template?'"), 'cloneUiceTemplate should prompt for clone name');
+    assert(appJs.includes("body: JSON.stringify(clone)"), 'cloneUiceTemplate should persist clone via API');
+});
+
+it('server.js preserves office template in GET /api/templates', () => {
+    const serverJs = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf-8');
+    assert(serverJs.includes("Auto-reseeded missing office template into templates collection"), 'server.js missing auto-reseed logic in GET /api/templates');
+});
+
 console.log('\n======================================================');
 console.log(`TEST RESULTS: ${passed} passed, ${failed} failed`);
 console.log('======================================================\n');

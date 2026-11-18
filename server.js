@@ -3476,14 +3476,81 @@ app.post('/api/classifications', authenticateToken, async (req, res) => {
 });
 
 // 10. Templates GET (Protected)
+const OFFICE_TEMPLATE_SEED = {
+  id: 'tpl-office',
+  name: 'office',
+  cardTitle: 'ADMIN',
+  layout: 'horizontal',
+  cardTheme: 'organic-wave',
+  photoShape: 'circle',
+  nameStyle: 'clean',
+  barcodePosition: 'bottom-center',
+  font: "'Playfair Display', 'Georgia', serif",
+  backgroundColor: '#ffffff',
+  headerBgColor: '#7a0c0c',
+  accentColor: '#c8102e',
+  labelColor: '#64748b',
+  valueColor: '#c8102e',
+  headerText: 'VALLEY SECURITY AGENCY',
+  subheaderText: 'SHAHIDGUNJ SRINAGAR 7889311608',
+  logoSize: 42,
+  headerHeight: 65,
+  headerFontSize: 12,
+  photoWidth: 115,
+  photoHeight: 115,
+  photoTopOffset: 12,
+  qrSize: 62,
+  detailsFontSize: 8.5,
+  nameFontSize: 18,
+  designationFontSize: 11,
+  rowPadding: 2,
+  labelWidth: 38,
+  labelValueSpacing: 6,
+  logo: 'preset-vsa-logo',
+  signature: 'preset-vsa-sig',
+  fields: {
+    photo: true,
+    name: true,
+    designation: true,
+    department: true,
+    empid: true,
+    father: true,
+    phone: true,
+    email: false,
+    blood: true,
+    address: true,
+    signature: true,
+    qrcode: true,
+    barcode: true,
+    validity: true
+  },
+  fieldOrder: ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone'],
+  isVisualTemplate: true
+};
+
 app.get('/api/templates', authenticateToken, async (req, res) => {
   try {
     if (usePostgres && pool) {
       const dbRes = await pool.query('SELECT data FROM templates ORDER BY id ASC');
-      const templates = dbRes.rows.map(r => r.data);
+      let templates = dbRes.rows.map(r => r.data);
+      // Auto-reseed office template if missing
+      if (!templates.some(t => t.id === 'tpl-office' || (t.name && t.name.toLowerCase() === 'office'))) {
+        try {
+          await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data', ['tpl-office', JSON.stringify(OFFICE_TEMPLATE_SEED)]);
+          templates.push(OFFICE_TEMPLATE_SEED);
+          console.log('🔄 Auto-reseeded missing office template into templates collection.');
+        } catch (seedErr) {
+          console.error('Failed to auto-reseed office template:', seedErr);
+        }
+      }
       return res.json(templates);
     } else {
       const db = readLocalDb();
+      if (!db.templates) db.templates = [];
+      if (!db.templates.some(t => t.id === 'tpl-office' || (t.name && t.name.toLowerCase() === 'office'))) {
+        db.templates.push(OFFICE_TEMPLATE_SEED);
+        writeLocalDb(db);
+      }
       return res.json(db.templates || []);
     }
   } catch (e) {

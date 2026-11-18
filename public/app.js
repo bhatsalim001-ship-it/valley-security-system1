@@ -1601,20 +1601,29 @@ function populateSelectors() {
         }
     }
 
-    // 4B. Populate templates select
+    // 4B. Populate templates select across both Classic and Advance visual designers
     const idTplSel = document.getElementById('id-select-template');
     const bulkTplSel = document.getElementById('bulk-select-template');
     const tplEditSel = document.getElementById('tpl-edit-select');
+    const topTplSel = document.getElementById('uice-top-tpl-select');
     let tplHtml = '';
-    VSA_STATE.templates.forEach(t => {
-        tplHtml += `<option value="${t.id}">${t.name} (${t.layout === 'vertical' ? 'Vertical' : 'Horizontal'})</option>`;
+    (VSA_STATE.templates || []).forEach(t => {
+        tplHtml += `<option value="${t.id}">${escapeHtml(t.name)} (${t.layout === 'vertical' ? 'Vertical' : 'Horizontal'})</option>`;
     });
     if (idTplSel) idTplSel.innerHTML = tplHtml;
     if (bulkTplSel) bulkTplSel.innerHTML = tplHtml;
     if (tplEditSel) {
         tplEditSel.innerHTML = '<option value="">-- Select Template to Edit/Delete --</option>' + tplHtml;
-        const activeTplId = document.getElementById('tpl-id').value;
+        const activeTplId = document.getElementById('tpl-id') ? document.getElementById('tpl-id').value : '';
         tplEditSel.value = activeTplId || '';
+    }
+    if (topTplSel) {
+        topTplSel.innerHTML = tplHtml;
+        const activeTplId = (document.getElementById('tpl-id') && document.getElementById('tpl-id').value) ||
+            (typeof UICE_STATE !== 'undefined' && UICE_STATE.template && UICE_STATE.template.id);
+        if (activeTplId) {
+            topTplSel.value = activeTplId;
+        }
     }
 
     // 5. Employee Record Filters and Select (Letterhead Form)
@@ -9258,22 +9267,44 @@ function importUiceTemplateJson(file) {
     reader.readAsText(file);
 }
 
-function cloneUiceTemplate() {
+async function cloneUiceTemplate() {
     if (!UICE_STATE.template) {
         alert('No active template to clone.');
         return;
     }
-    const clone = JSON.parse(JSON.stringify(UICE_STATE.template));
-    clone.id = 'tpl-clone-' + Date.now();
-    clone.name = `${clone.name || 'Template'} (Copy)`;
-
-    if (typeof VSA_STATE !== 'undefined' && VSA_STATE.templates) {
-        VSA_STATE.templates.push(clone);
-        if (typeof renderTemplatesList === 'function') renderTemplatesList();
-        if (typeof populateSelectors === 'function') populateSelectors();
+    const defaultCopyName = `${UICE_STATE.template.name || 'Template'} (Copy)`;
+    const chosenName = prompt('What would you like to name this cloned template?', defaultCopyName);
+    if (!chosenName || !chosenName.trim()) {
+        return;
     }
-    initUiceWithTemplate(clone);
-    alert(`Cloned template as "${clone.name}".`);
+    const clone = JSON.parse(JSON.stringify(UICE_STATE.template));
+    clone.id = 'tpl-' + Date.now();
+    clone.name = chosenName.trim();
+    clone.isVisualTemplate = true;
+
+    try {
+        const response = await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(clone)
+        });
+        if (!response.ok) throw new Error('API save error');
+        const savedClone = await response.json();
+
+        if (typeof VSA_STATE !== 'undefined' && VSA_STATE.templates) {
+            VSA_STATE.templates.push(savedClone);
+            if (typeof renderTemplatesList === 'function') renderTemplatesList();
+            if (typeof populateSelectors === 'function') populateSelectors();
+        }
+        initUiceWithTemplate(savedClone);
+        if (typeof loadTemplateInStudio === 'function') {
+            loadTemplateInStudio(savedClone.id);
+        }
+        alert(`Template "${savedClone.name}" cloned and saved! Visible in both Classic and Advance makers.`);
+    } catch (err) {
+        console.error('Clone template error:', err);
+        alert('Failed to save cloned template: ' + err.message);
+    }
 }
 
 /**
@@ -12939,11 +12970,7 @@ function setupUiceListeners() {
     const btnNewTpl = document.getElementById('btn-uice-new-template');
     if (btnNewTpl) {
         btnNewTpl.addEventListener('click', function() {
-            resetTemplateForm();
-            const newTpl = getActiveTemplateFromForm();
-            newTpl.id = 'tpl-' + Date.now();
-            newTpl.name = 'New Custom Layout';
-            initUiceWithTemplate(newTpl);
+            promptAndCreateNewTemplate('visual');
         });
     }
 
@@ -15086,7 +15113,9 @@ async function saveUiceTemplate() {
 
     const tpl = UICE_STATE.template;
     if (!tpl.name) {
-        tpl.name = prompt('Enter a name for this template layout:', 'Custom ID Badge') || 'Custom ID Badge';
+        const enteredName = prompt('Enter a name for this template layout:', 'Custom ID Badge');
+        if (!enteredName || !enteredName.trim()) return;
+        tpl.name = enteredName.trim();
     }
 
     if (!tpl.id) {
@@ -15114,6 +15143,9 @@ async function saveUiceTemplate() {
         renderTemplatesList();
         populateSelectors();
         initUiceWithTemplate(savedTpl);
+        if (typeof loadTemplateInStudio === 'function') {
+            loadTemplateInStudio(savedTpl.id);
+        }
 
         alert(`Template "${savedTpl.name}" saved successfully with dual-orientation layout nodes!`);
     } catch (err) {
@@ -15346,10 +15378,14 @@ function loadTemplateInStudio(id) {
     }
     renderReorderableFieldsList();
 
-    // Sync template selector dropdown
+    // Sync template selector dropdowns on both Classic and Advance visual sides
     const tplEditSel = document.getElementById('tpl-edit-select');
     if (tplEditSel) {
         tplEditSel.value = tpl.id || '';
+    }
+    const topTplSel = document.getElementById('uice-top-tpl-select');
+    if (topTplSel) {
+        topTplSel.value = tpl.id || '';
     }
 
     // Toggle delete selected button
@@ -15572,6 +15608,65 @@ async function saveTemplate() {
     } catch (err) {
         console.error("Error saving template:", err);
         alert('Failed to save template.');
+    }
+}
+
+/**
+ * Prompts user for a template name, creates a new template, and immediately persists it to both Classic and Advance visual designers.
+ */
+async function promptAndCreateNewTemplate(mode = 'classic') {
+    const defaultName = mode === 'visual' ? 'New Visual Card' : 'New ID Template';
+    const enteredName = prompt('What would you like to name your new template?', defaultName);
+    if (!enteredName || !enteredName.trim()) {
+        return; // User cancelled
+    }
+    const cleanName = enteredName.trim();
+
+    // Check if name already exists
+    const existing = (VSA_STATE.templates || []).find(t => t.name && t.name.toLowerCase() === cleanName.toLowerCase());
+    if (existing) {
+        if (confirm(`A template named "${cleanName}" already exists. Would you like to open it to edit?`)) {
+            loadTemplateInStudio(existing.id);
+            return;
+        }
+    }
+
+    resetTemplateForm();
+    const newTpl = getActiveTemplateFromForm();
+    newTpl.id = 'tpl-' + Date.now();
+    newTpl.name = cleanName;
+    newTpl.isVisualTemplate = true;
+
+    // Build dual-orientation layouts for UICE
+    if (typeof convertLegacyTemplateToUice === 'function') {
+        convertLegacyTemplateToUice(newTpl);
+    }
+
+    try {
+        const response = await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newTpl)
+        });
+        if (!response.ok) throw new Error('API save error');
+        const savedTpl = await response.json();
+
+        if (!VSA_STATE.templates) VSA_STATE.templates = [];
+        const idx = VSA_STATE.templates.findIndex(t => t.id === savedTpl.id);
+        if (idx !== -1) {
+            VSA_STATE.templates[idx] = savedTpl;
+        } else {
+            VSA_STATE.templates.push(savedTpl);
+        }
+
+        renderTemplatesList();
+        populateSelectors();
+        loadTemplateInStudio(savedTpl.id);
+
+        alert(`Template "${savedTpl.name}" created and saved! It is now available in both Classic and Advance ID Card makers.`);
+    } catch (err) {
+        console.error('Failed to create new template:', err);
+        alert('Failed to save new template: ' + err.message);
     }
 }
 
@@ -15962,6 +16057,25 @@ const MASTER_CLONE_PRESETS = {
 function applyMasterClonePreset(cloneKey) {
     const preset = MASTER_CLONE_PRESETS[cloneKey];
     if (!preset) return;
+
+    // Sync template ID if an existing matching template exists in VSA_STATE.templates
+    let existingTpl = (VSA_STATE.templates || []).find(t => 
+        (cloneKey === 'office' && (t.id === 'tpl-office' || (t.name && t.name.toLowerCase() === 'office'))) ||
+        (t.name && t.name.toLowerCase() === preset.name.toLowerCase())
+    );
+    if (existingTpl) {
+        if (document.getElementById('tpl-id')) document.getElementById('tpl-id').value = existingTpl.id;
+        const tplEditSel = document.getElementById('tpl-edit-select');
+        if (tplEditSel) tplEditSel.value = existingTpl.id;
+        const topTplSel = document.getElementById('uice-top-tpl-select');
+        if (topTplSel) topTplSel.value = existingTpl.id;
+    } else if (cloneKey === 'office') {
+        if (document.getElementById('tpl-id')) document.getElementById('tpl-id').value = 'tpl-office';
+        const tplEditSel = document.getElementById('tpl-edit-select');
+        if (tplEditSel) tplEditSel.value = 'tpl-office';
+        const topTplSel = document.getElementById('uice-top-tpl-select');
+        if (topTplSel) topTplSel.value = 'tpl-office';
+    }
 
     // Apply values to inputs
     if (document.getElementById('tpl-name')) document.getElementById('tpl-name').value = preset.name;
@@ -16385,10 +16499,10 @@ function setupTemplatesManager() {
     if (btnReset) btnReset.addEventListener('click', resetTemplateForm);
 
     const btnNew = document.getElementById('btn-tpl-new');
-    if (btnNew) btnNew.addEventListener('click', resetTemplateForm);
+    if (btnNew) btnNew.addEventListener('click', () => promptAndCreateNewTemplate('classic'));
 
     const btnNewTop = document.getElementById('btn-tpl-new-top');
-    if (btnNewTop) btnNewTop.addEventListener('click', resetTemplateForm);
+    if (btnNewTop) btnNewTop.addEventListener('click', () => promptAndCreateNewTemplate('classic'));
 
     const tplEditSel = document.getElementById('tpl-edit-select');
     if (tplEditSel) {
