@@ -99,12 +99,58 @@ if (usePostgres) {
     }
     pool = new Pool({
       connectionString: finalDbUrl,
-      ssl: { rejectUnauthorized: process.env.PG_ALLOW_INSECURE_SSL === 'true' ? false : (NODE_ENV === 'production') }
+      ssl: { rejectUnauthorized: process.env.PG_ALLOW_INSECURE_SSL === 'true' ? false : (NODE_ENV === 'production') },
+      max: parseInt(process.env.PG_MAX_POOL || '20', 10),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000
     });
     pool.on('error', (err) => {
       console.error('Unexpected idle client error in PostgreSQL pool:', err.message);
     });
-    console.log('✅ PostgreSQL Connection Initialized');
+
+    // Wrap pool.query with resilient retry on transient disconnects / Neon serverless compute wakeups
+    const rawQuery = pool.query.bind(pool);
+    pool.query = async function resilientQuery(queryTextOrConfig, values, callback) {
+      const isTransient = (err) => {
+        if (!err) return false;
+        const msg = String(err.message || '').toLowerCase();
+        const code = String(err.code || '');
+        return (
+          code === 'ECONNRESET' ||
+          code === 'ETIMEDOUT' ||
+          code === '57P01' ||
+          code === '08006' ||
+          code === '08001' ||
+          code === '08003' ||
+          msg.includes('connection terminated') ||
+          msg.includes('timeout') ||
+          msg.includes('socket has been ended')
+        );
+      };
+
+      if (typeof values === 'function' || typeof callback === 'function') {
+        return rawQuery(queryTextOrConfig, values, callback);
+      }
+
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (attempts < maxAttempts) {
+        try {
+          return await rawQuery(queryTextOrConfig, values);
+        } catch (err) {
+          attempts++;
+          if (attempts < maxAttempts && isTransient(err)) {
+            const backoffMs = attempts * 350;
+            console.warn(`⚠️ PostgreSQL transient error [${err.code || err.message}]. Retrying query in ${backoffMs}ms (attempt ${attempts}/${maxAttempts})...`);
+            await new Promise(r => setTimeout(r, backoffMs));
+          } else {
+            throw err;
+          }
+        }
+      }
+    };
+
+    console.log('✅ PostgreSQL Connection Initialized with Resilient Query Retry');
   } catch (e) {
     console.error('❌ PostgreSQL Initialization Error:', e.message);
     usePostgres = false;
@@ -2683,26 +2729,124 @@ app.get('/api/health', async (req, res) => {
 
 
 
-// 4. Employee GET Directory List
+// 4. Employee GET Directory List (Supports pagination, search, filtering, and summary projection)
 app.get('/api/employees', authenticateToken, async (req, res) => {
   try {
+    const pageParam = req.query.page ? parseInt(req.query.page, 10) : null;
+    const limitParam = req.query.limit ? parseInt(req.query.limit, 10) : null;
+    const search = req.query.search ? String(req.query.search).trim().toLowerCase() : null;
+    const department = req.query.department ? String(req.query.department).trim().toLowerCase() : null;
+    const status = req.query.status ? String(req.query.status).trim().toLowerCase() : null;
+    const isSummary = req.query.fields === 'summary';
+    const isPaginated = pageParam !== null || limitParam !== null;
+
+    const page = Math.max(1, pageParam || 1);
+    const limit = Math.min(500, Math.max(1, limitParam || 50));
+    const offset = (page - 1) * limit;
+
     let emps = [];
+    let totalCount = 0;
+
     try {
       if (usePostgres && pool) {
-        const dbRes = await pool.query('SELECT data FROM employees ORDER BY id ASC');
-        emps = dbRes.rows.map(r => r.data);
+        if (isPaginated || search || department || status) {
+          const conditions = [];
+          const values = [];
+
+          if (search) {
+            values.push(`%${search}%`);
+            const sIdx = values.length;
+            conditions.push(`(
+              LOWER(id) LIKE $${sIdx} OR
+              LOWER(COALESCE(data->>'name', '')) LIKE $${sIdx} OR
+              LOWER(COALESCE(data->>'mobile', '')) LIKE $${sIdx} OR
+              LOWER(COALESCE(data->>'department', '')) LIKE $${sIdx} OR
+              LOWER(COALESCE(data->>'designation', '')) LIKE $${sIdx}
+            )`);
+          }
+
+          if (department && department !== 'all') {
+            values.push(department);
+            conditions.push(`LOWER(COALESCE(data->>'department', '')) = $${values.length}`);
+          }
+
+          if (status && status !== 'all') {
+            values.push(status);
+            conditions.push(`LOWER(COALESCE(data->>'status', '')) = $${values.length}`);
+          }
+
+          const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+          const countRes = await pool.query(`SELECT COUNT(*) AS total FROM employees ${whereClause}`, values);
+          totalCount = parseInt(countRes.rows[0].total, 10) || 0;
+
+          let dataQuery = `SELECT data FROM employees ${whereClause} ORDER BY id ASC`;
+          if (isPaginated) {
+            values.push(limit);
+            values.push(offset);
+            dataQuery += ` LIMIT $${values.length - 1} OFFSET $${values.length}`;
+          }
+          const dbRes = await pool.query(dataQuery, values);
+          emps = dbRes.rows.map(r => r.data);
+        } else {
+          const dbRes = await pool.query('SELECT data FROM employees ORDER BY id ASC');
+          emps = dbRes.rows.map(r => r.data);
+          totalCount = emps.length;
+        }
       } else {
         const db = readLocalDb();
-        emps = db.employees || [];
+        let allEmps = db.employees || [];
+
+        if (search) {
+          allEmps = allEmps.filter(e =>
+            (e.id && e.id.toLowerCase().includes(search)) ||
+            (e.name && e.name.toLowerCase().includes(search)) ||
+            (e.mobile && e.mobile.toLowerCase().includes(search)) ||
+            (e.department && e.department.toLowerCase().includes(search)) ||
+            (e.designation && e.designation.toLowerCase().includes(search))
+          );
+        }
+        if (department && department !== 'all') {
+          allEmps = allEmps.filter(e => e.department && e.department.toLowerCase() === department);
+        }
+        if (status && status !== 'all') {
+          allEmps = allEmps.filter(e => e.status && e.status.toLowerCase() === status);
+        }
+
+        totalCount = allEmps.length;
+        if (isPaginated) {
+          emps = allEmps.slice(offset, offset + limit);
+        } else {
+          emps = allEmps;
+        }
       }
     } catch (err) {
       console.warn('⚠️ /api/employees failed during cloud DB query. Falling back to local JSON.', err.message);
       const db = readLocalDb();
       emps = db.employees || [];
+      totalCount = emps.length;
     }
 
-    // Append security tokens to image URLs for frontend fetching
+    // Process security tokens and field projections
     const processedEmps = emps.map(emp => {
+      if (isSummary) {
+        return {
+          id: emp.id,
+          name: emp.name,
+          fatherName: emp.fatherName,
+          mobile: emp.mobile,
+          department: emp.department,
+          designation: emp.designation,
+          status: emp.status || 'Active',
+          bloodGroup: emp.bloodGroup,
+          joiningDate: emp.joiningDate,
+          secureToken: emp.secureToken,
+          photoUrl: (emp.documents && emp.documents.photo)
+            ? (emp.documents.photo.startsWith('/api/') ? `${emp.documents.photo}?token=${emp.secureToken}` : emp.documents.photo)
+            : null
+        };
+      }
+
       const responseData = JSON.parse(JSON.stringify(emp));
       if (responseData.documents) {
         if (responseData.documents.photo && responseData.documents.photo.startsWith('/api/')) {
@@ -2714,6 +2858,18 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
       }
       return responseData;
     });
+
+    res.setHeader('X-Total-Count', String(totalCount));
+
+    if (isPaginated) {
+      return res.json({
+        employees: processedEmps,
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit)
+      });
+    }
 
     return res.json(processedEmps);
   } catch (e) {

@@ -760,7 +760,7 @@ async function fetchData() {
             };
         }
         
-        VSA_STATE.employees = emps || [];
+        VSA_STATE.employees = Array.isArray(emps) ? emps : (emps.employees || []);
         VSA_STATE.clients = [];
         VSA_STATE.departments = classifications.departments || [];
         VSA_STATE.designations = classifications.designations || [];
