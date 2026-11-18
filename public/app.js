@@ -14689,18 +14689,20 @@ function printUiceSheet(options = {}) {
     // Fallback: fill full sheet with current preview employee or mock guard
     if (guards.length === 0) {
         const previewGuard = UICE_STATE.previewEmp || (typeof VSA_STATE !== 'undefined' && VSA_STATE.employees && VSA_STATE.employees[0]) || { id: 'VSA-0042', name: 'Rajesh Kumar' };
-        const capacity = layoutType === '10up' ? 10 : (layoutType === '9up' ? 9 : 8);
+        const capacity = layoutType === '10up' ? 10 : (layoutType === '9up' ? 9 : (layoutType === '4up' ? 4 : (layoutType === '1up' ? 1 : 8)));
         guards = Array.from({ length: capacity }, () => ({ ...previewGuard }));
     }
 
     const tpl = UICE_STATE.template || { font: "'Plus Jakarta Sans', sans-serif" };
-    const orientation = (layoutType === '9up') ? 'vertical' : 'horizontal';
+    const orientation = (layoutType === '9up') ? 'vertical' : (layoutType === '1up' && UICE_STATE.orientation === 'vertical' ? 'vertical' : 'horizontal');
     const cardLayout = (tpl.layouts && tpl.layouts[orientation]) || (tpl.layouts && (tpl.layouts.horizontal || tpl.layouts.vertical)) || { width: 500, height: 320, elements: [] };
 
     const gridClass = `uice-sheet-grid-${layoutType}`;
     let cols = 2, rows = 4;
     if (layoutType === '10up') { cols = 2; rows = 5; }
     else if (layoutType === '9up') { cols = 3; rows = 3; }
+    else if (layoutType === '4up') { cols = 2; rows = 2; }
+    else if (layoutType === '1up') { cols = 1; rows = 1; }
 
     let sheetHtml = '';
 

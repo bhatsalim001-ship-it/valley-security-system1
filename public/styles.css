@@ -9378,6 +9378,29 @@ html, body {
         height: 100% !important;
     }
 
+    /* 4-Up Grid: 2 columns x 2 rows (Large Precision Proof) */
+    .uice-sheet-grid-4up {
+        display: grid !important;
+        grid-template-columns: repeat(2, 85.6mm) !important;
+        grid-template-rows: repeat(2, 54mm) !important;
+        gap: 20mm 15mm !important;
+        justify-content: center !important;
+        align-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* 1-Up Grid: 1 column x 1 row (Single Centered Proof Sheet) */
+    .uice-sheet-grid-1up {
+        display: grid !important;
+        grid-template-columns: 85.6mm !important;
+        grid-template-rows: 54mm !important;
+        justify-content: center !important;
+        align-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
     .uice-sheet-card-cell {
         position: relative !important;
         box-sizing: border-box !important;
