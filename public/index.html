@@ -3126,7 +3126,7 @@
                     <i data-lucide="building-2" style="width: 20px; height: 20px; color: #818cf8;"></i>
                     Create Deployment Project
                 </h2>
-                <button class="modal-close" onclick="closeDeploymentProjectModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeDeploymentProjectModal()" aria-label="Close deployment project modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="deployment-project-form" class="luxury-form" onsubmit="handleDeploymentProjectSubmit(event)">
@@ -3219,7 +3219,7 @@
                     <button class="btn btn-success" id="btn-print-project-cards" onclick="batchPrintProjectCards()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #059669; color: #fff; font-weight: 700; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;">
                         <i data-lucide="zap" style="width: 16px; height: 16px; fill: currentColor;"></i> ⚡ Print All Project ID Cards
                     </button>
-                    <button class="modal-close" onclick="closeProjectCandidatesModal()">&times;</button>
+                    <button type="button" class="modal-close" onclick="closeProjectCandidatesModal()" aria-label="Close project candidates modal">&times;</button>
                 </div>
             </div>
 
@@ -3267,7 +3267,7 @@
                 <h2 id="deployment-qr-modal-title" style="font-size: 16px; color: var(--vs-text-primary);">
                     Onboarding QR Code & Link
                 </h2>
-                <button class="modal-close" onclick="closeDeploymentQrModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeDeploymentQrModal()" aria-label="Close QR code modal">&times;</button>
             </div>
             <div class="modal-body" style="padding: 24px 20px;">
                 <h3 id="qr-modal-project-name" style="font-size: 16px; font-weight: 700; color: var(--vs-text-primary); margin-bottom: 4px;">Tender Name</h3>
@@ -3301,7 +3301,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2 id="employee-modal-title">Register New Security Personnel</h2>
-                <button class="modal-close" id="btn-close-emp-modal">&times;</button>
+                <button type="button" class="modal-close" id="btn-close-emp-modal" aria-label="Close employee registration modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="employee-form" class="luxury-form">
@@ -3600,7 +3600,7 @@
     <!-- Developer Profile Modal -->
     <div id="developer-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Developer Profile">
         <div class="modal-content developer-modal-content">
-            <button class="modal-close-btn" id="btn-close-developer-modal">&times;</button>
+            <button type="button" class="modal-close-btn" id="btn-close-developer-modal" aria-label="Close developer profile modal">&times;</button>
             <div class="developer-profile-wrapper">
                 <div class="developer-portrait-container">
                     <img src="developer.jpg" alt="Salim Ilyas Bhat" class="developer-portrait-img">
@@ -3899,7 +3899,7 @@
                     <i data-lucide="proportions" style="width: 20px; height: 20px; color: #3b82f6;"></i>
                     Custom Canvas Dimensions
                 </h2>
-                <button type="button" class="modal-close" id="btn-close-uice-custom-dim" onclick="closeUiceCustomDimModal()">&times;</button>
+                <button type="button" class="modal-close" id="btn-close-uice-custom-dim" onclick="closeUiceCustomDimModal()" aria-label="Close canvas dimensions modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="form-uice-custom-dim" onsubmit="handleUiceCustomDimSubmit(event)">
@@ -3947,7 +3947,7 @@
                     <i data-lucide="download" style="width: 20px; height: 20px; color: #10b981;"></i>
                     High-DPI Master Card Exporter
                 </h2>
-                <button type="button" class="modal-close" onclick="closeUiceExportModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeUiceExportModal()" aria-label="Close high-DPI export modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="form-uice-export" onsubmit="handleUiceExportSubmit(event)">
@@ -4020,7 +4020,7 @@
                     <i data-lucide="printer" style="width: 20px; height: 20px; color: #3b82f6;"></i>
                     A4 Multi-Up Physical Print Sheet Generator
                 </h2>
-                <button type="button" class="modal-close" onclick="closeUiceSheetModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeUiceSheetModal()" aria-label="Close sheet modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="form-uice-sheet" onsubmit="handleUiceSheetSubmit(event)">
@@ -4096,7 +4096,7 @@
                     <i data-lucide="copy" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
                     Industrial Batch ID Card Generation Pipeline
                 </h2>
-                <button type="button" class="modal-close" onclick="closeUiceBatchModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeUiceBatchModal()" aria-label="Close batch modal">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Step 1: Pre-Flight Audit Report -->
@@ -4167,7 +4167,7 @@
                     <i data-lucide="sparkles" style="width: 20px; height: 20px; color: #f59e0b;"></i>
                     Master Archetype Preset Library
                 </h2>
-                <button type="button" class="modal-close" onclick="closeUiceArchetypesModal()">&times;</button>
+                <button type="button" class="modal-close" onclick="closeUiceArchetypesModal()" aria-label="Close archetypes modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">

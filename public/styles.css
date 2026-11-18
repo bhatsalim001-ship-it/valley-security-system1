@@ -7879,7 +7879,7 @@ textarea:focus-visible {
 .data-table tbody tr:hover,
 .employees-table tbody tr:hover,
 #emp-table-body tr:hover {
-    background-color: rgba(99, 102, 241, 0.04) !important;
+    background-color: var(--hover-bg, rgba(16, 185, 129, 0.06)) !important;
 }
 
 /* 9. Live Status Badge Pulsing Beacons */
@@ -8067,7 +8067,7 @@ html, body {
 
 /* 4. High-Contrast Focus-Visible Ring */
 :focus-visible {
-    outline: 2px solid var(--brand-primary, #6366f1) !important;
+    outline: 2px solid var(--vs-border-interactive, var(--vs-accent-emerald, #10b981)) !important;
     outline-offset: 2px !important;
 }
 
@@ -8149,10 +8149,26 @@ html, body {
     .sidebar-toggle-btn,
     .theme-toggle-btn,
     .modal-close,
+    .modal-close-btn,
     .btn-photo-action,
-    .btn-camera {
+    .btn-camera,
+    .candidate-filter-pill,
+    .filter-pill,
+    .tab-btn,
+    .action-btn,
+    .pagination-btn,
+    .dmy-calendar-btn {
         min-height: 44px !important;
         min-width: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    select,
+    textarea {
+        min-height: 44px !important;
     }
 }
 

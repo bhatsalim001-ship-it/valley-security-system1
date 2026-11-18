@@ -450,6 +450,19 @@
                 font-size: 20px;
             }
         }
+
+        :focus-visible {
+            outline: 2px solid var(--border-focus, #10b981) !important;
+            outline-offset: 2px !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -478,8 +491,8 @@
             <p class="login-subtitle" id="login-firm-full">Valley Security Service Agency</p>
         </div>
 
-        <div id="error-msg" class="error-message"></div>
-        <div id="success-msg" class="success-message"></div>
+        <div id="error-msg" class="error-message" role="alert" aria-live="assertive"></div>
+        <div id="success-msg" class="success-message" role="status" aria-live="polite"></div>
 
         <form id="login-form">
             <div class="form-group">
@@ -514,7 +527,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="login-button">
+            <button type="submit" class="login-button" aria-label="Authenticate admin access">
                 <div class="button-content">
                     <span>Authenticate</span>
                     <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>

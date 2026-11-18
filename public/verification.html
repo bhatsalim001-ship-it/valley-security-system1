@@ -38,8 +38,8 @@
             --bg-surface: rgba(15, 23, 42, 0.82);
             --bg-surface-elevated: rgba(30, 41, 59, 0.6);
             --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-focus: #6366f1;
-            --brand-primary: #6366f1;
+            --border-focus: #10b981;
+            --brand-primary: #10b981;
             --theme-gold: #f59e0b;
             --theme-green: #10b981;
             --theme-red: #ef4444;
@@ -350,6 +350,19 @@
                 padding: 6px 8px;
             }
         }
+
+        :focus-visible {
+            outline: 2px solid var(--theme-green, #10b981) !important;
+            outline-offset: 2px !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -467,7 +480,7 @@
                 </div>
 
                 <div class="guard-avatar-frame">
-                    <img src="${escapeHtml(photoUrl)}" alt="Guard Profile">
+                    <img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(guard.name || 'Guard Profile')}">
                 </div>
 
                 <h3 class="guard-name">${escapeHtml(guard.name)}</h3>

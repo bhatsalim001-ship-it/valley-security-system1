@@ -1163,6 +1163,36 @@
                 justify-content: center;
             }
         }
+
+        :focus-visible {
+            outline: 2px solid var(--theme-green, #10b981) !important;
+            outline-offset: 2px !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+            .btn-step,
+            .btn-photo-action,
+            .btn-camera,
+            .btn-crop-action,
+            .toast-close {
+                min-height: 44px !important;
+                min-width: 44px !important;
+            }
+
+            input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+            select,
+            textarea {
+                min-height: 44px !important;
+            }
+        }
     </style>
 </head>
 <body>
