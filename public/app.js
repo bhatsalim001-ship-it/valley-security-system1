@@ -10013,7 +10013,8 @@ function generateSecurityWatermarkHtml(el, properties = {}) {
 /**
  * Builds the inner HTML for an element node inside the artboard.
  */
-function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null) {
+function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null, template = null) {
+    if (!template && typeof UICE_STATE !== 'undefined' && UICE_STATE && UICE_STATE.template) template = UICE_STATE.template;
     const p = el.properties || {};
 
     switch (el.type) {
@@ -15307,7 +15308,7 @@ function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDat
         : (layout.elements || []);
 
     const elementsHtml = activeList.filter(el => el.visible !== false).map(el => {
-        const innerContent = renderUiceElementHtml(el, emp, validityYears, issueDate);
+        const innerContent = renderUiceElementHtml(el, emp, validityYears, issueDate, template);
         return `
             <div style="position: absolute; left: ${el.x}px; top: ${el.y}px; width: ${el.width}px; height: ${el.height}px; transform: rotate(${el.rotation || 0}deg); z-index: ${el.zIndex || 1}; box-sizing: border-box; overflow: hidden;">
                 ${innerContent}
@@ -15316,7 +15317,7 @@ function generateUiceCardHtml(emp, layout, template, validityYears = 3, issueDat
 
     return `
         <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
-            <div class="visual-id-card-render ${isHoriz ? 'id-card-horizontal' : 'id-card-vertical'}" style="position: relative; width: ${width}px; height: ${height}px; border-radius: ${borderRadius}px; overflow: hidden; background: ${bg.color || '#ffffff'}; border: ${bg.borderWidth || 2}px solid ${bg.accent || '#009688'}; box-shadow: 0 4px 15px rgba(0,0,0,0.15); box-sizing: border-box; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"};">
+            <div class="visual-id-card-render ${isHoriz ? 'id-card-horizontal' : 'id-card-vertical'}" style="position: relative; width: ${width}px; height: ${height}px; border-radius: ${borderRadius}px; overflow: hidden; background: ${bg.color || '#ffffff'}; border: ${bg.borderWidth || 2}px solid ${bg.accent || '#009688'}; box-shadow: 0 4px 15px rgba(0,0,0,0.15); box-sizing: border-box; font-family: ${(template && template.font) || "'Plus Jakarta Sans', sans-serif"};">
                 <div style="position: absolute; inset: 0; pointer-events: none; z-index: 0; background: ${bg.color || '#ffffff'};"></div>
                 <div style="position: absolute; inset: 0; z-index: 1;">
                     ${elementsHtml}
