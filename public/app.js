@@ -9823,7 +9823,10 @@ function resolveUiceTokens(text, emp = {}, validityYears = 3, issueDate = null) 
         '{{validUntil}}': formatDate(validUntil),
         '{{validity}}': formatDate(validUntil),
         '{{rank}}': emp.rank || emp.designation || 'Officer',
-        '{{zone}}': emp.zone || 'North Zone'
+        '{{zone}}': emp.zone || 'North Zone',
+        '{{status}}': emp.status || 'Active',
+        '{{secureToken}}': emp.secureToken || '',
+        '{{qrVerificationUrl}}': typeof getUiceVerificationUrl === 'function' ? getUiceVerificationUrl(emp) : `/verification.html?id=${emp.id || 'VSA-0042'}`
     };
 
     let result = text;

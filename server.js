@@ -2448,9 +2448,9 @@ app.post('/api/auth/google-login', authLimiter, async (req, res) => {
 });
 
 
-// Helper to check if current request has a valid Admin session cookie
+// Helper to check if current request has a valid Admin session cookie or Bearer token
 function isAdmin(req) {
-  const token = req.cookies.auth_token;
+  const token = req.cookies?.auth_token || (req.headers?.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
   if (!token) return false;
   try {
     const verified = jwt.verify(token, JWT_SECRET);
@@ -2658,17 +2658,24 @@ app.get('/api/employees/:id', async (req, res) => {
 
     // Dynamically append verification token to image URLs so client can fetch them securely
     const responseData = JSON.parse(JSON.stringify(empData));
+    if (responseData.photo && typeof responseData.photo === 'string' && responseData.photo.startsWith('/api/')) {
+      const cleanPhoto = responseData.photo.split('?')[0];
+      responseData.photo = `${cleanPhoto}?token=${responseData.secureToken || ''}`;
+    }
     if (responseData.documents) {
-      if (responseData.documents.photo && responseData.documents.photo.startsWith('/api/')) {
-        responseData.documents.photo = `${responseData.documents.photo}?token=${responseData.secureToken}`;
+      if (responseData.documents.photo && typeof responseData.documents.photo === 'string' && responseData.documents.photo.startsWith('/api/')) {
+        const cleanPhoto = responseData.documents.photo.split('?')[0];
+        responseData.documents.photo = `${cleanPhoto}?token=${responseData.secureToken || ''}`;
       }
-      if (responseData.documents.signature && responseData.documents.signature.startsWith('/api/')) {
-        responseData.documents.signature = `${responseData.documents.signature}?token=${responseData.secureToken}`;
+      if (responseData.documents.signature && typeof responseData.documents.signature === 'string' && responseData.documents.signature.startsWith('/api/')) {
+        const cleanSig = responseData.documents.signature.split('?')[0];
+        responseData.documents.signature = `${cleanSig}?token=${responseData.secureToken || ''}`;
       }
     }
 
     // Privacy safeguard (F2-03): For unauthenticated QR verification requests, project only public card fields
     if (!adminSession) {
+      const publicPhoto = responseData.documents?.photo || responseData.photo || '';
       return res.json({
         id: responseData.id,
         name: responseData.name,
@@ -2681,8 +2688,9 @@ app.get('/api/employees/:id', async (req, res) => {
         joiningDate: responseData.joiningDate || '',
         cardIssueDate: responseData.cardIssueDate || '',
         cardValidity: responseData.cardValidity || 3,
+        photo: publicPhoto,
         documents: {
-          photo: responseData.documents?.photo || ''
+          photo: publicPhoto
         }
       });
     }
