@@ -4685,6 +4685,82 @@ app.post('/api/deployment-projects/:id/bulk-approve', authenticateToken, async (
   }
 });
 
+// Protected: Export deployment project candidate roster to CSV
+app.get('/api/deployment-projects/:id/export', authenticateToken, async (req, res) => {
+  try {
+    const project = await getDeploymentProject(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Deployment project not found.' });
+    }
+
+    let employees = [];
+    if (usePostgres && pool) {
+      const empRes = await pool.query(
+        `SELECT id, data FROM employees 
+         WHERE (data->>'deployment_project_id') = $1
+         ORDER BY id ASC`,
+        [project.id]
+      );
+      employees = empRes.rows.map(r => typeof r.data === 'string' ? JSON.parse(r.data) : r.data);
+    } else {
+      const db = readLocalDb();
+      employees = (db.employees || []).filter(e => e.deployment_project_id === project.id || (e.data && e.data.deployment_project_id === project.id));
+    }
+
+    const sanitizeCsvCell = (val) => {
+      let str = String(val === undefined || val === null ? '' : val).trim();
+      // Prevent CSV formula injection (OWASP)
+      if (/^[=+@-]/.test(str)) {
+        str = "'" + str;
+      }
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        str = '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const headers = ['Staff ID', 'Name', 'Father/Guardian Name', 'Designation', 'Department', 'Mobile Number', 'Gender', 'Blood Group', 'Status', 'Registered Date'];
+    const rows = [headers.join(',')];
+
+    for (const emp of employees) {
+      const empId = emp.id || emp.employeeId || '';
+      const name = emp.name || '';
+      const fatherName = emp.fatherName || emp.father_name || '';
+      const designation = emp.designation || project.data?.designation || 'Security Guard';
+      const department = emp.department || project.data?.department || project.name || '';
+      const mobile = emp.mobile || '';
+      const gender = emp.gender || '';
+      const blood = emp.bloodGroup || '';
+      const status = emp.status || 'Pending';
+      const regDate = emp.joiningDate || emp.createdAt || '';
+
+      rows.push([
+        sanitizeCsvCell(empId),
+        sanitizeCsvCell(name),
+        sanitizeCsvCell(fatherName),
+        sanitizeCsvCell(designation),
+        sanitizeCsvCell(department),
+        sanitizeCsvCell(mobile),
+        sanitizeCsvCell(gender),
+        sanitizeCsvCell(blood),
+        sanitizeCsvCell(status),
+        sanitizeCsvCell(regDate)
+      ].join(','));
+    }
+
+    const csvContent = '\uFEFF' + rows.join('\r\n');
+    const safeSlug = (project.slug || project.name || 'deployment').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `roster_${safeSlug}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.status(200).send(csvContent);
+  } catch (err) {
+    console.error('Error exporting deployment project roster:', err);
+    return res.status(500).json({ error: 'Failed to export candidate roster.' });
+  }
+});
+
 // Automatically generate secureToken for any existing employee rows in local/PostgreSQL databases
 async function ensureAllEmployeesHaveTokens() {
   try {

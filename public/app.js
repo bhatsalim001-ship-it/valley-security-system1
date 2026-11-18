@@ -18958,6 +18958,110 @@ function approveIndividualCandidate(empId) {
 }
 window.approveIndividualCandidate = approveIndividualCandidate;
 
+function filterProjectCandidates(statusFilter = 'all') {
+    const tbody = document.getElementById('project-candidates-tbody');
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr[data-cand-id]');
+    const filter = String(statusFilter).toLowerCase();
+
+    rows.forEach(row => {
+        const statusCell = row.querySelector('.cand-status-cell');
+        const statusText = (statusCell ? statusCell.textContent : '').toLowerCase().trim();
+        if (filter === 'all') {
+            row.style.display = '';
+        } else if (filter === 'approved') {
+            row.style.display = (statusText.includes('active') || statusText.includes('approved')) ? '' : 'none';
+        } else if (filter === 'pending') {
+            row.style.display = statusText.includes('pending') ? '' : 'none';
+        } else if (filter === 'rejected') {
+            row.style.display = (statusText.includes('rejected') || statusText.includes('suspended')) ? '' : 'none';
+        }
+    });
+
+    const bTotal = document.getElementById('badge-cand-total');
+    const bApp = document.getElementById('badge-cand-approved');
+    const bPend = document.getElementById('badge-cand-pending');
+    const bRej = document.getElementById('badge-cand-rejected');
+    if (bTotal) bTotal.style.outline = filter === 'all' ? '2px solid #818cf8' : 'none';
+    if (bApp) bApp.style.outline = filter === 'approved' ? '2px solid #34d399' : 'none';
+    if (bPend) bPend.style.outline = filter === 'pending' ? '2px solid #f59e0b' : 'none';
+    if (bRej) bRej.style.outline = filter === 'rejected' ? '2px solid #f87171' : 'none';
+}
+window.filterProjectCandidates = filterProjectCandidates;
+
+async function exportProjectCandidatesRoster(projectId) {
+    const targetProjectId = projectId || VSA_STATE.activeDeploymentProjectId;
+    if (!targetProjectId) {
+        showToast("No active deployment selected for export.");
+        return;
+    }
+
+    const project = (VSA_STATE.deploymentProjects || []).find(p => p.id === targetProjectId) || { name: 'Deployment', slug: 'deployment' };
+    const candidates = VSA_STATE.activeProjectCandidates || [];
+
+    if (candidates.length === 0) {
+        showToast("No candidates registered in this project to export.");
+        return;
+    }
+
+    const sanitizeCsvCell = (val) => {
+        let str = String(val === undefined || val === null ? '' : val).trim();
+        if (/^[=+@-]/.test(str)) {
+            str = "'" + str;
+        }
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            str = '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    };
+
+    const headers = ['Staff ID', 'Name', 'Father/Guardian Name', 'Designation', 'Department', 'Mobile Number', 'Gender', 'Blood Group', 'Status', 'Registered Date'];
+    const rows = [headers.join(',')];
+
+    for (const cand of candidates) {
+        const empId = cand.id || cand.employeeId || '';
+        const name = cand.name || '';
+        const fatherName = cand.fatherName || cand.father_name || '';
+        const designation = cand.designation || project.designation || 'Security Guard';
+        const department = cand.department || project.department || project.name || '';
+        const mobile = cand.mobile || '';
+        const gender = cand.gender || '';
+        const blood = cand.bloodGroup || '';
+        const status = cand.status || 'Pending';
+        const regDate = cand.joiningDate || cand.createdAt || '';
+
+        rows.push([
+            sanitizeCsvCell(empId),
+            sanitizeCsvCell(name),
+            sanitizeCsvCell(fatherName),
+            sanitizeCsvCell(designation),
+            sanitizeCsvCell(department),
+            sanitizeCsvCell(mobile),
+            sanitizeCsvCell(gender),
+            sanitizeCsvCell(blood),
+            sanitizeCsvCell(status),
+            sanitizeCsvCell(regDate)
+        ].join(','));
+    }
+
+    const csvContent = '\uFEFF' + rows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const safeSlug = (project.slug || project.name || 'deployment').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `roster_${safeSlug}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`Exported roster with ${candidates.length} candidate(s) as CSV.`);
+}
+window.exportProjectCandidatesRoster = exportProjectCandidatesRoster;
+
 async function batchPrintProjectCards(projectId) {
     const targetProjectId = projectId || VSA_STATE.activeDeploymentProjectId;
     if (!targetProjectId) {
