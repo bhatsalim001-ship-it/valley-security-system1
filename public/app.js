@@ -2988,14 +2988,33 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     const makeAlignedRow = (label, val, isImportant = false) => {
         if (!val || val === '-') return '';
         const isHoriz = template.layout === 'horizontal';
-        const lblW = isHoriz ? '88px' : '33%';
-        const maxLblW = isHoriz ? '88px' : '36%';
-        const borderBtm = '0.5px solid rgba(128, 128, 128, 0.15)';
+        let lblW;
+        let maxLblW;
+        if (typeof template.labelWidth === 'number') {
+            if (template.labelWidth === 92) {
+                lblW = isHoriz ? '88px' : '33%';
+                maxLblW = isHoriz ? '88px' : '36%';
+            } else if (template.labelWidth > 60) {
+                lblW = isHoriz ? `${template.labelWidth}px` : `${Math.min(template.labelWidth, 50)}%`;
+                maxLblW = lblW;
+            } else {
+                lblW = `${template.labelWidth}%`;
+                maxLblW = `${template.labelWidth}%`;
+            }
+        } else if (typeof template.labelWidth === 'string') {
+            lblW = template.labelWidth;
+            maxLblW = template.labelWidth;
+        } else {
+            lblW = isHoriz ? '38%' : '33%';
+            maxLblW = isHoriz ? '40%' : '36%';
+        }
+        const valSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8;
+        const borderBtm = isHoriz ? '0.5px solid rgba(128, 128, 128, 0.15)' : '1px dashed rgba(128, 128, 128, 0.2)';
         return `
         <tr style="border-bottom: ${borderBtm} !important;">
             <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px;">${label}</td>
             <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPadding}px 0;">:</td>
-            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0 0 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${val}</td>
+            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0; padding-left: ${valSpacing}px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${val}</td>
         </tr>`;
     };
 
@@ -9432,7 +9451,7 @@ function syncVisualPropertiesToRoot(tpl) {
         if (photoEl.y !== undefined) tpl.photoTopOffset = Math.max(0, photoEl.y - 95);
     }
 
-    // 5. Details Table (valueColor, labelColor, fontSize, rowPadding, labelWidth)
+    // 5. Details Table (valueColor, labelColor, fontSize, rowPadding, labelWidth, labelValueSpacing)
     const detailsEl = elements.find(e => e.type === 'details-table');
     if (detailsEl && detailsEl.properties) {
         const dp = detailsEl.properties;
@@ -9441,6 +9460,7 @@ function syncVisualPropertiesToRoot(tpl) {
         if (dp.fontSize) tpl.detailsFontSize = dp.fontSize;
         if (dp.rowPadding !== undefined) tpl.rowPadding = dp.rowPadding;
         if (dp.labelWidth !== undefined) tpl.labelWidth = dp.labelWidth;
+        if (dp.labelValueSpacing !== undefined) tpl.labelValueSpacing = dp.labelValueSpacing;
     }
 
     // 6. Employee Name & Designation
@@ -10174,7 +10194,8 @@ function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null) {
 
         case 'details-table': {
             let rowPad = p.rowPadding !== undefined ? p.rowPadding : 3;
-            const labelW = p.labelWidth || 38;
+            const labelW = p.labelWidth || (template && template.labelWidth ? template.labelWidth : 38);
+            const valSpacing = p.labelValueSpacing !== undefined ? p.labelValueSpacing : (template && template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8);
             const labelColor = p.labelColor || '#475569';
             const valueColor = p.valueColor || '#0f172a';
             let fontSize = p.fontSize || 8;
@@ -10218,7 +10239,7 @@ function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null) {
                 return `
                 <tr style="border-bottom: 0.5px solid rgba(128,128,128,0.15);">
                     <td style="font-size: ${fontSize}px; font-weight: 600; color: ${labelColor}; padding: ${rowPad}px 0; width: ${labelW}%; text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px; vertical-align: top;">${escapeHtml(r.label)}</td>
-                    <td style="font-size: ${fontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPad}px 0; width: ${100 - labelW}%; padding-left: 8px; white-space: ${whiteSpace}; word-break: ${wordBreak}; line-height: ${lineH}; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px; vertical-align: top;">${escapeHtml(r.value)}</td>
+                    <td style="font-size: ${fontSize}px; font-weight: 700; color: ${valueColor}; padding: ${rowPad}px 0; width: ${100 - labelW}%; padding-left: ${valSpacing}px; white-space: ${whiteSpace}; word-break: ${wordBreak}; line-height: ${lineH}; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px; vertical-align: top;">${escapeHtml(r.value)}</td>
                 </tr>`;
             }).join('');
 
@@ -12043,6 +12064,7 @@ function updateUicePropertyInspector(el) {
         const rowPadInp = document.getElementById('prop-uice-table-row-pad');
         const fontSizeInp = document.getElementById('prop-uice-table-font-size');
         const labelWInp = document.getElementById('prop-uice-table-label-w');
+        const valSpacingInp = document.getElementById('prop-uice-table-val-spacing');
         const labelCInp = document.getElementById('prop-uice-table-label-c');
         const valueCInp = document.getElementById('prop-uice-table-value-c');
         const autofitCb = document.getElementById('prop-uice-table-autofit');
@@ -12051,6 +12073,7 @@ function updateUicePropertyInspector(el) {
         if (rowPadInp) rowPadInp.value = p.rowPadding !== undefined ? p.rowPadding : 3;
         if (fontSizeInp) fontSizeInp.value = p.fontSize || 8;
         if (labelWInp) labelWInp.value = p.labelWidth || 38;
+        if (valSpacingInp) valSpacingInp.value = p.labelValueSpacing !== undefined ? p.labelValueSpacing : 8;
         if (labelCInp) labelCInp.value = p.labelColor || '#475569';
         if (valueCInp) valueCInp.value = p.valueColor || '#0f172a';
         if (autofitCb) autofitCb.checked = p.autoFit !== false;
@@ -13295,6 +13318,7 @@ function bindUiceInspectorInputs() {
     bindNum('prop-uice-table-row-pad', 'rowPadding', true);
     bindNum('prop-uice-table-font-size', 'fontSize', true);
     bindNum('prop-uice-table-label-w', 'labelWidth', true);
+    bindNum('prop-uice-table-val-spacing', 'labelValueSpacing', true);
     bindVal('prop-uice-table-label-c', 'labelColor', true);
     bindVal('prop-uice-table-value-c', 'valueColor', true);
     bindVal('prop-uice-table-autofit', 'autoFit', true);
@@ -15639,6 +15663,7 @@ function getActiveTemplateFromForm() {
                     el.properties.fontSize = detailsFontSize;
                     el.properties.rowPadding = rowPadding;
                     el.properties.labelWidth = labelWidth;
+                    el.properties.labelValueSpacing = labelValueSpacing;
                 }
             });
             if (curLayout.background) {
@@ -15861,6 +15886,25 @@ function resetTemplateForm() {
 
     document.getElementById('tpl-designation-font-size').value = 10;
     document.getElementById('lbl-designation-font-size').textContent = 10;
+
+    if (document.getElementById('tpl-row-padding')) {
+        document.getElementById('tpl-row-padding').value = 3;
+        if (document.getElementById('lbl-row-padding')) document.getElementById('lbl-row-padding').textContent = 3;
+    }
+    if (document.getElementById('tpl-label-width')) {
+        document.getElementById('tpl-label-width').value = 45;
+        if (document.getElementById('lbl-label-width')) document.getElementById('lbl-label-width').textContent = 45;
+    }
+    if (document.getElementById('tpl-label-value-spacing')) {
+        document.getElementById('tpl-label-value-spacing').value = 10;
+        if (document.getElementById('lbl-label-value-spacing')) document.getElementById('lbl-label-value-spacing').textContent = 10;
+    }
+    if (document.getElementById('tpl-label-color')) {
+        document.getElementById('tpl-label-color').value = '#555555';
+    }
+    if (document.getElementById('tpl-value-color')) {
+        document.getElementById('tpl-value-color').value = '#111111';
+    }
 
     VSA_STATE.customLogoBase64 = null;
     VSA_STATE.customSigBase64 = null;

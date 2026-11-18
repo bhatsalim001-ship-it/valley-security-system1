@@ -268,6 +268,35 @@ it('generateIdCardHtml organic-wave places Signature on left and Barcode on righ
 it('getActiveTemplateFromForm preserves layouts and propagates form updates into layout element properties', () => {
     assert(appJs.includes('activeTplObj.layouts = JSON.parse(JSON.stringify(existing.layouts));'), 'Should preserve layouts in getActiveTemplateFromForm');
     assert(appJs.includes('el.type === \'details-table\' && el.properties'), 'Should sync details-table properties in getActiveTemplateFromForm');
+    assert(appJs.includes('el.properties.labelValueSpacing = labelValueSpacing;'), 'Should sync labelValueSpacing to details-table in getActiveTemplateFromForm');
+});
+
+console.log('\n=== 8. CLASSIC CARD LABEL WIDTH & VALUE SPACING SYNCHRONIZATION ===');
+
+it('makeAlignedRow dynamically sizes label width using template.labelWidth', () => {
+    assert(appJs.includes('lblW = `${template.labelWidth}%`;'), 'Missing dynamic percentage labelWidth calculation in makeAlignedRow');
+    assert(appJs.includes('if (template.labelWidth === 92)'), 'Preserve preset compatibility for Hanover wave 92');
+});
+
+it('makeAlignedRow dynamically spaces values using template.labelValueSpacing', () => {
+    assert(appJs.includes('const valSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8;'), 'Missing valSpacing resolution in makeAlignedRow');
+    assert(appJs.includes('padding-left: ${valSpacing}px;'), 'Missing dynamic padding-left valSpacing on value cell in makeAlignedRow');
+});
+
+it('renderUiceElementHtml details-table supports dynamic labelWidth and labelValueSpacing', () => {
+    assert(appJs.includes('const labelW = p.labelWidth || (template && template.labelWidth ? template.labelWidth : 38);'), 'UICE details-table should support template.labelWidth');
+    assert(appJs.includes('const valSpacing = p.labelValueSpacing !== undefined ? p.labelValueSpacing : (template && template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8);'), 'UICE details-table should support template.labelValueSpacing');
+    assert(appJs.includes('padding-left: ${valSpacing}px;'), 'UICE details-table value cell should use valSpacing');
+});
+
+it('syncVisualPropertiesToRoot extracts labelValueSpacing into template root', () => {
+    assert(appJs.includes('if (dp.labelValueSpacing !== undefined) tpl.labelValueSpacing = dp.labelValueSpacing;'), 'syncVisualPropertiesToRoot should extract labelValueSpacing');
+});
+
+it('resetTemplateForm resets row-padding, label-width, and label-value-spacing', () => {
+    assert(appJs.includes("document.getElementById('tpl-row-padding').value = 3;"), 'resetTemplateForm should reset tpl-row-padding');
+    assert(appJs.includes("document.getElementById('tpl-label-width').value = 45;"), 'resetTemplateForm should reset tpl-label-width');
+    assert(appJs.includes("document.getElementById('tpl-label-value-spacing').value = 10;"), 'resetTemplateForm should reset tpl-label-value-spacing');
 });
 
 console.log('\n======================================================');
@@ -279,3 +308,4 @@ if (failed > 0) {
 } else {
     process.exit(0);
 }
+
