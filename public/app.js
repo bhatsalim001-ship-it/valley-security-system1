@@ -9760,6 +9760,7 @@ function renderUiceStage() {
  * {{dob}}, {{site}}, {{rank}}, {{zone}}, etc.
  */
 function resolveUiceTokens(text, emp = {}, validityYears = 3, issueDate = null) {
+    if (!emp || typeof emp !== 'object') emp = {};
     if (!text || typeof text !== 'string') return text || '';
 
     const now = new Date();
@@ -10024,6 +10025,7 @@ function generateSecurityWatermarkHtml(el, properties = {}) {
  * Builds the inner HTML for an element node inside the artboard.
  */
 function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null, template = null) {
+    if (!emp || typeof emp !== 'object') emp = {};
     if (!template && typeof UICE_STATE !== 'undefined' && UICE_STATE && UICE_STATE.template) template = UICE_STATE.template;
     const p = el.properties || {};
 
@@ -10094,7 +10096,7 @@ function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null, tem
         }
 
         case 'employee-photo': {
-            let photoUrl = (emp.documents && emp.documents.photo) ? emp.documents.photo : '';
+            let photoUrl = (emp.documents && emp.documents.photo) ? emp.documents.photo : (emp.photo || '');
             if (photoUrl.startsWith('/api/employees/') && emp.secureToken) {
                 photoUrl += (photoUrl.includes('?') ? '&' : '?') + `token=${emp.secureToken}`;
             }
