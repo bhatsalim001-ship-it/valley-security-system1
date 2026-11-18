@@ -2759,6 +2759,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     const showBlood = (fields.blood !== false) && (fields.bloodGroup !== false);
     const showAddress = fields.address !== false;
     const showQrCode = fields.qrcode !== false;
+    const showQrcode = showQrCode;
+    const showSignature = fields.signature !== false;
     const showBarcode = fields.barcode !== false;
     const showValidity = fields.validity !== false;
 
@@ -3069,29 +3071,37 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         photoContainerStyle = `width: ${stW}px; height: ${stH}px; border-radius: 6px; overflow: hidden; border: 2px solid ${template.accentColor || '#dfba5f'}; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea;`;
     }
 
-    // 2. Name Block Style (Banner, Boxed, Clean)
+    // 2. Name Block Style (Banner, Boxed, Clean) with dynamic auto-fit for long names
     let nameBlockHtml = '';
     if (showName) {
+        const empNameClean = cleanTextVal(emp.name);
+        let dynNameFontSize = nameFontSize;
+        if (empNameClean.length > 25) {
+            dynNameFontSize = Math.max(10.5, nameFontSize - 3);
+        } else if (empNameClean.length > 18) {
+            dynNameFontSize = Math.max(12, nameFontSize - 1.5);
+        }
+
         if (nameStyle === 'banner') {
             const bannerLight = isColorLight(template.accentColor || '#0e3e2b');
             const bannerTextColor = bannerLight ? '#0f172a' : '#ffffff';
             nameBlockHtml = `
             <div style="background: ${template.accentColor || '#0e3e2b'}; color: ${bannerTextColor}; padding: 3px 14px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.18); max-width: 98%; overflow: hidden; margin-bottom: 2px;">
-                <h2 class="id-portrait-name" style="color: ${bannerTextColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px; text-transform: uppercase;">
-                    ${cleanTextVal(emp.name)}
+                <h2 class="id-portrait-name" style="color: ${bannerTextColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px; text-transform: uppercase;">
+                    ${empNameClean}
                 </h2>
             </div>`;
         } else if (nameStyle === 'boxed') {
             nameBlockHtml = `
             <div style="border: 1.5px solid ${template.accentColor || '#0e3e2b'}; background: rgba(128,128,128,0.06); padding: 2px 10px; border-radius: 6px; display: inline-flex; align-items: center; max-width: 98%; overflow: hidden; margin-bottom: 2px;">
-                <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
-                    ${cleanTextVal(emp.name)}
+                <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
+                    ${empNameClean}
                 </h2>
             </div>`;
         } else {
             nameBlockHtml = `
-            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${nameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
-                ${cleanTextVal(emp.name)}
+            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
+                ${empNameClean}
             </h2>`;
         }
     }
@@ -3221,11 +3231,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                         <!-- Column 2 (Right Area): 100% On Clean White Background, Zero Dark Wave Overlap -->
                         <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding-left: 4px; padding-top: 4px; z-index: 2;">
                             <div style="margin-bottom: 3px;">
-                                <h2 class="id-portrait-name" style="font-family: ${template.nameFont || template.font || "'Playfair Display', Georgia, serif"}; color: #0f172a; font-size: ${nameFontSize || 17}px; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; letter-spacing: 0.6px; text-transform: uppercase;">
+                                <h2 class="id-portrait-name" style="font-family: ${template.nameFont || template.font || "'Playfair Display', Georgia, serif"}; color: #0f172a; font-size: ${cleanTextVal(emp.name).length > 24 ? Math.max(12, (nameFontSize || 17) - 3) : (nameFontSize || 17)}px; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; letter-spacing: 0.6px; text-transform: uppercase;">
                                     ${cleanTextVal(emp.name)}
                                 </h2>
                                 ${showDesignation ? `
-                                <h3 class="id-portrait-designation" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; color: ${template.accentColor || '#dc2626'}; font-size: ${designationFontSize || 10.5}px; font-weight: 800; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1.1;">
+                                <h3 class="id-portrait-designation" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; color: ${template.accentColor || '#dc2626'}; font-size: ${cleanTextVal(emp.designation).length > 28 ? Math.max(8.5, (designationFontSize || 10.5) - 1.5) : (designationFontSize || 10.5)}px; font-weight: 800; margin: 1px 0 0 0; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1.1;">
                                     ${cleanTextVal(emp.designation)}
                                 </h3>` : ''}
                             </div>
