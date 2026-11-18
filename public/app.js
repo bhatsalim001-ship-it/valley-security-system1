@@ -3112,6 +3112,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
             const leftColWidth = Math.max(130, Math.min(150, (photoShape === 'circle' ? pDim : photoWidth) + 12));
             const qrBoxDim = qrSize || 48;
             const qrCanvasDim = Math.max(24, qrBoxDim - 8);
+            const isQrUnderPhoto = template.barcodePosition === 'bottom-center' || template.qrPosition === 'bottom-left' || (template.name && template.name.toLowerCase().includes('office')) || template.id === 'tpl-office';
 
             return `
             <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
@@ -3156,7 +3157,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                 <p class="id-portrait-subtitle" style="color: rgba(255,255,255,0.92); font-size: ${Math.max(6, headerFontSize * 0.52)}px; margin: 1px 0 0 0; text-transform: uppercase; line-height: 1.15; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.4px;">${template.subheaderText || 'SHAHIDGUNJ SRINAGAR'}</p>
                             </div>
                         </div>
-                        <!-- Right: High-Impact Display Serif Card Title (SECURITY ID CARD / STUDENT ID CARD) -->
+                        <!-- Right: High-Impact Display Serif Card Title (SECURITY ID CARD / STUDENT ID CARD / ADMIN) -->
                         <div style="text-align: right; line-height: 1.05; padding-right: 2px;">
                             <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: 0 1px 4px rgba(0,0,0,0.4);">
                                 ${titleLine1}${titleLine2 ? `<br><span style="font-size: 15px; font-weight: 700; opacity: 0.95;">${titleLine2}</span>` : ''}
@@ -3164,15 +3165,24 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                         </div>
                     </div>
 
-                    <!-- Body Content Split: Left Pillar (Photo + Barcode) vs Right Details & Security Lockup -->
+                    <!-- Body Content Split: Left Pillar (Photo + Barcode/QR) vs Right Details & Security Lockup -->
                     <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 0 16px 8px 16px; z-index: 2; position: relative;">
-                        <!-- Column 1 (Left Pillar): Large Photo overlapping wave + Barcode Directly Below -->
+                        <!-- Column 1 (Left Pillar): Large Photo overlapping wave + Barcode or QR Directly Below -->
                         <div style="width: ${leftColWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; flex-shrink: 0; z-index: 3;">
                             ${showPhoto ? `<div class="id-portrait-photo-box" style="${wavePhotoStyle}">${photoHtml}</div>` : ''}
+                            ${isQrUnderPhoto ? `
+                            ${showQrcode ? `
+                            <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 4px;">
+                                <div class="id-portrait-qr" style="width: ${qrBoxDim}px; height: ${qrBoxDim}px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#009688'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrCanvasDim}" style="width: ${qrCanvasDim}px; height: ${qrCanvasDim}px; display: block;"></canvas>
+                                </div>
+                            </div>` : ''}
+                            ` : `
                             <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
                                 ${getBarcodeHtml(template.barcodeWidth ? template.barcodeWidth + 'px' : '120px', template.barcodeHeight ? template.barcodeHeight + 'px' : '25px')}
                                 <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 800; color: #334155; letter-spacing: 0.8px; margin-top: 2px;">${cleanTextVal(emp.id, false)}</span>
                             </div>
+                            `}
                         </div>
 
                         <!-- Column 2 (Right Area): 100% On Clean White Background, Zero Dark Wave Overlap -->
@@ -3187,10 +3197,27 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                 </h3>` : ''}
                             </div>
 
-                            <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: auto;">
-                                ${cleanDetailsRowsHtml}
-                            </table>
+                            <div style="background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 6px; padding: 2px 8px; width: 100%; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: auto;">
+                                <table class="id-portrait-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                                    ${cleanDetailsRowsHtml}
+                                </table>
+                            </div>
 
+                            ${isQrUnderPhoto ? `
+                            <!-- Bottom Security Verification Lockup: Barcode (Left) + Signature (Right) -->
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 4px; padding-bottom: 2px;">
+                                ${showBarcode ? `
+                                <div style="display: flex; flex-direction: column; align-items: flex-start; padding-left: 2px;">
+                                    ${getBarcodeHtml(template.barcodeWidth ? template.barcodeWidth + 'px' : '116px', template.barcodeHeight ? template.barcodeHeight + 'px' : '24px')}
+                                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 800; color: #334155; letter-spacing: 0.8px; margin-top: 1px;">${cleanTextVal(emp.id, false)}</span>
+                                </div>` : '<div></div>'}
+                                ${showSignature ? `
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 100px; padding-right: 2px;">
+                                    <div style="height: 26px; width: 90px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+                                    <div style="font-size: 6px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #94a3b8; padding-top: 2px; width: 95px; text-align: center; white-space: nowrap;">AUTHORITY SIGNATURE</div>
+                                </div>` : ''}
+                            </div>
+                            ` : `
                             <!-- Bottom Security Verification Lockup: Signature (Left) + QR Code (Right) -->
                             <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; padding-top: 4px; padding-bottom: 2px;">
                                 <!-- Authority Signature -->
@@ -3209,6 +3236,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                     </div>
                                 </div>
                             </div>
+                            `}
                         </div>
                     </div>
                 </div>
@@ -7414,6 +7442,7 @@ function getUiceDefaultElements(orientation, tpl = {}) {
 
     if (isHoriz) {
         if (cardTheme === 'organic-wave') {
+            const isQrUnderPhoto = tpl.barcodePosition === 'bottom-center' || tpl.qrPosition === 'bottom-left' || (tpl.name && tpl.name.toLowerCase().includes('office')) || tpl.id === 'tpl-office';
             return [
                 // 1. Top Fluid Waves Header with Gradient
                 {
@@ -7525,7 +7554,7 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                     type: 'employee-photo',
                     name: 'Employee Photo',
                     x: 18,
-                    y: 72,
+                    y: 72 + (tpl.photoTopOffset !== undefined ? tpl.photoTopOffset : (isQrUnderPhoto ? 12 : 0)),
                     width: photoDim,
                     height: photoDim,
                     rotation: 0,
@@ -7540,14 +7569,14 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                         objectFit: 'cover'
                     }
                 },
-                // 7. Barcode (under photo)
+                // 7. Barcode (under details table when isQrUnderPhoto, else under photo)
                 {
                     id: 'uice-elem-barcode',
                     type: 'barcode',
                     name: 'Employee Barcode',
-                    x: 14,
-                    y: 202,
-                    width: 124,
+                    x: isQrUnderPhoto ? 160 : 14,
+                    y: isQrUnderPhoto ? 248 : 202,
+                    width: isQrUnderPhoto ? 140 : 124,
                     height: 28,
                     rotation: 0,
                     zIndex: 2,
@@ -7623,7 +7652,7 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                     properties: {
                         fontSize: tpl.detailsFontSize || 8.5,
                         labelColor: tpl.labelColor || '#475569',
-                        valueColor: tpl.valueColor || '#0f172a',
+                        valueColor: tpl.valueColor || (isQrUnderPhoto ? '#c8102e' : '#0f172a'),
                         rowPadding: tpl.rowPadding || 2.5,
                         labelWidth: tpl.labelWidth || 38,
                         fields: tpl.fieldOrder || ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone']
@@ -7634,9 +7663,9 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                     id: 'uice-elem-signature',
                     type: 'signature',
                     name: 'Authority Signature',
-                    x: 165,
-                    y: 258,
-                    width: 100,
+                    x: isQrUnderPhoto ? 345 : 165,
+                    y: isQrUnderPhoto ? 246 : 258,
+                    width: isQrUnderPhoto ? 120 : 100,
                     height: 46,
                     rotation: 0,
                     zIndex: 2,
@@ -7653,10 +7682,10 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                     id: 'uice-elem-qr',
                     type: 'qr-code',
                     name: 'Verification QR Code',
-                    x: 432,
-                    y: 250,
-                    width: tpl.qrSize || 48,
-                    height: tpl.qrSize || 48,
+                    x: isQrUnderPhoto ? 44 : 432,
+                    y: isQrUnderPhoto ? 195 : 250,
+                    width: isQrUnderPhoto ? (tpl.qrSize || 62) : (tpl.qrSize || 48),
+                    height: isQrUnderPhoto ? (tpl.qrSize || 62) : (tpl.qrSize || 48),
                     rotation: 0,
                     zIndex: 3,
                     locked: false,
@@ -7682,7 +7711,7 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                     rotation: 0,
                     zIndex: 2,
                     locked: false,
-                    visible: true,
+                    visible: !isQrUnderPhoto,
                     properties: {
                         text: 'OFFICIAL VSA\nSCAN TO VERIFY',
                         fontSize: 6,
@@ -15638,6 +15667,55 @@ function resetTemplateForm() {
 
 // 1-Click Master Design Clones Configuration
 const MASTER_CLONE_PRESETS = {
+    'office': {
+        name: 'office',
+        cardTitle: 'ADMIN',
+        layout: 'horizontal',
+        cardTheme: 'organic-wave',
+        photoShape: 'circle',
+        nameStyle: 'clean',
+        barcodePosition: 'bottom-center',
+        font: "'Playfair Display', 'Georgia', serif",
+        backgroundColor: '#ffffff',
+        headerBgColor: '#7a0c0c',
+        accentColor: '#c8102e',
+        labelColor: '#64748b',
+        valueColor: '#c8102e',
+        headerText: 'VALLEY SECURITY AGENCY',
+        subheaderText: 'SHAHIDGUNJ SRINAGAR 7889311608',
+        logoSize: 42,
+        headerHeight: 65,
+        headerFontSize: 12,
+        photoWidth: 115,
+        photoHeight: 115,
+        photoTopOffset: 12,
+        qrSize: 62,
+        detailsFontSize: 8.5,
+        nameFontSize: 18,
+        designationFontSize: 11,
+        rowPadding: 2,
+        labelWidth: 38,
+        labelValueSpacing: 6,
+        logo: 'preset-vsa-logo',
+        signature: 'preset-vsa-sig',
+        fields: {
+            photo: true,
+            name: true,
+            designation: true,
+            department: true,
+            empid: true,
+            father: true,
+            phone: true,
+            email: false,
+            blood: true,
+            address: true,
+            signature: true,
+            qrcode: true,
+            barcode: true,
+            validity: true
+        },
+        fieldOrder: ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone']
+    },
     'hanover-wave': {
         name: 'Hanover Teal Wave (100% Replica)',
         cardTitle: 'SECURITY ID CARD',

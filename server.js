@@ -1427,6 +1427,64 @@ async function initDatabase() {
       await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2)', ['tpl-nift', JSON.stringify(niftTemplate)]);
     }
 
+    // Seed office template if not present
+    const officeCheck = await pool.query("SELECT id FROM templates WHERE id = 'tpl-office'");
+    if (officeCheck.rows.length === 0) {
+      console.log('🔄 Seeding Office Staff Pass (office) badge template...');
+      const officeTemplate = {
+        id: 'tpl-office',
+        name: 'office',
+        cardTitle: 'ADMIN',
+        layout: 'horizontal',
+        cardTheme: 'organic-wave',
+        photoShape: 'circle',
+        nameStyle: 'clean',
+        barcodePosition: 'bottom-center',
+        font: "'Playfair Display', 'Georgia', serif",
+        backgroundColor: '#ffffff',
+        headerBgColor: '#7a0c0c',
+        accentColor: '#c8102e',
+        labelColor: '#64748b',
+        valueColor: '#c8102e',
+        headerText: 'VALLEY SECURITY AGENCY',
+        subheaderText: 'SHAHIDGUNJ SRINAGAR 7889311608',
+        logoSize: 42,
+        headerHeight: 65,
+        headerFontSize: 12,
+        photoWidth: 115,
+        photoHeight: 115,
+        photoTopOffset: 12,
+        qrSize: 62,
+        detailsFontSize: 8.5,
+        nameFontSize: 18,
+        designationFontSize: 11,
+        rowPadding: 2,
+        labelWidth: 38,
+        labelValueSpacing: 6,
+        logo: 'preset-vsa-logo',
+        signature: 'preset-vsa-sig',
+        fields: {
+          photo: true,
+          name: true,
+          designation: true,
+          department: true,
+          empid: true,
+          father: true,
+          phone: true,
+          email: false,
+          blood: true,
+          address: true,
+          signature: true,
+          qrcode: true,
+          barcode: true,
+          validity: true
+        },
+        fieldOrder: ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone'],
+        isVisualTemplate: true
+      };
+      await pool.query('INSERT INTO templates (id, data) VALUES ($1, $2)', ['tpl-office', JSON.stringify(officeTemplate)]);
+    }
+
     // Auto-compress default logo/signature in existing templates table if they exist
     try {
       const templatesRes = await pool.query('SELECT id, data FROM templates');

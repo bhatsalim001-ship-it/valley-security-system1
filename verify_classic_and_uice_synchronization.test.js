@@ -139,6 +139,71 @@ it('applyMasterClonePreset sets photoTopOffset and synchronizes UICE', () => {
     assert(appJs.includes("MASTER_CLONE_PRESETS = {"), 'MASTER_CLONE_PRESETS defined');
 });
 
+console.log('\n=== 5. OFFICE TEMPLATE PERSISTENCE & SYNCHRONIZATION ===');
+it('index.html contains 1-click clone button for office template', () => {
+    assert(indexHtml.includes('data-clone="office"'), 'index.html missing data-clone="office" button');
+    assert(indexHtml.includes('Office Pass'), 'index.html missing Office Pass label');
+});
+
+it('MASTER_CLONE_PRESETS contains office preset with red wave styling', () => {
+    assert(appJs.includes("'office': {"), "MASTER_CLONE_PRESETS missing 'office' preset");
+    assert(appJs.includes("name: 'office'"), "'office' preset missing name: 'office'");
+    assert(appJs.includes("cardTitle: 'ADMIN'"), "'office' preset missing cardTitle: 'ADMIN'");
+    assert(appJs.includes("headerBgColor: '#7a0c0c'"), "'office' preset missing headerBgColor: '#7a0c0c'");
+    assert(appJs.includes("accentColor: '#c8102e'"), "'office' preset missing accentColor: '#c8102e'");
+    assert(appJs.includes("valueColor: '#c8102e'"), "'office' preset missing valueColor: '#c8102e'");
+    assert(appJs.includes("barcodePosition: 'bottom-center'"), "'office' preset missing barcodePosition: 'bottom-center'");
+});
+
+it('server.js seeds tpl-office into PostgreSQL database', () => {
+    const serverJs = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf-8');
+    assert(serverJs.includes("id: 'tpl-office'"), "server.js missing seed for 'tpl-office'");
+    assert(serverJs.includes("name: 'office'"), "server.js missing office template name in seed");
+});
+
+it('generateIdCardHtml organic-wave supports isQrUnderPhoto layout', () => {
+    assert(appJs.includes('const isQrUnderPhoto = template.barcodePosition === \'bottom-center\''), 'generateIdCardHtml missing isQrUnderPhoto calculation');
+    assert(appJs.includes("${isQrUnderPhoto ? `"), 'generateIdCardHtml missing conditional render based on isQrUnderPhoto');
+});
+
+it('getUiceDefaultElements positions QR under photo and barcode under table for office', () => {
+    // Extract getUiceDefaultElements
+    const startIdx = appJs.indexOf('function getUiceDefaultElements');
+    assert(startIdx !== -1, 'getUiceDefaultElements missing in app.js');
+    const endIdx = appJs.indexOf('\nfunction getUiceDefaultBackElements');
+    assert(endIdx !== -1, 'getUiceDefaultBackElements boundary missing');
+    const fnCode = appJs.substring(startIdx, endIdx);
+    const getUiceDefaultElements = new Function(`${fnCode}; return getUiceDefaultElements;`)();
+    
+    const elements = getUiceDefaultElements('horizontal', {
+        id: 'tpl-office',
+        name: 'office',
+        cardTheme: 'organic-wave',
+        barcodePosition: 'bottom-center',
+        accentColor: '#c8102e'
+    });
+
+    const qr = elements.find(e => e.type === 'qr-code');
+    const barcode = elements.find(e => e.type === 'barcode');
+    const sig = elements.find(e => e.type === 'signature');
+    const table = elements.find(e => e.type === 'details-table');
+
+    assert(qr, 'qr-code element missing');
+    assert.strictEqual(qr.x, 44, 'qr-code x coordinate should be 44 (under photo)');
+    assert.strictEqual(qr.y, 195, 'qr-code y coordinate should be 195 (under photo)');
+
+    assert(barcode, 'barcode element missing');
+    assert.strictEqual(barcode.x, 160, 'barcode x coordinate should be 160 (under details table)');
+    assert.strictEqual(barcode.y, 248, 'barcode y coordinate should be 248 (under details table)');
+
+    assert(sig, 'signature element missing');
+    assert.strictEqual(sig.x, 345, 'signature x coordinate should be 345');
+    assert.strictEqual(sig.y, 246, 'signature y coordinate should be 246');
+
+    assert(table, 'details-table element missing');
+    assert.strictEqual(table.properties.valueColor, '#c8102e', 'table valueColor should be #c8102e');
+});
+
 console.log('\n======================================================');
 console.log(`TEST RESULTS: ${passed} passed, ${failed} failed`);
 console.log('======================================================\n');
