@@ -3099,7 +3099,20 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     // =========================================================================
     if (template.layout === 'horizontal') {
         if (cardTheme === 'organic-wave') {
-            const wavePhotoStyle = `width: 122px; height: 122px; border-radius: 50%; overflow: hidden; border: 3.5px solid #ffffff; outline: 3.5px solid ${template.accentColor || '#009688'}; box-shadow: 0 4px 14px rgba(0,0,0,0.22); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea; margin-top: -6px; margin-bottom: 10px;`;
+            const pDim = Math.min(photoWidth, photoHeight);
+            const pTopOffset = template.photoTopOffset !== undefined ? template.photoTopOffset : 10;
+            let wavePhotoStyle = '';
+            if (photoShape === 'circle') {
+                wavePhotoStyle = `width: ${pDim}px; height: ${pDim}px; border-radius: 50%; overflow: hidden; border: 3.5px solid #ffffff; outline: 3.5px solid ${template.accentColor || '#009688'}; box-shadow: 0 4px 14px rgba(0,0,0,0.22); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea; margin-top: ${pTopOffset}px; margin-bottom: 8px;`;
+            } else if (photoShape === 'squircle') {
+                wavePhotoStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 18px; overflow: hidden; border: 3px solid ${template.accentColor || '#009688'}; box-shadow: 0 4px 12px rgba(0,0,0,0.18); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea; margin-top: ${pTopOffset}px; margin-bottom: 8px;`;
+            } else {
+                wavePhotoStyle = `width: ${photoWidth}px; height: ${photoHeight}px; border-radius: 8px; overflow: hidden; border: 2.5px solid ${template.accentColor || '#009688'}; box-shadow: 0 3px 8px rgba(0,0,0,0.16); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #eaeaea; margin-top: ${pTopOffset}px; margin-bottom: 8px;`;
+            }
+            const leftColWidth = Math.max(130, Math.min(150, (photoShape === 'circle' ? pDim : photoWidth) + 12));
+            const qrBoxDim = qrSize || 48;
+            const qrCanvasDim = Math.max(24, qrBoxDim - 8);
+
             return `
             <div class="visual-id-card-render-wrapper" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%;">
                 <div class="id-card-horizontal visual-id-card-render theme-organic-wave" style="font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; ${bgStyle} border: 2px solid ${template.accentColor || '#009688'}; border-radius: 14px; display: flex; flex-direction: column; justify-content: flex-start; height: 320px; width: 500px; box-sizing: border-box; overflow: hidden; position: relative; background: #ffffff;">
@@ -3153,11 +3166,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
                     <!-- Body Content Split: Left Pillar (Photo + Barcode) vs Right Details & Security Lockup -->
                     <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0; align-items: stretch; padding: 0 16px 8px 16px; z-index: 2; position: relative;">
-                        <!-- Column 1 (Left Pillar): Large Circular Photo overlapping wave + Barcode Directly Below -->
-                        <div style="width: 130px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; flex-shrink: 0; z-index: 3;">
+                        <!-- Column 1 (Left Pillar): Large Photo overlapping wave + Barcode Directly Below -->
+                        <div style="width: ${leftColWidth}px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; flex-shrink: 0; z-index: 3;">
                             ${showPhoto ? `<div class="id-portrait-photo-box" style="${wavePhotoStyle}">${photoHtml}</div>` : ''}
                             <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-                                ${getBarcodeHtml('120px', '25px')}
+                                ${getBarcodeHtml(template.barcodeWidth ? template.barcodeWidth + 'px' : '120px', template.barcodeHeight ? template.barcodeHeight + 'px' : '25px')}
                                 <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 800; color: #334155; letter-spacing: 0.8px; margin-top: 2px;">${cleanTextVal(emp.id, false)}</span>
                             </div>
                         </div>
@@ -3191,8 +3204,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                         <span style="font-size: 6px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
                                         <span style="font-size: 5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
                                     </div>
-                                    <div class="id-portrait-qr" style="width: 44px; height: 44px; background: #ffffff; padding: 2px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#009688'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="40" style="width: 40px; height: 40px; display: block;"></canvas>
+                                    <div class="id-portrait-qr" style="width: ${qrBoxDim}px; height: ${qrBoxDim}px; background: #ffffff; padding: 2px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#009688'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrCanvasDim}" style="width: ${qrCanvasDim}px; height: ${qrCanvasDim}px; display: block;"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -3253,8 +3266,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                         <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
                                         <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
                                     </div>
-                                    <div class="id-portrait-qr" style="width: 50px; height: 50px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#2563eb'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="46" style="width: 46px; height: 46px; display: block;"></canvas>
+                                    <div class="id-portrait-qr" style="width: ${qrSize || 50}px; height: ${qrSize || 50}px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#2563eb'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${Math.max(24, (qrSize || 50) - 6)}" style="width: ${Math.max(24, (qrSize || 50) - 6)}px; height: ${Math.max(24, (qrSize || 50) - 6)}px; display: block;"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -3322,8 +3335,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                         <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
                                         <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
                                     </div>
-                                    <div class="id-portrait-qr" style="width: 50px; height: 50px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#006039'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="46" style="width: 46px; height: 46px; display: block;"></canvas>
+                                    <div class="id-portrait-qr" style="width: ${qrSize || 50}px; height: ${qrSize || 50}px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#006039'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${Math.max(24, (qrSize || 50) - 6)}" style="width: ${Math.max(24, (qrSize || 50) - 6)}px; height: ${Math.max(24, (qrSize || 50) - 6)}px; display: block;"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -7351,7 +7364,7 @@ const UICE_STATE = {
     snapToGrid: true,
     gridSize: 10,
     showGuides: true,
-    showGrid: true,
+    showGrid: false,
     showSafeMargins: false,
     showBleedArea: false,
     showElementOutlines: false,
@@ -7390,13 +7403,298 @@ const UICE_STATE = {
  */
 function getUiceDefaultElements(orientation, tpl = {}) {
     const isHoriz = orientation === 'horizontal';
-    const headerBg = tpl.headerBgColor || '#0e3e2b';
-    const accent = tpl.accentColor || '#009688';
+    const cardTheme = tpl.cardTheme || 'classic';
+    const headerBg = tpl.headerBgColor || (cardTheme === 'organic-wave' ? '#0d7a6e' : '#0e3e2b');
+    const accent = tpl.accentColor || (cardTheme === 'organic-wave' ? '#009688' : '#009688');
     const brandTitle = tpl.headerText || 'VALLEY SECURITY AGENCY';
     const brandSubtitle = tpl.subheaderText || 'SHAHIDGUNJ SRINAGAR';
-    const cardTitle = tpl.cardTitle || 'SECURITY ID CARD';
+    const cardTitle = tpl.cardTitle || (tpl.name && tpl.name.toUpperCase().includes('STUDENT') ? 'STUDENT ID CARD' : 'SECURITY ID CARD');
+    const photoDim = Math.min(tpl.photoWidth || 115, tpl.photoHeight || 115, isHoriz ? 125 : 100);
+    const photoShape = tpl.photoShape || 'circle';
 
     if (isHoriz) {
+        if (cardTheme === 'organic-wave') {
+            return [
+                // 1. Top Fluid Waves Header with Gradient
+                {
+                    id: 'uice-shape-wave-top',
+                    type: 'svg-wave-top',
+                    name: 'Fluid Wave Header',
+                    x: 0,
+                    y: 0,
+                    width: 500,
+                    height: 120,
+                    rotation: 0,
+                    zIndex: 1,
+                    locked: true,
+                    visible: true,
+                    properties: {
+                        headerBgColor: headerBg,
+                        accentColor: accent,
+                        opacity: 1
+                    }
+                },
+                // 2. Harmonic Guilloche Security Wave Lines
+                {
+                    id: 'uice-shape-guilloche',
+                    type: 'guilloche-waves',
+                    name: 'Guilloche Security Waves',
+                    x: 0,
+                    y: 0,
+                    width: 500,
+                    height: 320,
+                    rotation: 0,
+                    zIndex: 0,
+                    locked: true,
+                    visible: true,
+                    properties: {
+                        color: accent,
+                        opacity: 0.10
+                    }
+                },
+                // 3. Bottom Accent Wave
+                {
+                    id: 'uice-shape-wave-bottom',
+                    type: 'svg-wave-bottom',
+                    name: 'Accent Wave (Bottom)',
+                    x: 0,
+                    y: 278,
+                    width: 500,
+                    height: 42,
+                    rotation: 0,
+                    zIndex: 0,
+                    locked: true,
+                    visible: true,
+                    properties: {
+                        headerBgColor: headerBg,
+                        accentColor: accent,
+                        opacity: 1
+                    }
+                },
+                // 4. Agency Header (Brand Logo + Title + Subtitle)
+                {
+                    id: 'uice-elem-header',
+                    type: 'agency-brand',
+                    name: 'Agency Header',
+                    x: 16,
+                    y: 8,
+                    width: 290,
+                    height: 40,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        title: brandTitle,
+                        subtitle: brandSubtitle,
+                        titleFontSize: Math.min(tpl.headerFontSize || 11.5, 11.5),
+                        subtitleFontSize: 6.2,
+                        fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                        color: '#ffffff',
+                        logoSize: 34,
+                        logoPreset: tpl.logo || 'preset-vsa-logo'
+                    }
+                },
+                // 5. Card Title Display (Serif typography, White, Text Shadow)
+                {
+                    id: 'uice-elem-badge',
+                    type: 'badge-pill',
+                    name: 'Card Title Display',
+                    x: 316,
+                    y: 10,
+                    width: 168,
+                    height: 36,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        text: cardTitle,
+                        background: 'transparent',
+                        color: '#ffffff',
+                        fontSize: 18,
+                        fontWeight: 800,
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                        textAlign: 'right',
+                        letterSpacing: 0.8
+                    }
+                },
+                // 6. Employee Photo (Positioned comfortably down below top wave)
+                {
+                    id: 'uice-elem-photo',
+                    type: 'employee-photo',
+                    name: 'Employee Photo',
+                    x: 18,
+                    y: 72,
+                    width: photoDim,
+                    height: photoDim,
+                    rotation: 0,
+                    zIndex: 3,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        shape: photoShape,
+                        borderWidth: 3.5,
+                        borderColor: '#ffffff',
+                        outlineColor: accent,
+                        objectFit: 'cover'
+                    }
+                },
+                // 7. Barcode (under photo)
+                {
+                    id: 'uice-elem-barcode',
+                    type: 'barcode',
+                    name: 'Employee Barcode',
+                    x: 14,
+                    y: 202,
+                    width: 124,
+                    height: 28,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        format: 'CODE128',
+                        lineColor: '#000000',
+                        background: '#ffffff',
+                        showText: true,
+                        fontSize: 8.5
+                    }
+                },
+                // 8. Employee Full Name
+                {
+                    id: 'uice-elem-name',
+                    type: 'employee-name',
+                    name: 'Employee Name',
+                    x: 154,
+                    y: 64,
+                    width: 330,
+                    height: 26,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        fontSize: tpl.nameFontSize || 17,
+                        fontWeight: 800,
+                        fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                        color: '#0f172a',
+                        textAlign: 'left',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4
+                    }
+                },
+                // 9. Employee Designation
+                {
+                    id: 'uice-elem-designation',
+                    type: 'designation',
+                    name: 'Designation',
+                    x: 154,
+                    y: 92,
+                    width: 330,
+                    height: 20,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        fontSize: tpl.designationFontSize || 10.5,
+                        fontWeight: 700,
+                        fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                        color: accent,
+                        textAlign: 'left',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.6
+                    }
+                },
+                // 10. Details Table (Emp ID, Father, Dept, Blood, Validity, Address, Mobile)
+                {
+                    id: 'uice-elem-details-table',
+                    type: 'details-table',
+                    name: 'Details Table',
+                    x: 154,
+                    y: 114,
+                    width: 330,
+                    height: 120,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        fontSize: tpl.detailsFontSize || 8.5,
+                        labelColor: tpl.labelColor || '#475569',
+                        valueColor: tpl.valueColor || '#0f172a',
+                        rowPadding: tpl.rowPadding || 2.5,
+                        labelWidth: tpl.labelWidth || 38,
+                        fields: tpl.fieldOrder || ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone']
+                    }
+                },
+                // 11. Authority Signature
+                {
+                    id: 'uice-elem-signature',
+                    type: 'signature',
+                    name: 'Authority Signature',
+                    x: 165,
+                    y: 258,
+                    width: 100,
+                    height: 46,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        preset: tpl.signature || 'preset-vsa-sig',
+                        color: '#000000',
+                        label: 'AUTHORITY SIGNATURE'
+                    }
+                },
+                // 12. Official Verification QR Code
+                {
+                    id: 'uice-elem-qr',
+                    type: 'qr-code',
+                    name: 'Verification QR Code',
+                    x: 432,
+                    y: 250,
+                    width: tpl.qrSize || 48,
+                    height: tpl.qrSize || 48,
+                    rotation: 0,
+                    zIndex: 3,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        errorCorrection: 'H',
+                        foreground: '#000000',
+                        background: '#ffffff',
+                        quietZone: 2,
+                        borderColor: accent,
+                        borderWidth: 1.5
+                    }
+                },
+                // 13. Official VSA Scan Caption
+                {
+                    id: 'uice-elem-qr-caption',
+                    type: 'custom-text',
+                    name: 'QR Verify Caption',
+                    x: 348,
+                    y: 255,
+                    width: 78,
+                    height: 38,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        text: 'OFFICIAL VSA\nSCAN TO VERIFY',
+                        fontSize: 6,
+                        fontWeight: 800,
+                        color: '#475569',
+                        textAlign: 'right',
+                        lineHeight: 1.2
+                    }
+                }
+            ];
+        }
+
         return [
             // 1. Top Decorative Accent Bar
             {
@@ -7619,6 +7917,266 @@ function getUiceDefaultElements(orientation, tpl = {}) {
         ];
     } else {
         // Vertical Orientation (320 x 500)
+        if (cardTheme === 'organic-wave') {
+            return [
+                // 1. Top Fluid Waves Header with Gradient
+                {
+                    id: 'uice-shape-wave-top-v',
+                    type: 'svg-wave-top',
+                    name: 'Fluid Wave Header',
+                    x: 0,
+                    y: 0,
+                    width: 320,
+                    height: 130,
+                    rotation: 0,
+                    zIndex: 1,
+                    locked: true,
+                    visible: true,
+                    properties: {
+                        headerBgColor: headerBg,
+                        accentColor: accent,
+                        opacity: 1
+                    }
+                },
+                // 2. Harmonic Guilloche Security Wave Lines
+                {
+                    id: 'uice-shape-guilloche-v',
+                    type: 'guilloche-waves',
+                    name: 'Guilloche Security Waves',
+                    x: 0,
+                    y: 0,
+                    width: 320,
+                    height: 500,
+                    rotation: 0,
+                    zIndex: 0,
+                    locked: true,
+                    visible: true,
+                    properties: {
+                        color: accent,
+                        opacity: 0.10
+                    }
+                },
+                // 3. Bottom Accent Wave
+                {
+                    id: 'uice-shape-wave-bottom-v',
+                    type: 'svg-wave-bottom',
+                    name: 'Accent Wave (Bottom)',
+                    x: 0,
+                    y: 460,
+                    width: 320,
+                    height: 40,
+                    rotation: 0,
+                    zIndex: 0,
+                    locked: true,
+                    visible: true,
+                    properties: {
+                        headerBgColor: headerBg,
+                        accentColor: accent,
+                        opacity: 1
+                    }
+                },
+                // 4. Agency Header (Brand Logo + Title + Subtitle)
+                {
+                    id: 'uice-elem-header-v',
+                    type: 'agency-brand',
+                    name: 'Agency Header',
+                    x: 10,
+                    y: 8,
+                    width: 300,
+                    height: 46,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        title: brandTitle,
+                        subtitle: brandSubtitle,
+                        titleFontSize: 11.5,
+                        subtitleFontSize: 6.5,
+                        fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                        color: '#ffffff',
+                        logoSize: 34,
+                        logoPreset: tpl.logo || 'preset-vsa-logo'
+                    }
+                },
+                // 5. Card Title Display
+                {
+                    id: 'uice-elem-badge-v',
+                    type: 'badge-pill',
+                    name: 'Card Title Display',
+                    x: 60,
+                    y: 56,
+                    width: 200,
+                    height: 26,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        text: cardTitle,
+                        background: 'transparent',
+                        color: '#ffffff',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                        textAlign: 'center',
+                        letterSpacing: 0.8
+                    }
+                },
+                // 6. Employee Photo (Centered in Vertical)
+                {
+                    id: 'uice-elem-photo-v',
+                    type: 'employee-photo',
+                    name: 'Employee Photo',
+                    x: 105,
+                    y: 90,
+                    width: 110,
+                    height: 110,
+                    rotation: 0,
+                    zIndex: 3,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        shape: photoShape,
+                        borderWidth: 3.5,
+                        borderColor: '#ffffff',
+                        outlineColor: accent,
+                        objectFit: 'cover'
+                    }
+                },
+                // 7. Employee Name
+                {
+                    id: 'uice-elem-name-v',
+                    type: 'employee-name',
+                    name: 'Employee Name',
+                    x: 10,
+                    y: 208,
+                    width: 300,
+                    height: 26,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        fontSize: tpl.nameFontSize || 15.5,
+                        fontWeight: 800,
+                        fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                        color: '#0f172a',
+                        textAlign: 'center',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4
+                    }
+                },
+                // 8. Designation
+                {
+                    id: 'uice-elem-designation-v',
+                    type: 'designation',
+                    name: 'Designation',
+                    x: 10,
+                    y: 234,
+                    width: 300,
+                    height: 20,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        fontSize: tpl.designationFontSize || 10,
+                        fontWeight: 700,
+                        fontFamily: tpl.font || "'Plus Jakarta Sans', sans-serif",
+                        color: accent,
+                        textAlign: 'center',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5
+                    }
+                },
+                // 9. Details Table (Structured data card)
+                {
+                    id: 'uice-elem-details-table-v',
+                    type: 'details-table',
+                    name: 'Details Table',
+                    x: 14,
+                    y: 256,
+                    width: 292,
+                    height: 136,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        fontSize: tpl.detailsFontSize || 8,
+                        labelColor: tpl.labelColor || '#475569',
+                        valueColor: tpl.valueColor || '#0f172a',
+                        rowPadding: tpl.rowPadding || 2.5,
+                        labelWidth: 36,
+                        fields: tpl.fieldOrder || ['empid', 'father', 'department', 'blood', 'validity', 'phone']
+                    }
+                },
+                // 10. Authority Signature
+                {
+                    id: 'uice-elem-signature-v',
+                    type: 'signature',
+                    name: 'Authority Signature',
+                    x: 18,
+                    y: 396,
+                    width: 110,
+                    height: 46,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        preset: tpl.signature || 'preset-vsa-sig',
+                        color: '#000000',
+                        label: 'AUTHORITY SIGNATURE'
+                    }
+                },
+                // 11. Official Verification QR Code
+                {
+                    id: 'uice-elem-qr-v',
+                    type: 'qr-code',
+                    name: 'Verification QR Code',
+                    x: 236,
+                    y: 394,
+                    width: tpl.qrSize || 48,
+                    height: tpl.qrSize || 48,
+                    rotation: 0,
+                    zIndex: 3,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        errorCorrection: 'H',
+                        foreground: '#000000',
+                        background: '#ffffff',
+                        quietZone: 2,
+                        borderColor: accent,
+                        borderWidth: 1.5
+                    }
+                },
+                // 12. Employee Barcode (Bottom Plate)
+                {
+                    id: 'uice-elem-barcode-v',
+                    type: 'barcode',
+                    name: 'Barcode Plate',
+                    x: 20,
+                    y: 446,
+                    width: 280,
+                    height: 32,
+                    rotation: 0,
+                    zIndex: 2,
+                    locked: false,
+                    visible: true,
+                    properties: {
+                        format: 'CODE128',
+                        lineColor: '#000000',
+                        background: '#ffffff',
+                        showText: true,
+                        fontSize: 8.5
+                    }
+                }
+            ];
+        }
+
         return [
             // 1. Top Decorative Header Bar
             {
@@ -8710,7 +9268,8 @@ function convertLegacyTemplateToUice(tpl) {
             backElements: (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('horizontal', tpl) : []
         };
     } else {
-        if (!Array.isArray(tpl.layouts.horizontal.elements) || tpl.layouts.horizontal.elements.length === 0) {
+        if (!Array.isArray(tpl.layouts.horizontal.elements) || tpl.layouts.horizontal.elements.length === 0 ||
+            (tpl.cardTheme === 'organic-wave' && !tpl.layouts.horizontal.elements.some(e => e.type === 'svg-wave-top'))) {
             tpl.layouts.horizontal.elements = getUiceDefaultElements('horizontal', tpl);
         }
         if (!Array.isArray(tpl.layouts.horizontal.backElements) || tpl.layouts.horizontal.backElements.length === 0) {
@@ -8731,13 +9290,31 @@ function convertLegacyTemplateToUice(tpl) {
             backElements: (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('vertical', tpl) : []
         };
     } else {
-        if (!Array.isArray(tpl.layouts.vertical.elements) || tpl.layouts.vertical.elements.length === 0) {
+        if (!Array.isArray(tpl.layouts.vertical.elements) || tpl.layouts.vertical.elements.length === 0 ||
+            (tpl.cardTheme === 'organic-wave' && !tpl.layouts.vertical.elements.some(e => e.type === 'svg-wave-top'))) {
             tpl.layouts.vertical.elements = getUiceDefaultElements('vertical', tpl);
         }
         if (!Array.isArray(tpl.layouts.vertical.backElements) || tpl.layouts.vertical.backElements.length === 0) {
             tpl.layouts.vertical.backElements = (typeof getUiceDefaultBackElements === 'function') ? getUiceDefaultBackElements('vertical', tpl) : [];
         }
     }
+
+    // Synchronize current template colors to theme shapes if present
+    ['horizontal', 'vertical'].forEach(orient => {
+        if (tpl.layouts && tpl.layouts[orient] && Array.isArray(tpl.layouts[orient].elements)) {
+            tpl.layouts[orient].elements.forEach(e => {
+                if (e.type === 'svg-wave-top' || e.type === 'svg-wave-bottom') {
+                    e.properties = e.properties || {};
+                    if (tpl.headerBgColor) e.properties.headerBgColor = tpl.headerBgColor;
+                    if (tpl.accentColor) e.properties.accentColor = tpl.accentColor;
+                } else if (e.type === 'guilloche-waves') {
+                    e.properties = e.properties || {};
+                    if (tpl.accentColor) e.properties.color = tpl.accentColor;
+                }
+            });
+        }
+    });
+
     return tpl;
 }
 
@@ -9432,8 +10009,15 @@ function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null) {
         case 'badge-pill': {
             const rawText = p.text || 'SECURITY ID CARD';
             const resolvedText = resolveUiceTokens(rawText, emp, validityYears, issueDate);
+            const isTransparent = p.background === 'transparent' || !p.background;
+            const bgStyle = isTransparent ? 'background: transparent;' : `background: ${p.background}; box-shadow: 0 2px 6px rgba(0,0,0,0.2);`;
+            const textShadow = isTransparent ? 'text-shadow: 0 2px 5px rgba(0,0,0,0.45);' : '';
+            const justify = p.textAlign === 'right' ? 'flex-end' : (p.textAlign === 'left' ? 'flex-start' : 'center');
+            const fontFamily = p.fontFamily || "'Plus Jakarta Sans', sans-serif";
+            const fontStyle = p.fontStyle || (fontFamily.includes('Playfair') ? 'italic' : 'normal');
+
             return `
-                <div style="width: 100%; height: 100%; background: ${p.background || '#009688'}; color: ${p.color || '#ffffff'}; border-radius: ${p.borderRadius !== undefined ? p.borderRadius : 6}px; display: flex; align-items: center; justify-content: center; font-family: 'Plus Jakarta Sans', sans-serif; font-size: ${p.fontSize || 11}px; font-weight: ${p.fontWeight || 800}; text-transform: uppercase; letter-spacing: 0.8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); pointer-events: none;">
+                <div style="width: 100%; height: 100%; ${bgStyle} color: ${p.color || '#ffffff'}; border-radius: ${p.borderRadius !== undefined ? p.borderRadius : 6}px; display: flex; align-items: center; justify-content: ${justify}; font-family: ${fontFamily}; font-style: ${fontStyle}; font-size: ${p.fontSize || 11}px; font-weight: ${p.fontWeight || 800}; text-transform: uppercase; letter-spacing: ${p.letterSpacing !== undefined ? p.letterSpacing : 0.8}px; text-align: ${p.textAlign || 'center'}; ${textShadow} pointer-events: none; line-height: 1.15; padding: ${isTransparent ? '0 4px' : '2px 8px'}; box-sizing: border-box;">
                     ${escapeHtml(resolvedText)}
                 </div>`;
         }
@@ -9563,6 +10147,98 @@ function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null) {
 
         case 'security-watermark': {
             return generateSecurityWatermarkHtml(el, p);
+        }
+
+        case 'svg-wave-top': {
+            const headerBg = p.headerBgColor || '#0d7a6e';
+            const accent = p.accentColor || '#009688';
+            const gradId = `uiceWaveGrad_${(el.id || 'wave').replace(/[^a-zA-Z0-9_]/g, '')}`;
+            const isHoriz = el.width >= 400;
+
+            if (isHoriz) {
+                return `
+                    <div style="width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+                        <svg viewBox="0 0 500 120" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                            <defs>
+                                <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="${headerBg}" />
+                                    <stop offset="60%" stop-color="${accent}" />
+                                    <stop offset="100%" stop-color="#00b4d8" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,0 L500,0 L500,60 C420,54 330,50 205,58 C135,66 50,112 0,106 Z" fill="${accent}" opacity="0.32"/>
+                            <path d="M0,0 L500,0 L500,50 C420,46 330,42 200,50 C130,58 45,106 0,100 Z" fill="url(#${gradId})"/>
+                        </svg>
+                    </div>`;
+            } else {
+                return `
+                    <div style="width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+                        <svg viewBox="0 0 320 145" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                            <defs>
+                                <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="${headerBg}" />
+                                    <stop offset="60%" stop-color="${accent}" />
+                                    <stop offset="100%" stop-color="#00b4d8" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,0 L320,0 L320,85 C250,130 180,80 110,120 C50,145 15,115 0,130 Z" fill="${accent}" opacity="0.32"/>
+                            <path d="M0,0 L320,0 L320,72 C230,118 150,72 90,108 C40,128 10,105 0,118 Z" fill="url(#${gradId})"/>
+                        </svg>
+                    </div>`;
+            }
+        }
+
+        case 'svg-wave-bottom': {
+            const headerBg = p.headerBgColor || '#0d7a6e';
+            const accent = p.accentColor || '#009688';
+            const isHoriz = el.width >= 400;
+
+            if (isHoriz) {
+                return `
+                    <div style="width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+                        <svg viewBox="0 0 500 42" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                            <path d="M330,42 C400,18 450,24 500,8 L500,42 Z" fill="${accent}" opacity="0.6"/>
+                            <path d="M380,42 C430,22 470,24 500,14 L500,42 Z" fill="${headerBg}"/>
+                        </svg>
+                    </div>`;
+            } else {
+                return `
+                    <div style="width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+                        <svg viewBox="0 0 320 40" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                            <path d="M80,40 C160,10 240,35 320,8 L320,40 Z" fill="${accent}" opacity="0.75"/>
+                            <path d="M120,40 C190,18 260,36 320,18 L320,40 Z" fill="${headerBg}"/>
+                        </svg>
+                    </div>`;
+            }
+        }
+
+        case 'guilloche-waves': {
+            const accent = p.color || '#009688';
+            const opacity = p.opacity !== undefined ? p.opacity : 0.10;
+            const isHoriz = el.width >= 400;
+
+            if (isHoriz) {
+                return `
+                    <div style="width: 100%; height: 100%; pointer-events: none; opacity: ${opacity}; overflow: hidden;">
+                        <svg viewBox="0 0 500 320" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                            <path d="M-50,140 C50,110 120,230 220,160 C320,90 380,240 520,170" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-50,165 C60,135 130,255 230,185 C330,115 390,265 520,195" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-50,190 C70,160 140,280 240,210 C340,140 400,290 520,220" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-50,215 C80,185 150,305 250,235 C350,165 410,315 520,245" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-50,240 C90,210 160,330 260,260 C360,190 420,340 520,270" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                        </svg>
+                    </div>`;
+            } else {
+                return `
+                    <div style="width: 100%; height: 100%; pointer-events: none; opacity: ${opacity}; overflow: hidden;">
+                        <svg viewBox="0 0 320 500" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                            <path d="M-30,220 C40,170 120,310 210,240 C260,200 290,290 350,260" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-30,245 C50,195 130,335 220,265 C270,225 300,315 350,285" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-30,270 C60,220 140,360 230,290 C280,250 310,340 350,310" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                            <path d="M-30,295 C70,245 150,385 240,315 C290,275 320,365 350,335" fill="none" stroke="${accent}" stroke-width="1.2"/>
+                        </svg>
+                    </div>`;
+            }
         }
 
         default:
@@ -11904,6 +12580,12 @@ function setupUiceListeners() {
             tabClassic.classList.remove('active');
             if (viewVisual) viewVisual.style.display = 'block';
             if (viewClassic) viewClassic.style.display = 'none';
+            if (typeof getActiveTemplateFromForm === 'function' && typeof initUiceWithTemplate === 'function') {
+                const currentFormTpl = getActiveTemplateFromForm();
+                if (currentFormTpl) {
+                    initUiceWithTemplate(currentFormTpl);
+                }
+            }
             renderUiceStage();
         });
 
@@ -14520,6 +15202,14 @@ function loadTemplateInStudio(id) {
     document.getElementById('tpl-photo-height').value = photoHeightVal;
     document.getElementById('lbl-photo-height').textContent = photoHeightVal;
 
+    const photoTopOffsetVal = tpl.photoTopOffset !== undefined ? tpl.photoTopOffset : 10;
+    if (document.getElementById('tpl-photo-top-offset')) {
+        document.getElementById('tpl-photo-top-offset').value = photoTopOffsetVal;
+        if (document.getElementById('lbl-photo-top-offset')) {
+            document.getElementById('lbl-photo-top-offset').textContent = photoTopOffsetVal;
+        }
+    }
+
     const qrSizeVal = tpl.qrSize || 70;
     document.getElementById('tpl-qr-size').value = qrSizeVal;
     document.getElementById('lbl-qr-size').textContent = qrSizeVal;
@@ -14673,6 +15363,7 @@ function getActiveTemplateFromForm() {
     const headerFontSize = parseInt(document.getElementById('tpl-header-font-size').value) || 14;
     const photoWidth = parseInt(document.getElementById('tpl-photo-width').value) || 85;
     const photoHeight = parseInt(document.getElementById('tpl-photo-height').value) || 105;
+    const photoTopOffset = document.getElementById('tpl-photo-top-offset') ? parseInt(document.getElementById('tpl-photo-top-offset').value) : 10;
     const qrSize = parseInt(document.getElementById('tpl-qr-size').value) || 70;
     const detailsFontSize = parseInt(document.getElementById('tpl-details-font-size').value) || 8;
     const labelColor = document.getElementById('tpl-label-color').value || '#555555';
@@ -14739,6 +15430,7 @@ function getActiveTemplateFromForm() {
         headerFontSize,
         photoWidth,
         photoHeight,
+        photoTopOffset,
         qrSize,
         detailsFontSize,
         labelColor,
@@ -14889,6 +15581,13 @@ function resetTemplateForm() {
     document.getElementById('tpl-photo-height').value = 105;
     document.getElementById('lbl-photo-height').textContent = 105;
 
+    if (document.getElementById('tpl-photo-top-offset')) {
+        document.getElementById('tpl-photo-top-offset').value = 10;
+        if (document.getElementById('lbl-photo-top-offset')) {
+            document.getElementById('lbl-photo-top-offset').textContent = 10;
+        }
+    }
+
     document.getElementById('tpl-qr-size').value = 70;
     document.getElementById('lbl-qr-size').textContent = 70;
 
@@ -14960,6 +15659,7 @@ const MASTER_CLONE_PRESETS = {
         headerFontSize: 13,
         photoWidth: 125,
         photoHeight: 125,
+        photoTopOffset: 10,
         qrSize: 50,
         detailsFontSize: 9,
         nameFontSize: 18,
@@ -15218,6 +15918,7 @@ function applyMasterClonePreset(cloneKey) {
     setSlider('tpl-header-font-size', preset.headerFontSize, 'lbl-header-font-size');
     setSlider('tpl-photo-width', preset.photoWidth, 'lbl-photo-width');
     setSlider('tpl-photo-height', preset.photoHeight, 'lbl-photo-height');
+    setSlider('tpl-photo-top-offset', preset.photoTopOffset !== undefined ? preset.photoTopOffset : 10, 'lbl-photo-top-offset');
     setSlider('tpl-qr-size', preset.qrSize, 'lbl-qr-size');
     setSlider('tpl-details-font-size', preset.detailsFontSize, 'lbl-details-font-size');
     setSlider('tpl-name-font-size', preset.nameFontSize, 'lbl-name-font-size');
@@ -15263,6 +15964,9 @@ function applyMasterClonePreset(cloneKey) {
     });
 
     updateLivePreview();
+    if (typeof initUiceWithTemplate === 'function') {
+        initUiceWithTemplate(getActiveTemplateFromForm());
+    }
 }
 
 function setupTemplatesManager() {
@@ -15312,7 +16016,7 @@ function setupTemplatesManager() {
     // 1B. Range sliders listeners
     const rangeSliders = [
         'tpl-logo-size', 'tpl-header-height', 'tpl-header-font-size',
-        'tpl-photo-width', 'tpl-photo-height', 'tpl-qr-size', 'tpl-details-font-size',
+        'tpl-photo-width', 'tpl-photo-height', 'tpl-photo-top-offset', 'tpl-qr-size', 'tpl-details-font-size',
         'tpl-row-padding', 'tpl-label-width', 'tpl-label-value-spacing', 'tpl-name-font-size', 'tpl-designation-font-size'
     ];
     rangeSliders.forEach(id => {
@@ -15325,6 +16029,10 @@ function setupTemplatesManager() {
                 if (id === 'tpl-header-font-size') document.getElementById('lbl-header-font-size').textContent = val;
                 if (id === 'tpl-photo-width') document.getElementById('lbl-photo-width').textContent = val;
                 if (id === 'tpl-photo-height') document.getElementById('lbl-photo-height').textContent = val;
+                if (id === 'tpl-photo-top-offset') {
+                    const lbl = document.getElementById('lbl-photo-top-offset');
+                    if (lbl) lbl.textContent = val;
+                }
                 if (id === 'tpl-qr-size') document.getElementById('lbl-qr-size').textContent = val;
                 if (id === 'tpl-details-font-size') document.getElementById('lbl-details-font-size').textContent = val;
                 if (id === 'tpl-row-padding') document.getElementById('lbl-row-padding').textContent = val;
