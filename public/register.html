@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Employee Self-Registration - Valley Security Service Agency</title>
     <meta name="description" content="Official Employee Onboarding and Self-Registration Portal of Valley Security Service Agency.">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -1142,9 +1142,13 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        button, a, input, select, textarea, .btn-step, .btn-photo-action {
+            touch-action: manipulation;
+        }
+
         @media (max-width: 600px) {
             body {
-                padding: 16px 10px;
+                padding: max(16px, env(safe-area-inset-top, 16px)) max(10px, env(safe-area-inset-right, 10px)) max(16px, env(safe-area-inset-bottom, 16px)) max(10px, env(safe-area-inset-left, 10px));
                 align-items: flex-start;
             }
 

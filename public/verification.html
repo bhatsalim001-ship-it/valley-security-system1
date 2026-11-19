@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title id="verify-page-title">Employee Verification Portal - Valley Security</title>
     <meta name="description" content="Official Employee Verification Portal of Valley Security Service Agency. Verify security guard credentials and active status instantly via QR code.">
     <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification Portal, QR Code Verify, Active Guards">
@@ -337,7 +337,15 @@
             font-size: 13px;
         }
 
+        button, a, input {
+            touch-action: manipulation;
+        }
+
         @media (max-width: 480px) {
+            body {
+                padding: max(16px, env(safe-area-inset-top, 16px)) max(12px, env(safe-area-inset-right, 12px)) max(16px, env(safe-area-inset-bottom, 16px)) max(12px, env(safe-area-inset-left, 12px));
+            }
+
             .verify-container {
                 padding: 28px 20px;
                 border-radius: 20px;

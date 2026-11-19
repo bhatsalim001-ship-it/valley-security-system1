@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title id="login-page-title">Login - Employee ID System</title>
     <meta name="description" content="Official Employee Verification and ID Card System of Valley Security Service Agency. Secure admin access portal.">
     <meta name="keywords" content="Valley Security, Valley Security Service Agency, Security Guard, Verification, Admin Login, ID Badge">
@@ -442,9 +442,19 @@
             font-weight: 600;
         }
 
+        button, a, input {
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 640px) {
+            input {
+                font-size: 16px !important;
+            }
+        }
+
         @media (max-width: 480px) {
             body {
-                padding: 16px 12px;
+                padding: max(16px, env(safe-area-inset-top, 16px)) max(12px, env(safe-area-inset-right, 12px)) max(16px, env(safe-area-inset-bottom, 16px)) max(12px, env(safe-area-inset-left, 12px));
             }
 
             .login-container {

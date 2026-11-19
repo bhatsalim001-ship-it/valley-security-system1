@@ -17138,6 +17138,13 @@ function setupMobileSidebar() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', closeSidebar);
     });
+
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+            closeSidebar();
+        }
+    });
 }
 
 // Phase 11: PWA Service Worker & Network Connectivity Sentinel
