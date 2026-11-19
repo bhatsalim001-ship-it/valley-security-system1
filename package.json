@@ -4,7 +4,11 @@
   "description": "Valley Security Service Agency Employee Management & ID Card Generation System",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node verify_phase14_comprehensive_e2e_qa.test.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
