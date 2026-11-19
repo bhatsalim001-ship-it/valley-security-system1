@@ -49,16 +49,15 @@ const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png'
 function timingSafeTokenMatch(expected, provided) {
   if (typeof expected !== 'string' || typeof provided !== 'string') return false;
   if (!expected || !provided) return false;
-  const bufExp = Buffer.from(expected);
-  const bufProv = Buffer.from(provided);
-  if (bufExp.length !== bufProv.length) return false;
-  return crypto.timingSafeEqual(bufExp, bufProv);
+  const hExp = crypto.createHash('sha256').update(expected).digest();
+  const hProv = crypto.createHash('sha256').update(provided).digest();
+  return crypto.timingSafeEqual(hExp, hProv);
 }
 
 function escapeCsvCell(val) {
   if (val === null || val === undefined) return '""';
   let str = String(val);
-  if (/^[=+@\-\t\r]/.test(str)) {
+  if (/^[=+@\-\t\r|%]/.test(str)) {
     str = "'" + str;
   }
   return `"${str.replace(/"/g, '""')}"`;
@@ -418,6 +417,12 @@ app.use(helmet({
   hsts: NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false
 }));
 
+// SECURITY: Permissions-Policy header
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+  next();
+});
+
 // SECURITY: explicit CORS allowlist (no wildcard in production)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
@@ -463,6 +468,18 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// SECURITY: HTTP Parameter Pollution (HPP) defense
+app.use((req, res, next) => {
+  if (req.query) {
+    for (const key in req.query) {
+      if (Array.isArray(req.query[key])) {
+        req.query[key] = req.query[key][req.query[key].length - 1];
+      }
+    }
+  }
+  next();
+});
 
 // SECURITY: Global Input Sanitization Middleware to prevent XSS
 function sanitizeInput(obj) {
@@ -576,10 +593,7 @@ function isKillSwitchAuthenticated(req) {
     const expectedSig = crypto.createHmac('sha256', KILL_SWITCH_KEY).update(nonce).digest('hex');
 
     // Timing-safe comparison of HMAC signatures
-    const a = Buffer.from(providedSig, 'hex');
-    const b = Buffer.from(expectedSig, 'hex');
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
+    return timingSafeTokenMatch(expectedSig, providedSig);
   } catch (err) {
     return false;
   }
@@ -886,9 +900,7 @@ app.post('/kill-switch/login', authLimiter, async (req, res) => {
 
   // Secure timing-safe key comparison
   try {
-    const a = Buffer.from(key);
-    const b = Buffer.from(KILL_SWITCH_KEY);
-    if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+    if (timingSafeTokenMatch(KILL_SWITCH_KEY, key)) {
       // Store a signed HMAC nonce — never store the raw key in the cookie
       const sessionToken = generateKillSwitchSession();
       res.cookie('vsa_kill_session', sessionToken, {
@@ -1043,6 +1055,11 @@ app.get('/IUST_Employees.csv', authenticateToken, async (req, res) => {
 // Redirect middleware for static HTML pages and asset protection
 function protectHtmlPages(req, res, next) {
   const reqPathLower = (req.path || '').toLowerCase();
+
+  // Block any attempt to access hidden dot-files or sensitive server extensions
+  if (reqPathLower.startsWith('/.') || reqPathLower.includes('/.') || reqPathLower.endsWith('.env') || reqPathLower.endsWith('.sql') || reqPathLower.endsWith('.log') || reqPathLower.endsWith('.yml') || reqPathLower.endsWith('.yaml') || reqPathLower.endsWith('.bak')) {
+    return res.status(403).json({ error: 'Access denied: sensitive or hidden path.' });
+  }
 
   // Block unauthenticated direct static file downloads of sensitive data
   if (reqPathLower !== '/manifest.json' && (reqPathLower.endsWith('.vcf') || reqPathLower.endsWith('.csv') || reqPathLower.endsWith('.backup') || reqPathLower.endsWith('.json'))) {
@@ -4726,7 +4743,7 @@ app.get('/api/deployment-projects/:id/export', authenticateToken, async (req, re
     const sanitizeCsvCell = (val) => {
       let str = String(val === undefined || val === null ? '' : val).trim();
       // Prevent CSV formula injection (OWASP)
-      if (/^[=+@-]/.test(str)) {
+      if (/^[=+@\-\t\r|%]/.test(str)) {
         str = "'" + str;
       }
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {

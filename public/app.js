@@ -19092,7 +19092,7 @@ async function exportProjectCandidatesRoster(projectId) {
 
     const sanitizeCsvCell = (val) => {
         let str = String(val === undefined || val === null ? '' : val).trim();
-        if (/^[=+@-]/.test(str)) {
+        if (/^[=+@\-\t\r|%]/.test(str)) {
             str = "'" + str;
         }
         if (str.includes(',') || str.includes('"') || str.includes('\n')) {
