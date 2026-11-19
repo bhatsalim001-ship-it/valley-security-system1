@@ -70,6 +70,10 @@ async function runTests() {
     }
   }
 
+  let projectId = null;
+  let guardId = null;
+  let generalGuardId = null;
+
   try {
     // 1. Non-existent slug returns 404
     console.log('\n[Test 1] Public Project Info: 404 for invalid slug');
@@ -101,7 +105,7 @@ async function runTests() {
     assert(res2.status === 201 && data2.success === true, 'Project created with HTTP 201');
     assert(data2.project && data2.project.id.startsWith('proj_'), 'Project ID has standard proj_ prefix');
     const projectSlug = data2.project.slug;
-    const projectId = data2.project.id;
+    projectId = data2.project.id;
     assert(typeof projectSlug === 'string' && projectSlug.includes('skims-soura'), `Slug auto-generated cleanly: ${projectSlug}`);
 
     // 3. Public Project Info returns sanitized data
@@ -145,7 +149,7 @@ async function runTests() {
 
     const data5 = await res5.json();
     assert(res5.status === 200 && data5.success === true, 'Public registration succeeded');
-    const guardId = data5.employeeId;
+    guardId = data5.employeeId;
     assert(typeof guardId === 'string' && guardId.startsWith('VSA-'), `Assigned valid ID ${guardId}`);
     assert(data5.projectName === projectName, 'Returned project name confirmation');
 
@@ -201,6 +205,7 @@ async function runTests() {
     });
     const data8 = await res8.json();
     assert(res8.status === 200 && data8.success === true, 'Normal general registration succeeds without error');
+    generalGuardId = data8.employeeId;
     assert(data8.projectName === null, 'General registration has projectName null');
 
     // 9. Update Project Target & Deadline
@@ -235,6 +240,21 @@ async function runTests() {
     console.error('💥 Test execution failed with exception:', err);
     process.exit(1);
   } finally {
+    console.log('\n🧹 Cleaning up test artifacts from database...');
+    try {
+      if (guardId) {
+        await fetch(`${BASE_URL}/api/employees/${guardId}`, { method: 'DELETE', headers: authHeader });
+      }
+      if (generalGuardId) {
+        await fetch(`${BASE_URL}/api/employees/${generalGuardId}`, { method: 'DELETE', headers: authHeader });
+      }
+      if (projectId) {
+        await fetch(`${BASE_URL}/api/deployment-projects/${projectId}`, { method: 'DELETE', headers: authHeader });
+      }
+      console.log('✅ Cleaned up test employees and project.');
+    } catch (cleanErr) {
+      console.warn('⚠️ Cleanup warning:', cleanErr.message);
+    }
     if (serverProcess) {
       serverProcess.kill('SIGTERM');
       console.log('🧹 Cleaned up test server process.');

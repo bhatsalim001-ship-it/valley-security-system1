@@ -135,6 +135,10 @@ async function runTests() {
 
   assert(serverReady, `Test server started on port ${TEST_PORT}`);
 
+  let projectId = null;
+  let cand1Id = null;
+  let cand2Id = null;
+
   try {
     // 1. Create Deployment Project
     const createRes = await fetch(`${baseUrl}/api/deployment-projects`, {
@@ -156,6 +160,7 @@ async function runTests() {
     assert(createRes.status === 201, 'Created deployment project successfully (status 201)');
     const createData = await createRes.json();
     const project = createData.project;
+    projectId = project ? project.id : null;
     assert(project && project.id && project.slug.includes('skims-medical-security-onboarding-2026'), 'Project slug auto-generated correctly');
 
     // 2. Public Project Info
@@ -192,7 +197,7 @@ async function runTests() {
       console.error('Registration 1 error:', regRes1.status, regData1);
     }
     assert(regRes1.status === 200 || regRes1.status === 201, 'Candidate 1 registered via tender link');
-    const cand1Id = regData1.employeeId;
+    cand1Id = regData1.employeeId;
     assert(Boolean(cand1Id), `Candidate 1 assigned ID: ${cand1Id}`);
 
     // 4. Register Candidate 2
@@ -222,7 +227,7 @@ async function runTests() {
       console.error('Registration 2 error:', regRes2.status, regData2);
     }
     assert(regRes2.status === 200 || regRes2.status === 201, 'Candidate 2 registered via tender link');
-    const cand2Id = regData2.employeeId;
+    cand2Id = regData2.employeeId;
     assert(Boolean(cand2Id), `Candidate 2 assigned ID: ${cand2Id}`);
 
     // 5. Check Protected Deployment Projects List with Live Stats
@@ -283,6 +288,21 @@ async function runTests() {
     assert(delData.archived === true, 'Project safely archived instead of hard-deleted to preserve guard history');
 
   } finally {
+    console.log('\n🧹 Cleaning up test artifacts from database...');
+    try {
+      if (cand1Id) {
+        await fetch(`${baseUrl}/api/employees/${cand1Id}`, { method: 'DELETE', headers: authHeaders });
+      }
+      if (cand2Id) {
+        await fetch(`${baseUrl}/api/employees/${cand2Id}`, { method: 'DELETE', headers: authHeaders });
+      }
+      if (projectId) {
+        await fetch(`${baseUrl}/api/deployment-projects/${projectId}`, { method: 'DELETE', headers: authHeaders });
+      }
+      console.log('✅ Cleaned up test candidates and project.');
+    } catch (cleanErr) {
+      console.warn('⚠️ Cleanup warning:', cleanErr.message);
+    }
     serverProcess.kill('SIGTERM');
   }
 

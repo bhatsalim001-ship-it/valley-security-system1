@@ -193,6 +193,10 @@ async function runTests() {
 
   const validPhotoBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
+  let projectId = null;
+  let cand1Id = null;
+  let cand2Id = null;
+
   try {
     // 1. Create a Tender Deployment Project to test the portal context
     const projRes = await fetch(`${baseUrl}/api/deployment-projects`, {
@@ -211,6 +215,7 @@ async function runTests() {
     assert(projRes.status === 201, 'Created deployment project GMC Baramulla');
     const projData = await projRes.json();
     const project = projData.project;
+    projectId = project ? project.id : null;
 
     // 2. Query Public Project Info by Slug (what register.html does on ?project=slug)
     const infoRes = await fetch(`${baseUrl}/api/public/project-info/${project.slug}`);
@@ -246,14 +251,15 @@ async function runTests() {
     assert(regRes.status === 200 || regRes.status === 201, 'Tender candidate registered successfully');
     const regData = await regRes.json();
     assert(regData.success === true, 'Response confirms registration success');
-    assert(typeof regData.employeeId === 'string' && regData.employeeId.startsWith('VSA-'), `Assigned Staff ID: ${regData.employeeId}`);
+    cand1Id = regData.employeeId;
+    assert(typeof cand1Id === 'string' && cand1Id.startsWith('VSA-'), `Assigned Staff ID: ${cand1Id}`);
     assert(regData.projectName === 'GMC Baramulla Hospital Security 2026', 'Returned matching project name for receipt card');
 
     // 4. Verify Candidate is Linked to Deployment Project in Database
     const detailRes = await fetch(`${baseUrl}/api/deployment-projects/${project.id}`, { headers: authHeaders });
     assert(detailRes.status === 200, 'Fetched deployment project details');
     const detailData = await detailRes.json();
-    const linkedCandidate = (detailData.employees || []).find(e => e.id === regData.employeeId);
+    const linkedCandidate = (detailData.employees || []).find(e => e.id === cand1Id);
     assert(linkedCandidate !== undefined, 'Registered candidate found in project candidate roster');
     assert(linkedCandidate.name === 'Gulzar Ahmad Mir', 'Candidate name correctly saved');
     assert(linkedCandidate.status === 'Pending', 'Candidate initial status is Pending verification');
@@ -281,7 +287,8 @@ async function runTests() {
 
     assert(walkinRes.status === 200 || walkinRes.status === 201, 'Walk-in candidate registered successfully');
     const walkinData = await walkinRes.json();
-    assert(walkinData.success === true && walkinData.employeeId.startsWith('VSA-'), `Walk-in assigned Staff ID: ${walkinData.employeeId}`);
+    cand2Id = walkinData.employeeId;
+    assert(walkinData.success === true && cand2Id.startsWith('VSA-'), `Walk-in assigned Staff ID: ${cand2Id}`);
     assert(walkinData.projectName === null, 'Walk-in project name is null (general pool)');
 
     // 6. Test Mobile Validation: Rejection on Missing or Non-10-Digit Mobile
@@ -299,6 +306,21 @@ async function runTests() {
     assert(invalidRes.status === 400, 'Server rejects invalid mobile number (status 400)');
 
   } finally {
+    console.log('\n🧹 Cleaning up test artifacts from database...');
+    try {
+      if (cand1Id) {
+        await fetch(`${baseUrl}/api/employees/${cand1Id}`, { method: 'DELETE', headers: authHeaders });
+      }
+      if (cand2Id) {
+        await fetch(`${baseUrl}/api/employees/${cand2Id}`, { method: 'DELETE', headers: authHeaders });
+      }
+      if (projectId) {
+        await fetch(`${baseUrl}/api/deployment-projects/${projectId}`, { method: 'DELETE', headers: authHeaders });
+      }
+      console.log('✅ Cleaned up test candidates and project.');
+    } catch (cleanErr) {
+      console.warn('⚠️ Cleanup warning:', cleanErr.message);
+    }
     serverProcess.kill('SIGTERM');
   }
 

@@ -214,6 +214,11 @@ async function runTestSuite() {
     stdio: 'ignore'
   });
 
+  let projectId = null;
+  let empId = null;
+  let walkInId = null;
+  const token = adminToken();
+
   try {
     let serverReady = false;
     for (let i = 0; i < 30; i++) {
@@ -230,7 +235,6 @@ async function runTestSuite() {
     assert(serverReady, `Test server started and reachable on port ${TEST_PORT}`);
 
     // Create a Tender Project for Smart Photo Intake
-    const token = adminToken();
     const createProjRes = await fetch(`${baseUrl}/api/deployment-projects`, {
       method: 'POST',
       headers: {
@@ -249,6 +253,7 @@ async function runTestSuite() {
     assert(createProjRes.status === 201, 'Created deployment project successfully (status 201)');
     const projData = await createProjRes.json();
     const createdProject = projData.project;
+    projectId = createdProject ? createdProject.id : null;
     assert(Boolean(createdProject && createdProject.id), 'Project has valid ID');
     assert(Boolean(createdProject && createdProject.slug), 'Project slug generated cleanly');
 
@@ -278,7 +283,7 @@ async function runTestSuite() {
     assert(regRes.status === 200 || regRes.status === 201, 'Tender guard with smart portrait photo registered successfully (status 200)');
     const regData = await regRes.json();
     assert(regData.success === true, 'Response confirms registration success');
-    const empId = regData.employeeId || regData.id;
+    empId = regData.employeeId || regData.id;
     assert(Boolean(empId && empId.startsWith('VSA-')), `Candidate assigned Staff ID: ${empId}`);
     assert(regData.projectName === 'SKIMS Soura ICU Security Deployment 4820', 'Candidate matched to tender deployment');
 
@@ -328,11 +333,35 @@ async function runTestSuite() {
     });
     assert(walkInRes.status === 200 || walkInRes.status === 201, 'General walk-in candidate with portrait registered successfully');
     const walkInData = await walkInRes.json();
-    const walkInId = walkInData.employeeId || walkInData.id;
+    walkInId = walkInData.employeeId || walkInData.id;
     assert(Boolean(walkInId && walkInId.startsWith('VSA-')), `Walk-in assigned Staff ID: ${walkInId}`);
     assert(walkInData.projectName === null, 'Walk-in project name is null (general agency pool)');
 
   } finally {
+    console.log('\n🧹 Cleaning up test artifacts from database...');
+    try {
+      if (empId) {
+        await fetch(`${baseUrl}/api/employees/${empId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      if (walkInId) {
+        await fetch(`${baseUrl}/api/employees/${walkInId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      if (projectId) {
+        await fetch(`${baseUrl}/api/deployment-projects/${projectId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      console.log('✅ Cleaned up test employees and project.');
+    } catch (cleanErr) {
+      console.warn('⚠️ Cleanup warning:', cleanErr.message);
+    }
     serverProc.kill();
   }
 
