@@ -4039,6 +4039,12 @@ input[type="checkbox"].directory-select-item:checked::after {
     font-size: 11px;
 }
 
+.id-card-horizontal .id-table-value {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
 .id-card-horizontal .id-portrait-signature-box {
     display: flex;
     justify-content: space-between;

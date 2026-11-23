@@ -3016,14 +3016,17 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                 maxLblW = lblW;
             } else {
                 lblW = `${template.labelWidth}%`;
-                maxLblW = `${template.labelWidth}%`;
+                if (isHoriz && template.labelWidth < 22) {
+                    lblW = '22%';
+                }
+                maxLblW = lblW;
             }
         } else if (typeof template.labelWidth === 'string') {
             lblW = template.labelWidth;
             maxLblW = template.labelWidth;
         } else {
-            lblW = isHoriz ? '34%' : '33%';
-            maxLblW = isHoriz ? '36%' : '36%';
+            lblW = isHoriz ? '24%' : '33%';
+            maxLblW = isHoriz ? '26%' : '36%';
         }
         const valSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8;
         const borderBtm = isHoriz ? '0.5px solid rgba(128, 128, 128, 0.15)' : '1px dashed rgba(128, 128, 128, 0.2)';
@@ -3032,14 +3035,16 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         // Auto-scale font size and wrap long values in horizontal cards to eliminate ellipsis truncation
         let valFontSize = detailsFontSize + (isImportant ? 0.5 : 0);
         const valStr = String(val);
-        if (valStr.length > 32) {
-            valFontSize = Math.max(7.5, valFontSize - 2);
+        if (valStr.length > 36) {
+            valFontSize = isHoriz ? Math.min(valFontSize, 7.2) : Math.max(7.5, valFontSize - 2);
+        } else if (valStr.length > 28) {
+            valFontSize = isHoriz ? Math.min(valFontSize, 7.8) : Math.max(8.0, valFontSize - 1.5);
         } else if (valStr.length > 20) {
             valFontSize = Math.max(8.5, valFontSize - 1.2);
         }
 
         const valueWrapStyle = (isHoriz && valStr.length > 22)
-            ? 'line-height: 1.15; word-break: break-word; overflow-wrap: break-word; white-space: normal;'
+            ? 'line-height: 1.15; word-break: break-word; overflow-wrap: break-word; white-space: normal !important; text-overflow: clip !important;'
             : 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;';
 
         return `
@@ -4044,6 +4049,9 @@ function adjustCardTextSizes(container) {
         // 3. Fit nowrap table values horizontally
         const nowrapValues = card.querySelectorAll('.id-table-value');
         nowrapValues.forEach(valEl => {
+            if (valEl.style.whiteSpace === 'normal' || valEl.style.overflowWrap === 'break-word') {
+                return; // Skip wrapped / multi-line values so they are not forced to nowrap
+            }
             const style = window.getComputedStyle(valEl);
             if (style.whiteSpace === 'nowrap' || valEl.style.whiteSpace === 'nowrap' || valEl.style.textOverflow === 'ellipsis') {
                 let originalSize = parseFloat(style.fontSize) || 8;
@@ -4051,13 +4059,13 @@ function adjustCardTextSizes(container) {
                     valEl.dataset.originalSize = originalSize;
                 }
                 let size = originalSize;
-                const targetWidth = valEl.clientWidth || (isHorizontal ? 130 : 110);
+                const targetWidth = (valEl.clientWidth && valEl.clientWidth > 50) ? valEl.clientWidth : (isHorizontal ? 175 : 110);
                 
                 // Temporarily force nowrap for accurate measurement
                 const origWhiteSpace = valEl.style.whiteSpace;
                 valEl.style.whiteSpace = 'nowrap';
                 
-                while (valEl.scrollWidth > targetWidth + 2 && size > 7.5) {
+                while (valEl.scrollWidth > targetWidth + 2 && size > 7.0) {
                     size -= 0.5;
                     valEl.style.fontSize = size + 'px';
                     // Scale label as well
