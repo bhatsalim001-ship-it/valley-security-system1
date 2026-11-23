@@ -3038,7 +3038,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         const valStr = String(val);
         if (isHoriz && valStr.length > 25 && valStr.includes(' ')) {
             // Long values in horizontal layout: split at midpoint word boundary into clean 2-line display
-            valFontSize = Math.max(8.5, detailsFontSize - 1.2);
+            valFontSize = Math.max(6.5, detailsFontSize - 1.2);
             if (!valStr.includes('<br>') && !valStr.includes('<br/>')) {
                 const words = valStr.split(' ');
                 if (words.length >= 2) {
@@ -3060,11 +3060,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                 }
             }
         } else if (valStr.length > 36) {
-            valFontSize = isHoriz ? Math.min(valFontSize, 7.5) : Math.max(7.5, valFontSize - 2);
+            valFontSize = Math.max(6.5, detailsFontSize - 2);
         } else if (valStr.length > 28) {
-            valFontSize = isHoriz ? Math.min(valFontSize, 8.0) : Math.max(8.0, valFontSize - 1.5);
+            valFontSize = Math.max(7.0, detailsFontSize - 1.5);
         } else if (valStr.length > 20) {
-            valFontSize = Math.max(8.5, valFontSize - 1.2);
+            valFontSize = Math.max(7.5, detailsFontSize - 1.0);
         }
 
         const valueWrapStyle = (isHoriz && valStr.length > 22)
@@ -3136,13 +3136,11 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         const empNameClean = cleanTextVal(emp.name);
         let dynNameFontSize = nameFontSize;
         if (empNameClean.length > 28) {
-            dynNameFontSize = Math.min(nameFontSize, 11);
+            dynNameFontSize = Math.max(9, nameFontSize - 3);
         } else if (empNameClean.length > 22) {
-            dynNameFontSize = Math.min(nameFontSize, 12.5);
+            dynNameFontSize = Math.max(10, nameFontSize - 2);
         } else if (empNameClean.length > 16) {
-            dynNameFontSize = Math.min(nameFontSize, 14);
-        } else if (empNameClean.length > 12) {
-            dynNameFontSize = Math.min(nameFontSize, 15.5);
+            dynNameFontSize = Math.max(11, nameFontSize - 1);
         }
 
         const nameWrapStyle = isHorizLayout 
@@ -3181,7 +3179,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
     const getQrHtml = (customSize = qrSize) => {
         if (!showQrCode) return '';
-        const qrCanvasDim = Math.max(32, customSize - 6);
+        const qrCanvasDim = Math.max(24, customSize - 6);
         return `
         <div class="id-portrait-qr" style="width: ${customSize}px; height: ${customSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
             <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrCanvasDim}" data-qr-level="M" style="width: ${qrCanvasDim}px; height: ${qrCanvasDim}px; display: block;"></canvas>
@@ -3209,8 +3207,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     // HORIZONTAL LAYOUTS
     // =========================================================================
     if (template.layout === 'horizontal') {
-        const col3QrSize = Math.max(84, Math.min(qrSize || 88, 92));
-        const col3Width = Math.max(90, Math.min(94, col3QrSize + 6));
+        const col3QrSize = qrSize || 75;
+        const col3Width = Math.max(col3QrSize + 6, 76);
         if (cardTheme === 'organic-wave') {
             const pDim = Math.min(photoWidth, photoHeight);
             const pTopOffset = template.photoTopOffset !== undefined ? template.photoTopOffset : 10;
@@ -3407,9 +3405,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                         <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
                                         <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
                                     </div>
-                                    <div class="id-portrait-qr" style="width: ${qrSize || 50}px; height: ${qrSize || 50}px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#2563eb'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${Math.max(24, (qrSize || 50) - 6)}" style="width: ${Math.max(24, (qrSize || 50) - 6)}px; height: ${Math.max(24, (qrSize || 50) - 6)}px; display: block;"></canvas>
-                                    </div>
+                                    ${getQrHtml(qrSize || 50)}
                                 </div>
                             </div>
                         </div>
@@ -3476,9 +3472,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                                         <span style="font-size: 6.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block;">OFFICIAL VSA</span>
                                         <span style="font-size: 5.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; display: block;">SCAN TO VERIFY</span>
                                     </div>
-                                    <div class="id-portrait-qr" style="width: ${qrSize || 50}px; height: ${qrSize || 50}px; background: #ffffff; padding: 2px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 1.5px solid ${template.accentColor || '#006039'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${Math.max(24, (qrSize || 50) - 6)}" style="width: ${Math.max(24, (qrSize || 50) - 6)}px; height: ${Math.max(24, (qrSize || 50) - 6)}px; display: block;"></canvas>
-                                    </div>
+                                    ${getQrHtml(qrSize || 50)}
                                 </div>
                             </div>
                         </div>
@@ -3697,7 +3691,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     <!-- Bottom Section: QR, Signature, Barcode -->
                     <div style="padding: 2px 14px 6px 14px; width: 100%; box-sizing: border-box; z-index: 2; position: relative; margin-top: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(48)}
+                            ${getQrHtml(template.name && template.name.includes('Hanover') ? 48 : (qrSize || 48))}
                             <div style="flex-grow: 1; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                 ${getNoticeHtml(true)}
                             </div>
@@ -3760,7 +3754,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     <!-- Bottom Chevron Footer with Centered Barcode -->
                     <div style="background: ${template.headerBgColor || '#0c2340'}; clip-path: polygon(0 18%, 50% 0, 100% 18%, 100% 100%, 0 100%); padding: 12px 14px 6px 14px; margin: auto -15px -15px -15px; display: flex; flex-direction: column; align-items: center; z-index: 2;">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(48)}
+                            ${getQrHtml(qrSize || 48)}
                             ${getSigHtml('85px', '25px')}
                         </div>
                         ${showBarcode ? `
@@ -3816,7 +3810,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     <!-- Bottom Section -->
                     <div style="padding: 2px 14px 6px 14px; width: 100%; box-sizing: border-box; z-index: 2; margin-top: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(48)}
+                            ${getQrHtml(qrSize || 48)}
                             <div style="flex-grow: 1; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                 ${getNoticeHtml(true)}
                             </div>
@@ -3894,7 +3888,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     <!-- Bottom Section -->
                     <div style="padding: 2px 14px 6px 14px; width: 100%; box-sizing: border-box; z-index: 2; margin-top: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-bottom: 4px;">
-                            ${getQrHtml(48)}
+                            ${getQrHtml(qrSize || 48)}
                             <div style="flex-grow: 1; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                 ${getNoticeHtml(true)}
                             </div>
@@ -3939,7 +3933,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                         
                         ${showQrCode ? `
                         <div class="id-portrait-qr" style="width: ${qrSize}px; height: ${qrSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; flex-shrink: 0;">
-                            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
+                            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize - 6}" data-qr-level="M" style="width: ${qrSize - 6}px; height: ${qrSize - 6}px; display: block;"></canvas>
                         </div>
                         ` : ''}
                         
@@ -10352,7 +10346,7 @@ function renderUiceElementHtml(el, emp, validityYears = 3, issueDate = null, tem
 
             return `
                 <div style="width: 100%; height: 100%; background: ${p.background || '#ffffff'}; padding: ${p.quietZone || 2}px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: ${p.borderWidth || 1.5}px solid ${p.borderColor || '#009688'}; display: flex; align-items: center; justify-content: center; box-sizing: border-box; pointer-events: none;">
-                    <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize}" data-qr-bg="${p.background || '#ffffff'}" data-qr-fg="${p.foreground || '#000000'}" data-qr-level="${p.errorCorrection || 'H'}" style="width: ${qrSize}px; height: ${qrSize}px; display: block;"></canvas>
+                    <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrSize}" data-qr-bg="${p.background || '#ffffff'}" data-qr-fg="${p.foreground || '#000000'}" data-qr-level="${p.errorCorrection || 'M'}" style="width: ${qrSize}px; height: ${qrSize}px; display: block;"></canvas>
                 </div>`;
         }
 

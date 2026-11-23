@@ -3,7 +3,7 @@
  * Phase 11: Offline PWA Capabilities, Asset Resilience & Cache Sentinel
  */
 
-const CACHE_NAME = 'vsa-cache-v3';
+const CACHE_NAME = 'vsa-cache-v4';
 
 // Critical core application shell assets to pre-cache on install
 const PRECACHE_ASSETS = [
