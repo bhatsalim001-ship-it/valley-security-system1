@@ -3030,7 +3030,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         }
         const valSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8;
         const borderBtm = isHoriz ? '0.5px solid rgba(128, 128, 128, 0.15)' : '1px dashed rgba(128, 128, 128, 0.2)';
-        const rowPad = isHoriz ? Math.min(rowPadding !== undefined ? rowPadding : 3, 4.5) : (rowPadding !== undefined ? rowPadding : 3);
+        const rowPad = rowPadding !== undefined ? rowPadding : 3;
         
         // Auto-scale font size and format long multi-word values into clean two-line display in horizontal cards
         let valFontSize = detailsFontSize + (isImportant ? 0.5 : 0);
@@ -3073,9 +3073,9 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
         return `
         <tr style="border-bottom: ${borderBtm} !important;">
-            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPad}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px;">${label}</td>
-            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPad}px 0;">:</td>
-            <td class="id-table-value" style="font-size: ${valFontSize}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPad}px 0; padding-left: ${valSpacing}px; text-align: left; ${valueWrapStyle} font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${displayVal}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPad}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px; vertical-align: top; line-height: 1.2;">${label}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPad}px 0; vertical-align: top; line-height: 1.2;">:</td>
+            <td class="id-table-value" style="font-size: ${valFontSize}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPad}px 0; padding-left: ${valSpacing}px; text-align: left; ${valueWrapStyle} font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px; vertical-align: top;">${displayVal}</td>
         </tr>`;
     };
 
@@ -7764,7 +7764,7 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                         fontSize: tpl.detailsFontSize || 8.5,
                         labelColor: tpl.labelColor || '#475569',
                         valueColor: tpl.valueColor || (isQrUnderPhoto ? '#c8102e' : '#0f172a'),
-                        rowPadding: tpl.rowPadding || 2.5,
+                        rowPadding: tpl.rowPadding !== undefined ? tpl.rowPadding : 2.5,
                         labelWidth: tpl.labelWidth || 38,
                         fields: tpl.fieldOrder || ['empid', 'father', 'department', 'blood', 'validity', 'address', 'phone']
                     }
@@ -8247,7 +8247,7 @@ function getUiceDefaultElements(orientation, tpl = {}) {
                         fontSize: tpl.detailsFontSize || 8,
                         labelColor: tpl.labelColor || '#475569',
                         valueColor: tpl.valueColor || '#0f172a',
-                        rowPadding: tpl.rowPadding || 2.5,
+                        rowPadding: tpl.rowPadding !== undefined ? tpl.rowPadding : 2.5,
                         labelWidth: 36,
                         fields: tpl.fieldOrder || ['empid', 'father', 'department', 'blood', 'validity', 'phone']
                     }
@@ -15640,7 +15640,8 @@ function getActiveTemplateFromForm() {
     const detailsFontSize = parseInt(document.getElementById('tpl-details-font-size').value) || 8;
     const labelColor = document.getElementById('tpl-label-color').value || '#555555';
     const valueColor = document.getElementById('tpl-value-color').value || '#111111';
-    const rowPadding = parseInt(document.getElementById('tpl-row-padding').value) || 3;
+    const rowPaddingInp = document.getElementById('tpl-row-padding');
+    const rowPadding = rowPaddingInp ? (parseFloat(rowPaddingInp.value) >= 0 ? parseFloat(rowPaddingInp.value) : 3) : 3;
     const labelWidth = parseInt(document.getElementById('tpl-label-width').value) || 45;
     const labelValueSpacing = parseInt(document.getElementById('tpl-label-value-spacing').value) || 10;
     const nameFontSize = parseInt(document.getElementById('tpl-name-font-size').value) || (layout === 'horizontal' ? 13 : 14);
