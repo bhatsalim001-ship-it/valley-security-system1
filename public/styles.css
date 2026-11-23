@@ -3453,17 +3453,18 @@ g.chart-bar-group:hover rect {
     .id-card-horizontal .id-portrait-name {
         font-size: var(--name-font-size, 9.5pt) !important;
         margin-bottom: 0.2mm !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 55mm !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.15 !important;
+        max-width: 65mm !important;
     }
 
     .id-card-horizontal .id-portrait-designation {
         font-size: var(--designation-font-size, 7.5pt) !important;
         white-space: normal !important;
         line-height: 1.1 !important;
-        max-width: 55mm !important;
+        max-width: 65mm !important;
     }
 
     .id-card-horizontal .id-portrait-table {
@@ -3481,7 +3482,10 @@ g.chart-bar-group:hover rect {
     }
 
     .id-card-horizontal .id-table-value {
-        width: 36mm !important;
+        width: 38mm !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.15 !important;
     }
 
     .id-card-horizontal .id-portrait-signature-box {

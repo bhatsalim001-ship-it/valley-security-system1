@@ -3022,16 +3022,31 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
             lblW = template.labelWidth;
             maxLblW = template.labelWidth;
         } else {
-            lblW = isHoriz ? '38%' : '33%';
-            maxLblW = isHoriz ? '40%' : '36%';
+            lblW = isHoriz ? '34%' : '33%';
+            maxLblW = isHoriz ? '36%' : '36%';
         }
         const valSpacing = template.labelValueSpacing !== undefined ? template.labelValueSpacing : 8;
         const borderBtm = isHoriz ? '0.5px solid rgba(128, 128, 128, 0.15)' : '1px dashed rgba(128, 128, 128, 0.2)';
+        const rowPad = isHoriz ? Math.min(rowPadding !== undefined ? rowPadding : 3, 4.5) : (rowPadding !== undefined ? rowPadding : 3);
+        
+        // Auto-scale font size and wrap long values in horizontal cards to eliminate ellipsis truncation
+        let valFontSize = detailsFontSize + (isImportant ? 0.5 : 0);
+        const valStr = String(val);
+        if (valStr.length > 32) {
+            valFontSize = Math.max(7.5, valFontSize - 2);
+        } else if (valStr.length > 20) {
+            valFontSize = Math.max(8.5, valFontSize - 1.2);
+        }
+
+        const valueWrapStyle = (isHoriz && valStr.length > 22)
+            ? 'line-height: 1.15; word-break: break-word; overflow-wrap: break-word; white-space: normal;'
+            : 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;';
+
         return `
         <tr style="border-bottom: ${borderBtm} !important;">
-            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPadding}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px;">${label}</td>
-            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPadding}px 0;">:</td>
-            <td class="id-table-value" style="font-size: ${detailsFontSize + (isImportant ? 0.5 : 0)}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPadding}px 0; padding-left: ${valSpacing}px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${val}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPad}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px;">${label}</td>
+            <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPad}px 0;">:</td>
+            <td class="id-table-value" style="font-size: ${valFontSize}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPad}px 0; padding-left: ${valSpacing}px; text-align: left; ${valueWrapStyle} font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${val}</td>
         </tr>`;
     };
 
@@ -3091,31 +3106,39 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     if (showName) {
         const empNameClean = cleanTextVal(emp.name);
         let dynNameFontSize = nameFontSize;
-        if (empNameClean.length > 25) {
-            dynNameFontSize = Math.max(10.5, nameFontSize - 3);
-        } else if (empNameClean.length > 18) {
-            dynNameFontSize = Math.max(12, nameFontSize - 1.5);
+        if (empNameClean.length > 28) {
+            dynNameFontSize = Math.min(nameFontSize, 11);
+        } else if (empNameClean.length > 22) {
+            dynNameFontSize = Math.min(nameFontSize, 12.5);
+        } else if (empNameClean.length > 16) {
+            dynNameFontSize = Math.min(nameFontSize, 14);
+        } else if (empNameClean.length > 12) {
+            dynNameFontSize = Math.min(nameFontSize, 15.5);
         }
+
+        const nameWrapStyle = isHorizLayout 
+            ? 'line-height: 1.15; letter-spacing: 0.3px; word-break: keep-all; overflow-wrap: break-word; white-space: normal;'
+            : 'line-height: 1.2; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
 
         if (nameStyle === 'banner') {
             const bannerLight = isColorLight(template.accentColor || '#0e3e2b');
             const bannerTextColor = bannerLight ? '#0f172a' : '#ffffff';
             nameBlockHtml = `
             <div style="background: ${template.accentColor || '#0e3e2b'}; color: ${bannerTextColor}; padding: 3px 14px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.18); max-width: 98%; overflow: hidden; margin-bottom: 2px;">
-                <h2 class="id-portrait-name" style="color: ${bannerTextColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px; text-transform: uppercase;">
+                <h2 class="id-portrait-name" style="color: ${bannerTextColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; ${nameWrapStyle} text-transform: uppercase;">
                     ${empNameClean}
                 </h2>
             </div>`;
         } else if (nameStyle === 'boxed') {
             nameBlockHtml = `
             <div style="border: 1.5px solid ${template.accentColor || '#0e3e2b'}; background: rgba(128,128,128,0.06); padding: 2px 10px; border-radius: 6px; display: inline-flex; align-items: center; max-width: 98%; overflow: hidden; margin-bottom: 2px;">
-                <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
+                <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; ${nameWrapStyle}">
                     ${empNameClean}
                 </h2>
             </div>`;
         } else {
             nameBlockHtml = `
-            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; letter-spacing: 0.5px;">
+            <h2 class="id-portrait-name" style="color: ${textColor}; font-size: ${dynNameFontSize}px; font-weight: 800; margin: 0; ${nameWrapStyle}">
                 ${empNameClean}
             </h2>`;
         }
@@ -3156,6 +3179,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     // HORIZONTAL LAYOUTS
     // =========================================================================
     if (template.layout === 'horizontal') {
+        const col3QrSize = Math.min(qrSize || 70, 72);
+        const col3Width = Math.max(76, Math.min(94, col3QrSize + 14));
         if (cardTheme === 'organic-wave') {
             const pDim = Math.min(photoWidth, photoHeight);
             const pTopOffset = template.photoTopOffset !== undefined ? template.photoTopOffset : 10;
@@ -3491,10 +3516,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                             ` : ''}
                         </div>
 
-                        <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                            ${getQrHtml(qrSize)}
+                        <div style="width: ${col3Width}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                            ${getQrHtml(col3QrSize)}
                             ${getNoticeHtml(true)}
-                            ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                            ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${col3Width}px`, '18px') : getSigHtml(`${col3Width}px`, '28px')}
                         </div>
                     </div>
                 </div>
@@ -3551,10 +3576,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
                     </div>
                     
                     <!-- Column 3: QR Code, Barcode, and terms -->
-                    <div style="width: ${Math.max(85, qrSize + 15)}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                        ${getQrHtml(qrSize)}
+                    <div style="width: ${col3Width}px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                        ${getQrHtml(col3QrSize)}
                         ${getNoticeHtml(true)}
-                        ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${Math.max(85, qrSize + 15)}px`, '18px') : getSigHtml(`${Math.max(85, qrSize + 15)}px`, '28px')}
+                        ${barcodePosition === 'bottom-right' ? getBarcodeHtml(`${col3Width}px`, '18px') : getSigHtml(`${col3Width}px`, '28px')}
                     </div>
                 </div>
             </div>
@@ -4003,7 +4028,8 @@ function adjustCardTextSizes(container) {
                 nameEl.dataset.originalSize = originalSize;
             }
             let size = originalSize;
-            const targetWidth = nameEl.clientWidth || (isHorizontal ? 240 : 200);
+            const parentWidth = nameEl.parentElement ? nameEl.parentElement.clientWidth : 0;
+            const targetWidth = (parentWidth && parentWidth > 50) ? parentWidth : (nameEl.clientWidth || (isHorizontal ? 240 : 200));
             const origWhiteSpace = nameEl.style.whiteSpace;
             nameEl.style.whiteSpace = 'nowrap';
             while (nameEl.scrollWidth > targetWidth + 2 && size > 7.5) {
