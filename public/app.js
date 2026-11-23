@@ -3032,13 +3032,37 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         const borderBtm = isHoriz ? '0.5px solid rgba(128, 128, 128, 0.15)' : '1px dashed rgba(128, 128, 128, 0.2)';
         const rowPad = isHoriz ? Math.min(rowPadding !== undefined ? rowPadding : 3, 4.5) : (rowPadding !== undefined ? rowPadding : 3);
         
-        // Auto-scale font size and wrap long values in horizontal cards to eliminate ellipsis truncation
+        // Auto-scale font size and format long multi-word values into clean two-line display in horizontal cards
         let valFontSize = detailsFontSize + (isImportant ? 0.5 : 0);
+        let displayVal = val;
         const valStr = String(val);
-        if (valStr.length > 36) {
-            valFontSize = isHoriz ? Math.min(valFontSize, 7.2) : Math.max(7.5, valFontSize - 2);
+        if (isHoriz && valStr.length > 25 && valStr.includes(' ')) {
+            // Long values in horizontal layout: split at midpoint word boundary into clean 2-line display
+            valFontSize = Math.max(8.5, detailsFontSize - 1.2);
+            if (!valStr.includes('<br>') && !valStr.includes('<br/>')) {
+                const words = valStr.split(' ');
+                if (words.length >= 2) {
+                    const midChar = valStr.length / 2;
+                    let bestIdx = 0;
+                    let bestDist = Infinity;
+                    let runningLen = 0;
+                    for (let w = 0; w < words.length - 1; w++) {
+                        runningLen += words[w].length + (w > 0 ? 1 : 0);
+                        const dist = Math.abs(runningLen - midChar);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestIdx = w;
+                        }
+                    }
+                    const line1 = words.slice(0, bestIdx + 1).join(' ');
+                    const line2 = words.slice(bestIdx + 1).join(' ');
+                    displayVal = `${line1}<br>${line2}`;
+                }
+            }
+        } else if (valStr.length > 36) {
+            valFontSize = isHoriz ? Math.min(valFontSize, 7.5) : Math.max(7.5, valFontSize - 2);
         } else if (valStr.length > 28) {
-            valFontSize = isHoriz ? Math.min(valFontSize, 7.8) : Math.max(8.0, valFontSize - 1.5);
+            valFontSize = isHoriz ? Math.min(valFontSize, 8.0) : Math.max(8.0, valFontSize - 1.5);
         } else if (valStr.length > 20) {
             valFontSize = Math.max(8.5, valFontSize - 1.2);
         }
@@ -3051,7 +3075,7 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
         <tr style="border-bottom: ${borderBtm} !important;">
             <td style="font-size: ${detailsFontSize}px; font-weight: 600; color: ${labelColor}; width: ${lblW}; max-width: ${maxLblW}; text-align: left; padding: ${rowPad}px 0; white-space: nowrap; font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; text-transform: uppercase; letter-spacing: 0.3px;">${label}</td>
             <td style="font-size: ${detailsFontSize}px; font-weight: 700; color: ${labelColor}; width: 12px; text-align: center; padding: ${rowPad}px 0;">:</td>
-            <td class="id-table-value" style="font-size: ${valFontSize}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPad}px 0; padding-left: ${valSpacing}px; text-align: left; ${valueWrapStyle} font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${val}</td>
+            <td class="id-table-value" style="font-size: ${valFontSize}px; font-weight: ${isImportant ? '800' : '700'}; color: ${valueColor}; padding: ${rowPad}px 0; padding-left: ${valSpacing}px; text-align: left; ${valueWrapStyle} font-family: ${template.font || "'Plus Jakarta Sans', sans-serif"}; width: auto; letter-spacing: 0.3px;">${displayVal}</td>
         </tr>`;
     };
 
@@ -3157,9 +3181,10 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
 
     const getQrHtml = (customSize = qrSize) => {
         if (!showQrCode) return '';
+        const qrCanvasDim = Math.max(32, customSize - 6);
         return `
-        <div class="id-portrait-qr" style="width: ${customSize}px; height: ${customSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${customSize - 6}" style="width: ${customSize - 6}px; height: ${customSize - 6}px; display: block;"></canvas>
+        <div class="id-portrait-qr" style="width: ${customSize}px; height: ${customSize}px; background: #ffffff; padding: 3px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(128,128,128,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
+            <canvas class="qr-canvas qr-canvas-rendered" data-qr-val="${verificationUrl}" data-qr-size="${qrCanvasDim}" data-qr-level="M" style="width: ${qrCanvasDim}px; height: ${qrCanvasDim}px; display: block;"></canvas>
         </div>`;
     };
 
@@ -3184,8 +3209,8 @@ function generateIdCardHtml(emp, template, validityYears = 3, issueDate = null, 
     // HORIZONTAL LAYOUTS
     // =========================================================================
     if (template.layout === 'horizontal') {
-        const col3QrSize = Math.min(qrSize || 70, 72);
-        const col3Width = Math.max(76, Math.min(94, col3QrSize + 14));
+        const col3QrSize = Math.max(84, Math.min(qrSize || 88, 92));
+        const col3Width = Math.max(90, Math.min(94, col3QrSize + 6));
         if (cardTheme === 'organic-wave') {
             const pDim = Math.min(photoWidth, photoHeight);
             const pTopOffset = template.photoTopOffset !== undefined ? template.photoTopOffset : 10;
@@ -4139,7 +4164,7 @@ function renderQrsInContainer(container) {
         const size = parseInt(canvas.getAttribute('data-qr-size')) || 100;
         const bg = canvas.getAttribute('data-qr-bg') || '#ffffff';
         const fg = canvas.getAttribute('data-qr-fg') || '#000000';
-        const level = canvas.getAttribute('data-qr-level') || 'H';
+        const level = canvas.getAttribute('data-qr-level') || 'M';
         // High-DPI support: render at 2x resolution for razor-sharp printing and canvas export
         const scale = 2;
         canvas.width = size * scale;

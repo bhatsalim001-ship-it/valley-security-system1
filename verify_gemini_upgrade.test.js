@@ -122,17 +122,22 @@ async function runLiveTest() {
         const { GoogleGenerativeAI } = require('@google/generative-ai');
         const genAI = new GoogleGenerativeAI(apiKey);
         
+        const withTimeout = (promise, ms) => Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms))
+        ]);
+
         let reply = '';
         let modelUsed = 'gemini-3.8-flash';
         try {
             const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
-            const result = await model.generateContent('Answer "OK" in one word.');
+            const result = await withTimeout(model.generateContent('Answer "OK" in one word.'), 10000);
             reply = result.response.text().trim();
         } catch (err) {
             console.log(`  ℹ️ Primary model returned transient note (${err.message.slice(0, 60)}...). Invoking fallback...`);
             modelUsed = 'gemini-2.5-flash (auto-fallback)';
             const fallback = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-            const fbResult = await fallback.generateContent('Answer "OK" in one word.');
+            const fbResult = await withTimeout(fallback.generateContent('Answer "OK" in one word.'), 10000);
             reply = fbResult.response.text().trim();
         }
 
