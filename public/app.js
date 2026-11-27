@@ -285,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventHandlers();
     setupClassificationsManager();
     setupTemplatesManager();
+    initGeminiApiKeyManager();
     setupCropperControls();
     setupModalA11y();
     setupMobileSidebar();
@@ -709,7 +710,7 @@ function updateHeaderTitles(view) {
 // Fetch All Database details (Optimized: parallel lightweight endpoints with /api/db fallback)
 async function fetchData() {
     try {
-        let emps = [];
+        let emps = null;
         let classifications = {};
 
         try {
@@ -728,6 +729,7 @@ async function fetchData() {
                     classifications = await classRes.json();
                 }
             } else {
+                console.warn(`/api/employees returned status ${empRes.status}, attempting fallback to /api/db`);
                 // Graceful fallback to /api/db if /api/employees fails
                 const dbRes = await fetch('/api/db');
                 if (dbRes.status === 401) {
@@ -735,16 +737,18 @@ async function fetchData() {
                     window.location.href = '/login.html';
                     return;
                 }
-                if (!dbRes.ok) throw new Error('API Sync failure');
-                const db = await dbRes.json();
-                emps = db.employees || [];
-                classifications = {
-                    departments: db.departments || [],
-                    designations: db.designations || [],
-                    manpowerTypes: db.manpowerTypes || []
-                };
+                if (dbRes.ok) {
+                    const db = await dbRes.json();
+                    emps = db.employees || [];
+                    classifications = {
+                        departments: db.departments || [],
+                        designations: db.designations || [],
+                        manpowerTypes: db.manpowerTypes || []
+                    };
+                }
             }
         } catch (fetchErr) {
+            console.warn('⚡ Network error during primary employee fetch, trying /api/db fallback:', fetchErr);
             try {
                 const dbRes = await fetch('/api/db');
                 if (dbRes.status === 401) {
@@ -762,19 +766,40 @@ async function fetchData() {
                     };
                 }
             } catch (dbErr) {
-                console.warn('⚡ Offline mode: Loading cached employee roster');
-                try {
-                    const cached = localStorage.getItem('vsa_last_employees_cache');
-                    if (cached) emps = JSON.parse(cached) || [];
-                } catch (e) {}
+                console.warn('⚡ Offline mode: Falling back to cached employee roster', dbErr);
             }
         }
-        
-        VSA_STATE.employees = Array.isArray(emps) ? emps : (emps.employees || []);
-        if (Array.isArray(VSA_STATE.employees) && VSA_STATE.employees.length > 0) {
+
+        // Critical guard against "0 employees" disappearance:
+        // Extract incoming employees list safely
+        let incomingEmps = null;
+        if (Array.isArray(emps) && emps.length > 0) {
+            incomingEmps = emps;
+        } else if (emps && Array.isArray(emps.employees) && emps.employees.length > 0) {
+            incomingEmps = emps.employees;
+        }
+
+        if (incomingEmps && incomingEmps.length > 0) {
+            VSA_STATE.employees = incomingEmps;
             try {
-                localStorage.setItem('vsa_last_employees_cache', JSON.stringify(VSA_STATE.employees));
+                localStorage.setItem('vsa_last_employees_cache', JSON.stringify(incomingEmps));
             } catch (storageErr) {}
+        } else {
+            // Emps returned empty or fetch failed due to server rate-limit or wake-up delay
+            if (Array.isArray(VSA_STATE.employees) && VSA_STATE.employees.length > 0) {
+                console.warn(`⚠️ Retaining existing ${VSA_STATE.employees.length} loaded employees across transient network/server response.`);
+            } else {
+                try {
+                    const cached = localStorage.getItem('vsa_last_employees_cache');
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            console.info(`⚡ Restored ${parsed.length} employees from persistent local storage cache.`);
+                            VSA_STATE.employees = parsed;
+                        }
+                    }
+                } catch (e) {}
+            }
         }
         VSA_STATE.clients = [];
         VSA_STATE.departments = classifications.departments || [];
@@ -1950,7 +1975,8 @@ async function triggerIdBulkDownload() {
         } catch (e) {
             console.warn('Font loading wait failed:', e);
         }
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await waitForCardImages(bulkContainer);
+        await new Promise(resolve => setTimeout(resolve, 150));
 
         if (template && template.isVisualTemplate) {
             const cards = bulkContainer.querySelectorAll('.visual-id-card-render');
@@ -5893,6 +5919,29 @@ function triggerIDCardPrint() {
     window.print();
 }
 
+// Helper to ensure all images inside a card element are fully loaded before canvas snapshotting
+async function waitForCardImages(element, timeoutMs = 3500) {
+    if (!element) return;
+    const images = Array.from(element.querySelectorAll('img'));
+    if (images.length === 0) return;
+    const promises = images.map(img => {
+        if (img.complete && img.naturalHeight > 0) return Promise.resolve();
+        return new Promise(resolve => {
+            let timer = null;
+            const onFinish = () => {
+                if (timer) clearTimeout(timer);
+                img.removeEventListener('load', onFinish);
+                img.removeEventListener('error', onFinish);
+                resolve();
+            };
+            timer = setTimeout(onFinish, timeoutMs);
+            img.addEventListener('load', onFinish);
+            img.addEventListener('error', onFinish);
+        });
+    });
+    await Promise.all(promises);
+}
+
 async function downloadIdCardImage() {
     const selectedId = document.getElementById('id-select-employee').value;
     if (!selectedId) {
@@ -5920,24 +5969,27 @@ async function downloadIdCardImage() {
             return;
         }
         
-        cards.forEach((cardElement, index) => {
+        for (let index = 0; index < cards.length; index++) {
+            const cardElement = cards[index];
             const sideName = index === 0 ? 'Front' : 'Back';
-            html2canvas(cardElement, {
-                scale: 4,
-                useCORS: true,
-                allowTaint: false,
-                backgroundColor: '#ffffff',
-                logging: false,
-                letterRendering: true
-            }).then(canvas => {
+            await waitForCardImages(cardElement);
+            try {
+                const canvas = await html2canvas(cardElement, {
+                    scale: 4,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    letterRendering: true
+                });
                 const link = document.createElement('a');
                 link.download = `VSA_ID_Card_${sideName}_${selectedId}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-            }).catch(err => {
+            } catch (err) {
                 console.error(`Error generating ${sideName} ID card image:`, err);
-            });
-        });
+            }
+        }
     } else {
         const cardElement = document.querySelector('.id-card-portrait, .id-card-horizontal');
         if (!cardElement) {
@@ -5945,22 +5997,24 @@ async function downloadIdCardImage() {
             return;
         }
         
-        html2canvas(cardElement, {
-            scale: 4, // 4x scale for print-quality 300+ DPI sharpness
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            logging: false,
-            letterRendering: true
-        }).then(canvas => {
+        await waitForCardImages(cardElement);
+        try {
+            const canvas = await html2canvas(cardElement, {
+                scale: 4, // 4x scale for print-quality 300+ DPI sharpness
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: '#ffffff',
+                logging: false,
+                letterRendering: true
+            });
             const link = document.createElement('a');
             link.download = `VSA_ID_Card_${selectedId}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-        }).catch(err => {
+        } catch (err) {
             console.error("Error generating ID card image:", err);
             alert("Failed to save ID card as image.");
-        });
+        }
     }
 }
 
@@ -5992,6 +6046,7 @@ async function downloadIndividualCardImage(empId) {
     } catch (e) {
         console.warn('Font loading wait failed:', e);
     }
+    await waitForCardImages(tempDiv);
     await new Promise(resolve => setTimeout(resolve, 200)); // Allow rendering time
     
     if (template && template.isVisualTemplate) {
@@ -6006,6 +6061,7 @@ async function downloadIndividualCardImage(empId) {
         for (let idx = 0; idx < cards.length; idx++) {
             const cardElement = cards[idx];
             const sideName = idx === 0 ? 'Front' : 'Back';
+            await waitForCardImages(cardElement);
             try {
                 const canvas = await html2canvas(cardElement, {
                     scale: 4,
@@ -6034,24 +6090,26 @@ async function downloadIndividualCardImage(empId) {
             return;
         }
         
-        html2canvas(cardElement, {
-            scale: 4, // 300+ DPI sharp quality
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            logging: false,
-            letterRendering: true
-        }).then(canvas => {
+        await waitForCardImages(cardElement);
+        try {
+            const canvas = await html2canvas(cardElement, {
+                scale: 4, // 300+ DPI sharp quality
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: '#ffffff',
+                logging: false,
+                letterRendering: true
+            });
             const link = document.createElement('a');
             link.download = `VSA_ID_Card_${emp.id}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             document.body.removeChild(tempDiv);
-        }).catch(err => {
+        } catch (err) {
             console.error("Error generating individual card image:", err);
             document.body.removeChild(tempDiv);
             alert("Failed to download individual card as image.");
-        });
+        }
     }
 }
 
@@ -6815,7 +6873,8 @@ async function triggerBulkDownload() {
         } catch (e) {
             console.warn('Font loading wait failed:', e);
         }
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await waitForCardImages(bulkContainer);
+        await new Promise(resolve => setTimeout(resolve, 150));
 
         const cardElement = bulkContainer.querySelector('.id-card-portrait') || bulkContainer.querySelector('.id-card-horizontal');
         if (cardElement) {
@@ -16624,6 +16683,9 @@ function setupTemplatesManager() {
                 return;
             }
 
+            // Retrieve active Gemini API key from localStorage or Card Studio input field
+            const activeKey = (localStorage.getItem('vsa_gemini_api_key') || document.getElementById('tpl-gemini-api-key')?.value || '').trim();
+
             const loader = document.getElementById('tpl-ai-loader');
             if (loader) loader.classList.remove('hidden');
 
@@ -16632,16 +16694,28 @@ function setupTemplatesManager() {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...(activeKey ? { 'x-gemini-api-key': activeKey } : {})
                     },
                     body: JSON.stringify({
                         prompt: prompt,
-                        image: tplReferenceImageBase64
+                        image: tplReferenceImageBase64,
+                        ...(activeKey ? { apiKey: activeKey } : {})
                     })
                 });
 
                 const resData = await response.json();
                 if (!response.ok || !resData.success) {
+                    if (resData.error && resData.error.toLowerCase().includes('gemini api key')) {
+                        // Automatically open and highlight the Gemini API Key drawer
+                        const drawer = document.getElementById('tpl-gemini-key-drawer');
+                        if (drawer) drawer.style.display = 'block';
+                        const keyInp = document.getElementById('tpl-gemini-api-key');
+                        if (keyInp) {
+                            keyInp.focus();
+                            keyInp.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.6)';
+                        }
+                    }
                     throw new Error(resData.error || 'Failed to generate layout.');
                 }
 
@@ -16669,28 +16743,34 @@ function setupTemplatesManager() {
                 if (data.headerText) document.getElementById('tpl-header-text').value = data.headerText;
                 if (data.subheaderText) document.getElementById('tpl-subheader-text').value = data.subheaderText;
                 
-                // Sliders
-                const setSliderVal = (id, val, lblId) => {
+                // Sliders - with event dispatch and safe bounds
+                const setSliderVal = (id, val, lblId, minVal, maxVal) => {
                     const slider = document.getElementById(id);
-                    if (slider && val !== undefined) {
-                        slider.value = val;
-                        const label = document.getElementById(lblId || `lbl-${id.replace('tpl-', '')}`);
-                        if (label) label.textContent = val;
+                    if (slider && val !== undefined && val !== null && val !== '') {
+                        let num = parseFloat(val);
+                        if (!isNaN(num)) {
+                            if (minVal !== undefined) num = Math.max(minVal, num);
+                            if (maxVal !== undefined) num = Math.min(maxVal, num);
+                            slider.value = num;
+                            const label = document.getElementById(lblId || `lbl-${id.replace('tpl-', '')}`);
+                            if (label) label.textContent = num;
+                            slider.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
                     }
                 };
 
-                setSliderVal('tpl-logo-size', data.logoSize, 'lbl-logo-size');
-                setSliderVal('tpl-header-height', data.headerHeight, 'lbl-header-height');
-                setSliderVal('tpl-header-font-size', data.headerFontSize, 'lbl-header-font-size');
-                setSliderVal('tpl-photo-width', data.photoWidth, 'lbl-photo-width');
-                setSliderVal('tpl-photo-height', data.photoHeight, 'lbl-photo-height');
-                setSliderVal('tpl-qr-size', data.qrSize, 'lbl-qr-size');
-                setSliderVal('tpl-details-font-size', data.detailsFontSize, 'lbl-details-font-size');
-                setSliderVal('tpl-name-font-size', data.nameFontSize, 'lbl-name-font-size');
-                setSliderVal('tpl-designation-font-size', data.designationFontSize, 'lbl-designation-font-size');
-                setSliderVal('tpl-row-padding', data.rowPadding, 'lbl-row-padding');
-                setSliderVal('tpl-label-width', data.labelWidth, 'lbl-label-width');
-                setSliderVal('tpl-label-value-spacing', data.labelValueSpacing, 'lbl-label-value-spacing');
+                setSliderVal('tpl-logo-size', data.logoSize, 'lbl-logo-size', 30, 100);
+                setSliderVal('tpl-header-height', data.headerHeight, 'lbl-header-height', 60, 150);
+                setSliderVal('tpl-header-font-size', data.headerFontSize, 'lbl-header-font-size', 10, 24);
+                setSliderVal('tpl-photo-width', data.photoWidth, 'lbl-photo-width', 60, 145);
+                setSliderVal('tpl-photo-height', data.photoHeight, 'lbl-photo-height', 70, 165);
+                setSliderVal('tpl-qr-size', data.qrSize, 'lbl-qr-size', 35, 150);
+                setSliderVal('tpl-details-font-size', data.detailsFontSize, 'lbl-details-font-size', 6, 12);
+                setSliderVal('tpl-name-font-size', data.nameFontSize, 'lbl-name-font-size', 8, 22);
+                setSliderVal('tpl-designation-font-size', data.designationFontSize, 'lbl-designation-font-size', 6, 18);
+                setSliderVal('tpl-row-padding', data.rowPadding, 'lbl-row-padding', 0, 14);
+                setSliderVal('tpl-label-width', data.labelWidth, 'lbl-label-width', 10, 85);
+                setSliderVal('tpl-label-value-spacing', data.labelValueSpacing, 'lbl-label-value-spacing', 0, 80);
 
                 if (data.labelColor) document.getElementById('tpl-label-color').value = data.labelColor;
                 if (data.valueColor) document.getElementById('tpl-value-color').value = data.valueColor;
@@ -16758,6 +16838,219 @@ function setupTemplatesManager() {
             }
         });
     }
+
+// ==========================================
+// GEMINI API KEY CONTROLLER & SYNCHRONIZER
+// ==========================================
+async function initGeminiApiKeyManager() {
+    const cardStatusPill = document.getElementById('tpl-gemini-status-pill');
+    const cardStatusDot = document.getElementById('tpl-gemini-status-dot');
+    const cardStatusLabel = document.getElementById('tpl-gemini-status-label');
+    const cardKeyPreview = document.getElementById('tpl-gemini-key-preview');
+    const cardKeyDrawer = document.getElementById('tpl-gemini-key-drawer');
+    const cardKeyInput = document.getElementById('tpl-gemini-api-key');
+    const cardKeyMsg = document.getElementById('tpl-gemini-key-msg');
+    const btnToggleDrawer = document.getElementById('btn-toggle-gemini-drawer');
+    const lblDrawerToggle = document.getElementById('lbl-gemini-drawer-toggle');
+    const btnToggleVis = document.getElementById('btn-toggle-gemini-key-vis');
+    const iconEye = document.getElementById('icon-gemini-eye');
+    const btnSaveKey = document.getElementById('btn-save-gemini-key');
+    const btnClearKey = document.getElementById('btn-clear-gemini-key');
+
+    // Settings view elements
+    const settingsBadge = document.getElementById('settings-gemini-status-badge');
+    const settingsInput = document.getElementById('settings-gemini-api-key');
+    const btnSettingsToggleVis = document.getElementById('btn-settings-toggle-gemini-vis');
+    const iconSettingsEye = document.getElementById('icon-settings-gemini-eye');
+    const btnSettingsSave = document.getElementById('btn-settings-save-gemini');
+    const btnSettingsClear = document.getElementById('btn-settings-clear-gemini');
+    const settingsMsg = document.getElementById('settings-gemini-msg');
+
+    let isConfigured = false;
+    let isDrawerOpen = false;
+
+    // Helper: update UI across Card Studio & Settings view
+    const updateUIState = (configured, preview = '') => {
+        isConfigured = !!configured;
+        if (configured) {
+            if (cardStatusPill) {
+                cardStatusPill.style.background = 'rgba(16, 185, 129, 0.15)';
+                cardStatusPill.style.color = '#34d399';
+                cardStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            }
+            if (cardStatusDot) cardStatusDot.style.background = '#10b981';
+            if (cardStatusLabel) cardStatusLabel.textContent = 'Connected';
+            if (cardKeyPreview) cardKeyPreview.textContent = preview ? `(${preview})` : '';
+            if (lblDrawerToggle) lblDrawerToggle.textContent = 'Change Key';
+            if (cardKeyMsg) cardKeyMsg.innerHTML = '<span style="color:#34d399;">✓ API Key connected & verified for Card Studio AI.</span>';
+            if (settingsBadge) {
+                settingsBadge.textContent = 'Active';
+                settingsBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                settingsBadge.style.color = '#34d399';
+            }
+            if (settingsMsg) settingsMsg.innerHTML = '<span style="color:#34d399;">✓ API Key active in system database.</span>';
+        } else {
+            if (cardStatusPill) {
+                cardStatusPill.style.background = 'rgba(245, 158, 11, 0.15)';
+                cardStatusPill.style.color = '#fbbf24';
+                cardStatusPill.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+            }
+            if (cardStatusDot) cardStatusDot.style.background = '#fbbf24';
+            if (cardStatusLabel) cardStatusLabel.textContent = 'Key Needed';
+            if (cardKeyPreview) cardKeyPreview.textContent = '';
+            if (lblDrawerToggle) lblDrawerToggle.textContent = 'Configure Key';
+            if (cardKeyMsg) cardKeyMsg.textContent = 'Stored securely in system settings & browser storage.';
+            if (settingsBadge) {
+                settingsBadge.textContent = 'Unconfigured';
+                settingsBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                settingsBadge.style.color = '#fbbf24';
+            }
+            if (settingsMsg) settingsMsg.textContent = 'Syncs directly with Card Studio AI & system database.';
+        }
+    };
+
+    // Toggle drawer open/close
+    if (btnToggleDrawer && cardKeyDrawer) {
+        btnToggleDrawer.addEventListener('click', () => {
+            isDrawerOpen = !isDrawerOpen;
+            cardKeyDrawer.style.display = isDrawerOpen ? 'block' : 'none';
+        });
+    }
+
+    // Toggle visibility in Card Studio
+    if (btnToggleVis && cardKeyInput) {
+        btnToggleVis.addEventListener('click', () => {
+            const isPw = cardKeyInput.type === 'password';
+            cardKeyInput.type = isPw ? 'text' : 'password';
+            if (iconEye) iconEye.setAttribute('data-lucide', isPw ? 'eye-off' : 'eye');
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
+
+    // Toggle visibility in Settings
+    if (btnSettingsToggleVis && settingsInput) {
+        btnSettingsToggleVis.addEventListener('click', () => {
+            const isPw = settingsInput.type === 'password';
+            settingsInput.type = isPw ? 'text' : 'password';
+            if (iconSettingsEye) iconSettingsEye.setAttribute('data-lucide', isPw ? 'eye-off' : 'eye');
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
+
+    // Save & Verify Handler
+    const handleSaveKey = async (keyToSave) => {
+        if (!keyToSave || keyToSave.trim().length < 8) {
+            alert('Please enter a valid Google Gemini API Key (minimum 8 characters).');
+            return;
+        }
+
+        const trimmed = keyToSave.trim();
+        const saveLbl = document.getElementById('lbl-save-gemini-text');
+        if (saveLbl) saveLbl.textContent = 'Verifying...';
+        if (btnSaveKey) btnSaveKey.disabled = true;
+        if (btnSettingsSave) btnSettingsSave.disabled = true;
+
+        try {
+            const res = await fetch('/api/settings/gemini-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ apiKey: trimmed })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Key verification failed.');
+            }
+
+            // Save in localStorage for immediate frontend access
+            localStorage.setItem('vsa_gemini_api_key', trimmed);
+            if (cardKeyInput) cardKeyInput.value = trimmed;
+            if (settingsInput) settingsInput.value = trimmed;
+
+            updateUIState(true, data.preview || `${trimmed.substring(0, 6)}...`);
+            if (cardKeyDrawer) cardKeyDrawer.style.display = 'none';
+            isDrawerOpen = false;
+
+            alert('Google Gemini API Key successfully verified and saved!');
+        } catch (err) {
+            console.error('Error saving Gemini key:', err);
+            alert('Failed to verify Gemini API Key: ' + err.message);
+            if (cardKeyMsg) cardKeyMsg.innerHTML = `<span style="color:#f87171;">Error: ${err.message}</span>`;
+        } finally {
+            if (saveLbl) saveLbl.textContent = 'Save & Verify';
+            if (btnSaveKey) btnSaveKey.disabled = false;
+            if (btnSettingsSave) btnSettingsSave.disabled = false;
+        }
+    };
+
+    if (btnSaveKey) {
+        btnSaveKey.addEventListener('click', () => {
+            const keyVal = cardKeyInput ? cardKeyInput.value : '';
+            handleSaveKey(keyVal);
+        });
+    }
+
+    if (btnSettingsSave) {
+        btnSettingsSave.addEventListener('click', () => {
+            const keyVal = settingsInput ? settingsInput.value : '';
+            handleSaveKey(keyVal);
+        });
+    }
+
+    // Clear Key Handler
+    const handleClearKey = async () => {
+        if (!confirm('Are you sure you want to remove your saved Gemini API key?')) return;
+
+        try {
+            await fetch('/api/settings/gemini-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ apiKey: '' })
+            });
+            localStorage.removeItem('vsa_gemini_api_key');
+            if (cardKeyInput) cardKeyInput.value = '';
+            if (settingsInput) settingsInput.value = '';
+            updateUIState(false);
+            alert('Gemini API Key removed.');
+        } catch (err) {
+            console.error('Error clearing Gemini key:', err);
+        }
+    };
+
+    if (btnClearKey) btnClearKey.addEventListener('click', handleClearKey);
+    if (btnSettingsClear) btnSettingsClear.addEventListener('click', handleClearKey);
+
+    // Initial check from localStorage and server
+    const localKey = localStorage.getItem('vsa_gemini_api_key');
+    if (localKey && cardKeyInput) cardKeyInput.value = localKey;
+    if (localKey && settingsInput) settingsInput.value = localKey;
+
+    try {
+        const headers = localKey ? { 'x-gemini-api-key': localKey } : {};
+        const res = await fetch('/api/settings/gemini-key', {
+            credentials: 'same-origin',
+            headers
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.configured) {
+                updateUIState(true, data.preview);
+                if (cardKeyDrawer) cardKeyDrawer.style.display = 'none';
+            } else {
+                updateUIState(false);
+                if (cardKeyDrawer) cardKeyDrawer.style.display = 'block';
+                isDrawerOpen = true;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not inspect Gemini settings from server:', e.message);
+        if (localKey) updateUIState(true, `${localKey.substring(0, 6)}...`);
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+}
 
 
     // 7. Save / Reset buttons

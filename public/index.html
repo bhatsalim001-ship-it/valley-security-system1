@@ -90,7 +90,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <!-- Google MediaPipe Selfie Segmentation for background removal -->
     <script src="lib/selfie_segmentation/selfie_segmentation.js"></script>
-    <link rel="stylesheet" href="styles.css?v=15.0">
+    <link rel="stylesheet" href="styles.css?v=16.0">
 </head>
 <body>
     <!-- Accessibility Skip Link (WCAG 2.1 AA 2.4.1) -->
@@ -2157,11 +2157,59 @@
                                             <h4 class="studio-ai-title">
                                                 <i data-lucide="sparkles"></i> AI Layout Designer
                                             </h4>
-                                            <span class="badge badge-accent">Gemini Powered</span>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span id="tpl-gemini-status-pill" class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 8px; border-radius: 12px;">
+                                                    <span id="tpl-gemini-status-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #fbbf24; display: inline-block;"></span>
+                                                    <span id="tpl-gemini-status-label">Checking Key...</span>
+                                                </span>
+                                                <span class="badge badge-accent">Gemini Powered</span>
+                                            </div>
                                         </div>
                                         <p class="studio-ai-desc">
                                             Upload a reference image of any ID card design you like and describe the style. The Gemini AI will automatically parse and map it to your form sliders.
                                         </p>
+
+                                        <!-- Gemini API Key Configuration Panel -->
+                                        <div class="studio-gemini-key-box" id="tpl-gemini-key-box" style="margin-bottom: 14px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px;">
+                                            <div class="studio-gemini-key-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <div style="font-size: 12px; font-weight: 600; color: #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                                    <i data-lucide="key-round" style="width: 14px; height: 14px; color: var(--theme-accent, #cfa15c);"></i>
+                                                    <span>Gemini API Key</span>
+                                                    <span id="tpl-gemini-key-preview" style="font-size: 11px; color: #94a3b8; font-family: monospace; margin-left: 4px;"></span>
+                                                </div>
+                                                <button type="button" class="btn btn-xs btn-outline" id="btn-toggle-gemini-drawer" style="padding: 2px 8px; font-size: 11px; height: 26px; border-color: rgba(255, 255, 255, 0.15);">
+                                                    <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
+                                                    <span id="lbl-gemini-drawer-toggle">Configure Key</span>
+                                                </button>
+                                            </div>
+
+                                            <div id="tpl-gemini-key-drawer" class="studio-gemini-drawer">
+                                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+                                                    <div style="position: relative; flex: 1; min-width: 200px;">
+                                                        <input type="password" id="tpl-gemini-api-key" class="form-control" placeholder="Paste Gemini API Key (e.g. AIzaSy... or AQ...)" autocomplete="off" style="padding-right: 38px; font-family: monospace; font-size: 12px; height: 38px;">
+                                                        <button type="button" id="btn-toggle-gemini-key-vis" title="Toggle visibility" aria-label="Toggle Gemini API Key visibility" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: flex; align-items: center; min-width: 28px; min-height: 28px;">
+                                                            <i data-lucide="eye" id="icon-gemini-eye" style="width: 15px; height: 15px;"></i>
+                                                        </button>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary" id="btn-save-gemini-key" style="height: 38px; padding: 0 14px; font-size: 12px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                                        <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                                                        <span id="lbl-save-gemini-text">Save & Verify</span>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline" id="btn-clear-gemini-key" style="height: 38px; padding: 0 10px; font-size: 12px; display: flex; align-items: center; gap: 4px; white-space: nowrap; border-color: rgba(239, 68, 68, 0.4); color: #f87171;" title="Clear stored API key">
+                                                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                                    </button>
+                                                </div>
+
+                                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 11px;">
+                                                    <span id="tpl-gemini-key-msg" style="color: #94a3b8; line-height: 1.3;">
+                                                        Stored securely in system settings & browser storage.
+                                                    </span>
+                                                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color: #60a5fa; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+                                                        Get Free Gemini Key <i data-lucide="external-link" style="width: 11px; height: 11px;"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                         
                                         <div class="studio-ai-controls">
                                             <div class="studio-ai-upload-row">
@@ -3014,6 +3062,43 @@
                                     <span>Company Profile details are permanently embedded into generated employee badges and official letterheads.</span>
                                 </div>
                             </form>
+                        </div>
+
+                        <!-- Google Gemini AI Engine Settings -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <h3 class="settings-card-title">
+                                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: var(--theme-accent, #cfa15c);"></i>
+                                    Google Gemini AI Engine
+                                </h3>
+                                <span id="settings-gemini-status-badge" class="settings-badge">Checking...</span>
+                            </div>
+                            <p class="text-muted mb-4">Powers Card Studio's AI Layout Designer, document auto-OCR enrollment, handwritten registration sheet scanning, and official name resolver.</p>
+                            <div class="settings-company-group">
+                                <div class="settings-field">
+                                    <label class="settings-field-label" for="settings-gemini-api-key">Configured API Key</label>
+                                    <div style="position: relative; display: flex; align-items: center;">
+                                        <input type="password" id="settings-gemini-api-key" class="settings-field-input" placeholder="Enter Gemini API Key (e.g. AIzaSy... or AQ...)" autocomplete="off" style="padding-right: 40px; font-family: monospace; font-size: 12px;">
+                                        <button type="button" id="btn-settings-toggle-gemini-vis" style="position: absolute; right: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Toggle visibility" aria-label="Toggle settings Gemini API key visibility">
+                                            <i data-lucide="eye" id="icon-settings-gemini-eye" style="width: 16px; height: 16px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-primary" id="btn-settings-save-gemini" style="flex: 1; min-width: 140px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <i data-lucide="save"></i> Save & Test Key
+                                    </button>
+                                    <button type="button" class="btn btn-outline" id="btn-settings-clear-gemini" style="height: 40px; border-color: rgba(239, 68, 68, 0.4); color: #f87171; display: flex; align-items: center; gap: 6px;" title="Clear configured API key">
+                                        <i data-lucide="trash-2"></i> Clear
+                                    </button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 6px;">
+                                    <span id="settings-gemini-msg" style="font-size: 11px; color: #94a3b8;">Syncs directly with Card Studio AI & system database.</span>
+                                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #60a5fa; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+                                        Get API Key <i data-lucide="external-link" style="width: 11px; height: 11px;"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -4196,6 +4281,6 @@
     <div id="printable-id-bulk" class="hidden"></div>
 
     <!-- Script Entrypoint -->
-    <script src="app.js?v=19.0"></script>
+    <script src="app.js?v=21.0"></script>
 </body>
 </html>

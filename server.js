@@ -46,6 +46,27 @@ function checkEnv(name, { minLength = 0, fallback = '' } = {}) {
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
+// ============================================================================
+// IN-MEMORY EMPLOYEE MEDIA & SECURITY TOKEN CACHE
+// Eliminates redundant Neon PostgreSQL queries on concurrent photo requests
+// ============================================================================
+const employeePhotoMemoryCache = new Map();     // empId -> { buffer: Buffer, mimeType: string } | null
+const employeeSignatureMemoryCache = new Map(); // empId -> { buffer: Buffer, mimeType: string } | null
+const employeeTokenMemoryCache = new Map();     // empId -> string (secureToken)
+
+function invalidateEmployeeMediaCache(empId) {
+  if (!empId) return;
+  employeePhotoMemoryCache.delete(empId);
+  employeeSignatureMemoryCache.delete(empId);
+  employeeTokenMemoryCache.delete(empId);
+}
+
+function clearAllEmployeeMediaCache() {
+  employeePhotoMemoryCache.clear();
+  employeeSignatureMemoryCache.clear();
+  employeeTokenMemoryCache.clear();
+}
+
 function timingSafeTokenMatch(expected, provided) {
   if (typeof expected !== 'string' || typeof provided !== 'string') return false;
   if (!expected || !provided) return false;
@@ -522,7 +543,7 @@ const authLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,        // 1 minute
-  max: 60,                    // 60 requests per IP
+  max: 600,                   // 600 requests per IP (10 req/s, prevents 429 during normal dashboard navigation)
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Rate limit exceeded. Please slow down.' }
@@ -536,8 +557,18 @@ const registerLimiter = rateLimit({
   message: { success: false, error: 'Too many registration attempts. Please try again in an hour.' }
 });
 
-// Apply general API limiter to every /api/* route
-app.use('/api/', apiLimiter);
+// Apply general API limiter to /api/* routes, but exclude binary media assets (photos, signatures, avatars)
+app.use('/api/', (req, res, next) => {
+  if (
+    req.path.endsWith('/photo') ||
+    req.path.endsWith('/signature') ||
+    req.path.includes('default-avatar') ||
+    req.path.includes('/logo')
+  ) {
+    return next();
+  }
+  return apiLimiter(req, res, next);
+});
 
 
 // --------------------------------------------------------------------------
@@ -1820,6 +1851,7 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
           writeLocalDb(db);
         }
       }
+      invalidateEmployeeMediaCache(existingEmpId);
 
       await recordNotification('RECORD_MERGED', existingEmpId, existingEmpData.name, existingEmpData.department, `Form & photo submitted by ${existingEmpData.name} (${existingEmpId}) merged into existing card.`);
 
@@ -1900,6 +1932,10 @@ app.post('/api/public/register', registerLimiter, async (req, res) => {
 
       db.employees.push(empData);
       writeLocalDb(db);
+    }
+    invalidateEmployeeMediaCache(empId);
+    if (empData && empData.secureToken) {
+      employeeTokenMemoryCache.set(empId, empData.secureToken);
     }
 
     const notifMsg = matchedProject 
@@ -2010,6 +2046,7 @@ app.post('/api/upload-photo-by-token', apiLimiter, async (req, res) => {
         writeLocalDb(db);
       }
     }
+    invalidateEmployeeMediaCache(employeeId);
 
     await recordNotification('PHOTO_UPLOADED', emp.id, emp.name, emp.department, `Photo uploaded for ${emp.name} (${emp.id}) via self-service link.`);
 
@@ -2491,36 +2528,80 @@ async function verifyImageAccess(req, res, empId) {
 
   const queryToken = req.query.token;
   if (typeof queryToken === 'string' && queryToken.length > 0) {
-    let empData = null;
-    try {
-      if (usePostgres && pool) {
-        const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
-        if (dbRes.rows.length > 0) empData = dbRes.rows[0].data;
-      } else {
+    let secureToken = employeeTokenMemoryCache.get(empId);
+    if (!secureToken) {
+      let empData = null;
+      try {
+        if (usePostgres && pool) {
+          const dbRes = await pool.query('SELECT data FROM employees WHERE id = $1', [empId]);
+          if (dbRes.rows.length > 0) empData = dbRes.rows[0].data;
+        } else {
+          const db = readLocalDb();
+          empData = db.employees.find(e => e.id === empId);
+        }
+      } catch (err) {
+        console.warn('⚠️ verifyImageAccess failed during cloud DB query. Falling back to local JSON.', err.message);
         const db = readLocalDb();
         empData = db.employees.find(e => e.id === empId);
       }
-    } catch (err) {
-      console.warn('⚠️ verifyImageAccess failed during cloud DB query. Falling back to local JSON.', err.message);
-      const db = readLocalDb();
-      empData = db.employees.find(e => e.id === empId);
+      if (empData && empData.secureToken) {
+        secureToken = empData.secureToken;
+        employeeTokenMemoryCache.set(empId, secureToken);
+      }
     }
-    if (empData && timingSafeTokenMatch(empData.secureToken, queryToken)) {
+    if (secureToken && timingSafeTokenMatch(secureToken, queryToken)) {
       return true;
     }
   }
   return false;
 }
 
-// Serving binary photo
+// Pre-flight CORS handler for photo route
+app.options('/api/employees/:id/photo', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return res.sendStatus(204);
+});
+
+// Serving binary photo (In-Memory Cached & CORS Unlocked)
 app.get('/api/employees/:id/photo', async (req, res) => {
   const empId = req.params.id;
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   try {
     const hasAccess = await verifyImageAccess(req, res, empId);
     if (!hasAccess) {
       return res.status(401).json({ error: 'Unauthorized image access.' });
     }
 
+    const defaultAvatarSvg = Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+        <rect width="300" height="300" fill="#181a24"/>
+        <circle cx="150" cy="115" r="55" fill="#cfa15c"/>
+        <path d="M65 260 c0-55 45-75 85-75 s85 20 85 75" fill="#cfa15c"/>
+      </svg>`
+    );
+
+    // 1. Fast path: check in-memory photo cache
+    if (employeePhotoMemoryCache.has(empId)) {
+      const cached = employeePhotoMemoryCache.get(empId);
+      if (!cached) {
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.send(defaultAvatarSvg);
+      }
+      res.setHeader('Content-Type', cached.mimeType);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(cached.buffer);
+    }
+
+    // 2. Slow path: load from database and populate memory cache
     let base64Str = null;
     try {
       if (usePostgres && pool) {
@@ -2536,15 +2617,8 @@ app.get('/api/employees/:id/photo', async (req, res) => {
       if (photosDb[empId]) base64Str = photosDb[empId].photo;
     }
 
-    const defaultAvatarSvg = Buffer.from(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
-        <rect width="300" height="300" fill="#181a24"/>
-        <circle cx="150" cy="115" r="55" fill="#cfa15c"/>
-        <path d="M65 260 c0-55 45-75 85-75 s85 20 85 75" fill="#cfa15c"/>
-      </svg>`
-    );
-
     if (!base64Str || !base64Str.startsWith('data:image/')) {
+      employeePhotoMemoryCache.set(empId, null);
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
       res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -2559,6 +2633,7 @@ app.get('/api/employees/:id/photo', async (req, res) => {
 
     const mimeType = matches[1].toLowerCase();
     if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
+      employeePhotoMemoryCache.set(empId, null);
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
       res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -2566,6 +2641,7 @@ app.get('/api/employees/:id/photo', async (req, res) => {
     }
 
     const buffer = Buffer.from(matches[2], 'base64');
+    employeePhotoMemoryCache.set(empId, { buffer, mimeType });
 
     res.setHeader('Content-Type', mimeType);
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -2578,6 +2654,8 @@ app.get('/api/employees/:id/photo', async (req, res) => {
 });
 
 app.get('/api/employees/default-avatar.svg', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   const defaultAvatarSvg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
       <rect width="300" height="300" fill="#181a24"/>
@@ -2592,15 +2670,40 @@ app.get('/api/employees/default-avatar.svg', (req, res) => {
   return res.send(defaultAvatarSvg);
 });
 
-// Serving binary signature
+// Pre-flight CORS handler for signature route
+app.options('/api/employees/:id/signature', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return res.sendStatus(204);
+});
+
+// Serving binary signature (In-Memory Cached & CORS Unlocked)
 app.get('/api/employees/:id/signature', async (req, res) => {
   const empId = req.params.id;
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   try {
     const hasAccess = await verifyImageAccess(req, res, empId);
     if (!hasAccess) {
       return res.status(401).json({ error: 'Unauthorized signature access.' });
     }
 
+    // 1. Fast path: check in-memory signature cache
+    if (employeeSignatureMemoryCache.has(empId)) {
+      const cached = employeeSignatureMemoryCache.get(empId);
+      if (!cached) {
+        return res.status(404).json({ error: 'Signature not found.' });
+      }
+      res.setHeader('Content-Type', cached.mimeType);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(cached.buffer);
+    }
+
+    // 2. Slow path: query DB and populate cache
     let base64Str = null;
     try {
       if (usePostgres && pool) {
@@ -2617,6 +2720,7 @@ app.get('/api/employees/:id/signature', async (req, res) => {
     }
 
     if (!base64Str || !base64Str.startsWith('data:image/')) {
+      employeeSignatureMemoryCache.set(empId, null);
       return res.status(404).json({ error: 'Signature not found.' });
     }
 
@@ -2627,10 +2731,12 @@ app.get('/api/employees/:id/signature', async (req, res) => {
 
     const mimeType = matches[1].toLowerCase();
     if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
+      employeeSignatureMemoryCache.set(empId, null);
       return res.status(400).json({ error: 'Unsupported signature format.' });
     }
 
     const buffer = Buffer.from(matches[2], 'base64');
+    employeeSignatureMemoryCache.set(empId, { buffer, mimeType });
 
     res.setHeader('Content-Type', mimeType);
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -2861,6 +2967,9 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
 
     // Process security tokens and field projections
     const processedEmps = emps.map(emp => {
+      if (emp && emp.id && emp.secureToken) {
+        employeeTokenMemoryCache.set(emp.id, emp.secureToken);
+      }
       if (isSummary) {
         return {
           id: emp.id,
@@ -2978,6 +3087,10 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
       db.employees.push(newEmp);
       writeLocalDb(db);
     }
+    invalidateEmployeeMediaCache(newEmp.id);
+    if (newEmp.secureToken) {
+      employeeTokenMemoryCache.set(newEmp.id, newEmp.secureToken);
+    }
 
     // Trigger Telegram alert for Admin Dashboard creation
     await recordNotification(
@@ -3047,6 +3160,187 @@ async function generateWithGemini(apiKey, contents, options = {}) {
   }
 }
 
+// In-memory cache for dynamic DB-configured Gemini API Key
+let cachedDbGeminiApiKey = null;
+let lastDbKeyFetchTime = 0;
+
+/**
+ * Resolves the effective Google Gemini API Key in order of precedence:
+ * 1. Request header (x-gemini-api-key) or body/query (apiKey) - from user session
+ * 2. Database settings table ('gemini_api_key') - persistent system configuration
+ * 3. Environment variable (GEMINI_API_KEY) - server infrastructure fallback
+ */
+async function getEffectiveGeminiApiKey(req = null) {
+  // 1. Explicit key in current request from client UI / localStorage
+  if (req) {
+    const headerKey = req.headers && (req.headers['x-gemini-api-key'] || req.headers['authorization-gemini']);
+    const bodyKey = req.body && typeof req.body === 'object' && req.body.apiKey;
+    const queryKey = req.query && req.query.apiKey;
+    const candidate = (headerKey || bodyKey || queryKey);
+    if (candidate && typeof candidate === 'string' && candidate.trim().length > 5) {
+      return candidate.trim();
+    }
+  }
+
+  // 2. Database settings table (persisted across sessions & client devices)
+  const now = Date.now();
+  if (now - lastDbKeyFetchTime < 30000 && cachedDbGeminiApiKey !== null) {
+    if (cachedDbGeminiApiKey) return cachedDbGeminiApiKey;
+  } else if (usePostgres && pool) {
+    try {
+      const res = await pool.query("SELECT value FROM settings WHERE key = 'gemini_api_key'");
+      lastDbKeyFetchTime = now;
+      if (res.rows.length > 0 && res.rows[0].value) {
+        let val = res.rows[0].value;
+        if (typeof val === 'string') {
+          try { val = JSON.parse(val); } catch (e) {}
+        }
+        if (typeof val === 'string' && val.trim().length > 5) {
+          cachedDbGeminiApiKey = val.trim();
+          return cachedDbGeminiApiKey;
+        }
+      }
+      cachedDbGeminiApiKey = '';
+    } catch (e) {
+      console.warn('[Gemini AI] Failed to read gemini_api_key from settings:', e.message);
+    }
+  } else {
+    try {
+      const local = readLocalDb();
+      if (local && local.settings && local.settings.gemini_api_key) {
+        return local.settings.gemini_api_key.trim();
+      }
+    } catch (e) {}
+  }
+
+  // 3. Environment variable fallback (process.env.GEMINI_API_KEY)
+  const envKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (envKey) return envKey;
+
+  return null;
+}
+
+// GET Gemini API Key Status
+app.get('/api/settings/gemini-key', authenticateToken, async (req, res) => {
+  try {
+    const key = await getEffectiveGeminiApiKey(req);
+    const hasKey = !!(key && key.length > 5);
+    const preview = hasKey ? `${key.substring(0, 6)}...${key.substring(key.length - 4)}` : null;
+    let source = 'none';
+    if (req.headers && req.headers['x-gemini-api-key']) {
+      source = 'request-header';
+    } else if (cachedDbGeminiApiKey) {
+      source = 'database';
+    } else if (process.env.GEMINI_API_KEY) {
+      source = 'environment';
+    }
+    return res.json({
+      success: true,
+      configured: hasKey,
+      preview: preview,
+      source: source
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Failed to inspect Gemini settings: ' + err.message });
+  }
+});
+
+// POST Gemini API Key Save / Update
+app.post('/api/settings/gemini-key', authenticateToken, async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    
+    // Clearing key
+    if (apiKey === null || apiKey === undefined || apiKey === '') {
+      if (usePostgres && pool) {
+        await pool.query("DELETE FROM settings WHERE key = 'gemini_api_key'");
+      } else {
+        const db = readLocalDb();
+        if (db.settings) delete db.settings.gemini_api_key;
+        writeLocalDb(db);
+      }
+      cachedDbGeminiApiKey = '';
+      lastDbKeyFetchTime = Date.now();
+      return res.json({ success: true, message: 'Gemini API key cleared successfully.', configured: false });
+    }
+
+    if (typeof apiKey !== 'string' || apiKey.trim().length < 10) {
+      return res.status(400).json({ success: false, error: 'Invalid API key format. Please provide a valid Gemini API key.' });
+    }
+
+    const trimmedKey = apiKey.trim();
+
+    // Verify key with Gemini before saving
+    try {
+      await generateWithGemini(trimmedKey, 'Respond OK in 1 word');
+    } catch (testErr) {
+      console.warn('[Gemini AI] Key verification returned warning during save:', testErr.message);
+      const isTransient = testErr.message && (
+        testErr.message.includes('503') || 
+        testErr.message.includes('high demand') ||
+        testErr.message.includes('overloaded') ||
+        testErr.message.includes('ResourceExhausted')
+      );
+      if (!isTransient && (
+        testErr.message.includes('API_KEY_INVALID') || 
+        testErr.message.includes('API key not valid') || 
+        testErr.message.includes('400')
+      )) {
+        return res.status(400).json({ success: false, error: 'Google Gemini API key validation failed: ' + testErr.message });
+      }
+    }
+
+    if (usePostgres && pool) {
+      await pool.query(
+        'INSERT INTO settings (key, "value") VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET "value" = EXCLUDED."value"',
+        ['gemini_api_key', JSON.stringify(trimmedKey)]
+      );
+    } else {
+      const db = readLocalDb();
+      db.settings = db.settings || {};
+      db.settings.gemini_api_key = trimmedKey;
+      writeLocalDb(db);
+    }
+
+    cachedDbGeminiApiKey = trimmedKey;
+    lastDbKeyFetchTime = Date.now();
+    const preview = `${trimmedKey.substring(0, 6)}...${trimmedKey.substring(trimmedKey.length - 4)}`;
+
+    return res.json({
+      success: true,
+      message: 'Gemini API key verified and saved successfully to database!',
+      configured: true,
+      preview: preview
+    });
+  } catch (err) {
+    console.error('Save Gemini API key error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to save Gemini API key: ' + err.message });
+  }
+});
+
+// POST Test Gemini API Key
+app.post('/api/ai/test-key', authenticateToken, async (req, res) => {
+  try {
+    const key = (req.body && req.body.apiKey) ? req.body.apiKey.trim() : await getEffectiveGeminiApiKey(req);
+    if (!key) {
+      return res.status(400).json({ success: false, error: 'No Gemini API key provided or configured.' });
+    }
+
+    const result = await generateWithGemini(key, 'Respond OK in 1 word');
+    const reply = result.response.text().trim();
+    return res.json({
+      success: true,
+      message: 'Google Gemini API connection verified and active!',
+      reply: reply
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      error: 'Gemini connection test failed: ' + (err.message || 'Unknown error')
+    });
+  }
+});
+
 // AI OCR Document Auto-Enrollment Endpoint
 app.post('/api/employees/ocr', authenticateToken, async (req, res) => {
   const { image } = req.body;
@@ -3054,9 +3348,9 @@ app.post('/api/employees/ocr', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Image data is required.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = await getEffectiveGeminiApiKey(req);
   if (!apiKey || apiKey.trim() === '') {
-    return res.status(400).json({ error: 'Gemini API Key is not configured on the server. Please add GEMINI_API_KEY to your .env file.' });
+    return res.status(400).json({ error: 'Gemini API Key is not configured on the server. Please add GEMINI_API_KEY in Card Studio or Settings.' });
   }
 
   try {
@@ -3128,9 +3422,9 @@ app.post('/api/employees/scan-form', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Form image data is required.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = await getEffectiveGeminiApiKey(req);
   if (!apiKey || apiKey.trim() === '') {
-    return res.status(400).json({ error: 'Gemini API Key is not configured on the server. Please add GEMINI_API_KEY to your env.' });
+    return res.status(400).json({ error: 'Gemini API Key is not configured on the server. Please add GEMINI_API_KEY in Card Studio or Settings.' });
   }
 
   try {
@@ -3159,9 +3453,9 @@ app.post('/api/templates/generate-ai', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Text prompt description is required.' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = await getEffectiveGeminiApiKey(req);
   if (!apiKey || apiKey.trim() === '') {
-    return res.status(400).json({ error: 'Gemini API Key is not configured on the server.' });
+    return res.status(400).json({ error: 'Gemini API Key is not configured. Please enter your Gemini API key in Card Studio or Settings.' });
   }
 
   try {
@@ -3387,6 +3681,10 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
       db.employees[idx] = mergedEmp;
       writeLocalDb(db);
     }
+    invalidateEmployeeMediaCache(empId);
+    if (mergedEmp && mergedEmp.secureToken) {
+      employeeTokenMemoryCache.set(empId, mergedEmp.secureToken);
+    }
 
     // Trigger Telegram alert for Admin Dashboard update/approval
     await recordNotification(
@@ -3433,6 +3731,7 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
         writeLocalDb(db);
       }
     }
+    invalidateEmployeeMediaCache(empId);
     return res.json({ success: true, message: 'Employee deleted successfully.' });
   } catch (e) {
     return res.status(500).json({ error: 'Failed to delete employee.' });
@@ -3464,6 +3763,7 @@ app.post('/api/employees/bulk-delete', authenticateToken, async (req, res) => {
       deletedCount = beforeLen - db.employees.length;
       writeLocalDb(db);
     }
+    employeeIds.forEach(id => invalidateEmployeeMediaCache(id));
     return res.json({ success: true, count: deletedCount, message: `Successfully deleted ${deletedCount} employee(s).` });
   } catch (e) {
     console.error('Error in bulk delete:', e);
@@ -3523,7 +3823,7 @@ async function syncDatabaseToGit() {
 // 7.5. AI Dashboard Insights Endpoint (Protected)
 app.get('/api/ai/dashboard-insights', authenticateToken, async (req, res) => {
   try {
-    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+    const apiKey = (await getEffectiveGeminiApiKey(req) || '').trim();
     if (!apiKey) {
       return res.status(503).json({
         success: false,
@@ -3818,7 +4118,7 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Query is required.' });
   }
 
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const apiKey = (await getEffectiveGeminiApiKey(req) || '').trim();
   if (!apiKey) {
     return res.status(503).json({
       success: false,
@@ -3866,7 +4166,7 @@ app.get('/api/resolve-official-name', authenticateToken, async (req, res) => {
 
 // Batch audit current departments list using Gemini
 app.get('/api/audit-departments', authenticateToken, async (req, res) => {
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const apiKey = (await getEffectiveGeminiApiKey(req) || '').trim();
   if (!apiKey) {
     return res.status(503).json({
       success: false,
@@ -4220,6 +4520,8 @@ app.post('/api/db/import', authenticateToken, async (req, res) => {
     
     // Automatically trigger migration to separate any imported base64 photos/signatures
     await runImageMigration();
+    clearAllEmployeeMediaCache();
+    await warmEmployeeMediaCache();
     
     return res.json({ success: true, message: 'Database imported successfully.' });
   } catch (e) {
@@ -4806,6 +5108,9 @@ async function ensureAllEmployeesHaveTokens() {
           await pool.query('UPDATE employees SET data = $1 WHERE id = $2', [JSON.stringify(empData), row.id]);
           console.log(`Generated secureToken for employee ${row.id} in PostgreSQL`);
         }
+        if (empData && empData.secureToken) {
+          employeeTokenMemoryCache.set(row.id, empData.secureToken);
+        }
       }
     } else {
       const db = readLocalDb();
@@ -4816,6 +5121,9 @@ async function ensureAllEmployeesHaveTokens() {
           changed = true;
           console.log(`Generated secureToken for employee ${emp.id} in Local DB`);
         }
+        if (emp && emp.secureToken) {
+          employeeTokenMemoryCache.set(emp.id, emp.secureToken);
+        }
       });
       if (changed) {
         writeLocalDb(db);
@@ -4823,6 +5131,74 @@ async function ensureAllEmployeesHaveTokens() {
     }
   } catch (err) {
     console.error('Error generating secure tokens:', err.message);
+  }
+}
+
+// Pre-warm employee photo and signature cache in RAM to eliminate redundant DB roundtrips
+async function warmEmployeeMediaCache() {
+  try {
+    if (usePostgres && pool) {
+      console.log('⚡ Pre-warming employee media cache from PostgreSQL...');
+      const res = await pool.query('SELECT employee_id, photo, signature FROM employee_photos');
+      let photoCount = 0;
+      let sigCount = 0;
+      for (const row of res.rows) {
+        if (row.photo && row.photo.startsWith('data:image/')) {
+          const matches = row.photo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (matches && matches.length === 3 && ALLOWED_IMAGE_MIME_TYPES.has(matches[1].toLowerCase())) {
+            employeePhotoMemoryCache.set(row.employee_id, {
+              mimeType: matches[1].toLowerCase(),
+              buffer: Buffer.from(matches[2], 'base64')
+            });
+            photoCount++;
+          } else {
+            employeePhotoMemoryCache.set(row.employee_id, null);
+          }
+        } else {
+          employeePhotoMemoryCache.set(row.employee_id, null);
+        }
+
+        if (row.signature && row.signature.startsWith('data:image/')) {
+          const matches = row.signature.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (matches && matches.length === 3 && ALLOWED_IMAGE_MIME_TYPES.has(matches[1].toLowerCase())) {
+            employeeSignatureMemoryCache.set(row.employee_id, {
+              mimeType: matches[1].toLowerCase(),
+              buffer: Buffer.from(matches[2], 'base64')
+            });
+            sigCount++;
+          } else {
+            employeeSignatureMemoryCache.set(row.employee_id, null);
+          }
+        } else {
+          employeeSignatureMemoryCache.set(row.employee_id, null);
+        }
+      }
+      console.log(`✅ Pre-warmed ${photoCount} photos and ${sigCount} signatures in memory.`);
+    } else {
+      const photosDb = readPhotosDb();
+      for (const [empId, data] of Object.entries(photosDb)) {
+        if (data.photo && data.photo.startsWith('data:image/')) {
+          const matches = data.photo.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (matches && matches.length === 3 && ALLOWED_IMAGE_MIME_TYPES.has(matches[1].toLowerCase())) {
+            employeePhotoMemoryCache.set(empId, {
+              mimeType: matches[1].toLowerCase(),
+              buffer: Buffer.from(matches[2], 'base64')
+            });
+          }
+        }
+        if (data.signature && data.signature.startsWith('data:image/')) {
+          const matches = data.signature.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          if (matches && matches.length === 3 && ALLOWED_IMAGE_MIME_TYPES.has(matches[1].toLowerCase())) {
+            employeeSignatureMemoryCache.set(empId, {
+              mimeType: matches[1].toLowerCase(),
+              buffer: Buffer.from(matches[2], 'base64')
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not pre-warm employee media cache (will load on demand):', err.message);
   }
 }
 
@@ -4887,6 +5263,7 @@ app.listen(PORT, async () => {
   await initDatabase();
   await runImageMigration();
   await ensureAllEmployeesHaveTokens();
+  await warmEmployeeMediaCache();
   await loadSiteEnabledFromDb();
   startDatabaseReconnectService();
   console.log('================================================================');
